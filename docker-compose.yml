@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/up.sql:/docker-entrypoint-initdb.d/up.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST: postgres
+    ports:
+      - 5432:5432
