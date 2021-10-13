@@ -1,4 +1,6 @@
 target/
-db/
+.db/
 queries/
 .env
+.queries
+.scraps
