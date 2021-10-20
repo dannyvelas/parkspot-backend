@@ -11,12 +11,12 @@ type Config struct {
 }
 
 func New() (*Config, error) {
-	postgresConfig, err := NewPostgresConfig()
+	postgresConfig, err := newPostgresConfig()
 	if err != nil {
 		return nil, err
 	}
 
-	serverConfig, err := NewServerConfig()
+	serverConfig, err := newServerConfig()
 	if err != nil {
 		return nil, err
 	}

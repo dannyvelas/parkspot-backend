@@ -1,5 +1,6 @@
 package utils
 
 const (
-	PAGE_SIZE = 100
+	maxPageSize     = 150
+	defaultPageSize = 100
 )

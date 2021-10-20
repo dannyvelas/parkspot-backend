@@ -14,10 +14,21 @@ func NewPermitRepo(database *Database) *PermitRepo {
 
 func (permitRepo *PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
 	const query = `
-  SELECT id, resident_id, license_plate, color_and_model, start_date, end_date, request_date, affects_days
+  SELECT
+    permits.id,
+		permits.resident_id,
+		permits.license_plate,
+		cars.color_and_model,
+		permits.start_date,
+		permits.end_date,
+		permits.request_date,
+		permits.affects_days
   FROM permits
-  WHERE start_date <= EXTRACT(epoch FROM NOW())
-  AND end_date >= EXTRACT(epoch FROM NOW())
+  LEFT JOIN cars ON
+    permits.license_plate = cars.license_plate 
+  WHERE
+    permits.start_date <= EXTRACT(epoch FROM NOW())
+    AND permits.end_date >= EXTRACT(epoch FROM NOW())
   LIMIT $1
   OFFSET $2
   `

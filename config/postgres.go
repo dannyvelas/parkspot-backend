@@ -14,7 +14,7 @@ type PostgresConfig struct {
 	Dbname   string
 }
 
-func NewPostgresConfig() (*PostgresConfig, error) {
+func newPostgresConfig() (*PostgresConfig, error) {
 	host := os.Getenv("PG_HOST")
 	if host == "" {
 		return nil, varNotFoundError("PG_HOST")

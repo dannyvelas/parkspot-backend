@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/dannyvelas/parkspot-api/config"
-	"github.com/dannyvelas/parkspot-api/response"
+	"github.com/dannyvelas/parkspot-api/routing"
 	"github.com/dannyvelas/parkspot-api/storage"
+	"github.com/go-chi/chi/v5"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 )
@@ -24,8 +23,8 @@ func main() {
 
 	permitRepo := storage.NewPermitRepo(database)
 
-	router := httprouter.New()
-	router.HandlerFunc("/api/permits", response.PermitsRouter(permitRepo))
+	router := chi.NewRouter()
+	router.Route("/api/permits", routing.PermitsRouter(*permitRepo))
 
 	log.Fatal(http.ListenAndServe(":5000", router))
 }

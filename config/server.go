@@ -8,7 +8,7 @@ type ServerConfig struct {
 	Address string
 }
 
-func NewServerConfig() (*ServerConfig, error) {
+func newServerConfig() (*ServerConfig, error) {
 	address := os.Getenv("SERVER_ADDRESS")
 	if address == "" {
 		return nil, varNotFoundError("SERVER_ADDRESS")
