@@ -11,11 +11,11 @@ import (
 
 func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 	return func(r chi.Router) {
-		r.Get("/active", GetActivePermits(permitRepo))
+		r.Get("/active", GetActive(permitRepo))
 	}
 }
 
-func GetActivePermits(permitRepo storage.PermitRepo) http.HandlerFunc {
+func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		page := utils.ToUint(r.URL.Query().Get("page"))
 		size := utils.ToUint(r.URL.Query().Get("size"))

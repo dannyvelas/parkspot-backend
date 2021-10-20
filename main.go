@@ -21,9 +21,11 @@ func main() {
 		panic(err)
 	}
 
+	adminRepo := storage.NewAdminRepo(database)
 	permitRepo := storage.NewPermitRepo(database)
 
 	router := chi.NewRouter()
+	router.Post("/api/login", routing.HandleLogin(*adminRepo))
 	router.Route("/api/permits", routing.PermitsRouter(*permitRepo))
 
 	log.Fatal(http.ListenAndServe(":5000", router))
