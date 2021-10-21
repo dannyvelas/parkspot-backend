@@ -6,8 +6,8 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Postgres PostgresConfig
+	server   ServerConfig
+	postgres PostgresConfig
 }
 
 func New() (*Config, error) {
@@ -22,9 +22,17 @@ func New() (*Config, error) {
 	}
 
 	return &Config{
-		Server:   *serverConfig,
-		Postgres: *postgresConfig,
+		server:   *serverConfig,
+		postgres: *postgresConfig,
 	}, nil
+}
+
+func (config Config) Server() ServerConfig {
+	return config.server
+}
+
+func (config Config) Postgres() PostgresConfig {
+	return config.postgres
 }
 
 func varNotFoundError(variable string) error {

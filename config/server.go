@@ -5,7 +5,7 @@ import (
 )
 
 type ServerConfig struct {
-	Address string
+	address string
 }
 
 func newServerConfig() (*ServerConfig, error) {
@@ -15,6 +15,10 @@ func newServerConfig() (*ServerConfig, error) {
 	}
 
 	return &ServerConfig{
-		Address: address,
+		address: address,
 	}, nil
+}
+
+func (serverConfig ServerConfig) Address() string {
+	return serverConfig.address
 }

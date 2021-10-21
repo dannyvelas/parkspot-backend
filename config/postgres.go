@@ -7,11 +7,11 @@ import (
 )
 
 type PostgresConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	Dbname   string
+	host     string
+	port     int
+	user     string
+	password string
+	dbName   string
 }
 
 func newPostgresConfig() (*PostgresConfig, error) {
@@ -46,10 +46,30 @@ func newPostgresConfig() (*PostgresConfig, error) {
 	}
 
 	return &PostgresConfig{
-		Host:     host,
-		Port:     portAsInt,
-		User:     user,
-		Password: password,
-		Dbname:   dbName,
+		host:     host,
+		port:     portAsInt,
+		user:     user,
+		password: password,
+		dbName:   dbName,
 	}, nil
+}
+
+func (postgresConfig PostgresConfig) Host() string {
+	return postgresConfig.host
+}
+
+func (postgresConfig PostgresConfig) Port() int {
+	return postgresConfig.port
+}
+
+func (postgresConfig PostgresConfig) User() string {
+	return postgresConfig.user
+}
+
+func (postgresConfig PostgresConfig) Password() string {
+	return postgresConfig.password
+}
+
+func (postgresConfig PostgresConfig) DbName() string {
+	return postgresConfig.dbName
 }
