@@ -1,5 +1,13 @@
 package storage
 
-import "errors"
+type NotFound struct {
+	msg string
+}
 
-var ResourceNotFound = errors.New("Resource Not Found.")
+func NewNotFound(resource string) NotFound {
+	return NotFound{msg: resource}
+}
+
+func (notFound NotFound) Error() string {
+	return notFound.msg
+}

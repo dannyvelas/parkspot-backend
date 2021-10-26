@@ -2,18 +2,19 @@ package routing
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/dannyvelas/parkspot-api/utils"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
 type credentials struct {
-	id       string
-	password string
+	Id       string
+	Password string
 }
 
-func HandleLogin(adminRepo storage.AdminRepo) http.HandlerFunc {
+func Login(adminRepo storage.AdminRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
@@ -22,13 +23,21 @@ func HandleLogin(adminRepo storage.AdminRepo) http.HandlerFunc {
 			return
 		}
 
-		admin, err := adminRepo.GetOne(r.URL.Opaque)
-		if err != nil && err == storage.ResourceNotFound {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+		admin, err := adminRepo.GetOne(creds.Id)
+		if errors.As(err, &storage.NotFound{}) {
+			http.Error(w, "Wrong Credentials", http.StatusUnauthorized)
 			return
 		} else if err != nil {
-			fmt.Println(err)
 			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword(
+			[]byte(admin.Password),
+			[]byte(creds.Password),
+		)
+		if err != nil {
+			http.Error(w, "Wrong Credentials", http.StatusUnauthorized)
 			return
 		}
 

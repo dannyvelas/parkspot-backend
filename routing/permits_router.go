@@ -1,12 +1,10 @@
 package routing
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/dannyvelas/parkspot-api/utils"
 	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
 func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
@@ -24,7 +22,6 @@ func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 		activePermits, err := permitRepo.GetActive(limit, offset)
 
 		if err != nil {
-			fmt.Println(err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
