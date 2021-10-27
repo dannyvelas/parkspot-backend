@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	server   ServerConfig
+	token    TokenConfig
 	postgres PostgresConfig
 }
 
@@ -16,19 +16,19 @@ func New() (*Config, error) {
 		return nil, err
 	}
 
-	serverConfig, err := newServerConfig()
+	tokenConfig, err := newTokenConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Config{
-		server:   *serverConfig,
+		token:    *tokenConfig,
 		postgres: *postgresConfig,
 	}, nil
 }
 
-func (config Config) Server() ServerConfig {
-	return config.server
+func (config Config) Token() TokenConfig {
+	return config.token
 }
 
 func (config Config) Postgres() PostgresConfig {
