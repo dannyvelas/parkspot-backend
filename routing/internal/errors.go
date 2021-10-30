@@ -1,4 +1,4 @@
-package routing
+package internal
 
 import (
 	"github.com/rs/zerolog/log"

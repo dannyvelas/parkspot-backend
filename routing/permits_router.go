@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"github.com/dannyvelas/parkspot-api/routing/internal"
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -14,16 +15,16 @@ func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 
 func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		page := ToUint(r.URL.Query().Get("page"))
-		size := ToUint(r.URL.Query().Get("size"))
-		limit, offset := PagingToLimitOffset(page, size)
+		page := internal.ToUint(r.URL.Query().Get("page"))
+		size := internal.ToUint(r.URL.Query().Get("size"))
+		limit, offset := internal.PagingToLimitOffset(page, size)
 
 		activePermits, err := permitRepo.GetActive(limit, offset)
 		if err != nil {
-			HandleInternalError(w, "Error querying permitRepo: "+err.Error())
+			internal.HandleInternalError(w, "Error querying permitRepo: "+err.Error())
 			return
 		}
 
-		RespondJson(w, http.StatusOK, activePermits)
+		internal.RespondJson(w, http.StatusOK, activePermits)
 	}
 }
