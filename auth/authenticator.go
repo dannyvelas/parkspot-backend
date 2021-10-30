@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/dannyvelas/parkspot-api/config"
+	"github.com/dannyvelas/parkspot-api/utils"
 	"net/http"
 )
 
@@ -17,13 +18,13 @@ func (authenticator Authenticator) AdminOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//cookie, err := r.Cookie("jwt")
 		//if err != nil {
-		//	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		//	utils.HandleError(w, utils.Unauthorized)
 		//	return
 		//}
 
 		//jwtPayload, err := authenticator.parseJWT(cookie.Value)
 		//if err != nil {
-		//	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		//	utils.HandleError(w, utils.Unauthorized)
 		//	return
 		//}
 		//next.ServeHTTP(w, r)
