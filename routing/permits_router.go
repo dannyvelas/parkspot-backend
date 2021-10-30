@@ -17,12 +17,11 @@ func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		page := utils.ToUint(r.URL.Query().Get("page"))
 		size := utils.ToUint(r.URL.Query().Get("size"))
-
 		limit, offset := utils.PagingToLimitOffset(page, size)
-		activePermits, err := permitRepo.GetActive(limit, offset)
 
+		activePermits, err := permitRepo.GetActive(limit, offset)
 		if err != nil {
-			http.Error(w, http.StatusText(500), 500)
+			utils.HandleInternalError(w, "Error querying permitRepo: "+err.Error())
 			return
 		}
 

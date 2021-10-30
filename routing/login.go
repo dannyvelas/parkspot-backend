@@ -3,6 +3,7 @@ package routing
 import (
 	"encoding/json"
 	"errors"
+	"github.com/dannyvelas/parkspot-api/auth"
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/dannyvelas/parkspot-api/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -14,21 +15,21 @@ type credentials struct {
 	Password string
 }
 
-func Login(adminRepo storage.AdminRepo) http.HandlerFunc {
+func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			utils.HandleError(w, utils.BadRequest)
 			return
 		}
 
 		admin, err := adminRepo.GetOne(creds.Id)
 		if errors.As(err, &storage.NotFound{}) {
-			http.Error(w, "Wrong Credentials", http.StatusUnauthorized)
+			utils.HandleError(w, utils.Unauthorized)
 			return
 		} else if err != nil {
-			http.Error(w, http.StatusText(500), 500)
+			utils.HandleInternalError(w, "Error querying adminRepo: "+err.Error())
 			return
 		}
 
@@ -37,10 +38,17 @@ func Login(adminRepo storage.AdminRepo) http.HandlerFunc {
 			[]byte(creds.Password),
 		)
 		if err != nil {
-			http.Error(w, "Wrong Credentials", http.StatusUnauthorized)
+			utils.HandleError(w, utils.Unauthorized)
 			return
 		}
 
-		utils.RespondJson(w, http.StatusOK, admin)
+		token, err := authenticator.NewJWT(admin.Id)
+		if err != nil {
+			utils.HandleInternalError(w, "Error generating JWT: "+err.Error())
+			return
+		}
+
+		cookie := http.Cookie{Name: "jwt", Value: token, HttpOnly: true, Path: "/"}
+		http.SetCookie(w, &cookie)
 	}
 }

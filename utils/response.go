@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -17,6 +18,6 @@ func RespondJson(w http.ResponseWriter, statusCode int, data interface{}) {
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err = w.Write([]byte(`{"err": "Error parsing response"}`))
+		_, err = io.WriteString(w, `{"err": "Error parsing response"}`)
 	}
 }

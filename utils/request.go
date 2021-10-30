@@ -1,13 +1,12 @@
 package utils
 
-import (
-	"strconv"
-)
+import "strconv"
 
 func ToUint(value string) uint {
 	if value == "" {
 		return 0
 	}
+
 	res, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
 		return 0
