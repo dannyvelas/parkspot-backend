@@ -1,4 +1,4 @@
-package utils
+package routing
 
 const (
 	maxPageSize     = 150

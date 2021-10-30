@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/dannyvelas/parkspot-api/auth"
 	"github.com/dannyvelas/parkspot-api/storage"
-	"github.com/dannyvelas/parkspot-api/utils"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
@@ -20,16 +19,16 @@ func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.H
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {
-			utils.HandleError(w, utils.BadRequest)
+			HandleError(w, BadRequest)
 			return
 		}
 
 		admin, err := adminRepo.GetOne(creds.Id)
 		if errors.As(err, &storage.NotFound{}) {
-			utils.HandleError(w, utils.Unauthorized)
+			HandleError(w, Unauthorized)
 			return
 		} else if err != nil {
-			utils.HandleInternalError(w, "Error querying adminRepo: "+err.Error())
+			HandleInternalError(w, "Error querying adminRepo: "+err.Error())
 			return
 		}
 
@@ -38,13 +37,13 @@ func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.H
 			[]byte(creds.Password),
 		)
 		if err != nil {
-			utils.HandleError(w, utils.Unauthorized)
+			HandleError(w, Unauthorized)
 			return
 		}
 
 		token, err := authenticator.NewJWT(admin.Id)
 		if err != nil {
-			utils.HandleInternalError(w, "Error generating JWT: "+err.Error())
+			HandleInternalError(w, "Error generating JWT: "+err.Error())
 			return
 		}
 

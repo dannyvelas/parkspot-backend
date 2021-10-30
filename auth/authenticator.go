@@ -2,7 +2,6 @@ package auth
 
 import (
 	"github.com/dannyvelas/parkspot-api/config"
-	"github.com/dannyvelas/parkspot-api/utils"
 	"net/http"
 )
 
