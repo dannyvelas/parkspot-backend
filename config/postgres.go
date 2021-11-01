@@ -15,43 +15,37 @@ type PostgresConfig struct {
 }
 
 func newPostgresConfig() (*PostgresConfig, error) {
-	host := os.Getenv("PG_HOST")
-	if host == "" {
+	var postgresConfig PostgresConfig
+
+	postgresConfig.host = os.Getenv("PG_HOST")
+	if postgresConfig.host == "" {
 		return nil, varNotFoundError("PG_HOST")
 	}
 
-	port := os.Getenv("PG_PORT")
-	if port == "" {
+	if portString := os.Getenv("PG_PORT"); portString == "" {
 		return nil, varNotFoundError("PG_PORT")
-	}
-
-	portAsInt, err := strconv.Atoi(port)
-	if err != nil {
+	} else if portInt, err := strconv.Atoi(portString); err != nil {
 		return nil, errors.New("PG_PORT could not be converted to an integer.")
+	} else {
+		postgresConfig.port = portInt
 	}
 
-	user := os.Getenv("PG_USER")
-	if user == "" {
+	postgresConfig.user = os.Getenv("PG_USER")
+	if postgresConfig.user == "" {
 		return nil, varNotFoundError("PG_USER")
 	}
 
-	password := os.Getenv("PG_PASSWORD")
-	if password == "" {
+	postgresConfig.password = os.Getenv("PG_PASSWORD")
+	if postgresConfig.password == "" {
 		return nil, varNotFoundError("PG_PASSWORD")
 	}
 
-	dbName := os.Getenv("PG_DBNAME")
-	if dbName == "" {
+	postgresConfig.dbName = os.Getenv("PG_DBNAME")
+	if postgresConfig.dbName == "" {
 		return nil, varNotFoundError("PG_DBNAME")
 	}
 
-	return &PostgresConfig{
-		host:     host,
-		port:     portAsInt,
-		user:     user,
-		password: password,
-		dbName:   dbName,
-	}, nil
+	return &postgresConfig, nil
 }
 
 func (postgresConfig PostgresConfig) Host() string {

@@ -7,14 +7,14 @@ type TokenConfig struct {
 }
 
 func newTokenConfig() (*TokenConfig, error) {
-	secret := os.Getenv("TOKEN_SECRET")
-	if secret == "" {
+	var tokenConfig TokenConfig
+
+	tokenConfig.secret = os.Getenv("TOKEN_SECRET")
+	if tokenConfig.secret == "" {
 		return nil, varNotFoundError("TOKEN_SECRET")
 	}
 
-	return &TokenConfig{
-		secret: secret,
-	}, nil
+	return &tokenConfig, nil
 }
 
 func (tokenConfig TokenConfig) Secret() string {
