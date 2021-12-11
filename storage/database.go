@@ -30,7 +30,6 @@ func NewDatabase(postgres_config config.PostgresConfig) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Successfully connected!")
 
 	return &Database{driver: driver}, nil
 }
