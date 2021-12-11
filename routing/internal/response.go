@@ -2,22 +2,24 @@ package internal
 
 import (
 	"encoding/json"
+	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 )
 
 func RespondJson(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(statusCode)
 
 	if data == nil {
 		_, _ = w.Write([]byte(""))
 		return
 	}
 
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Error().Msg("Error parsing response")
+
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err = io.WriteString(w, `{"err": "Error parsing response"}`)
+		_, err = io.WriteString(w, `{"error": "Internal Server Error"}`)
+		return
 	}
 }
