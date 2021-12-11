@@ -4,12 +4,14 @@ import (
 	"github.com/dannyvelas/parkspot-api/routing/internal"
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
 func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Get("/active", GetActive(permitRepo))
+		r.Get("/all", GetAll(permitRepo))
 	}
 }
 
@@ -26,5 +28,23 @@ func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 		}
 
 		internal.RespondJson(w, http.StatusOK, activePermits)
+	}
+}
+
+func GetAll(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Info().Msg("Get All Endpoint")
+
+		page := internal.ToUint(r.URL.Query().Get("page"))
+		size := internal.ToUint(r.URL.Query().Get("size"))
+		limit, offset := internal.PagingToLimitOffset(page, size)
+
+		allPermits, err := permitRepo.GetAll(limit, offset)
+		if err != nil {
+			internal.HandleInternalError(w, "Error querying permitRepo: "+err.Error())
+			return
+		}
+
+		internal.RespondJson(w, http.StatusOK, allPermits)
 	}
 }
