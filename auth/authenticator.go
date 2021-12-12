@@ -9,8 +9,8 @@ type Authenticator struct {
 	tokenSecret []byte
 }
 
-func NewAuthenticator(tokenConfig config.TokenConfig) *Authenticator {
-	return &Authenticator{tokenSecret: []byte(tokenConfig.Secret())}
+func NewAuthenticator(tokenConfig config.TokenConfig) Authenticator {
+	return Authenticator{tokenSecret: []byte(tokenConfig.Secret())}
 }
 
 func (authenticator Authenticator) AdminOnly(next http.Handler) http.Handler {

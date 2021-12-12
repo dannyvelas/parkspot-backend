@@ -6,14 +6,14 @@ import (
 )
 
 type AdminRepo struct {
-	database *Database
+	database Database
 }
 
-func NewAdminRepo(database *Database) *AdminRepo {
-	return &AdminRepo{database: database}
+func NewAdminRepo(database Database) AdminRepo {
+	return AdminRepo{database: database}
 }
 
-func (adminRepo *AdminRepo) GetOne(id string) (models.Admin, error) {
+func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	const query = `SELECT id, password FROM admins WHERE id = $1`
 
 	var admin models.Admin

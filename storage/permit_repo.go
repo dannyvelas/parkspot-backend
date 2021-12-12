@@ -5,14 +5,14 @@ import (
 )
 
 type PermitRepo struct {
-	database *Database
+	database Database
 }
 
-func NewPermitRepo(database *Database) *PermitRepo {
-	return &PermitRepo{database: database}
+func NewPermitRepo(database Database) PermitRepo {
+	return PermitRepo{database: database}
 }
 
-func (permitRepo *PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
 	const query = `
     SELECT
       permits.id,

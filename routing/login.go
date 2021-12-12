@@ -33,11 +33,10 @@ func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.H
 			return
 		}
 
-		err = bcrypt.CompareHashAndPassword(
+		if err = bcrypt.CompareHashAndPassword(
 			[]byte(admin.Password),
 			[]byte(creds.Password),
-		)
-		if err != nil {
+		); err != nil {
 			internal.HandleError(w, internal.Unauthorized)
 			return
 		}

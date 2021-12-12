@@ -17,6 +17,8 @@ func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 
 func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Info().Msg("Get All Endpoint")
+
 		page := internal.ToUint(r.URL.Query().Get("page"))
 		size := internal.ToUint(r.URL.Query().Get("size"))
 		limit, offset := internal.PagingToLimitOffset(page, size)

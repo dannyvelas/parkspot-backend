@@ -10,20 +10,20 @@ type Config struct {
 	postgres PostgresConfig
 }
 
-func New() (*Config, error) {
+func New() (Config, error) {
 	postgresConfig, err := newPostgresConfig()
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	tokenConfig, err := newTokenConfig()
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
-	return &Config{
-		token:    *tokenConfig,
-		postgres: *postgresConfig,
+	return Config{
+		token:    tokenConfig,
+		postgres: postgresConfig,
 	}, nil
 }
 

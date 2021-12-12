@@ -11,7 +11,7 @@ type Database struct {
 	driver *sql.DB
 }
 
-func NewDatabase(postgres_config config.PostgresConfig) (*Database, error) {
+func NewDatabase(postgres_config config.PostgresConfig) (Database, error) {
 	psqlInfo := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		postgres_config.Host(),
@@ -23,13 +23,13 @@ func NewDatabase(postgres_config config.PostgresConfig) (*Database, error) {
 
 	driver, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		return nil, err
+		return Database{}, err
 	}
 
 	err = driver.Ping()
 	if err != nil {
-		return nil, err
+		return Database{}, err
 	}
 
-	return &Database{driver: driver}, nil
+	return Database{driver: driver}, nil
 }
