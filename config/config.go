@@ -8,23 +8,31 @@ import (
 type Config struct {
 	token    TokenConfig
 	postgres PostgresConfig
+	http     HttpConfig
 }
 
 func New() (Config, error) {
-	postgresConfig, err := newPostgresConfig()
-	if err != nil {
+	var config Config
+
+	if httpConfig, err := newHttpConfig(); err != nil {
 		return Config{}, err
+	} else {
+		config.http = httpConfig
 	}
 
-	tokenConfig, err := newTokenConfig()
-	if err != nil {
+	if postgresConfig, err := newPostgresConfig(); err != nil {
 		return Config{}, err
+	} else {
+		config.postgres = postgresConfig
 	}
 
-	return Config{
-		token:    tokenConfig,
-		postgres: postgresConfig,
-	}, nil
+	if tokenConfig, err := newTokenConfig(); err != nil {
+		return Config{}, err
+	} else {
+		config.token = tokenConfig
+	}
+
+	return config, nil
 }
 
 func (config Config) Token() TokenConfig {
@@ -33,6 +41,10 @@ func (config Config) Token() TokenConfig {
 
 func (config Config) Postgres() PostgresConfig {
 	return config.postgres
+}
+
+func (config Config) Http() HttpConfig {
+	return config.http
 }
 
 func varNotFoundError(variable string) error {
