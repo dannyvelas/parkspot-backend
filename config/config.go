@@ -9,11 +9,7 @@ type Config struct {
 func New() (Config, error) {
 	var config Config
 
-	if httpConfig, err := newHttpConfig(); err != nil {
-		return Config{}, err
-	} else {
-		config.http = httpConfig
-	}
+	config.http = newHttpConfig()
 
 	if postgresConfig, err := newPostgresConfig(); err != nil {
 		return Config{}, err

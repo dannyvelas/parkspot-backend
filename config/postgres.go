@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"os"
 	"strconv"
 )
@@ -19,30 +18,30 @@ func newPostgresConfig() (PostgresConfig, error) {
 
 	postgresConfig.host = os.Getenv("PG_HOST")
 	if postgresConfig.host == "" {
-		return PostgresConfig{}, varNotFoundError("PG_HOST")
+		return PostgresConfig{}, NotFoundError{"PG_HOST"}
 	}
 
 	if portString := os.Getenv("PG_PORT"); portString == "" {
-		return PostgresConfig{}, varNotFoundError("PG_PORT")
+		return PostgresConfig{}, NotFoundError{"PG_PORT"}
 	} else if portInt, err := strconv.Atoi(portString); err != nil {
-		return PostgresConfig{}, errors.New("PG_PORT could not be converted to an integer.")
+		return PostgresConfig{}, ConversionError{"PG_PORT", "int"}
 	} else {
 		postgresConfig.port = portInt
 	}
 
 	postgresConfig.user = os.Getenv("PG_USER")
 	if postgresConfig.user == "" {
-		return PostgresConfig{}, varNotFoundError("PG_USER")
+		return PostgresConfig{}, NotFoundError{"PG_USER"}
 	}
 
 	postgresConfig.password = os.Getenv("PG_PASSWORD")
 	if postgresConfig.password == "" {
-		return PostgresConfig{}, varNotFoundError("PG_PASSWORD")
+		return PostgresConfig{}, NotFoundError{"PG_PASSWORD"}
 	}
 
 	postgresConfig.dbName = os.Getenv("PG_DBNAME")
 	if postgresConfig.dbName == "" {
-		return PostgresConfig{}, varNotFoundError("PG_DBNAME")
+		return PostgresConfig{}, NotFoundError{"PG_DBNAME"}
 	}
 
 	return postgresConfig, nil
