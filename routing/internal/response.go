@@ -19,7 +19,7 @@ func RespondJson(w http.ResponseWriter, statusCode int, data interface{}) {
 		log.Error().Msg("Error parsing response")
 
 		w.WriteHeader(http.StatusInternalServerError)
-		_, err = io.WriteString(w, `{"error": "Internal Server Error"}`)
+		io.WriteString(w, `{"error": "Internal Server Error"}`)
 		return
 	}
 }

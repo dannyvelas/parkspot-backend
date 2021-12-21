@@ -17,13 +17,13 @@ func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 
 func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info().Msg("Get All Endpoint")
+		log.Info().Msg("Get Active Endpoint")
 
-		page := internal.ToUint(r.URL.Query().Get("page"))
 		size := internal.ToUint(r.URL.Query().Get("size"))
-		limit, offset := internal.PagingToLimitOffset(page, size)
+		page := internal.ToUint(r.URL.Query().Get("page"))
+		boundedSize, offset := internal.GetBoundedSizeAndOffset(size, page)
 
-		activePermits, err := permitRepo.GetActive(limit, offset)
+		activePermits, err := permitRepo.GetActive(boundedSize, offset)
 		if err != nil {
 			internal.HandleInternalError(w, "Error querying permitRepo: "+err.Error())
 			return
@@ -37,11 +37,11 @@ func GetAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info().Msg("Get All Endpoint")
 
-		page := internal.ToUint(r.URL.Query().Get("page"))
 		size := internal.ToUint(r.URL.Query().Get("size"))
-		limit, offset := internal.PagingToLimitOffset(page, size)
+		page := internal.ToUint(r.URL.Query().Get("page"))
+		boundedSize, offset := internal.GetBoundedSizeAndOffset(size, page)
 
-		allPermits, err := permitRepo.GetAll(limit, offset)
+		allPermits, err := permitRepo.GetAll(boundedSize, offset)
 		if err != nil {
 			internal.HandleInternalError(w, "Error querying permitRepo: "+err.Error())
 			return

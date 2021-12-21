@@ -12,7 +12,7 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{database: database}
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permits.id,
@@ -66,7 +66,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset int) ([]models.Permit, erro
 	return permits, nil
 }
 
-func (permitRepo *PermitRepo) GetAll(limit, offset int) ([]models.Permit, error) {
+func (permitRepo *PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permits.id,

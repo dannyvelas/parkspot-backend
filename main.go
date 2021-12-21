@@ -56,9 +56,8 @@ func main() {
 
 	// configure http server
 	httpConfig := config.Http()
-	portString := fmt.Sprintf(":%d", httpConfig.Port())
 	httpServer := http.Server{
-		Addr:         portString,
+		Addr:         fmt.Sprintf(":%d", httpConfig.Port()),
 		Handler:      router,
 		ReadTimeout:  httpConfig.ReadTimeout(),
 		WriteTimeout: httpConfig.WriteTimeout(),
@@ -66,6 +65,7 @@ func main() {
 
 	// initialize error channel
 	errChannel := make(chan error)
+	defer close(errChannel)
 
 	// receive errors from startup or signal interrupt
 	go func() {

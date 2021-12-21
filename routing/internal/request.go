@@ -15,17 +15,17 @@ func ToUint(value string) uint {
 	return uint(res)
 }
 
-func PagingToLimitOffset(page, size uint) (limit, offset int) {
+func GetBoundedSizeAndOffset(size, page uint) (boundedSize, offset uint) {
 	if 0 < size && size < maxPageSize {
-		limit = int(size)
+		boundedSize = size
 	} else if size > maxPageSize {
-		limit = maxPageSize
+		boundedSize = maxPageSize
 	} else {
-		limit = defaultPageSize
+		boundedSize = defaultPageSize
 	}
 
 	if page > 1 {
-		offset = (int(page) - 1) * limit
+		offset = (page - 1) * boundedSize
 	} else {
 		offset = 0
 	}
