@@ -61,6 +61,7 @@ func main() {
 		Handler:      router,
 		ReadTimeout:  httpConfig.ReadTimeout(),
 		WriteTimeout: httpConfig.WriteTimeout(),
+		IdleTimeout:  httpConfig.IdleTimeout(),
 	}
 
 	// initialize error channel

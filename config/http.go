@@ -1,7 +1,7 @@
 package config
 
 import (
-	"errors"
+	"github.com/rs/zerolog/log"
 	"os"
 	"strconv"
 	"time"
@@ -11,33 +11,60 @@ type HttpConfig struct {
 	port         uint
 	readTimeout  time.Duration
 	writeTimeout time.Duration
+	idleTimeout  time.Duration
 }
+
+const (
+	defaultReadTimeout  = 5 * time.Second
+	defaultWriteTimeout = 10 * time.Second
+	defaultIdleTimeout  = 120 * time.Second
+)
 
 func newHttpConfig() (HttpConfig, error) {
 	var httpConfig HttpConfig
 
 	if portString := os.Getenv("HTTP_PORT"); portString == "" {
-		return HttpConfig{}, varNotFoundError("HTTP_PORT")
+		return HttpConfig{}, NotFoundError{"HTTP_PORT"}
 	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
-		return HttpConfig{}, errors.New("HTTP_PORT could not be converted to an integer.")
+		return HttpConfig{}, ConversionError{"HTTP_PORT", "uint"}
 	} else {
 		httpConfig.port = uint(parsed)
 	}
 
 	if readTimeoutString := os.Getenv("HTTP_READTIMEOUT"); readTimeoutString == "" {
-		return HttpConfig{}, varNotFoundError("HTTP_READTIMEOUT")
+		notFoundError := NotFoundError{"HTTP_READTIMEOUT"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", notFoundError, defaultReadTimeout)
+		httpConfig.readTimeout = defaultReadTimeout
 	} else if parsed, err := time.ParseDuration(readTimeoutString); err != nil {
-		return HttpConfig{}, errors.New("HTTP_READTIMEOUT could not be converted to an integer.")
+		conversionError := ConversionError{"HTTP_READTIMEOUT", "duration"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", conversionError, defaultReadTimeout)
+		httpConfig.readTimeout = defaultReadTimeout
 	} else {
 		httpConfig.readTimeout = parsed
 	}
 
 	if writeTimeoutString := os.Getenv("HTTP_WRITETIMEOUT"); writeTimeoutString == "" {
-		return HttpConfig{}, varNotFoundError("HTTP_WRITETIMEOUT")
+		notFoundError := NotFoundError{"HTTP_WRITETIMEOUT"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", notFoundError, defaultWriteTimeout)
+		httpConfig.writeTimeout = defaultWriteTimeout
 	} else if parsed, err := time.ParseDuration(writeTimeoutString); err != nil {
-		return HttpConfig{}, errors.New("HTTP_WRITETIMEOUT could not be converted to an integer.")
+		conversionError := ConversionError{"HTTP_WRITETIMEOUT", "duration"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", conversionError, defaultWriteTimeout)
+		httpConfig.writeTimeout = defaultWriteTimeout
 	} else {
 		httpConfig.writeTimeout = parsed
+	}
+
+	if idleTimeoutString := os.Getenv("HTTP_IDLETIMEOUT"); idleTimeoutString == "" {
+		notFoundError := NotFoundError{"HTTP_IDLETIMEOUT"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", notFoundError, defaultIdleTimeout)
+		httpConfig.idleTimeout = defaultIdleTimeout
+	} else if parsed, err := time.ParseDuration(idleTimeoutString); err != nil {
+		conversionError := ConversionError{"HTTP_IDLETIMEOUT", "duration"}.Error()
+		log.Warn().Msgf("%s. Using Default of: %s seconds.", conversionError, defaultIdleTimeout)
+		httpConfig.idleTimeout = defaultIdleTimeout
+	} else {
+		httpConfig.idleTimeout = parsed
 	}
 
 	return httpConfig, nil
@@ -53,4 +80,8 @@ func (httpConfig HttpConfig) ReadTimeout() time.Duration {
 
 func (httpConfig HttpConfig) WriteTimeout() time.Duration {
 	return httpConfig.writeTimeout
+}
+
+func (httpConfig HttpConfig) IdleTimeout() time.Duration {
+	return httpConfig.idleTimeout
 }

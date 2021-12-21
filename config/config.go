@@ -1,10 +1,5 @@
 package config
 
-import (
-	"errors"
-	"fmt"
-)
-
 type Config struct {
 	token    TokenConfig
 	postgres PostgresConfig
@@ -45,8 +40,4 @@ func (config Config) Postgres() PostgresConfig {
 
 func (config Config) Http() HttpConfig {
 	return config.http
-}
-
-func varNotFoundError(variable string) error {
-	return errors.New(fmt.Sprintf("No config value found for %s", variable))
 }
