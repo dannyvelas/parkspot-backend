@@ -25,40 +25,40 @@ func newHttpConfig() HttpConfig {
 	var httpConfig HttpConfig
 
 	if portString := os.Getenv("HTTP_PORT"); portString == "" {
-		log.Warn().Msgf(NotFoundError{"HTTP_PORT"}.ErrorUsingDefault(defaultPort))
+		log.Warn().Msg(NotFoundError{"HTTP_PORT"}.ErrorUsingDefault(defaultPort))
 		httpConfig.port = defaultPort
 	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
-		log.Warn().Msgf(ConversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultPort))
+		log.Warn().Msg(ConversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultPort))
 		httpConfig.port = defaultPort
 	} else {
 		httpConfig.port = uint(parsed)
 	}
 
 	if readTimeoutString := os.Getenv("HTTP_READTIMEOUT"); readTimeoutString == "" {
-		log.Warn().Msgf(NotFoundError{"HTTP_READTIMEOUT"}.ErrorUsingDefault(defaultReadTimeout))
+		log.Warn().Msg(NotFoundError{"HTTP_READTIMEOUT"}.ErrorUsingDefault(defaultReadTimeout))
 		httpConfig.readTimeout = defaultReadTimeout * time.Second
 	} else if parsed, err := time.ParseDuration(readTimeoutString); err != nil {
-		log.Warn().Msgf(ConversionError{"HTTP_READTIMEOUT", "duration"}.ErrorUsingDefault(defaultReadTimeout))
+		log.Warn().Msg(ConversionError{"HTTP_READTIMEOUT", "duration"}.ErrorUsingDefault(defaultReadTimeout))
 		httpConfig.readTimeout = defaultReadTimeout * time.Second
 	} else {
 		httpConfig.readTimeout = parsed * time.Second
 	}
 
 	if writeTimeoutString := os.Getenv("HTTP_WRITETIMEOUT"); writeTimeoutString == "" {
-		log.Warn().Msgf(NotFoundError{"HTTP_WRITETIMEOUT"}.ErrorUsingDefault(defaultWriteTimeout))
+		log.Warn().Msg(NotFoundError{"HTTP_WRITETIMEOUT"}.ErrorUsingDefault(defaultWriteTimeout))
 		httpConfig.writeTimeout = defaultWriteTimeout * time.Second
 	} else if parsed, err := time.ParseDuration(writeTimeoutString); err != nil {
-		log.Warn().Msgf(ConversionError{"HTTP_WRITETIMEOUT", "duration"}.ErrorUsingDefault(defaultWriteTimeout))
+		log.Warn().Msg(ConversionError{"HTTP_WRITETIMEOUT", "duration"}.ErrorUsingDefault(defaultWriteTimeout))
 		httpConfig.writeTimeout = defaultWriteTimeout * time.Second
 	} else {
 		httpConfig.writeTimeout = parsed * time.Second
 	}
 
 	if idleTimeoutString := os.Getenv("HTTP_IDLETIMEOUT"); idleTimeoutString == "" {
-		log.Warn().Msgf(NotFoundError{"HTTP_IDLETIMEOUT"}.ErrorUsingDefault(defaultIdleTimeout))
+		log.Warn().Msg(NotFoundError{"HTTP_IDLETIMEOUT"}.ErrorUsingDefault(defaultIdleTimeout))
 		httpConfig.idleTimeout = defaultIdleTimeout * time.Second
 	} else if parsed, err := time.ParseDuration(idleTimeoutString); err != nil {
-		log.Warn().Msgf(ConversionError{"HTTP_IDLETIMEOUT", "duration"}.ErrorUsingDefault(defaultIdleTimeout))
+		log.Warn().Msg(ConversionError{"HTTP_IDLETIMEOUT", "duration"}.ErrorUsingDefault(defaultIdleTimeout))
 		httpConfig.idleTimeout = defaultIdleTimeout * time.Second
 	} else {
 		httpConfig.idleTimeout = parsed * time.Second

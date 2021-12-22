@@ -25,7 +25,7 @@ func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.H
 		}
 
 		admin, err := adminRepo.GetOne(creds.Id)
-		if errors.As(err, &storage.NotFound{}) {
+		if errors.As(err, &storage.NotFoundError{}) {
 			internal.HandleError(w, internal.Unauthorized)
 			return
 		} else if err != nil {
