@@ -8,7 +8,6 @@ import (
 	"github.com/dannyvelas/parkspot-api/routing"
 	"github.com/dannyvelas/parkspot-api/storage"
 	"github.com/go-chi/chi/v5"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -25,14 +24,14 @@ func main() {
 	// load config
 	config, err := config.New()
 	if err != nil {
-		log.Fatal().Msgf("Failed loading config: %s", err.Error())
+		log.Fatal().Msgf("Failed loading config: %s", err)
 		return
 	}
 
 	// connect to database
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %s", err.Error())
+		log.Fatal().Msgf("Failed to start database: %s", err)
 		return
 	}
 	log.Info().Msg("Connected to Database.")
@@ -79,14 +78,14 @@ func main() {
 	}()
 
 	fatalErr := <-errChannel
-	log.Info().Msgf("Closing server: %s", fatalErr.Error())
+	log.Info().Msgf("Closing server: %s", fatalErr)
 
 	shutdownGracefully(30*time.Second, httpServer)
 }
 
 func StartServer(httpServer http.Server) error {
 	if err := httpServer.ListenAndServe(); err != nil {
-		log.Fatal().Msgf("Failed to start server: %s", err.Error())
+		log.Fatal().Msgf("Failed to start server: %s", err)
 		return err
 	}
 	return nil
@@ -99,7 +98,7 @@ func shutdownGracefully(timeout time.Duration, httpServer http.Server) {
 	defer cancel()
 
 	if err := httpServer.Shutdown(gracefullCtx); err != nil {
-		log.Error().Msgf("Error shutting down the server: %s", err.Error())
+		log.Error().Msgf("Error shutting down the server: %s", err)
 	} else {
 		log.Info().Msg("HttpServer gracefully shut down")
 	}

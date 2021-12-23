@@ -11,7 +11,7 @@ func newTokenConfig() (TokenConfig, error) {
 
 	tokenConfig.secret = os.Getenv("TOKEN_SECRET")
 	if tokenConfig.secret == "" {
-		return TokenConfig{}, NotFoundError{"TOKEN_SECRET"}
+		return TokenConfig{}, notFoundError{"TOKEN_SECRET"}
 	}
 
 	return tokenConfig, nil

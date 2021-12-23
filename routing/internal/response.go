@@ -16,11 +16,12 @@ func RespondJson(w http.ResponseWriter, statusCode int, data interface{}) {
 	}
 
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Error().Msg("Error parsing response: " + err.Error())
-
 		w.WriteHeader(http.StatusInternalServerError)
+
+		log.Error().Msgf("Error encoding response: %s", err)
+
 		if _, err := io.WriteString(w, `{"error": "Internal Server Error"}`); err != nil {
-			log.Error().Msg("Error sending Internal Server Error response: " + err.Error())
+			log.Error().Msgf("Error sending Internal Server Error response: %s", err)
 		}
 	}
 }

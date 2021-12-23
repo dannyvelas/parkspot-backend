@@ -1,5 +1,7 @@
 package config
 
+import "github.com/joho/godotenv"
+
 type Config struct {
 	token    TokenConfig
 	postgres PostgresConfig
@@ -8,6 +10,11 @@ type Config struct {
 
 func New() (Config, error) {
 	var config Config
+
+	err := godotenv.Load()
+	if err != nil {
+		return Config{}, err
+	}
 
 	config.http = newHttpConfig()
 

@@ -23,6 +23,6 @@ func HandleError(w http.ResponseWriter, errorType errorType) {
 }
 
 func HandleInternalError(w http.ResponseWriter, message string) {
-	log.Error().Msgf(message)
+	log.Error().Msg(message)
 	HandleError(w, InternalServerError)
 }
