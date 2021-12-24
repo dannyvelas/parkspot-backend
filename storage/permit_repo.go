@@ -39,7 +39,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 	}
 	defer rows.Close()
 
-	var permits []models.Permit
+	permits := []models.Permit{}
 	for rows.Next() {
 		var permit models.Permit
 		err := rows.Scan(
@@ -90,7 +90,7 @@ func (permitRepo *PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error
 	}
 	defer rows.Close()
 
-	var permits []models.Permit
+	permits := []models.Permit{}
 	for rows.Next() {
 		var permit models.Permit
 		err := rows.Scan(
