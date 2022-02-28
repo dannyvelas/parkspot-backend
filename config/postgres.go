@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/rs/zerolog/log"
 	"os"
 	"strconv"
 )
@@ -13,37 +14,52 @@ type PostgresConfig struct {
 	dbName   string
 }
 
+const (
+	defaultHost         = "postgres"
+	defaultPostgresPort = 5432
+	defaultUser         = "postgres"
+	defaultPassword     = "postgres"
+	defaultDbName       = "postgres"
+)
+
 func newPostgresConfig() (PostgresConfig, error) {
 	var postgresConfig PostgresConfig
 
 	postgresConfig.host = os.Getenv("PG_HOST")
 	if postgresConfig.host == "" {
-		return PostgresConfig{}, notFoundError{"PG_HOST"}
+		log.Warn().Msg(notFoundError{"PG_HOST"}.ErrorUsingDefault(defaultHost))
+		postgresConfig.host = defaultHost
 	}
 
 	if portString := os.Getenv("PG_PORT"); portString == "" {
-		return PostgresConfig{}, notFoundError{"PG_PORT"}
+		log.Warn().Msg(notFoundError{"PG_PORT"}.ErrorUsingDefault(defaultPostgresPort))
+		postgresConfig.port = defaultPostgresPort
 	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
-		return PostgresConfig{}, conversionError{"PG_PORT", "uint"}
+		log.Warn().Msg(conversionError{"PG_PORT", "uint"}.ErrorUsingDefault(defaultPostgresPort))
+		postgresConfig.port = defaultPostgresPort
 	} else if parsed < 80 {
-		return PostgresConfig{}, invalidError{"PG_PORT", "< 80"}
+		log.Warn().Msg(invalidError{"PG_PORT", "< 80"}.ErrorUsingDefault(defaultPostgresPort))
+		postgresConfig.port = defaultPostgresPort
 	} else {
 		postgresConfig.port = uint(parsed)
 	}
 
 	postgresConfig.user = os.Getenv("PG_USER")
 	if postgresConfig.user == "" {
-		return PostgresConfig{}, notFoundError{"PG_USER"}
+		log.Warn().Msg(notFoundError{"PG_USER"}.ErrorUsingDefault(defaultUser))
+		postgresConfig.user = defaultUser
 	}
 
 	postgresConfig.password = os.Getenv("PG_PASSWORD")
 	if postgresConfig.password == "" {
-		return PostgresConfig{}, notFoundError{"PG_PASSWORD"}
+		log.Warn().Msg(notFoundError{"PG_PASSWORD"}.ErrorUsingDefault(defaultPassword))
+		postgresConfig.password = defaultPassword
 	}
 
 	postgresConfig.dbName = os.Getenv("PG_DBNAME")
 	if postgresConfig.dbName == "" {
-		return PostgresConfig{}, notFoundError{"PG_DBNAME"}
+		log.Warn().Msg(notFoundError{"PG_DBNAME"}.ErrorUsingDefault(defaultDbName))
+		postgresConfig.dbName = defaultDbName
 	}
 
 	return postgresConfig, nil

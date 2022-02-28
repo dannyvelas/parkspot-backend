@@ -1,6 +1,9 @@
 package config
 
-import "github.com/joho/godotenv"
+import (
+	"github.com/joho/godotenv"
+	"github.com/rs/zerolog/log"
+)
 
 type Config struct {
 	token    TokenConfig
@@ -13,7 +16,7 @@ func New() (Config, error) {
 
 	err := godotenv.Load()
 	if err != nil {
-		return Config{}, err
+		log.Warn().Msg(".env file not found.")
 	}
 
 	config.http = newHttpConfig()

@@ -15,7 +15,7 @@ type HttpConfig struct {
 }
 
 const (
-	defaultPort         = 5000
+	defaultHttpPort     = 5000
 	defaultReadTimeout  = 5
 	defaultWriteTimeout = 10
 	defaultIdleTimeout  = 120
@@ -25,14 +25,14 @@ func newHttpConfig() HttpConfig {
 	var httpConfig HttpConfig
 
 	if portString := os.Getenv("HTTP_PORT"); portString == "" {
-		log.Warn().Msg(notFoundError{"HTTP_PORT"}.ErrorUsingDefault(defaultPort))
-		httpConfig.port = defaultPort
+		log.Warn().Msg(notFoundError{"HTTP_PORT"}.ErrorUsingDefault(defaultHttpPort))
+		httpConfig.port = defaultHttpPort
 	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
-		log.Warn().Msg(conversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultPort))
-		httpConfig.port = defaultPort
+		log.Warn().Msg(conversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultHttpPort))
+		httpConfig.port = defaultHttpPort
 	} else if parsed < 80 {
-		log.Warn().Msg(invalidError{"PG_PORT", "< 80"}.ErrorUsingDefault(defaultPort))
-		httpConfig.port = defaultPort
+		log.Warn().Msg(invalidError{"PG_PORT", "< 80"}.ErrorUsingDefault(defaultHttpPort))
+		httpConfig.port = defaultHttpPort
 	} else {
 		httpConfig.port = uint(parsed)
 	}
