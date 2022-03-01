@@ -37,9 +37,6 @@ func newPostgresConfig() (PostgresConfig, error) {
 	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
 		log.Warn().Msg(conversionError{"PG_PORT", "uint"}.ErrorUsingDefault(defaultPostgresPort))
 		postgresConfig.port = defaultPostgresPort
-	} else if parsed < 80 {
-		log.Warn().Msg(invalidError{"PG_PORT", "< 80"}.ErrorUsingDefault(defaultPostgresPort))
-		postgresConfig.port = defaultPostgresPort
 	} else {
 		postgresConfig.port = uint(parsed)
 	}

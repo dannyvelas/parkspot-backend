@@ -31,7 +31,7 @@ func newHttpConfig() HttpConfig {
 		log.Warn().Msg(conversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultHttpPort))
 		httpConfig.port = defaultHttpPort
 	} else if parsed < 80 {
-		log.Warn().Msg(invalidError{"PG_PORT", "< 80"}.ErrorUsingDefault(defaultHttpPort))
+		log.Warn().Msg(invalidError{"HTTP_PORT", "< 80"}.ErrorUsingDefault(defaultHttpPort))
 		httpConfig.port = defaultHttpPort
 	} else {
 		httpConfig.port = uint(parsed)
