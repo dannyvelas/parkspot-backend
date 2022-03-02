@@ -30,10 +30,10 @@ func readEnvUint(envKey string, defaultValue uint) (envValue uint) {
 }
 
 func readEnvDuration(envKey string, defaultValue uint) (envValue time.Duration) {
-	if readTimeoutString := os.Getenv(envKey); readTimeoutString == "" {
+	if envValueString := os.Getenv(envKey); envValueString == "" {
 		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
 		envValue = time.Duration(defaultValue) * time.Second
-	} else if parsed, err := time.ParseDuration(readTimeoutString); err != nil {
+	} else if parsed, err := time.ParseDuration(envValueString); err != nil {
 		log.Warn().Msg(conversionError{envKey, "duration"}.ErrorUsingDefault(defaultValue))
 		envValue = time.Duration(defaultValue) * time.Second
 	} else {
