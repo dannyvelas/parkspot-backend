@@ -33,16 +33,3 @@ func (e conversionError) Error() string {
 func (e conversionError) ErrorUsingDefault(val interface{}) string {
 	return fmt.Sprintf("%s. Using default of: %v", e, val)
 }
-
-type invalidError struct {
-	variableName string
-	reason       string
-}
-
-func (e invalidError) Error() string {
-	return fmt.Sprintf("%s is invalid because it is %s", e.variableName, e.reason)
-}
-
-func (e invalidError) ErrorUsingDefault(val interface{}) string {
-	return fmt.Sprintf("%s. Using default of: %v", e, val)
-}
