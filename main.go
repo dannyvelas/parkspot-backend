@@ -22,7 +22,7 @@ func main() {
 	log.Info().Msg("Initializing app...")
 
 	// load config
-	config := config.New()
+	config := config.NewConfig()
 
 	// connect to database
 	database, err := storage.NewDatabase(config.Postgres())

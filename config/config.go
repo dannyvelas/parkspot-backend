@@ -6,12 +6,12 @@ import (
 )
 
 type Config struct {
-	token    TokenConfig
-	postgres PostgresConfig
 	http     HttpConfig
+	postgres PostgresConfig
+	token    TokenConfig
 }
 
-func New() Config {
+func NewConfig() Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Warn().Msg(".env file not found.")
@@ -24,14 +24,14 @@ func New() Config {
 	}
 }
 
-func (config Config) Token() TokenConfig {
-	return config.token
+func (config Config) Http() HttpConfig {
+	return config.http
 }
 
 func (config Config) Postgres() PostgresConfig {
 	return config.postgres
 }
 
-func (config Config) Http() HttpConfig {
-	return config.http
+func (config Config) Token() TokenConfig {
+	return config.token
 }
