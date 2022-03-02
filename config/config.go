@@ -20,18 +20,8 @@ func New() (Config, error) {
 	}
 
 	config.http = newHttpConfig()
-
-	if postgresConfig, err := newPostgresConfig(); err != nil {
-		return Config{}, err
-	} else {
-		config.postgres = postgresConfig
-	}
-
-	if tokenConfig, err := newTokenConfig(); err != nil {
-		return Config{}, err
-	} else {
-		config.token = tokenConfig
-	}
+	config.postgres = newPostgresConfig()
+	config.token = newTokenConfig()
 
 	return config, nil
 }

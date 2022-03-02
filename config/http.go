@@ -1,9 +1,6 @@
 package config
 
 import (
-	"github.com/rs/zerolog/log"
-	"os"
-	"strconv"
 	"time"
 )
 
@@ -15,59 +12,19 @@ type HttpConfig struct {
 }
 
 const (
-	defaultHttpPort     = 5000
-	defaultReadTimeout  = 5
-	defaultWriteTimeout = 10
-	defaultIdleTimeout  = 120
+	defaultHttpPort         = 5000
+	defaultHttpReadTimeout  = 5
+	defaultHttpWriteTimeout = 10
+	defaultHttpIdleTimeout  = 120
 )
 
 func newHttpConfig() HttpConfig {
-	var httpConfig HttpConfig
-
-	if portString := os.Getenv("HTTP_PORT"); portString == "" {
-		log.Warn().Msg(notFoundError{"HTTP_PORT"}.ErrorUsingDefault(defaultHttpPort))
-		httpConfig.port = defaultHttpPort
-	} else if parsed, err := strconv.ParseUint(portString, 10, 64); err != nil {
-		log.Warn().Msg(conversionError{"HTTP_PORT", "uint"}.ErrorUsingDefault(defaultHttpPort))
-		httpConfig.port = defaultHttpPort
-	} else if parsed < 80 {
-		log.Warn().Msg(invalidError{"HTTP_PORT", "< 80"}.ErrorUsingDefault(defaultHttpPort))
-		httpConfig.port = defaultHttpPort
-	} else {
-		httpConfig.port = uint(parsed)
+	return HttpConfig{
+		port:         readEnvUint("HTTP_PORT", defaultHttpPort),
+		readTimeout:  readEnvDuration("HTTP_READTIMEOUT", defaultHttpReadTimeout),
+		writeTimeout: readEnvDuration("HTTP_WRITETIMEOUT", defaultHttpWriteTimeout),
+		idleTimeout:  readEnvDuration("HTTP_IDLETIMEOUT", defaultHttpIdleTimeout),
 	}
-
-	if readTimeoutString := os.Getenv("HTTP_READTIMEOUT"); readTimeoutString == "" {
-		log.Warn().Msg(notFoundError{"HTTP_READTIMEOUT"}.ErrorUsingDefault(defaultReadTimeout))
-		httpConfig.readTimeout = defaultReadTimeout * time.Second
-	} else if parsed, err := time.ParseDuration(readTimeoutString); err != nil {
-		log.Warn().Msg(conversionError{"HTTP_READTIMEOUT", "duration"}.ErrorUsingDefault(defaultReadTimeout))
-		httpConfig.readTimeout = defaultReadTimeout * time.Second
-	} else {
-		httpConfig.readTimeout = parsed * time.Second
-	}
-
-	if writeTimeoutString := os.Getenv("HTTP_WRITETIMEOUT"); writeTimeoutString == "" {
-		log.Warn().Msg(notFoundError{"HTTP_WRITETIMEOUT"}.ErrorUsingDefault(defaultWriteTimeout))
-		httpConfig.writeTimeout = defaultWriteTimeout * time.Second
-	} else if parsed, err := time.ParseDuration(writeTimeoutString); err != nil {
-		log.Warn().Msg(conversionError{"HTTP_WRITETIMEOUT", "duration"}.ErrorUsingDefault(defaultWriteTimeout))
-		httpConfig.writeTimeout = defaultWriteTimeout * time.Second
-	} else {
-		httpConfig.writeTimeout = parsed * time.Second
-	}
-
-	if idleTimeoutString := os.Getenv("HTTP_IDLETIMEOUT"); idleTimeoutString == "" {
-		log.Warn().Msg(notFoundError{"HTTP_IDLETIMEOUT"}.ErrorUsingDefault(defaultIdleTimeout))
-		httpConfig.idleTimeout = defaultIdleTimeout * time.Second
-	} else if parsed, err := time.ParseDuration(idleTimeoutString); err != nil {
-		log.Warn().Msg(conversionError{"HTTP_IDLETIMEOUT", "duration"}.ErrorUsingDefault(defaultIdleTimeout))
-		httpConfig.idleTimeout = defaultIdleTimeout * time.Second
-	} else {
-		httpConfig.idleTimeout = parsed * time.Second
-	}
-
-	return httpConfig
 }
 
 func (httpConfig HttpConfig) Port() uint {

@@ -1,20 +1,17 @@
 package config
 
-import "os"
-
 type TokenConfig struct {
 	secret string
 }
 
-func newTokenConfig() (TokenConfig, error) {
-	var tokenConfig TokenConfig
+const (
+	defaultTokenSecret = "THISISASECRET"
+)
 
-	tokenConfig.secret = os.Getenv("TOKEN_SECRET")
-	if tokenConfig.secret == "" {
-		return TokenConfig{}, notFoundError{"TOKEN_SECRET"}
+func newTokenConfig() TokenConfig {
+	return TokenConfig{
+		secret: readEnvString("TOKEN_SECRET", defaultTokenSecret),
 	}
-
-	return tokenConfig, nil
 }
 
 func (tokenConfig TokenConfig) Secret() string {
