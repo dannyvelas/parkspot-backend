@@ -11,19 +11,17 @@ type Config struct {
 	http     HttpConfig
 }
 
-func New() (Config, error) {
-	var config Config
-
+func New() Config {
 	err := godotenv.Load()
 	if err != nil {
 		log.Warn().Msg(".env file not found.")
 	}
 
-	config.http = newHttpConfig()
-	config.postgres = newPostgresConfig()
-	config.token = newTokenConfig()
-
-	return config, nil
+	return Config{
+		http:     newHttpConfig(),
+		postgres: newPostgresConfig(),
+		token:    newTokenConfig(),
+	}
 }
 
 func (config Config) Token() TokenConfig {
