@@ -3,3 +3,5 @@ target/
 .env
 .queries/
 .scraps/
+.DS_Store
+parkspot-api
