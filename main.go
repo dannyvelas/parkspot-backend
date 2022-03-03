@@ -52,7 +52,7 @@ func main() {
 	// configure http server
 	httpConfig := config.Http()
 	httpServer := http.Server{
-		Addr:         fmt.Sprintf(":%d", httpConfig.Port()),
+		Addr:         fmt.Sprintf("%s:%d", httpConfig.Host(), httpConfig.Port()),
 		Handler:      router,
 		ReadTimeout:  httpConfig.ReadTimeout(),
 		WriteTimeout: httpConfig.WriteTimeout(),

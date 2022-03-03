@@ -5,6 +5,7 @@ import (
 )
 
 type HttpConfig struct {
+	host         string
 	port         uint
 	readTimeout  time.Duration
 	writeTimeout time.Duration
@@ -12,6 +13,7 @@ type HttpConfig struct {
 }
 
 const (
+	defaultHttpHost         = "127.0.0.1"
 	defaultHttpPort         = 5000
 	defaultHttpReadTimeout  = 5
 	defaultHttpWriteTimeout = 10
@@ -20,11 +22,16 @@ const (
 
 func newHttpConfig() HttpConfig {
 	return HttpConfig{
+		host:         readEnvString("HTTP_HOST", defaultHttpHost),
 		port:         readEnvUint("HTTP_PORT", defaultHttpPort),
 		readTimeout:  readEnvDuration("HTTP_READTIMEOUT", defaultHttpReadTimeout),
 		writeTimeout: readEnvDuration("HTTP_WRITETIMEOUT", defaultHttpWriteTimeout),
 		idleTimeout:  readEnvDuration("HTTP_IDLETIMEOUT", defaultHttpIdleTimeout),
 	}
+}
+
+func (httpConfig HttpConfig) Host() string {
+	return httpConfig.host
 }
 
 func (httpConfig HttpConfig) Port() uint {

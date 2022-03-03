@@ -9,7 +9,7 @@ type PostgresConfig struct {
 }
 
 const (
-	defaultPostgresHost     = "postgres"
+	defaultPostgresHost     = "127.0.0.1"
 	defaultPostgresPort     = 5432
 	defaultPostgresUser     = "postgres"
 	defaultPostgresPassword = "postgres"
