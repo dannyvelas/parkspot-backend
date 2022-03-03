@@ -1,0 +1,10 @@
+* Strategies to use authentication middleware:
+  * use built-in go-chi authentication:
+    * PRO: nice and simple
+    * CON: using contexts to control instead of inform
+  * use jack-lindamood logic:
+    * PRO: inputs to authentication are strongly typed
+    * CON: difficult to implement with go-chi routing
+  * Simply wrapping routing functions with Authorize() function
+    * PRO: nice and simple
+    * CON: verbose, would have to do this for pretty much every function

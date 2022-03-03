@@ -1,0 +1,1 @@
+* explore whether to make endpoint like Get{All,Active} package private
