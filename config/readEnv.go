@@ -7,37 +7,44 @@ import (
 	"time"
 )
 
-func readEnvString(envKey string, defaultValue string) (envValue string) {
-	envValue = os.Getenv(envKey)
+func readEnvString(envKey string, defaultValue string) string {
+	envValue := os.Getenv(envKey)
 	if envValue == "" {
 		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
-		envValue = defaultValue
+		return defaultValue
 	}
-	return
+
+	return envValue
 }
 
-func readEnvUint(envKey string, defaultValue uint) (envValue uint) {
-	if envValueString := os.Getenv(envKey); envValueString == "" {
+func readEnvUint(envKey string, defaultValue uint) uint {
+	envValueString := os.Getenv(envKey)
+	if envValueString == "" {
 		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
-		envValue = defaultValue
-	} else if parsed, err := strconv.ParseUint(envValueString, 10, 64); err != nil {
+		return defaultValue
+	}
+
+	parsed, err := strconv.ParseUint(envValueString, 10, 64)
+	if err != nil {
 		log.Warn().Msg(conversionError{envKey, "uint"}.ErrorUsingDefault(defaultValue))
-		envValue = defaultValue
-	} else {
-		envValue = uint(parsed)
+		return defaultValue
 	}
-	return
+
+	return uint(parsed)
 }
 
-func readEnvDuration(envKey string, defaultValue uint) (envValue time.Duration) {
-	if envValueString := os.Getenv(envKey); envValueString == "" {
+func readEnvDuration(envKey string, defaultValue uint) time.Duration {
+	envValueString := os.Getenv(envKey)
+	if envValueString == "" {
 		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
-		envValue = time.Duration(defaultValue) * time.Second
-	} else if parsed, err := time.ParseDuration(envValueString); err != nil {
-		log.Warn().Msg(conversionError{envKey, "duration"}.ErrorUsingDefault(defaultValue))
-		envValue = time.Duration(defaultValue) * time.Second
-	} else {
-		envValue = parsed * time.Second
+		return time.Duration(defaultValue) * time.Second
 	}
-	return
+
+	parsed, err := time.ParseDuration(envValueString)
+	if err != nil {
+		log.Warn().Msg(conversionError{envKey, "duration"}.ErrorUsingDefault(defaultValue))
+		return time.Duration(defaultValue) * time.Second
+	}
+
+	return parsed * time.Second
 }
