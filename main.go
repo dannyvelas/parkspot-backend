@@ -25,6 +25,7 @@ func main() {
 	config := config.NewConfig()
 
 	// connect to database
+	// NOTE: no defer close() because connection closes automatically on program exit
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %s", err)
@@ -44,9 +45,9 @@ func main() {
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", routing.Login(authenticator, adminRepo))
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			//adminRouter.Use(authenticator.AdminOnly)
-			adminRouter.Route("/hello", routing.AddAdminId{}.HelloRouter())
-			//adminRouter.Route("/permits", routing.PermitsRouter(permitRepo))
+			adminRouter.Use(routing.Authorize(authenticator))
+			adminRouter.Route("/hello", routing.HelloRouter())
+			adminRouter.Route("/permits", routing.PermitsRouter(permitRepo))
 		})
 	})
 

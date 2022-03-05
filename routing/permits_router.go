@@ -17,7 +17,7 @@ func PermitsRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 
 func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info().Msg("Get Active Endpoint")
+		log.Debug().Msg("Get Active Endpoint")
 
 		size := internal.ToUint(r.URL.Query().Get("size"))
 		page := internal.ToUint(r.URL.Query().Get("page"))
@@ -35,7 +35,7 @@ func GetActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func GetAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info().Msg("Get All Endpoint")
+		log.Debug().Msg("Get All Endpoint")
 
 		size := internal.ToUint(r.URL.Query().Get("size"))
 		page := internal.ToUint(r.URL.Query().Get("page"))

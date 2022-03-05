@@ -7,20 +7,29 @@ import (
 	"net/http"
 )
 
-type AddAdminId struct {
-	Id string
-}
-
-func (addAdminId AddAdminId) HelloRouter() func(chi.Router) {
+func HelloRouter() func(chi.Router) {
 	return func(r chi.Router) {
-		r.Get("/", sayHello(addAdminId.Id))
+		r.Get("/", sayHello())
 	}
 }
 
-func sayHello(adminId string) http.HandlerFunc {
+func sayHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Info().Msg("Say Hello Endpoint")
+		log.Debug().Msg("Say Hello Endpoint")
+		ctx := r.Context()
 
-		internal.RespondJson(w, http.StatusOK, "hello, "+adminId)
+		userId := ctx.Value("id")
+		if userId == nil {
+			internal.HandleInternalError(w, "key id not found in context")
+			return
+		}
+
+		userIdString, ok := userId.(string)
+		if !ok {
+			internal.HandleInternalError(w, "key id not string")
+			return
+		}
+
+		internal.RespondJson(w, http.StatusOK, "hello, "+userIdString)
 	}
 }

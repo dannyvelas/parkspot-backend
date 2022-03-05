@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/parkspot-api/auth"
 	"github.com/dannyvelas/parkspot-api/routing/internal"
 	"github.com/dannyvelas/parkspot-api/storage"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
@@ -17,6 +18,8 @@ type credentials struct {
 
 func Login(authenticator auth.Authenticator, adminRepo storage.AdminRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Debug().Msg("Login Endpoint")
+
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {

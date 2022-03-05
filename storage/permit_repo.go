@@ -42,6 +42,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 	permits := []models.Permit{}
 	for rows.Next() {
 		var permit models.Permit
+
 		err := rows.Scan(
 			&permit.Id,
 			&permit.ResidentId,
@@ -52,7 +53,6 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 			&permit.RequestDate,
 			&permit.AffectsDays,
 		)
-
 		if err != nil {
 			return nil, err
 		}

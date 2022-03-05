@@ -1,1 +1,2 @@
 * explore whether to make endpoint like Get{All,Active} package private
+* removing internal.* error types in favor of http.* error types

@@ -3,21 +3,18 @@ package auth
 import (
 	"errors"
 	"github.com/golang-jwt/jwt"
+	"time"
 )
 
-type JWTPayload struct {
+type JWTClaims struct {
 	Id string `json:"id"`
-}
-
-type jwtClaims struct {
-	JWTPayload
 	jwt.StandardClaims
 }
 
 func (authenticator Authenticator) NewJWT(id string) (string, error) {
-	claims := jwtClaims{
-		JWTPayload{Id: id},
-		jwt.StandardClaims{ExpiresAt: 15000},
+	claims := JWTClaims{
+		id,
+		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -25,21 +22,25 @@ func (authenticator Authenticator) NewJWT(id string) (string, error) {
 	return token.SignedString(authenticator.tokenSecret)
 }
 
-func (authenticator Authenticator) parseJWT(tokenString string) (JWTPayload, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func (authenticator Authenticator) ParseJWT(tokenString string) (string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Unauthorized")
+			return nil, errors.New("Not using SigningMethodHMAC!")
 		}
 
 		return authenticator.tokenSecret, nil
 	})
 	if err != nil {
-		return JWTPayload{}, err
+		return "", err
 	}
 
-	if claims, ok := token.Claims.(jwtClaims); ok && token.Valid {
-		return claims.JWTPayload, nil
+	if claims, ok := token.Claims.(*JWTClaims); !ok || !token.Valid {
+		if !ok {
+			return "", errors.New("Failure casting JWTClaims!")
+		} else {
+			return "", errors.New("Token not valid!")
+		}
 	} else {
-		return JWTPayload{}, errors.New("Unauthorized")
+		return claims.Id, nil
 	}
 }
