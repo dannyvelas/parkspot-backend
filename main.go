@@ -25,7 +25,7 @@ func main() {
 	config := config.NewConfig()
 
 	// connect to database
-	// NOTE: no defer close() because connection closes automatically on program exit
+	// no defer close() because connection closes automatically on program exit
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %s", err)

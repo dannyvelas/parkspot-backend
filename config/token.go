@@ -5,7 +5,7 @@ type TokenConfig struct {
 }
 
 const (
-	defaultTokenSecret = "THISISASECRET"
+	defaultTokenSecret = "tokensecret"
 )
 
 func newTokenConfig() TokenConfig {
