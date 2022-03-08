@@ -21,7 +21,7 @@ func Authorize(authenticator auth.Authenticator) func(http.Handler) http.Handler
 
 			userId, err := authenticator.ParseJWT(cookie.Value)
 			if err != nil {
-				log.Debug().Msg("Couldn't parse payload: " + err.Error())
+				log.Debug().Msg("Error parsing payload: " + err.Error())
 				internal.HandleError(w, internal.Unauthorized)
 				return
 			}
