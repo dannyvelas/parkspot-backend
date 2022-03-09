@@ -40,12 +40,15 @@ func main() {
 	// initialize authenticator
 	authenticator := auth.NewAuthenticator(config.Token())
 
+	// initialize routing authenticator
+	routing_auth := routing.NewAuthenticator(authenticator)
+
 	// set routes
 	router := chi.NewRouter()
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", routing.Login(authenticator, adminRepo))
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			adminRouter.Use(routing.Authorize(authenticator))
+			adminRouter.Use(routing_auth.Authorize)
 			adminRouter.Route("/hello", routing.HelloRouter())
 			adminRouter.Route("/permits", routing.PermitsRouter(permitRepo))
 		})
