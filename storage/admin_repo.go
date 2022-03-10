@@ -2,7 +2,7 @@ package storage
 
 import (
 	"database/sql"
-	"github.com/dannyvelas/parkspot-api/models"
+	"github.com/dannyvelas/lasvistas_api/models"
 )
 
 type AdminRepo struct {

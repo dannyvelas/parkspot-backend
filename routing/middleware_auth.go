@@ -2,7 +2,7 @@ package routing
 
 import (
 	"context"
-	"github.com/dannyvelas/parkspot-api/routing/internal"
+	"github.com/dannyvelas/lasvistas_api/routing/internal"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )

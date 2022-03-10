@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"github.com/dannyvelas/parkspot-api/auth"
+	"github.com/dannyvelas/lasvistas_api/auth"
 )
 
 type RoutingAuthenticator struct {

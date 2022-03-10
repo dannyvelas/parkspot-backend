@@ -3,7 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
-	"github.com/dannyvelas/parkspot-api/config"
+	"github.com/dannyvelas/lasvistas_api/config"
 	_ "github.com/lib/pq"
 )
 

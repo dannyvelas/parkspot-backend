@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/dannyvelas/parkspot-api/models"
+	"github.com/dannyvelas/lasvistas_api/models"
 )
 
 type PermitRepo struct {

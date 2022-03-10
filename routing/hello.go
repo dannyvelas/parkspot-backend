@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"github.com/dannyvelas/parkspot-api/routing/internal"
+	"github.com/dannyvelas/lasvistas_api/routing/internal"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"

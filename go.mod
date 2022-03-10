@@ -1,4 +1,4 @@
-module github.com/dannyvelas/parkspot-api
+module github.com/dannyvelas/lasvistas_api
 
 go 1.17
 

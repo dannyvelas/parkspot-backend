@@ -3,9 +3,9 @@ package routing
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dannyvelas/parkspot-api/auth"
-	"github.com/dannyvelas/parkspot-api/routing/internal"
-	"github.com/dannyvelas/parkspot-api/storage"
+	"github.com/dannyvelas/lasvistas_api/auth"
+	"github.com/dannyvelas/lasvistas_api/routing/internal"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"

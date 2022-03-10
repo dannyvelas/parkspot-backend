@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/dannyvelas/parkspot-api/config"
+	"github.com/dannyvelas/lasvistas_api/config"
 )
 
 type Authenticator struct {
