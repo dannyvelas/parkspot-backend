@@ -11,14 +11,14 @@ type Database struct {
 	driver *sql.DB
 }
 
-func NewDatabase(postgres_config config.PostgresConfig) (Database, error) {
+func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	psqlInfo := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		postgres_config.Host(),
-		postgres_config.Port(),
-		postgres_config.User(),
-		postgres_config.Password(),
-		postgres_config.DbName(),
+		postgresConfig.Host(),
+		postgresConfig.Port(),
+		postgresConfig.User(),
+		postgresConfig.Password(),
+		postgresConfig.DbName(),
 	)
 
 	driver, err := sql.Open("postgres", psqlInfo)

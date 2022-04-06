@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/auth"
+	"github.com/dannyvelas/lasvistas_api/api"
 	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/routing"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
@@ -16,6 +15,8 @@ import (
 	"syscall"
 	"time"
 )
+
+const projectName = "lasvistas_api"
 
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -28,29 +29,26 @@ func main() {
 	// no defer close() because connection closes automatically on program exit
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %s", err)
+		log.Fatal().Msgf("Failed to start database: %v", err)
 		return
 	}
 	log.Info().Msg("Connected to Database.")
 
 	// initialize repos
-	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
+	adminsRepo := storage.NewAdminsRepo(database)
+	permitsRepo := storage.NewPermitsRepo(database)
 
-	// initialize authenticator
-	authenticator := auth.NewAuthenticator(config.Token())
-
-	// initialize routing authenticator
-	routing_auth := routing.NewAuthenticator(authenticator)
+	// initialize JWTMiddleware
+	jwtMiddleware := api.NewJWTMiddleware(config.Token())
 
 	// set routes
 	router := chi.NewRouter()
 	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Post("/login", routing.Login(authenticator, adminRepo))
-		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			adminRouter.Use(routing_auth.Authorize)
-			adminRouter.Route("/hello", routing.HelloRouter())
-			adminRouter.Route("/permits", routing.PermitsRouter(permitRepo))
+		apiRouter.Post("/login", api.Login(jwtMiddleware, adminsRepo))
+		apiRouter.Route("/admin", func(adminsRouter chi.Router) {
+			adminsRouter.Use(jwtMiddleware.Authenticate)
+			adminsRouter.Route("/hello", api.HelloRouter())
+			adminsRouter.Route("/permits", api.PermitsRouter(permitsRepo))
 		})
 	})
 
@@ -79,14 +77,14 @@ func main() {
 	}()
 
 	fatalErr := <-errChannel
-	log.Info().Msgf("Closing server: %s", fatalErr)
+	log.Info().Msgf("Closing server: %v", fatalErr)
 
 	shutdownGracefully(30*time.Second, httpServer)
 }
 
 func StartServer(httpServer http.Server) error {
 	if err := httpServer.ListenAndServe(); err != nil {
-		log.Fatal().Msgf("Failed to start server: %s", err)
+		log.Fatal().Msgf("Failed to start server: %v", err)
 		return err
 	}
 	return nil
@@ -99,7 +97,7 @@ func shutdownGracefully(timeout time.Duration, httpServer http.Server) {
 	defer cancel()
 
 	if err := httpServer.Shutdown(gracefullCtx); err != nil {
-		log.Error().Msgf("Error shutting down the server: %s", err)
+		log.Error().Msgf("Error shutting down the server: %v", err)
 	} else {
 		log.Info().Msg("HttpServer gracefully shut down")
 	}

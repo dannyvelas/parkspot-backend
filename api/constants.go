@@ -1,4 +1,4 @@
-package internal
+package api
 
 const (
 	maxPageSize     = 150

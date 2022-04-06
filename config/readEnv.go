@@ -10,7 +10,7 @@ import (
 func readEnvString(envKey string, defaultValue string) string {
 	envValue := os.Getenv(envKey)
 	if envValue == "" {
-		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
+		log.Warn().Msg(newNotFoundError(envKey, defaultValue).Error())
 		return defaultValue
 	}
 
@@ -20,13 +20,13 @@ func readEnvString(envKey string, defaultValue string) string {
 func readEnvUint(envKey string, defaultValue uint) uint {
 	envValueString := os.Getenv(envKey)
 	if envValueString == "" {
-		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
+		log.Warn().Msg(newNotFoundError(envKey, defaultValue).Error())
 		return defaultValue
 	}
 
 	parsed, err := strconv.ParseUint(envValueString, 10, 64)
 	if err != nil {
-		log.Warn().Msg(conversionError{envKey, "uint"}.ErrorUsingDefault(defaultValue))
+		log.Warn().Msg(newConversionError(envKey, "uint", defaultValue).Error())
 		return defaultValue
 	}
 
@@ -36,13 +36,13 @@ func readEnvUint(envKey string, defaultValue uint) uint {
 func readEnvDuration(envKey string, defaultValue uint) time.Duration {
 	envValueString := os.Getenv(envKey)
 	if envValueString == "" {
-		log.Warn().Msg(notFoundError{envKey}.ErrorUsingDefault(defaultValue))
+		log.Warn().Msg(newNotFoundError(envKey, defaultValue).Error())
 		return time.Duration(defaultValue) * time.Second
 	}
 
 	parsed, err := time.ParseDuration(envValueString)
 	if err != nil {
-		log.Warn().Msg(conversionError{envKey, "duration"}.ErrorUsingDefault(defaultValue))
+		log.Warn().Msg(newConversionError(envKey, "duration", defaultValue).Error())
 		return time.Duration(defaultValue) * time.Second
 	}
 

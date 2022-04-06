@@ -1,18 +1,19 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
-type PermitRepo struct {
+type PermitsRepo struct {
 	database Database
 }
 
-func NewPermitRepo(database Database) PermitRepo {
-	return PermitRepo{database: database}
+func NewPermitsRepo(database Database) PermitsRepo {
+	return PermitsRepo{database: database}
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
+func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permits.id,
@@ -33,9 +34,10 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
     OFFSET $2
   `
 
-	rows, err := permitRepo.database.driver.Query(query, limit, offset)
+	boundedLimit := getBoundedLimit(limit)
+	rows, err := permitsRepo.database.driver.Query(query, boundedLimit, offset)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
 	}
 	defer rows.Close()
 
@@ -54,19 +56,19 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 			&permit.AffectsDays,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrScanningRow, err))
 		}
 
 		permits = append(permits, permit)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrIterating, err))
 	}
 
 	return permits, nil
 }
 
-func (permitRepo *PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
+func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permits.id,
@@ -84,9 +86,10 @@ func (permitRepo *PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error
     OFFSET $2
   `
 
-	rows, err := permitRepo.database.driver.Query(query, limit, offset)
+	boundedLimit := getBoundedLimit(limit)
+	rows, err := permitsRepo.database.driver.Query(query, boundedLimit, offset)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
 	}
 	defer rows.Close()
 
@@ -105,14 +108,29 @@ func (permitRepo *PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error
 		)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrScanningRow, err))
 		}
 
 		permits = append(permits, permit)
 	}
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrIterating, err))
 	}
 
 	return permits, nil
+}
+
+func (permitsRepo PermitsRepo) deleteAll() (int64, error) {
+	query := "DELETE FROM permits"
+	res, err := permitsRepo.database.driver.Exec(query)
+	if err != nil {
+		return 0, fmt.Errorf("permits_repo: deleteAll: %v", newError(ErrDatabaseExec, err))
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("permits_repo: deleteAll: %v", newError(ErrGetRowsAffected, err))
+	}
+
+	return rowsAffected, nil
 }
