@@ -19,7 +19,7 @@ func GetMigrator(database Database) (*migrate.Migrate, error) {
 	}
 
 	if err := migrator.Steps(1); err != nil {
-		return nil, fmt.Errorf("Failed go to v1 migrations: %v", err)
+		return nil, fmt.Errorf("Failed to go to v1 migrations: %v", err)
 	}
 
 	return migrator, nil
