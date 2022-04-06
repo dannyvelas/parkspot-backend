@@ -4,10 +4,18 @@ import (
 	"fmt"
 )
 
-type NotFoundError struct {
-	variableName string
-	defaultValue any
-}
+type (
+	NotFoundError struct {
+		variableName string
+		defaultValue any
+	}
+
+	ConversionError struct {
+		variableName    string
+		desiredTypeName string
+		defaultValue    any
+	}
+)
 
 func (e NotFoundError) Error() string {
 	err := fmt.Sprintf("No config value found for %s", e.variableName)
@@ -16,12 +24,6 @@ func (e NotFoundError) Error() string {
 
 func newNotFoundError(variableName string, devaultValue any) NotFoundError {
 	return NotFoundError{variableName, devaultValue}
-}
-
-type ConversionError struct {
-	variableName    string
-	desiredTypeName string
-	defaultValue    any
 }
 
 func (e ConversionError) Error() string {
