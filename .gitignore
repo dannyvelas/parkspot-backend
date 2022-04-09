@@ -5,3 +5,4 @@ target/
 .scraps/
 .DS_Store
 bin/
+migrations/
