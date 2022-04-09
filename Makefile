@@ -32,5 +32,10 @@ migrate_down:
 migrate_down_step:
 	migrate -path migrations -database $(PGCONNECTION) -verbose down 1
 
+migrate_force_version:
+	migrate -path migrations -database $(PGCONNECTION) -verbose force $(version)
 
-.PHONY: clean migrate_up migrate_up_step migrate_down migrate_down_step
+migrate_create:
+	migrate create -ext sql -dir migrations -seq $(name)
+
+.PHONY: clean migrate_up migrate_up_step migrate_down migrate_down_step migrate_force_version migrate_create
