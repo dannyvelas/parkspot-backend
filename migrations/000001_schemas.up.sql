@@ -12,12 +12,9 @@ CREATE TABLE IF NOT EXISTS admins(
 );
 
 CREATE TABLE IF NOT EXISTS residents(
-  id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+  id CHAR(8) PRIMARY KEY UNIQUE NOT NULL,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  is_tenant BOOLEAN NOT NULL,
-  building_number CHAR(4) NOT NULL,
-  unit_number CHAR(3) NOT NULL,
   phone VARCHAR(15) NOT NULL,
   email VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL,
@@ -34,12 +31,12 @@ CREATE TABLE IF NOT EXISTS cars(
 );
 
 CREATE TABLE IF NOT EXISTS permits(
-  id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
-  resident_id UUID REFERENCES residents(id) ON DELETE CASCADE NOT NULL,
+  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  resident_id CHAR(8) REFERENCES residents(id) ON DELETE CASCADE NOT NULL,
   car_id UUID REFERENCES cars(id) ON DELETE CASCADE NOT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
-  request_ts BIGINT NOT NULL,
+  request_ts BIGINT,
   affects_days BOOLEAN NOT NULL
 );
 
