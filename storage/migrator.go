@@ -18,8 +18,12 @@ func GetMigrator(database Database) (*migrate.Migrate, error) {
 		return nil, fmt.Errorf("Failed to initialize migrator: %v", err)
 	}
 
+	if err := migrator.Down(); err != nil {
+		return nil, fmt.Errorf("Failed to migrate all the way down: %v", err)
+	}
+
 	if err := migrator.Steps(1); err != nil {
-		return nil, fmt.Errorf("Failed to go to v1 migrations: %v", err)
+		return nil, fmt.Errorf("Failed to migrate to v1: %v", err)
 	}
 
 	return migrator, nil
