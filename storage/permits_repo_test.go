@@ -44,8 +44,8 @@ func (suite permitsRepoSuite) TearDownSuite() {
 func (suite permitsRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 	permits, err := suite.permitsRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error when getting all permits when the table is empty")
-	suite.Equal(len(permits), 0, "length of permits should be 0, since it is empty slice")
-	suite.Equal(permits, []models.Permit(nil), "permits is an empty slice")
+	suite.Equal(len(permits), 0, "length of permits should be 0")
+	suite.Equal(permits, []models.Permit{}, "permits should be an empty slice")
 }
 
 func TestPermitsRepo(t *testing.T) {

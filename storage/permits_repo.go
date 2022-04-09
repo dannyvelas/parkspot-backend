@@ -18,11 +18,13 @@ func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]models.Permit, e
     SELECT
       permits.id,
       permits.resident_id,
-      permits.license_plate,
-      cars.color_and_model,
+      cars.license_plate,
+      cars.color,
+      cars.make,
+      cars.model,
       permits.start_date,
       permits.end_date,
-      permits.request_date,
+      permits.request_ts,
       permits.affects_days
     FROM permits
     LEFT JOIN cars ON
@@ -48,8 +50,10 @@ func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]models.Permit, e
 		err := rows.Scan(
 			&permit.Id,
 			&permit.ResidentId,
-			&permit.LicensePlate,
-			&permit.ColorAndModel,
+			&permit.Car.LicensePlate,
+			&permit.Car.Color,
+			&permit.Car.Make,
+			&permit.Car.Model,
 			&permit.StartDate,
 			&permit.EndDate,
 			&permit.RequestDate,
@@ -73,15 +77,17 @@ func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]models.Permit, erro
     SELECT
       permits.id,
       permits.resident_id,
-      permits.license_plate,
-      cars.color_and_model,
+      cars.license_plate,
+      cars.color,
+      cars.make,
+      cars.model,
       permits.start_date,
       permits.end_date,
-      permits.request_date,
+      permits.request_ts,
       permits.affects_days
     FROM permits
     LEFT JOIN cars ON
-      permits.license_plate = cars.license_plate 
+      permits.car_id = cars.id
     LIMIT $1
     OFFSET $2
   `
@@ -99,8 +105,10 @@ func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]models.Permit, erro
 		err := rows.Scan(
 			&permit.Id,
 			&permit.ResidentId,
-			&permit.LicensePlate,
-			&permit.ColorAndModel,
+			&permit.Car.LicensePlate,
+			&permit.Car.Color,
+			&permit.Car.Make,
+			&permit.Car.Model,
 			&permit.StartDate,
 			&permit.EndDate,
 			&permit.RequestDate,
