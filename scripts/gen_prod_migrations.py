@@ -112,10 +112,10 @@ def row_to_resident(row: List[str]) -> Resident:
 ########################################
 allowed_files = [ "permits", "cars", "residents" ]
 if len(sys.argv) < 2:
-    print(f"usage: python3 gen_migrations.py [{' | '.join(allowed_files)}]")
+    print(f"usage: python3 gen_prod_migrations.py [{' | '.join(allowed_files)}]")
     exit(1)
 elif sys.argv[1] not in allowed_files:
-    print(f"usage: python3 gen_migrations.py [{' | '.join(allowed_files)}]")
+    print(f"usage: python3 gen_prod_migrations.py [{' | '.join(allowed_files)}]")
     exit(1)
 
 model = sys.argv[1]
