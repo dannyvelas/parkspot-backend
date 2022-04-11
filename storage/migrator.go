@@ -18,8 +18,14 @@ func GetMigrator(database Database) (*migrate.Migrate, error) {
 		return nil, fmt.Errorf("Failed to initialize migrator: %v", err)
 	}
 
-	if err := migrator.Down(); err != nil {
-		return nil, fmt.Errorf("Failed to migrate all the way down: %v", err)
+	if _, dirty, err := migrator.Version(); dirty {
+		return nil, fmt.Errorf("Error: database version is dirty. Please fix it.")
+	} else if err != nil && err != migrate.ErrNilVersion {
+		return nil, fmt.Errorf("Error getting migrator version: %v", err)
+	} else if err == nil {
+		if err := migrator.Down(); err != nil {
+			return nil, fmt.Errorf("Failed to migrate all the way down: %v", err)
+		}
 	}
 
 	if err := migrator.Steps(1); err != nil {
