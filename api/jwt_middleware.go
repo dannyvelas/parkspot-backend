@@ -53,12 +53,10 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (string, error) 
 		return "", err
 	}
 
-	if claims, ok := token.Claims.(*jwtClaims); !ok || !token.Valid {
-		if !ok {
-			return "", errCastingJWTClaims
-		} else {
-			return "", errInvalidToken
-		}
+	if claims, ok := token.Claims.(*jwtClaims); !ok {
+		return "", errCastingJWTClaims
+	} else if !token.Valid {
+		return "", errInvalidToken
 	} else {
 		return claims.Id, nil
 	}
