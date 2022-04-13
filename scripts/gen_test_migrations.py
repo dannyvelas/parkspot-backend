@@ -3,7 +3,13 @@ import uuid
 import random
 import string
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Tuple, Union
+
+def nullablestr_to_sql(value: Union[str,None]) -> str:
+    if value:
+        return f'{value}'
+    else:
+        return 'NULL'
 
 ########################################
 ## PERMIT
@@ -26,7 +32,15 @@ class Permit:
         self.affects_days = affects_days
 
     def as_sql(self):
-        return f"""INSERT INTO permits(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES ({self.id}, '{self.resident_id}', '{self.car_id}', '{self.start_date}', '{self.end_date}', {self.request_ts}, {self.affects_days});"""
+        return (f"INSERT INTO permits(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES"
+            f"( {self.id}"
+            f", '{self.resident_id}'"
+            f", '{self.car_id}'"
+            f", '{self.start_date}'"
+            f", '{self.end_date}'"
+            f", {self.request_ts}"
+            f", {self.affects_days}"
+            f");")
 
 def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
     def get_rand_dates() -> Tuple[datetime, datetime]:
@@ -41,7 +55,7 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
         rand_day = random.randrange(1, 29)
 
         start_date = datetime(rand_year, rand_month, rand_day)
-        end_date = start_date + timedelta(days=random.randrange(0, 16))
+        end_date = start_date + timedelta(days=random.randrange(1, 16))
 
         return (start_date, end_date)
 
@@ -57,9 +71,9 @@ class Car:
     id: str
     license_plate: str
     color: str
-    make: str
-    model: str
-    def __init__(self, id: str, license_plate: str, color: str, make: str, model: str):
+    make: Union[str, None]
+    model: Union[str, None]
+    def __init__(self, id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None]):
         self.id = id
         self.license_plate = license_plate
         self.color = color
@@ -67,7 +81,14 @@ class Car:
         self.model = model
 
     def as_sql(self):
-        return f"""INSERT INTO cars(id, license_plate, color, make, model) VALUES ( '{self.id}', '{self.license_plate}', '{self.color}', '{self.make}', '{self.model}');"""
+        return (f"INSERT INTO cars(id, license_plate, color, make, model) VALUES"
+            f"'{self.id}'"
+            f", '{self.license_plate}'"
+            f", '{self.color}'"
+            f", {nullablestr_to_sql(self.make)}"
+            f", {nullablestr_to_sql(self.model)}"
+            f");"
+        )
 
 def get_rand_car() -> Car:
     def get_rand_line() -> str:
@@ -92,8 +113,8 @@ def get_rand_car() -> Car:
         id            = str(uuid.uuid4()),
         license_plate = get_rand_lp(),
         color         = get_rand_color(),
-        make          = split_line[0],
-        model         = split_line[1]
+        make          = split_line[0] if bool(random.getrandbits(1)) else None,
+        model         = split_line[1] if bool(random.getrandbits(1)) else None
         )
 
 ########################################
@@ -111,7 +132,17 @@ class Resident:
         self.amt_parking_days_used = amt_parking_days_used
 
     def as_sql(self):
-        return f"""INSERT INTO residents(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES ('{self.id}', '{self.first_name}', '{self.last_name}', '{self.phone}', '{self.email}', '{self.password}', {self.unlim_days}, {self.amt_parking_days_used});"""
+        return (f"INSERT INTO residents(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES"
+        f"( '{self.id}'"
+		f", '{self.first_name}'"
+		f", '{self.last_name}'"
+		f", '{self.phone}'"
+		f", '{self.email}'"
+		f", '{self.password}'"
+		f", {self.unlim_days}"
+		f", {self.amt_parking_days_used}"
+        f");"
+        )
 
 def row_to_resident(row: List[str]) -> Resident:
     def get_rand_resid() -> str:
