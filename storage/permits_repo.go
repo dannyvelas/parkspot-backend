@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/models"
 )
 
 type PermitsRepo struct {
@@ -13,11 +12,12 @@ func NewPermitsRepo(database Database) PermitsRepo {
 	return PermitsRepo{database: database}
 }
 
-func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
+func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]Permit, error) {
 	const query = `
     SELECT
-      permits.id,
-      permits.resident_id,
+      permits.id AS id,
+      permits.resident_id AS resident_id,
+      cars.id,
       cars.license_plate,
       cars.color,
       cars.make,
@@ -28,56 +28,30 @@ func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]models.Permit, e
       permits.affects_days
     FROM permits
     LEFT JOIN cars ON
-      permits.license_plate = cars.license_plate 
+      permits.car_id = cars.id 
     WHERE
-      permits.start_date <= EXTRACT(epoch FROM NOW())
-      AND permits.end_date >= EXTRACT(epoch FROM NOW())
+      permits.start_date <= NOW()
+      AND permits.end_date >= NOW()
     LIMIT $1
     OFFSET $2
   `
 
-	boundedLimit := getBoundedLimit(limit)
-	rows, err := permitsRepo.database.driver.Query(query, boundedLimit, offset)
+	permits := []Permit{}
+	err := permitsRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
-	}
-	defer rows.Close()
-
-	permits := []models.Permit{}
-	for rows.Next() {
-		var permit models.Permit
-
-		err := rows.Scan(
-			&permit.Id,
-			&permit.ResidentId,
-			&permit.Car.LicensePlate,
-			&permit.Car.Color,
-			&permit.Car.Make,
-			&permit.Car.Model,
-			&permit.StartDate,
-			&permit.EndDate,
-			&permit.RequestDate,
-			&permit.AffectsDays,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrScanningRow, err))
-		}
-
-		permits = append(permits, permit)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrIterating, err))
 	}
 
 	return permits, nil
 }
 
-func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
+func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]Permit, error) {
 	const query = `
     SELECT
       permits.id,
       permits.resident_id,
-      cars.license_plate,
+      cars.id AS cars_id,
+      cars.license_plate AS license_plate,
       cars.color,
       cars.make,
       cars.model,
@@ -92,37 +66,10 @@ func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]models.Permit, erro
     OFFSET $2
   `
 
-	boundedLimit := getBoundedLimit(limit)
-	rows, err := permitsRepo.database.driver.Query(query, boundedLimit, offset)
+	permits := []Permit{}
+	err := permitsRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
-	}
-	defer rows.Close()
-
-	permits := []models.Permit{}
-	for rows.Next() {
-		var permit models.Permit
-		err := rows.Scan(
-			&permit.Id,
-			&permit.ResidentId,
-			&permit.Car.LicensePlate,
-			&permit.Car.Color,
-			&permit.Car.Make,
-			&permit.Car.Model,
-			&permit.StartDate,
-			&permit.EndDate,
-			&permit.RequestDate,
-			&permit.AffectsDays,
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrScanningRow, err))
-		}
-
-		permits = append(permits, permit)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrIterating, err))
 	}
 
 	return permits, nil
