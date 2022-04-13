@@ -52,4 +52,3 @@ func getAll(permitsRepo storage.PermitsRepo) http.HandlerFunc {
 		respondJSON(w, http.StatusOK, allPermits)
 	}
 }
-

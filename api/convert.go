@@ -15,7 +15,7 @@ func toUint(value string) uint {
 func getBoundedSizeAndOffset(size, page uint) (boundedSize, offset uint) {
 	if size > maxPageSize {
 		boundedSize = maxPageSize
-	} else if size < 0 {
+	} else if size <= 0 {
 		boundedSize = defaultPageSize
 	} else {
 		boundedSize = size
