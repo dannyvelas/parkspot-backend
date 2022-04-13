@@ -1,4 +1,4 @@
-package models
+package storage
 
 type Admin struct {
 	Id           string
