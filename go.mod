@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/jmoiron/sqlx v1.3.1
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.3
 	github.com/rs/zerolog v1.25.0

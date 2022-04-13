@@ -8,7 +8,7 @@ import (
 )
 
 func GetMigrator(database Database) (*migrate.Migrate, error) {
-	driver, err := postgres.WithInstance(database.driver, &postgres.Config{})
+	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to cast Database.driver to migrate.Driver interface: %v", err)
 	}
@@ -22,7 +22,7 @@ func GetMigrator(database Database) (*migrate.Migrate, error) {
 		return nil, fmt.Errorf("Error: database version is dirty. Please fix it.")
 	} else if err != nil && err != migrate.ErrNilVersion {
 		return nil, fmt.Errorf("Error getting migrator version: %v", err)
-	} else if err == nil {
+	} else if err == nil { // if version non-zero, migrate down
 		if err := migrator.Down(); err != nil {
 			return nil, fmt.Errorf("Failed to migrate all the way down: %v", err)
 		}

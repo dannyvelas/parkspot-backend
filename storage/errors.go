@@ -10,8 +10,6 @@ type sentinelError struct {
 
 var (
 	ErrDatabaseQuery   = sentinelError{"Error querying database"}
-	ErrScanningRow     = sentinelError{"Error Scanning Row"}
-	ErrIterating       = sentinelError{"Error when iterating sql rows"}
 	ErrQueryScanOneRow = sentinelError{"Error when querying and scanning one row"}
 	ErrNoRows          = sentinelError{"No rows found"}
 	ErrDatabaseExec    = sentinelError{"Error executing database command"}

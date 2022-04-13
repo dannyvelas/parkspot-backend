@@ -1,14 +1,14 @@
 package storage
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
 type Database struct {
-	driver *sql.DB
+	driver *sqlx.DB
 }
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
@@ -21,7 +21,7 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 		postgresConfig.DbName(),
 	)
 
-	driver, err := sql.Open("postgres", psqlInfo)
+	driver, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		return Database{}, err
 	}
