@@ -132,7 +132,7 @@ class Car:
 
 def get_rand_car() -> Car:
     def get_rand_line() -> str:
-        with open('./scripts/sample_car_data.csv', 'r') as in_file:
+        with open('./scripts/gen/csv_in/cars.csv', 'r') as in_file:
             random_line = next(in_file)
             for i, line in enumerate(in_file, 2):
                 if random.randrange(i) == 0:
@@ -162,8 +162,8 @@ def row_to_car(row: List[str]) -> Car:
       id            = row[0],
       license_plate = row[1],
       color         = row[2],
-      make          = row[3],
-      model         = row[4]
+      make          = row[3] if row[3] != 'NULL' else None,
+      model         = row[4] if row[4] != 'NULL' else None
     )
 
 ########################################
@@ -205,7 +205,7 @@ class Resident:
             f"\t{self.amt_parking_days_used}"
         )
 
-def row_to_resident(row: List[str]) -> Resident:
+def csv_in_row_to_resident(row: List[str]) -> Resident:
     def get_rand_resid() -> str:
         id_prefix = ''.join([ random.choice(string.digits) for _ in range(7) ])
         return random.choice(['T', 'B']) + id_prefix
@@ -219,6 +219,19 @@ def row_to_resident(row: List[str]) -> Resident:
       password              = row[4],
       unlim_days            = bool(random.getrandbits(1)),
       amt_parking_days_used = random.randrange(0, 31),
+        )
+
+def csv_out_row_to_resident(row: List[str]) -> Resident:
+
+    return Resident(
+      id                    = row[0],
+      first_name            = row[1],
+      last_name             = row[2],
+      phone                 = row[3],
+      email                 = row[4],
+      password              = row[5],
+      unlim_days            = row[6] == 'True',
+      amt_parking_days_used = int(row[7]),
         )
 
 ########################################
@@ -246,7 +259,7 @@ if __name__ == '__main__':
                         permit_id = 1
 
                         for _, row in enumerate(reader):
-                            resident = row_to_resident(row)
+                            resident = csv_in_row_to_resident(row)
                             r_file_out.write(f'{resident.as_csv()}\n')
 
                             car = get_rand_car()
@@ -265,7 +278,7 @@ if __name__ == '__main__':
             with open(migration_out_file_name(4, 'residents'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
-                    resident = row_to_resident(row)
+                    resident = csv_out_row_to_resident(row)
                     file_out.write(f'{resident.as_sql()}\n')
                                         
             with open(migration_in_file_name('cars'), 'r') as file_in:
