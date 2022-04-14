@@ -2,6 +2,8 @@ package storage
 
 import (
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/slice"
 )
 
 type PermitRepo struct {
@@ -12,7 +14,7 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{database: database}
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permit.id,
@@ -36,16 +38,18 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]Permit, error) {
     OFFSET $2
   `
 
-	permits := []Permit{}
+	permits := []permit{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	return permits, nil
+	modelsPermits := slice.Map(permits, func(p permit) models.Permit { return p.toModels() })
+
+	return modelsPermits, nil
 }
 
-func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]Permit, error) {
+func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
 	const query = `
     SELECT
       permit.id,
@@ -66,13 +70,15 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]Permit, error) {
     OFFSET $2
   `
 
-	permits := []Permit{}
+	permits := []permit{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	return permits, nil
+	modelsPermits := slice.Map(permits, func(p permit) models.Permit { return p.toModels() })
+
+	return modelsPermits, nil
 }
 
 func (permitRepo PermitRepo) deleteAll() (int64, error) {
