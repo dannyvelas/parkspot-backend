@@ -1,5 +1,5 @@
 BEGIN;
 
-DELETE FROM admins;
+DELETE FROM admin;
 
 COMMIT;
