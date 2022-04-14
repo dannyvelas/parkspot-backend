@@ -1,5 +1,0 @@
-BEGIN;
-
-DELETE FROM permits;
-
-COMMIT;

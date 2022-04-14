@@ -41,7 +41,7 @@ class Permit:
         self.affects_days = affects_days
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO permits(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES"
+        return (f"INSERT INTO permit(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES"
             f"( {self.id}"
             f", '{self.resident_id}'"
             f", '{self.car_id}'"
@@ -112,7 +112,7 @@ class Car:
         self.model = model
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO cars(id, license_plate, color, make, model) VALUES"
+        return (f"INSERT INTO car(id, license_plate, color, make, model) VALUES"
             f"( '{self.id}'"
             f", '{self.license_plate}'"
             f", '{self.color}'"
@@ -132,7 +132,7 @@ class Car:
 
 def get_rand_car() -> Car:
     def get_rand_line() -> str:
-        with open('./scripts/gen/csv_in/cars.csv', 'r') as in_file:
+        with open('./scripts/gen/csv_in/car.csv', 'r') as in_file:
             random_line = next(in_file)
             for i, line in enumerate(in_file, 2):
                 if random.randrange(i) == 0:
@@ -181,7 +181,7 @@ class Resident:
         self.amt_parking_days_used = amt_parking_days_used
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO residents(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES"
+        return (f"INSERT INTO resident(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES"
             f"( '{self.id}'"
             f", '{self.first_name}'"
             f", '{self.last_name}'"
@@ -251,10 +251,10 @@ if __name__ == '__main__':
         def csv_in_file_name(model: str) -> str: return f'./scripts/gen/csv_in/{model}.csv'
         def csv_out_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
 
-        with open(csv_out_file_name('residents'), 'w') as r_file_out:
-            with open(csv_out_file_name('cars'), 'w') as c_file_out:
-                with open(csv_out_file_name('permits'), 'w') as p_file_out:
-                    with open(csv_in_file_name('residents'), 'r') as file_in:
+        with open(csv_out_file_name('resident'), 'w') as r_file_out:
+            with open(csv_out_file_name('car'), 'w') as c_file_out:
+                with open(csv_out_file_name('permit'), 'w') as p_file_out:
+                    with open(csv_in_file_name('resident'), 'r') as file_in:
                         reader = csv.reader(file_in, delimiter='\t')
                         permit_id = 1
 
@@ -274,22 +274,22 @@ if __name__ == '__main__':
         def migration_in_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
         def migration_out_file_name(version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'
 
-        with open(migration_in_file_name('residents'), 'r') as file_in:
-            with open(migration_out_file_name(4, 'residents'), 'w') as file_out:
+        with open(migration_in_file_name('resident'), 'r') as file_in:
+            with open(migration_out_file_name(4, 'resident'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
                     resident = csv_out_row_to_resident(row)
                     file_out.write(f'{resident.as_sql()}\n')
                                         
-            with open(migration_in_file_name('cars'), 'r') as file_in:
-                with open(migration_out_file_name(3, 'cars'), 'w') as file_out:
+            with open(migration_in_file_name('car'), 'r') as file_in:
+                with open(migration_out_file_name(3, 'car'), 'w') as file_out:
                     reader = csv.reader(file_in, delimiter='\t')
                     for _, row in enumerate(reader):
                         car = row_to_car(row)
                         file_out.write(f'{car.as_sql()}\n')
 
-            with open(migration_in_file_name('permits'), 'r') as file_in:
-                with open(migration_out_file_name(5, 'permits'), 'w') as file_out:
+            with open(migration_in_file_name('permit'), 'r') as file_in:
+                with open(migration_out_file_name(5, 'permit'), 'w') as file_out:
                     reader = csv.reader(file_in, delimiter='\t')
                     for _, row in enumerate(reader):
                         permit = row_to_permit(row)

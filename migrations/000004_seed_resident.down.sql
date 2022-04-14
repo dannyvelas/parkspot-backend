@@ -1,0 +1,5 @@
+BEGIN;
+
+DELETE FROM resident;
+
+COMMIT;
