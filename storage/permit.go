@@ -6,7 +6,7 @@ import (
 )
 
 type permit struct {
-	PermitId   int    `db:"id"`
+	PermitId   int    `db:"permit_id"`
 	ResidentId string `db:"resident_id"`
 	car
 	StartDate   time.Time `db:"start_date"`
