@@ -4,87 +4,87 @@ import (
 	"fmt"
 )
 
-type PermitsRepo struct {
+type PermitRepo struct {
 	database Database
 }
 
-func NewPermitsRepo(database Database) PermitsRepo {
-	return PermitsRepo{database: database}
+func NewPermitRepo(database Database) PermitRepo {
+	return PermitRepo{database: database}
 }
 
-func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]Permit, error) {
 	const query = `
     SELECT
-      permits.id,
-      permits.resident_id,
+      permit.id,
+      permit.resident_id,
       cars.id AS car_id,
       cars.license_plate,
       cars.color,
       cars.make,
       cars.model,
-      permits.start_date,
-      permits.end_date,
-      permits.request_ts,
-      permits.affects_days
-    FROM permits
+      permit.start_date,
+      permit.end_date,
+      permit.request_ts,
+      permit.affects_days
+    FROM permit
     LEFT JOIN cars ON
-      permits.car_id = cars.id 
+      permit.car_id = cars.id 
     WHERE
-      permits.start_date <= NOW()
-      AND permits.end_date >= NOW()
+      permit.start_date <= NOW()
+      AND permit.end_date >= NOW()
     LIMIT $1
     OFFSET $2
   `
 
 	permits := []Permit{}
-	err := permitsRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
+	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
-		return nil, fmt.Errorf("permits_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
+		return nil, fmt.Errorf("permit_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
 	}
 
 	return permits, nil
 }
 
-func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]Permit, error) {
+func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]Permit, error) {
 	const query = `
     SELECT
-      permits.id,
-      permits.resident_id,
+      permit.id,
+      permit.resident_id,
       cars.id AS car_id,
       cars.license_plate,
       cars.color,
       cars.make,
       cars.model,
-      permits.start_date,
-      permits.end_date,
-      permits.request_ts,
-      permits.affects_days
-    FROM permits
+      permit.start_date,
+      permit.end_date,
+      permit.request_ts,
+      permit.affects_days
+    FROM permit
     LEFT JOIN cars ON
-      permits.car_id = cars.id
+      permit.car_id = cars.id
     LIMIT $1
     OFFSET $2
   `
 
 	permits := []Permit{}
-	err := permitsRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
+	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
-		return nil, fmt.Errorf("permits_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
+		return nil, fmt.Errorf("permit_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
 	}
 
 	return permits, nil
 }
 
-func (permitsRepo PermitsRepo) deleteAll() (int64, error) {
-	query := "DELETE FROM permits"
-	res, err := permitsRepo.database.driver.Exec(query)
+func (permitRepo PermitRepo) deleteAll() (int64, error) {
+	query := "DELETE FROM permit"
+	res, err := permitRepo.database.driver.Exec(query)
 	if err != nil {
-		return 0, fmt.Errorf("permits_repo: deleteAll: %v", newError(ErrDatabaseExec, err))
+		return 0, fmt.Errorf("permit_repo: deleteAll: %v", newError(ErrDatabaseExec, err))
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		return 0, fmt.Errorf("permits_repo: deleteAll: %v", newError(ErrGetRowsAffected, err))
+		return 0, fmt.Errorf("permit_repo: deleteAll: %v", newError(ErrGetRowsAffected, err))
 	}
 
 	return rowsAffected, nil

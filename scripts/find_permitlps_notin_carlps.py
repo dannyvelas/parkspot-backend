@@ -2,7 +2,7 @@ import re
 
 permit_lps = set()
 car_lps = set()
-with open('./migrations/000005_seed_permits.up.sql', 'r') as pfile_in:
+with open('./migrations/000005_seed_permit.up.sql', 'r') as pfile_in:
     for line in pfile_in:
         match = re.findall(r"= '([^']+)'", line)
         if match:

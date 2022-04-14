@@ -8,24 +8,24 @@ import (
 	"net/http"
 )
 
-func PermitsRouter(permitsRepo storage.PermitsRepo) func(chi.Router) {
+func PermitRouter(permitRepo storage.PermitRepo) func(chi.Router) {
 	return func(r chi.Router) {
-		r.Get("/active", getActive(permitsRepo))
-		r.Get("/all", getAll(permitsRepo))
+		r.Get("/active", getActive(permitRepo))
+		r.Get("/all", getAll(permitRepo))
 	}
 }
 
-func getActive(permitsRepo storage.PermitsRepo) http.HandlerFunc {
+func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Msg("Get Active Permits Endpoint")
+		log.Debug().Msg("Get Active Permit Endpoint")
 
 		size := toUint(r.URL.Query().Get("size"))
 		page := toUint(r.URL.Query().Get("page"))
 		boundedSize, offset := getBoundedSizeAndOffset(size, page)
 
-		activePermits, err := permitsRepo.GetActive(boundedSize, offset)
+		activePermits, err := permitRepo.GetActive(boundedSize, offset)
 		if err != nil {
-			err := fmt.Errorf("permits_router: GetActive: Error querying permitsRepo: %v", err)
+			err := fmt.Errorf("permit_router: GetActive: Error querying permitRepo: %v", err)
 			respondError(w, err, errInternalServerError)
 			return
 		}
@@ -34,7 +34,7 @@ func getActive(permitsRepo storage.PermitsRepo) http.HandlerFunc {
 	}
 }
 
-func getAll(permitsRepo storage.PermitsRepo) http.HandlerFunc {
+func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Debug().Msg("Get All Endpoint")
 
@@ -42,9 +42,9 @@ func getAll(permitsRepo storage.PermitsRepo) http.HandlerFunc {
 		page := toUint(r.URL.Query().Get("page"))
 		boundedSize, offset := getBoundedSizeAndOffset(size, page)
 
-		allPermits, err := permitsRepo.GetAll(boundedSize, offset)
+		allPermits, err := permitRepo.GetAll(boundedSize, offset)
 		if err != nil {
-			err = fmt.Errorf("permits_router: getAll: Error querying permitsRepo: %v", err)
+			err = fmt.Errorf("permit_router: getAll: Error querying permitRepo: %v", err)
 			respondError(w, err, errInternalServerError)
 			return
 		}

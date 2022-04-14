@@ -1,2 +1,2 @@
-- [ ] add createOne to permitsRepo
-- [ ] add createOne test to permitsRepo
+- [ ] add createOne to permitRepo
+- [ ] add createOne test to permitRepo

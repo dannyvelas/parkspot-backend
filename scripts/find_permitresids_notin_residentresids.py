@@ -2,7 +2,7 @@ import re
 
 permit_resids = set()
 resident_resids = set()
-with open('./migrations/000005_seed_permits.up.sql', 'r') as pfile_in:
+with open('./migrations/000005_seed_permit.up.sql', 'r') as pfile_in:
     for i, line in enumerate(pfile_in):
         match = re.findall(r'(t|T|b|B)([0-9]+)', line)
         if match:

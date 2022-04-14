@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-type permitsRepoSuite struct {
+type permitRepoSuite struct {
 	suite.Suite
-	permitsRepo PermitsRepo
-	migrator    *migrate.Migrate
+	permitRepo PermitRepo
+	migrator   *migrate.Migrate
 }
 
-func TestPermitsRepo(t *testing.T) {
-	suite.Run(t, new(permitsRepoSuite))
+func TestPermitRepo(t *testing.T) {
+	suite.Run(t, new(permitRepoSuite))
 }
 
-func (suite *permitsRepoSuite) SetupSuite() {
+func (suite *permitRepoSuite) SetupSuite() {
 	config := config.NewConfig()
 
 	database, err := NewDatabase(config.Postgres())
@@ -33,37 +33,37 @@ func (suite *permitsRepoSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
 
-	suite.permitsRepo = NewPermitsRepo(database)
+	suite.permitRepo = NewPermitRepo(database)
 	suite.migrator = migrator
 }
 
-func (suite permitsRepoSuite) TearDownTest() {
-	suite.permitsRepo.deleteAll()
+func (suite permitRepoSuite) TearDownTest() {
+	suite.permitRepo.deleteAll()
 }
 
-func (suite permitsRepoSuite) TearDownSuite() {
+func (suite permitRepoSuite) TearDownSuite() {
 	suite.migrator.Down()
 }
 
-func (suite permitsRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
-	permits, err := suite.permitsRepo.GetAll(defaultLimit, defaultOffset)
-	suite.NoError(err, "no error getting all permits when the table is empty")
-	suite.Equal(len(permits), 0, "length of permits should be 0")
-	suite.Equal(permits, []Permit{}, "permits should be an empty slice")
+func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	suite.NoError(err, "no error getting all permit when the table is empty")
+	suite.Equal(len(permits), 0, "length of permit should be 0")
+	suite.Equal(permits, []Permit{}, "permit should be an empty slice")
 }
 
-func (suite permitsRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
-	permits, err := suite.permitsRepo.GetActive(defaultLimit, defaultOffset)
+func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
+	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting active permits when the table is empty")
 	suite.Equal(len(permits), 0, "length of permits should be 0")
 	suite.Equal(permits, []Permit{}, "permits should be an empty slice")
 }
 
-func (suite permitsRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
+func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	err := suite.migrator.Up()
 	suite.NoError(err, "no error when migrating all the way up")
 
-	permits, err := suite.permitsRepo.GetAll(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 
