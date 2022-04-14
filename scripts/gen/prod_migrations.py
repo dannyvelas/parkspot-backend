@@ -92,7 +92,7 @@ class Resident:
       self.unlim_days = unlim_days
       self.amt_parking_days_used = amt_parking_days_used
     def as_sql(self):
-        return f"""INSERT INTO residents(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES ('{self.id}', '{self.first_name}', '{self.last_name}', '{self.phone}', '{self.email}', '{self.password}', {self.unlim_days}, {self.amt_parking_days_used});"""
+        return f"""INSERT INTO resident(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES ('{self.id}', '{self.first_name}', '{self.last_name}', '{self.phone}', '{self.email}', '{self.password}', {self.unlim_days}, {self.amt_parking_days_used});"""
 
 def row_to_resident(row: List[str]) -> Resident:
     for e in row:
@@ -110,7 +110,7 @@ def row_to_resident(row: List[str]) -> Resident:
 ########################################
 ## MAIN
 ########################################
-allowed_files = [ "permit", "car", "residents" ]
+allowed_files = [ "permit", "car", "resident" ]
 if len(sys.argv) < 2:
     print(f"usage: python3 gen_prod_migrations.py [{' | '.join(allowed_files)}]")
     exit(1)
@@ -138,7 +138,7 @@ with open(file_name, 'r') as file_in:
             for row in reader:
                 car = row_to_car(row)
                 file_out.write(f'{car.as_sql()}\n')
-        if model == 'residents':
+        if model == 'resident':
             reader = csv.reader(file_in, delimiter='\t')
             next(reader) # skip header
             for row in reader:
