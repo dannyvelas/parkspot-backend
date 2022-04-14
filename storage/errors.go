@@ -9,6 +9,7 @@ type sentinelError struct {
 }
 
 var (
+	ErrConnecting      = sentinelError{"Error connecting to database"}
 	ErrDatabaseQuery   = sentinelError{"Error querying database"}
 	ErrQueryScanOneRow = sentinelError{"Error when querying and scanning one row"}
 	ErrNoRows          = sentinelError{"No rows found"}

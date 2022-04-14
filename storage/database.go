@@ -21,14 +21,9 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 		postgresConfig.DbName(),
 	)
 
-	driver, err := sqlx.Open("postgres", psqlInfo)
+	driver, err := sqlx.Connect("postgres", psqlInfo)
 	if err != nil {
-		return Database{}, err
-	}
-
-	err = driver.Ping()
-	if err != nil {
-		return Database{}, err
+		return Database{}, fmt.Errorf("database: %w", ErrConnecting)
 	}
 
 	return Database{driver: driver}, nil
