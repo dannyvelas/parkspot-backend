@@ -1,2 +1,3 @@
 - [ ] add createOne to permitRepo
 - [ ] add createOne test to permitRepo
+- [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
