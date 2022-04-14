@@ -15,9 +15,9 @@ func NewPermitsRepo(database Database) PermitsRepo {
 func (permitsRepo PermitsRepo) GetActive(limit, offset uint) ([]Permit, error) {
 	const query = `
     SELECT
-      permits.id AS id,
-      permits.resident_id AS resident_id,
-      cars.id,
+      permits.id,
+      permits.resident_id,
+      cars.id AS car_id,
       cars.license_plate,
       cars.color,
       cars.make,
@@ -50,8 +50,8 @@ func (permitsRepo PermitsRepo) GetAll(limit, offset uint) ([]Permit, error) {
     SELECT
       permits.id,
       permits.resident_id,
-      cars.id AS cars_id,
-      cars.license_plate AS license_plate,
+      cars.id AS car_id,
+      cars.license_plate,
       cars.color,
       cars.make,
       cars.model,
