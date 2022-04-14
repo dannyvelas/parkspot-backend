@@ -6,7 +6,7 @@ import (
 )
 
 type permit struct {
-	Id         int    `db:"id"`
+	PermitId   int    `db:"id"`
 	ResidentId string `db:"resident_id"`
 	car
 	StartDate   time.Time `db:"start_date"`
@@ -17,7 +17,7 @@ type permit struct {
 
 func (permit permit) toModels() models.Permit {
 	return models.Permit{
-		Id:         permit.Id,
+		Id:         permit.PermitId,
 		ResidentId: permit.ResidentId,
 		Car: models.Car{
 			Id:           permit.CarId,
