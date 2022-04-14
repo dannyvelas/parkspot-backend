@@ -15,7 +15,7 @@ type credentials struct {
 	Password string
 }
 
-func Login(jwtMiddleware JWTMiddleware, adminsRepo storage.AdminsRepo) http.HandlerFunc {
+func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Debug().Msg("Login Endpoint")
 
@@ -27,13 +27,13 @@ func Login(jwtMiddleware JWTMiddleware, adminsRepo storage.AdminsRepo) http.Hand
 			return
 		}
 
-		admin, err := adminsRepo.GetOne(creds.Id)
+		admin, err := adminRepo.GetOne(creds.Id)
 		if errors.Is(err, storage.ErrNoRows) {
 			err = fmt.Errorf("login_router: Rejected Auth: %v", err)
 			respondError(w, err, errUnauthorized)
 			return
 		} else if err != nil {
-			err = fmt.Errorf("login_router: Error querying adminsRepo: %v", err)
+			err = fmt.Errorf("login_router: Error querying adminRepo: %v", err)
 			respondError(w, err, errInternalServerError)
 			return
 		}
@@ -58,4 +58,3 @@ func Login(jwtMiddleware JWTMiddleware, adminsRepo storage.AdminsRepo) http.Hand
 		http.SetCookie(w, &cookie)
 	}
 }
-
