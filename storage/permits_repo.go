@@ -17,18 +17,18 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]Permit, error) {
     SELECT
       permit.id,
       permit.resident_id,
-      cars.id AS car_id,
-      cars.license_plate,
-      cars.color,
-      cars.make,
-      cars.model,
+      car.id AS car_id,
+      car.license_plate,
+      car.color,
+      car.make,
+      car.model,
       permit.start_date,
       permit.end_date,
       permit.request_ts,
       permit.affects_days
     FROM permit
-    LEFT JOIN cars ON
-      permit.car_id = cars.id 
+    LEFT JOIN car ON
+      permit.car_id = car.id 
     WHERE
       permit.start_date <= NOW()
       AND permit.end_date >= NOW()
@@ -50,18 +50,18 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]Permit, error) {
     SELECT
       permit.id,
       permit.resident_id,
-      cars.id AS car_id,
-      cars.license_plate,
-      cars.color,
-      cars.make,
-      cars.model,
+      car.id AS car_id,
+      car.license_plate,
+      car.color,
+      car.make,
+      car.model,
       permit.start_date,
       permit.end_date,
       permit.request_ts,
       permit.affects_days
     FROM permit
-    LEFT JOIN cars ON
-      permit.car_id = cars.id
+    LEFT JOIN car ON
+      permit.car_id = car.id
     LIMIT $1
     OFFSET $2
   `

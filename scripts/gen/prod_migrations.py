@@ -33,7 +33,7 @@ class Permit:
         self.affects_days = affects_days
 
     def as_sql(self):
-        return f"""INSERT INTO permit(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES ({self.id}, '{self.resident_id}', (SELECT cars.id FROM cars WHERE cars.license_plate = '{self.license_plate}'), '{self.start_date}', '{self.end_date}', {self.request_date}, {self.affects_days});"""
+        return f"""INSERT INTO permit(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES ({self.id}, '{self.resident_id}', (SELECT car.id FROM car WHERE car.license_plate = '{self.license_plate}'), '{self.start_date}', '{self.end_date}', {self.request_date}, {self.affects_days});"""
 
 def row_to_permit(row: List[str]) -> Permit:
     for e in row:
@@ -65,7 +65,7 @@ class Car:
         self.make = make
         self.model = model
     def as_sql(self):
-        return f"""INSERT INTO cars(id, license_plate, color, make, model) VALUES ( '{self.id}', '{self.license_plate}', '{self.color}', '{self.make}', '{self.model}');"""
+        return f"""INSERT INTO car(id, license_plate, color, make, model) VALUES ( '{self.id}', '{self.license_plate}', '{self.color}', '{self.make}', '{self.model}');"""
 
 def row_to_car(row: List[str]) -> Car:
     for e in row:
@@ -110,7 +110,7 @@ def row_to_resident(row: List[str]) -> Resident:
 ########################################
 ## MAIN
 ########################################
-allowed_files = [ "permit", "cars", "residents" ]
+allowed_files = [ "permit", "car", "residents" ]
 if len(sys.argv) < 2:
     print(f"usage: python3 gen_prod_migrations.py [{' | '.join(allowed_files)}]")
     exit(1)
@@ -132,7 +132,7 @@ with open(file_name, 'r') as file_in:
             for row in reader:
                 permit = row_to_permit(row)
                 file_out.write(f'{permit.as_sql()}\n')
-        if model == 'cars':
+        if model == 'car':
             reader = csv.reader(file_in, delimiter='\t')
             next(reader) # skip header
             for row in reader:
