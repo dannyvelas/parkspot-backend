@@ -75,8 +75,8 @@ def row_to_permit(row: List[str]) -> Permit:
 
 def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
     def get_rand_dates() -> Tuple[datetime, datetime]:
-        year = datetime.now().year
-        month = datetime.now().month
+        year = 2022
+        month = 4
 
         rand_year = year - random.randrange(0, 1)
         rand_month = month - random.randrange(0, 3)
