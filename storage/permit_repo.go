@@ -37,13 +37,13 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
     OFFSET $2
   `
 
-	permits := []permit{}
+	permits := permitSlice{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	return permitSlice(permits).toModels(), nil
+	return permits.toModels(), nil
 }
 
 func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
@@ -67,13 +67,13 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
     OFFSET $2
   `
 
-	permits := []permit{}
+	permits := permitSlice{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	return permitSlice(permits).toModels(), nil
+	return permits.toModels(), nil
 }
 
 func (permitRepo PermitRepo) deleteAll() (int64, error) {
