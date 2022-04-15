@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS permit(
   id SERIAL PRIMARY KEY UNIQUE NOT NULL,
   resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
   car_id UUID REFERENCES car(id) ON DELETE CASCADE NOT NULL,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
+  start_ts BIGINT NOT NULL,
+  end_ts BIGINT NOT NULL,
   request_ts BIGINT,
   affects_days BOOLEAN NOT NULL
 );
