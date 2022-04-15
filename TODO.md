@@ -1,7 +1,8 @@
+- [x] make some request_ts's null in test migrations because it is nullable
 - [ ] add createOne to permitRepo
 - [ ] add createOne test to permitRepo
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
+## Not necessary
 - [ ] add CONVENTIONS doc and mention in it that the storage models use <model-name>Id for id fields
 - [ ] change all `id` fields in database to be actually `<model-name>_id`
 - [ ] and then change car to not be embedded in permit for consistency with models schema
-- [ ] make some request_ts's null in test migrations because it is nullable
