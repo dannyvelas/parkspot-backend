@@ -27,26 +27,26 @@ class Permit:
     id: int
     resident_id: str
     car_id: str
-    start_date: str
-    end_date: str
+    start_ts: int
+    end_ts: int
     request_ts: int
     affects_days: bool
-    def __init__(self, id: int, resident_id: str, car_id: str, start_date: str, end_date: str, request_ts: int, affects_days: bool):
+    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: int, affects_days: bool):
         self.id = id
         self.resident_id = resident_id
         self.car_id = car_id
-        self.start_date = start_date
-        self.end_date = end_date
+        self.start_ts = start_ts
+        self.end_ts = end_ts
         self.request_ts = request_ts
         self.affects_days = affects_days
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO permit(id, resident_id, car_id, start_date, end_date, request_ts, affects_days) VALUES"
+        return (f"INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days) VALUES"
             f"( {self.id}"
             f", '{self.resident_id}'"
             f", '{self.car_id}'"
-            f", '{self.start_date}'"
-            f", '{self.end_date}'"
+            f", {self.start_ts}"
+            f", {self.end_ts}"
             f", {self.request_ts}"
             f", {self.affects_days}"
             f");")
@@ -56,8 +56,8 @@ class Permit:
             f"{self.id}"
             f"\t{self.resident_id}"
             f"\t{self.car_id}"
-            f"\t{self.start_date}"
-            f"\t{self.end_date}"
+            f"\t{self.start_ts}"
+            f"\t{self.end_ts}"
             f"\t{self.request_ts}"
             f"\t{self.affects_days}"
             )
@@ -67,14 +67,14 @@ def row_to_permit(row: List[str]) -> Permit:
         id           = int(row[0]),
         resident_id  = row[1],
         car_id       = row[2],
-        start_date   = row[3],
-        end_date     = row[4],
+        start_ts   = int(row[3]),
+        end_ts     = int(row[4]),
         request_ts   = int(row[5]),
         affects_days = row[6] == 'True'
     )
 
 def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
-    def get_rand_dates() -> Tuple[datetime, datetime]:
+    def get_rand_tss() -> Tuple[int, int]:
         year = 2022
         month = 4
 
@@ -88,13 +88,12 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
         start_date = datetime(rand_year, rand_month, rand_day)
         end_date = start_date + timedelta(days=random.randrange(1, 16))
 
-        return (start_date, end_date)
+        return (int(start_date.timestamp()), int(end_date.timestamp()))
 
-    start_date, end_date = get_rand_dates()
-    request_ts = start_date.timestamp() - random.randrange(0, 259200)
+    start_ts, end_ts = get_rand_tss()
+    request_ts = start_ts - random.randrange(0, 259200)
 
-    return Permit(i, resident_id, car_id, start_date.strftime("%Y-%m-%d"),
-            end_date.strftime("%Y-%m-%d"), int(request_ts), bool(random.getrandbits(1)))
+    return Permit(i, resident_id, car_id, start_ts, end_ts, int(request_ts), bool(random.getrandbits(1)))
 ########################################
 ## Car
 ########################################
