@@ -4,21 +4,26 @@ import random
 import sys
 import string
 from datetime import datetime, timedelta
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, TypeVar
 
 random.seed(42)
 
-def nullablestr_to_sql(value: Union[str,None]) -> str:
-    if value:
-        return f"'{value}'"
-    else:
-        return 'NULL'
+T = TypeVar('T', str, int)
 
-def nullablestr_to_csv(value: Union[str, None]) -> str:
-    if value:
-        return value
-    else:
+def nullable_to_sql(value: Union[T,None]) -> str:
+    if value is None:
         return 'NULL'
+    elif isinstance(value, str):
+        return f"'{value}'"
+    elif isinstance(value, int):
+        return f"{value}"
+
+
+def nullable_to_csv(value: Union[T, None]) -> str:
+    if value is None:
+        return ''
+    else:
+        return f'{value}'
 
 ########################################
 ## PERMIT
@@ -29,9 +34,9 @@ class Permit:
     car_id: str
     start_ts: int
     end_ts: int
-    request_ts: int
+    request_ts: Union[int, None]
     affects_days: bool
-    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: int, affects_days: bool):
+    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: Union[int,None], affects_days: bool):
         self.id = id
         self.resident_id = resident_id
         self.car_id = car_id
@@ -47,7 +52,7 @@ class Permit:
             f", '{self.car_id}'"
             f", {self.start_ts}"
             f", {self.end_ts}"
-            f", {self.request_ts}"
+            f", {nullable_to_sql(self.request_ts)}"
             f", {self.affects_days}"
             f");")
 
@@ -58,7 +63,7 @@ class Permit:
             f"\t{self.car_id}"
             f"\t{self.start_ts}"
             f"\t{self.end_ts}"
-            f"\t{self.request_ts}"
+            f"\t{nullable_to_csv(self.request_ts)}"
             f"\t{self.affects_days}"
             )
 
@@ -69,7 +74,7 @@ def row_to_permit(row: List[str]) -> Permit:
         car_id       = row[2],
         start_ts   = int(row[3]),
         end_ts     = int(row[4]),
-        request_ts   = int(row[5]),
+        request_ts   = int(row[5]) if row[5] != '' else None,
         affects_days = row[6] == 'True'
     )
 
@@ -93,7 +98,15 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
     start_ts, end_ts = get_rand_tss()
     request_ts = start_ts - random.randrange(0, 259200)
 
-    return Permit(i, resident_id, car_id, start_ts, end_ts, int(request_ts), bool(random.getrandbits(1)))
+    return Permit(
+        i,
+		resident_id,
+		car_id,
+		start_ts,
+		end_ts,
+		int(request_ts) if bool(random.getrandbits(1)) else None,
+		bool(random.getrandbits(1))
+    )
 ########################################
 ## Car
 ########################################
@@ -115,8 +128,8 @@ class Car:
             f"( '{self.id}'"
             f", '{self.license_plate}'"
             f", '{self.color}'"
-            f", {nullablestr_to_sql(self.make)}"
-            f", {nullablestr_to_sql(self.model)}"
+            f", {nullable_to_sql(self.make)}"
+            f", {nullable_to_sql(self.model)}"
             f");"
         )
 
@@ -125,8 +138,8 @@ class Car:
             f"{self.id}"
             f"\t{self.license_plate}"
             f"\t{self.color}"
-            f"\t{nullablestr_to_csv(self.make)}"
-            f"\t{nullablestr_to_csv(self.model)}"
+            f"\t{nullable_to_csv(self.make)}"
+            f"\t{nullable_to_csv(self.model)}"
         )
 
 def get_rand_car() -> Car:
@@ -161,8 +174,8 @@ def row_to_car(row: List[str]) -> Car:
       id            = row[0],
       license_plate = row[1],
       color         = row[2],
-      make          = row[3] if row[3] != 'NULL' else None,
-      model         = row[4] if row[4] != 'NULL' else None
+      make          = row[3] if row[3] != '' else None,
+      model         = row[4] if row[3] != '' else None,
     )
 
 ########################################
