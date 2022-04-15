@@ -32,3 +32,12 @@ func (permit permit) toModels() models.Permit {
 		AffectsDays: permit.AffectsDays,
 	}
 }
+
+type permitSlice []permit
+func (permits permitSlice) toModels() []models.Permit {
+	modelsPermits := make([]models.Permit, 0, len(permits))
+	for _, permit := range permits {
+		modelsPermits = append(modelsPermits, permit.toModels())
+	}
+	return modelsPermits
+}

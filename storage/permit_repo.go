@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/slice"
 )
 
 type PermitRepo struct {
@@ -44,9 +43,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 		return nil, fmt.Errorf("permit_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	modelsPermits := slice.Map(permits, func(p permit) models.Permit { return p.toModels() })
-
-	return modelsPermits, nil
+	return permitSlice(permits).toModels(), nil
 }
 
 func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
@@ -76,9 +73,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 		return nil, fmt.Errorf("permit_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
 	}
 
-	modelsPermits := slice.Map(permits, func(p permit) models.Permit { return p.toModels() })
-
-	return modelsPermits, nil
+	return permitSlice(permits).toModels(), nil
 }
 
 func (permitRepo PermitRepo) deleteAll() (int64, error) {
