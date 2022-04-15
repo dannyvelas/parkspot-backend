@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"time"
 )
@@ -33,4 +34,28 @@ func (self Permit) Equal(other Permit) bool {
 	}
 
 	return true
+}
+
+func NewPermit(id int, residentId string, car Car, startString string, endString string, requestTS int64, affectsDays bool) (Permit, error) {
+	dateFormat := "2006-01-02"
+
+	startDate, err := time.ParseInLocation(dateFormat, startString, time.Local)
+	if err != nil {
+		return Permit{}, fmt.Errorf("Error parsing startDate: %v", err)
+	}
+
+	endDate, err := time.ParseInLocation(dateFormat, endString, time.Local)
+	if err != nil {
+		return Permit{}, fmt.Errorf("Error parsing endDate: %v", err)
+	}
+
+	return Permit{
+		Id:          id,
+		ResidentId:  residentId,
+		Car:         car,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		RequestTS:   requestTS,
+		AffectsDays: affectsDays,
+	}, nil
 }

@@ -26,13 +26,6 @@ func TestPermitRepo(t *testing.T) {
 func (suite *permitRepoSuite) SetupSuite() {
 	config := config.NewConfig()
 
-	location, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		log.Fatal().Msgf("Failed to load location: %v", err)
-		return
-	}
-	suite.location = location
-
 	database, err := NewDatabase(config.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
@@ -79,21 +72,16 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	suite.NoError(err, "no error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 
-	// create dates
-	startDate, err := time.ParseInLocation("2006-01-02", "2022-02-22", suite.location)
-	suite.NoError(err, "no error creating startDate")
-	endDate, err := time.ParseInLocation("2006-01-02", "2022-03-05", suite.location)
-	suite.NoError(err, "no error creating endDate")
+	if len(permits) > 1 {
+		// create test permit
+		testCar := models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
+		testPermit, err := models.NewPermit(1, "T1043321", testCar, "2022-02-22", "2022-03-05", 1645487283, true)
+		suite.NoError(err, "no error creating testPermit")
 
-	// create test permit using above dates
-	testCar := models.Car{Id: "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", LicensePlate: "OGYR3X",
-		Color: "blue", Make: "", Model: ""}
-	testPermit := models.Permit{Id: 1, ResidentId: "T1043321", Car: testCar, StartDate: startDate,
-		EndDate: endDate, RequestTS: 1645487283, AffectsDays: true}
+		// get first permit
+		firstPermit := permits[0]
 
-	// get first permit
-	firstPermit := permits[0]
-
-	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
-	suite.Empty(cmp.Diff(firstPermit, testPermit), "firstPermit should be equal to testPermit")
+		// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
+		suite.Empty(cmp.Diff(firstPermit, testPermit), "firstPermit should be equal to testPermit")
+	}
 }
