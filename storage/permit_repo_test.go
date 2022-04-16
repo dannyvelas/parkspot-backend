@@ -28,7 +28,6 @@ func (suite *permitRepoSuite) SetupSuite() {
 	database, err := NewDatabase(config.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
-		return
 	}
 	suite.permitRepo = NewPermitRepo(database)
 
