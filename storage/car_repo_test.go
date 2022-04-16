@@ -1,12 +1,14 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -72,6 +74,25 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
 	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
+}
+
+func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
+	carAllFields := models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "toyota", "tercel")
+	for _, field := range reflect.VisibleFields(reflect.TypeOf(carAllFields)) {
+		// make each field "", one by one
+		carMissingField := carAllFields
+		carMissingFieldV := reflect.ValueOf(&carMissingField).Elem()
+		fieldV := carMissingFieldV.FieldByName(field.Name)
+		previousVal := fieldV.Interface()
+		fieldV.SetString("")
+
+		car, err := suite.carRepo.Create(carMissingField)
+		suite.ErrorIs(err, ErrMissingField, "errors.Is(err, ErrMissingField) should be true")
+		suite.Equal(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, field.Name))
+		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+
+		fieldV.SetString(previousVal.(string)) // restore value
+	}
 }
 
 func (suite carRepoSuite) TestCreate_EmptyLicensePlate_Negative() {
