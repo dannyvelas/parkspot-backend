@@ -1,0 +1,75 @@
+package storage
+
+import (
+	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/google/go-cmp/cmp"
+	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/suite"
+	"testing"
+	"time"
+)
+
+type carRepoSuite struct {
+	suite.Suite
+	location *time.Location
+	carRepo  carRepo
+	migrator *migrate.Migrate
+}
+
+func TestCarRepo(t *testing.T) {
+	suite.Run(t, new(carRepoSuite))
+}
+
+func (suite *carRepoSuite) SetupSuite() {
+	config := config.NewConfig()
+
+	database, err := NewDatabase(config.Postgres())
+	if err != nil {
+		log.Fatal().Msgf("Failed to start database: %v", err)
+	}
+	suite.carRepo = newCarRepo(database)
+
+	migrator, err := GetV1Migrator(database)
+	if err != nil {
+		log.Fatal().Msgf("Failed to get migrator: %v", err)
+	}
+	suite.migrator = migrator
+
+	if err := suite.migrator.Up(); err != nil {
+		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
+	}
+}
+
+func (suite carRepoSuite) TearDownSuite() {
+	err := suite.migrator.Down()
+	if err != nil {
+		suite.NoError(err, "No error migrating all the way down")
+	}
+}
+
+func (suite carRepoSuite) TestGetOne_Negative() {
+	_, err := suite.carRepo.GetOne("549c3b81-f3ca-49a3-8a79-a472c7f4554a") // non-existent uuid
+	suite.ErrorIs(err, ErrNoRows, "err should be equal to storage.ErrNoRows")
+}
+
+func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
+	car, err := suite.carRepo.GetOne("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e")
+	suite.NoError(err, "no errors when getting one car")
+
+	testCar := models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
+
+	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
+	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
+}
+
+func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
+	car, err := suite.carRepo.GetOne("8976e334-e281-7efd-ae84-92171d53434b")
+	suite.NoError(err, "no errors when getting one car")
+
+	testCar := models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
+
+	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
+	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
+}
