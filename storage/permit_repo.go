@@ -5,8 +5,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
-const permitVersion = 4
-
 type PermitRepo struct {
 	database Database
 }

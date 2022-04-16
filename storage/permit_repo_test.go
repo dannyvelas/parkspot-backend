@@ -1,7 +1,6 @@
 package storage
 
 import (
-	//"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -39,8 +38,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 	}
 	suite.migrator = migrator
 
-	if err := suite.migrator.Migrate(permitVersion); err != nil {
-		log.Fatal().Msgf("Error when migrating to permit version %d: %v", permitVersion, err)
+	if err := suite.migrator.Up(); err != nil {
+		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
 }
 
@@ -52,14 +51,14 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting all permit when the table is empty")
 	suite.Equal(len(permits), 0, "length of permit should be 0")
-	suite.Equal(permits, []models.Permit{}, "permit should be an empty slice")
+	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting active permits when the table is empty")
 	suite.Equal(len(permits), 0, "length of permits should be 0")
-	suite.Equal(permits, []models.Permit{}, "permits should be an empty slice")
+	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
