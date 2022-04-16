@@ -31,14 +31,17 @@ func (suite *permitRepoSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to start database: %v", err)
 		return
 	}
+	suite.permitRepo = NewPermitRepo(database)
 
 	migrator, err := GetV1Migrator(database)
 	if err != nil {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
-
-	suite.permitRepo = NewPermitRepo(database)
 	suite.migrator = migrator
+
+	if err := suite.migrator.Migrate(permitVersion); err != nil {
+		log.Fatal().Msgf("Error when migrating to permit version %d: %v", permitVersion, err)
+	}
 }
 
 func (suite permitRepoSuite) TearDownTest() {
