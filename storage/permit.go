@@ -18,15 +18,9 @@ type permit struct {
 
 func (permit permit) toModels() models.Permit {
 	return models.Permit{
-		Id:         permit.PermitId,
-		ResidentId: permit.ResidentId,
-		Car: models.Car{
-			Id:           permit.CarId,
-			LicensePlate: permit.LicensePlate,
-			Color:        permit.Color,
-			Make:         permit.Make.String,
-			Model:        permit.Model.String,
-		},
+		Id:          permit.PermitId,
+		ResidentId:  permit.ResidentId,
+		Car:         permit.car.toModels(),
 		StartDate:   time.Unix(permit.StartTS, 0),
 		EndDate:     time.Unix(permit.EndTS, 0),
 		RequestTS:   permit.RequestTS.Int64,
