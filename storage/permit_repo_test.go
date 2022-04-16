@@ -52,21 +52,18 @@ func (suite permitRepoSuite) TearDownSuite() {
 func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting all permit when the table is empty")
-	suite.Equal(len(permits), 0, "length of permit should be 0")
+	suite.Equal(0, len(permits), "length of permit should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting active permits when the table is empty")
-	suite.Equal(len(permits), 0, "length of permits should be 0")
+	suite.Equal(0, len(permits), "length of permits should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
-	err := suite.migrator.Up()
-	suite.NoError(err, "no error when migrating all the way up")
-
 	// check that length is not 0
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting all permits when the table is not empty")
