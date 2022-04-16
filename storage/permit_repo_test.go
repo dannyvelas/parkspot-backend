@@ -43,7 +43,10 @@ func (suite *permitRepoSuite) SetupSuite() {
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
-	suite.migrator.Down()
+	err := suite.migrator.Down()
+	if err != nil {
+		suite.NoError(err, "No error migrating all the way down")
+	}
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
