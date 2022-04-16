@@ -7,7 +7,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-func GetMigrator(database Database) (*migrate.Migrate, error) {
+func GetV1Migrator(database Database) (*migrate.Migrate, error) {
 	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to cast Database.driver to migrate.Driver interface: %v", err)

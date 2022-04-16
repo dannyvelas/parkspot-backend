@@ -32,7 +32,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 		return
 	}
 
-	migrator, err := GetMigrator(database)
+	migrator, err := GetV1Migrator(database)
 	if err != nil {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
