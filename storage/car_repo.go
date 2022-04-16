@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/typesafe"
 )
 
 type carRepo struct {
@@ -52,6 +53,11 @@ func (carRepo carRepo) CreateIfNotExists(car models.Car) (models.Car, error) {
 }
 
 func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
+	zeroValFields := typesafe.ZeroValFields(car)
+	if len(zeroValFields) > 0 {
+		return models.Car{}, errMissingFields(zeroValFields)
+	}
+
 	const query = `
     INSERT INTO car(id, license_plate, color, make, model)
     VALUES($1, $2, $3, $4, $5);

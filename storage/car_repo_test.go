@@ -73,3 +73,30 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
 	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
 }
+
+func (suite carRepoSuite) TestCreate_EmptyLicensePlate_Negative() {
+	testCar := models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "", "red", "toyota", "tercel")
+	car, err := suite.carRepo.Create(testCar)
+
+	suite.ErrorIs(err, ErrMissingField, "errors.Is(err, ErrMissingField) should be true")
+	suite.Equal(err.Error(), ErrMissingField.message+": [LicensePlate]")
+	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+}
+
+func (suite carRepoSuite) TestCreate_EmptyMake_Negative() {
+	testCar := models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "", "tercel")
+	car, err := suite.carRepo.Create(testCar)
+
+	suite.ErrorIs(err, ErrMissingField, "errors.Is(err, ErrMissingField) should be true")
+	suite.Equal(err.Error(), ErrMissingField.message+": [Make]")
+	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+}
+
+func (suite carRepoSuite) TestCreate_EmptyModel_Negative() {
+	testCar := models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "toyota", "")
+	car, err := suite.carRepo.Create(testCar)
+
+	suite.ErrorIs(err, ErrMissingField, "errors.Is(err, ErrMissingField) should be true")
+	suite.Equal(err.Error(), ErrMissingField.message+": [Model]")
+	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+}
