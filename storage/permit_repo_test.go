@@ -44,10 +44,6 @@ func (suite *permitRepoSuite) SetupSuite() {
 	}
 }
 
-func (suite permitRepoSuite) TearDownTest() {
-	suite.permitRepo.deleteAll()
-}
-
 func (suite permitRepoSuite) TearDownSuite() {
 	suite.migrator.Down()
 }

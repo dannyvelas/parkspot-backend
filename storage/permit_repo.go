@@ -77,18 +77,3 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 
 	return permits.toModels(), nil
 }
-
-func (permitRepo PermitRepo) deleteAll() (int64, error) {
-	query := "DELETE FROM permit"
-	res, err := permitRepo.database.driver.Exec(query)
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo: deleteAll: %v", newError(ErrDatabaseExec, err))
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo: deleteAll: %v", newError(ErrGetRowsAffected, err))
-	}
-
-	return rowsAffected, nil
-}
