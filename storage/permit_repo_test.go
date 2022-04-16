@@ -50,10 +50,8 @@ func (suite permitRepoSuite) TearDownSuite() {
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
-	err := suite.migrator.Down()
-	suite.NoError(err, "No error when migrating down")
-	err = suite.migrator.Steps(1)
-	suite.NoError(err, "No error when migrating to v1")
+	err := suite.migrator.Migrate(1)
+	suite.NoError(err, "No error when migrating down to v1")
 	defer func() {
 		err := suite.migrator.Up()
 		suite.NoError(err, "No error when migrating all the way up again")
@@ -66,10 +64,8 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 }
 
 func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
-	err := suite.migrator.Down()
-	suite.NoError(err, "No error when migrating down")
-	err = suite.migrator.Steps(1)
-	suite.NoError(err, "No error when migrating to v1")
+	err := suite.migrator.Migrate(1)
+	suite.NoError(err, "No error when migrating down to v1")
 	defer func() {
 		err := suite.migrator.Up()
 		suite.NoError(err, "No error when migrating all the way up again")
