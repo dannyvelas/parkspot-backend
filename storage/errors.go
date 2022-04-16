@@ -22,5 +22,5 @@ func (e sentinelError) Error() string {
 }
 
 func newError(sentinelErr sentinelError, err error) error {
-	return fmt.Errorf("%v: %v", sentinelErr, err)
+	return fmt.Errorf("%w: %v", sentinelErr, err)
 }

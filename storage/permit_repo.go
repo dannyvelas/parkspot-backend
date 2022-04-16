@@ -41,7 +41,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 	permits := permitSlice{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo: GetActive: %v", newError(ErrDatabaseQuery, err))
+		return nil, fmt.Errorf("permit_repo: GetActive: %w", newError(ErrDatabaseQuery, err))
 	}
 
 	return permits.toModels(), nil
@@ -71,7 +71,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 	permits := permitSlice{}
 	err := permitRepo.database.driver.Select(&permits, query, getBoundedLimit(limit), offset)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo: GetAll: %v", newError(ErrDatabaseQuery, err))
+		return nil, fmt.Errorf("permit_repo: GetAll: %w", newError(ErrDatabaseQuery, err))
 	}
 
 	return permits.toModels(), nil
@@ -88,7 +88,7 @@ func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error)
 	_, err = permitRepo.database.driver.Exec(permitQuery, permit.Id, permit.ResidentId, car.Id,
 		permit.StartDate.Unix(), permit.EndDate.Unix(), permit.RequestTS, permit.AffectsDays)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("permit_repo: Create: %v", newError(ErrDatabaseExec, err))
+		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w", newError(ErrDatabaseExec, err))
 	}
 
 	return permit, nil
