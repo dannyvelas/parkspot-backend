@@ -30,7 +30,6 @@ func main() {
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
-		return
 	}
 	log.Info().Msg("Connected to Database.")
 
