@@ -7,10 +7,11 @@ import (
 
 type PermitRepo struct {
 	database Database
+	carRepo  carRepo
 }
 
 func NewPermitRepo(database Database) PermitRepo {
-	return PermitRepo{database: database}
+	return PermitRepo{database: database, carRepo: newCarRepo(database)}
 }
 
 func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
@@ -74,4 +75,21 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 	}
 
 	return permits.toModels(), nil
+}
+
+func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error) {
+	car, err := permitRepo.carRepo.CreateIfNotExists(permit.Car)
+
+	const permitQuery = `
+    INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
+    VALUES($1, $2, $3, $4, $5, $6, $7);
+  `
+
+	_, err = permitRepo.database.driver.Exec(permitQuery, permit.Id, permit.ResidentId, car.Id,
+		permit.StartDate.Unix(), permit.EndDate.Unix(), permit.RequestTS, permit.AffectsDays)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("permit_repo: Create: %v", newError(ErrDatabaseExec, err))
+	}
+
+	return permit, nil
 }
