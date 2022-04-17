@@ -41,9 +41,9 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 
 func (carRepo carRepo) CreateIfNotExists(car models.Car) (models.Car, error) {
 	car, err := carRepo.GetOne(car.Id)
-	if err != nil && errors.Is(err, ErrNoRows) {
+	if err != nil && !errors.Is(err, ErrNoRows) {
 		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
-	} else if err == ErrNoRows {
+	} else if errors.Is(err, ErrNoRows) {
 		car, err = carRepo.Create(car)
 		if err != nil {
 			return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
