@@ -101,6 +101,15 @@ func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
 	}
 }
 
+func (suite carRepoSuite) TestCreateIfNotExists_CarExists_Positive() {
+	// chose car with no empty fields, otherwise this would fail for another reason - empty fields not allowed
+	existingCar := models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
+
+	car, err := suite.carRepo.CreateIfNotExists(existingCar)
+	suite.Nil(err, "err from creating existingCar should be nil")
+	suite.Empty(cmp.Diff(car, existingCar), "car should be equal to Car{}")
+}
+
 // returns a map, where each key is the name of a field
 // each value is a car which has that field zeroed-out
 func carsWithZeroedFields() map[string]models.Car {
