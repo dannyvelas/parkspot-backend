@@ -2,6 +2,7 @@ package storage
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/typesafe"
@@ -40,7 +41,7 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 
 func (carRepo carRepo) CreateIfNotExists(car models.Car) (models.Car, error) {
 	car, err := carRepo.GetOne(car.Id)
-	if err != nil && err != ErrNoRows {
+	if err != nil && errors.Is(err, ErrNoRows) {
 		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
 	} else if err == ErrNoRows {
 		car, err = carRepo.Create(car)
