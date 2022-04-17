@@ -10,14 +10,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	"reflect"
 	"testing"
-	"time"
 )
 
 type carRepoSuite struct {
 	suite.Suite
-	location *time.Location
-	carRepo  carRepo
-	migrator *migrate.Migrate
+	carRepo                carRepo
+	migrator               *migrate.Migrate
+	existingCar            models.Car
+	existingCarEmptyFields models.Car
+	nonExistingCar         models.Car
 }
 
 func TestCarRepo(t *testing.T) {
@@ -42,6 +43,10 @@ func (suite *carRepoSuite) SetupSuite() {
 	if err := suite.migrator.Up(); err != nil {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
+
+	suite.existingCar = models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
+	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
+	suite.nonExistingCar = models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -57,27 +62,27 @@ func (suite carRepoSuite) TestGetOne_Negative() {
 }
 
 func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
-	car, err := suite.carRepo.GetOne("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e")
-	suite.NoError(err, "no errors when getting one car")
+	existingCarEmptyFields := suite.existingCarEmptyFields
 
-	testCar := models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
+	foundCar, err := suite.carRepo.GetOne(existingCarEmptyFields.Id)
+	suite.NoError(err, "no errors when getting one car with empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
-	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
+	suite.Empty(cmp.Diff(foundCar, existingCarEmptyFields), "car should be equal to testCar")
 }
 
 func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
-	car, err := suite.carRepo.GetOne("8976e334-e281-7efd-ae84-92171d53434b")
-	suite.NoError(err, "no errors when getting one car")
+	existingCar := suite.existingCar
 
-	testCar := models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
+	foundCar, err := suite.carRepo.GetOne(existingCar.Id)
+	suite.NoError(err, "no errors when getting one car without any empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
-	suite.Empty(cmp.Diff(car, testCar), "car should be equal to testCar")
+	suite.Empty(cmp.Diff(foundCar, existingCar), "car should be equal to testCar")
 }
 
 func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
-	for fieldNameMissing, car := range carsWithZeroedFields() {
+	for fieldNameMissing, car := range manyWithEmptyFields(suite.nonExistingCar) {
 		car, err := suite.carRepo.Create(car)
 		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
 		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
@@ -85,16 +90,13 @@ func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
 }
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	// chose car with no empty fields, otherwise this would fail for another reason - empty fields not allowed
-	existingCar := models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
-
-	car, err := suite.carRepo.Create(existingCar)
+	car, err := suite.carRepo.Create(suite.existingCar)
 	suite.NotNil(err, "err from creating existingCar should not be nil")
 	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
 }
 
 func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
-	for fieldNameMissing, car := range carsWithZeroedFields() {
+	for fieldNameMissing, car := range manyWithEmptyFields(suite.nonExistingCar) {
 		car, err := suite.carRepo.CreateIfNotExists(car)
 		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
 		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
@@ -102,26 +104,22 @@ func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
 }
 
 func (suite carRepoSuite) TestCreateIfNotExists_CarExists_Positive() {
-	// chose car with no empty fields, otherwise this would fail for another reason - empty fields not allowed
-	existingCar := models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
-
-	car, err := suite.carRepo.CreateIfNotExists(existingCar)
+	foundCar, err := suite.carRepo.CreateIfNotExists(suite.existingCar)
 	suite.Nil(err, "err from creating existingCar should be nil")
-	suite.Empty(cmp.Diff(car, existingCar), "car should be equal to Car{}")
+	suite.Empty(cmp.Diff(foundCar, suite.existingCar), "car found should be equal to the existingCar passed in")
 }
 
 // returns a map, where each key is the name of a field
 // each value is a car which has that field zeroed-out
-func carsWithZeroedFields() map[string]models.Car {
-	carAllFields := models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "toyota", "tercel")
-	fieldMissingToCar := map[string]models.Car{}
+func manyWithEmptyFields(carAllFields models.Car) map[string]models.Car {
+	cars := map[string]models.Car{}
 	for _, field := range reflect.VisibleFields(reflect.TypeOf(carAllFields)) {
 		carMissingField := carAllFields
 		carMissingFieldV := reflect.ValueOf(&carMissingField).Elem()
 		fieldV := carMissingFieldV.FieldByName(field.Name)
 		fieldV.SetString("")
-		fieldMissingToCar[field.Name] = carMissingField
+		cars[field.Name] = carMissingField
 	}
 
-	return fieldMissingToCar
+	return cars
 }
