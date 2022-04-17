@@ -44,6 +44,7 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 }
 
 func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
+	// not checking for empty fields because that already happens in GetOne and Create
 	outCar, err := carRepo.GetOne(inCar.Id)
 	if err != nil && !errors.Is(err, ErrNoRows) {
 		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
