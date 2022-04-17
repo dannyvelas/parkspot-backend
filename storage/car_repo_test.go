@@ -93,6 +93,14 @@ func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
 }
 
+func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
+	for fieldNameMissing, car := range carsWithZeroedFields() {
+		car, err := suite.carRepo.CreateIfNotExists(car)
+		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
+		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+	}
+}
+
 // returns a map, where each key is the name of a field
 // each value is a car which has that field zeroed-out
 func carsWithZeroedFields() map[string]models.Car {
