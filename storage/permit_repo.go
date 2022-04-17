@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/typesafe"
 )
 
 type PermitRepo struct {
@@ -78,7 +79,15 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 }
 
 func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error) {
+	zeroValFields := typesafe.ZeroValFields(permit)
+	if len(zeroValFields) > 0 {
+		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w", errMissingFields(zeroValFields))
+	}
+
 	car, err := permitRepo.carRepo.CreateIfNotExists(permit.Car)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w", err)
+	}
 
 	const permitQuery = `
     INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
