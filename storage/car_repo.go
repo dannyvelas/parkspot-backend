@@ -39,24 +39,24 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
-func (carRepo carRepo) CreateIfNotExists(car models.Car) (models.Car, error) {
-	car, err := carRepo.GetOne(car.Id)
+func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
+	outCar, err := carRepo.GetOne(inCar.Id)
 	if err != nil && !errors.Is(err, ErrNoRows) {
 		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
 	} else if errors.Is(err, ErrNoRows) {
-		car, err = carRepo.Create(car)
+		outCar, err = carRepo.Create(inCar)
 		if err != nil {
 			return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
 		}
 	}
 
-	return car, nil
+	return outCar, nil
 }
 
 func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
 	zeroValFields := typesafe.ZeroValFields(car)
 	if len(zeroValFields) > 0 {
-		return models.Car{}, errMissingFields(zeroValFields)
+		return models.Car{}, fmt.Errorf("car_repo: Create: %w", errMissingFields(zeroValFields))
 	}
 
 	const query = `
