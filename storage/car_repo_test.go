@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"reflect"
 	"testing"
 )
 
@@ -82,7 +81,7 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
-	for fieldNameMissing, car := range manyWithEmptyFields(suite.nonExistingCar) {
+	for fieldNameMissing, car := range genEmptyFields(suite.nonExistingCar) {
 		car, err := suite.carRepo.Create(car)
 		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
 		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
@@ -96,7 +95,7 @@ func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 }
 
 func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
-	for fieldNameMissing, car := range manyWithEmptyFields(suite.nonExistingCar) {
+	for fieldNameMissing, car := range genEmptyFields(suite.nonExistingCar) {
 		car, err := suite.carRepo.CreateIfNotExists(car)
 		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
 		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
@@ -107,19 +106,4 @@ func (suite carRepoSuite) TestCreateIfNotExists_CarExists_Positive() {
 	foundCar, err := suite.carRepo.CreateIfNotExists(suite.existingCar)
 	suite.Nil(err, "err from creating existingCar should be nil")
 	suite.Empty(cmp.Diff(foundCar, suite.existingCar), "car found should be equal to the existingCar passed in")
-}
-
-// returns a map, where each key is the name of a field
-// each value is a car which has that field zeroed-out
-func manyWithEmptyFields(carAllFields models.Car) map[string]models.Car {
-	cars := map[string]models.Car{}
-	for _, field := range reflect.VisibleFields(reflect.TypeOf(carAllFields)) {
-		carMissingField := carAllFields
-		carMissingFieldV := reflect.ValueOf(&carMissingField).Elem()
-		fieldV := carMissingFieldV.FieldByName(field.Name)
-		fieldV.SetString("")
-		cars[field.Name] = carMissingField
-	}
-
-	return cars
 }
