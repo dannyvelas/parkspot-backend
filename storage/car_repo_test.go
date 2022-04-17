@@ -79,7 +79,6 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
 	for fieldNameMissing, car := range carsWithZeroedFields() {
 		car, err := suite.carRepo.Create(car)
-		suite.ErrorIs(err, ErrMissingField, "errors.Is(err, ErrMissingField) should be true")
 		suite.Equal(fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing), err.Error())
 		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
 	}
