@@ -97,14 +97,12 @@ func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 
 func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
 	for emptyFieldName, inCar := range genEmptyFields(suite.nonExistingCar) {
-		outCar, err := suite.carRepo.CreateIfNotExists(inCar)
-		if emptyFieldName == "Id" {
-			suite.ErrorIsf(err, ErrEmptyIDArg, "err should wrap storage.ErrEmptyIDArg for car without %s. Instead was: %v", emptyFieldName, err)
-		} else {
+		if emptyFieldName != "Id" { // empty Id gives ErrEmptyIDArg from car.GetOne
+			outCar, err := suite.carRepo.CreateIfNotExists(inCar)
 			condition := errors.Is(err, models.ErrInvalidFields) || errors.Is(err, models.ErrEmptyFields)
 			suite.Truef(condition, "err should be models.ErrInValidFields or models.ErrEmptyFields for car without %s. Was: %v", emptyFieldName, err)
+			suite.Empty(cmp.Diff(outCar, models.Car{}), "car returned should be equal to Car{}")
 		}
-		suite.Empty(cmp.Diff(outCar, models.Car{}), "car returned should be equal to Car{}")
 	}
 }
 
