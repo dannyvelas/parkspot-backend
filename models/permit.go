@@ -59,3 +59,15 @@ func (self Permit) Equal(other Permit) bool {
 
 	return true
 }
+
+func (permit Permit) Validate() error {
+	if permit.ResidentId[0] == 'P' {
+		return fmt.Errorf("permit_repo: create: Account not allowed to request permit")
+	}
+
+	if err := permit.Car.Validate(); err != nil {
+		return fmt.Errorf("Invalid permit: %w", err)
+	}
+
+	return nil
+}
