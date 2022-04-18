@@ -26,7 +26,3 @@ func (e sentinelError) Error() string {
 func newError(sentinelErr sentinelError, err error) error {
 	return fmt.Errorf("%w: %v", sentinelErr, err)
 }
-
-func errMissingFields(fieldNames []string) error {
-	return fmt.Errorf("%w: %v", ErrMissingField, fieldNames)
-}

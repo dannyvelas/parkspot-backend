@@ -61,7 +61,7 @@ func (self Permit) Equal(other Permit) bool {
 	return true
 }
 
-func (permit Permit) Validate() error {
+func (permit Permit) invalidFields() error {
 	errors := []string{}
 
 	if permit.ResidentId[0] == 'P' {
@@ -79,7 +79,9 @@ func (permit Permit) Validate() error {
 	return nil
 }
 
-func (permit Permit) EmptyFields() (emptyFields []string) {
+func (permit Permit) emptyFields() error {
+	emptyFields := []string{}
+
 	if permit.Id == 0 {
 		emptyFields = append(emptyFields, "Id")
 	} else if permit.ResidentId == "" {
@@ -94,5 +96,21 @@ func (permit Permit) EmptyFields() (emptyFields []string) {
 		// this is okay so do nothing
 	}
 
-	return
+	if len(emptyFields) > 0 {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+	}
+
+	return nil
+}
+
+func (permit Permit) Validate() error {
+	if err := permit.invalidFields(); err != nil {
+		return err
+	}
+
+	if err := permit.emptyFields(); err != nil {
+		return err
+	}
+
+	return nil
 }

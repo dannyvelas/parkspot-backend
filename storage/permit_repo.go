@@ -78,11 +78,6 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 }
 
 func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error) {
-	emptyFields := permit.EmptyFields()
-	if len(emptyFields) > 0 {
-		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w: %v", ErrMissingField, emptyFields)
-	}
-
 	if err := permit.Validate(); err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w: %v", ErrInvalidField, err)
 	}

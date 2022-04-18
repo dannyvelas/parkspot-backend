@@ -17,7 +17,7 @@ func newCarRepo(database Database) carRepo {
 
 func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 	if id == "" {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", errMissingFields([]string{"Id"}))
+		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w: %v", ErrMissingField, []string{"Id"})
 	}
 
 	const query = `
@@ -43,7 +43,7 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 }
 
 func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
-	// not checking for empty fields because that already happens in GetOne and Create
+	// not checking for empty/invalid fields because that already happens in GetOne and Create
 	outCar, err := carRepo.GetOne(inCar.Id)
 	if err != nil && !errors.Is(err, ErrNoRows) {
 		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
@@ -58,13 +58,8 @@ func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 }
 
 func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
-	emptyFields := car.EmptyFields()
-	if len(emptyFields) > 0 {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrMissingField, emptyFields)
-	}
-
 	if err := car.Validate(); err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrInvalidField, err)
+		return models.Car{}, fmt.Errorf("car_repo: Create: %w", err)
 	}
 
 	const query = `
