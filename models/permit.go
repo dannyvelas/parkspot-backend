@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"strings"
 	"time"
 )
 
@@ -61,12 +62,18 @@ func (self Permit) Equal(other Permit) bool {
 }
 
 func (permit Permit) Validate() error {
+	errors := []string{}
+
 	if permit.ResidentId[0] == 'P' {
-		return fmt.Errorf("permit_repo: create: Account not allowed to request permit")
+		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
 	}
 
 	if err := permit.Car.Validate(); err != nil {
-		return fmt.Errorf("Invalid permit: %w", err)
+		errors = append(errors, fmt.Sprintf("invalid car: %v", err))
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%v", strings.Join(errors, ". "))
 	}
 
 	return nil

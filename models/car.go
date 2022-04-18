@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 type Car struct {
@@ -40,25 +41,30 @@ func (self Car) Equal(other Car) bool {
 }
 
 func (car Car) Validate() error {
+	errors := []string{}
 	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(car.LicensePlate) {
-		return fmt.Errorf("Invalid car: licensePlate can only be letters or numbers")
+		errors = append(errors, "licensePlate can only be letters or numbers")
 	}
 
 	if len(car.LicensePlate) > 8 {
-		return fmt.Errorf("Invalid car: licensePlate can be maximum 8 characters")
+		errors = append(errors, "licensePlate can be maximum 8 characters")
 	}
 
 	if !regexp.MustCompile("^[A-Za-z]+$").MatchString(car.Color) {
-		return fmt.Errorf("Invalid car: color must be one word only letters")
+		errors = append(errors, "color must be one word only letters")
 	}
 
 	makeAndModelRe := regexp.MustCompile("^[A-Za-z0-9 -]+$")
 	if !makeAndModelRe.MatchString(car.Make) {
-		return fmt.Errorf("Invalid car: make can only have spaces, letters, numbers, and dashes")
+		errors = append(errors, "make can only have spaces, letters, numbers, and dashes")
 	}
 
 	if !makeAndModelRe.MatchString(car.Model) {
-		return fmt.Errorf("Invalid car: model can only have spaces, letters, numbers, and dashes")
+		errors = append(errors, "model can only have spaces, letters, numbers, and dashes")
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%v", strings.Join(errors, ". "))
 	}
 
 	return nil
