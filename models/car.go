@@ -69,3 +69,19 @@ func (car Car) Validate() error {
 
 	return nil
 }
+
+func (car Car) hasEmptyValue() bool {
+	if car.Id == "" {
+		return true
+	} else if car.LicensePlate == "" {
+		return true
+	} else if car.Color == "" {
+		return true
+	} else if car.Make == "" {
+		return true
+	} else if car.Model == "" {
+		return true
+	}
+
+	return false
+}

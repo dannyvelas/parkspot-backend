@@ -78,3 +78,21 @@ func (permit Permit) Validate() error {
 
 	return nil
 }
+
+func (permit Permit) hasEmptyValue() bool {
+	if permit.Id == 0 {
+		return true
+	} else if permit.ResidentId == "" {
+		return true
+	} else if permit.StartDate.IsZero() {
+		return true
+	} else if permit.EndDate.IsZero() {
+		return true
+	} else if permit.RequestTS == 0 {
+		return true
+	} else if permit.AffectsDays == false {
+		// this is okay so do nothing
+	}
+
+	return false
+}
