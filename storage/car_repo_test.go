@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"fmt"
+	"errors"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -81,10 +81,11 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
-	for fieldNameMissing, car := range genEmptyFields(suite.nonExistingCar) {
-		car, err := suite.carRepo.Create(car)
-		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
-		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+	for emptyFieldName, inCar := range genEmptyFields(suite.nonExistingCar) {
+		outCar, err := suite.carRepo.Create(inCar)
+		condition := errors.Is(err, models.ErrInvalidFields) || errors.Is(err, models.ErrEmptyFields)
+		suite.Truef(condition, "err should be models.ErrInValidFields or models.ErrEmptyFields for car without %s. Was: %v", emptyFieldName, err)
+		suite.Empty(cmp.Diff(outCar, models.Car{}), "car should be equal to Car{}")
 	}
 }
 
@@ -95,10 +96,15 @@ func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 }
 
 func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
-	for fieldNameMissing, car := range genEmptyFields(suite.nonExistingCar) {
-		car, err := suite.carRepo.CreateIfNotExists(car)
-		suite.Contains(err.Error(), fmt.Sprintf("%s: [%s]", ErrMissingField.message, fieldNameMissing))
-		suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+	for emptyFieldName, inCar := range genEmptyFields(suite.nonExistingCar) {
+		outCar, err := suite.carRepo.CreateIfNotExists(inCar)
+		if emptyFieldName == "Id" {
+			suite.ErrorIsf(err, ErrEmptyIDArg, "err should wrap storage.ErrEmptyIDArg for car without %s. Instead was: %v", emptyFieldName, err)
+		} else {
+			condition := errors.Is(err, models.ErrInvalidFields) || errors.Is(err, models.ErrEmptyFields)
+			suite.Truef(condition, "err should be models.ErrInValidFields or models.ErrEmptyFields for car without %s. Was: %v", emptyFieldName, err)
+		}
+		suite.Empty(cmp.Diff(outCar, models.Car{}), "car returned should be equal to Car{}")
 	}
 }
 
