@@ -15,8 +15,7 @@ var (
 	ErrNoRows          = sentinelError{"No rows found"}
 	ErrDatabaseExec    = sentinelError{"Error executing database command"}
 	ErrGetRowsAffected = sentinelError{"Error getting rows affected"}
-	ErrMissingField    = sentinelError{"Error: missing field"}
-	ErrInvalidField    = sentinelError{"Error: invalid field"}
+	ErrEmptyIDArg      = sentinelError{"ID argument is the zero value for its type"}
 )
 
 func (e sentinelError) Error() string {

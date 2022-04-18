@@ -17,7 +17,7 @@ func newCarRepo(database Database) carRepo {
 
 func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 	if id == "" {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w: %v", ErrMissingField, []string{"Id"})
+		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", ErrEmptyIDArg)
 	}
 
 	const query = `

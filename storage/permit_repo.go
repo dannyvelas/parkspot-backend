@@ -79,7 +79,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 
 func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error) {
 	if err := permit.Validate(); err != nil {
-		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w: %v", ErrInvalidField, err)
+		return models.Permit{}, fmt.Errorf("permit_repo: Create: %w", err)
 	}
 
 	car, err := permitRepo.carRepo.CreateIfNotExists(permit.Car)
