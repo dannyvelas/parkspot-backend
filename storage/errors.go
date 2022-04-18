@@ -1,9 +1,5 @@
 package storage
 
-import (
-	"fmt"
-)
-
 type sentinelError struct {
 	message string
 }
@@ -20,8 +16,4 @@ var (
 
 func (e sentinelError) Error() string {
 	return e.message
-}
-
-func newError(sentinelErr sentinelError, err error) error {
-	return fmt.Errorf("%w: %v", sentinelErr, err)
 }

@@ -36,7 +36,7 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 	if err == sql.ErrNoRows {
 		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", ErrNoRows)
 	} else if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", newError(ErrDatabaseQuery, err))
+		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return car.toModels(), nil
@@ -70,7 +70,7 @@ func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
 	_, err := carRepo.database.driver.Exec(query, car.Id, car.LicensePlate, car.Color,
 		car.Make, car.Model)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w", newError(ErrDatabaseExec, err))
+		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrDatabaseExec, err)
 	}
 
 	return car, nil
