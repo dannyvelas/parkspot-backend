@@ -8,6 +8,16 @@ type Car struct {
 	Model        string `json:"model"`
 }
 
+func NewCar(id string, licensePlate string, color string, make string, model string) Car {
+	return Car{
+		Id:           id,
+		LicensePlate: licensePlate,
+		Color:        color,
+		Make:         make,
+		Model:        model,
+	}
+}
+
 func (self Car) Equal(other Car) bool {
 	if self.Id != other.Id {
 		return false
@@ -22,14 +32,4 @@ func (self Car) Equal(other Car) bool {
 	}
 
 	return true
-}
-
-func NewCar(id string, licensePlate string, color string, make string, model string) Car {
-	return Car{
-		Id:           id,
-		LicensePlate: licensePlate,
-		Color:        color,
-		Make:         make,
-		Model:        model,
-	}
 }
