@@ -79,20 +79,20 @@ func (permit Permit) Validate() error {
 	return nil
 }
 
-func (permit Permit) hasEmptyValue() bool {
+func (permit Permit) EmptyFields() (emptyFields []string) {
 	if permit.Id == 0 {
-		return true
+		emptyFields = append(emptyFields, "Id")
 	} else if permit.ResidentId == "" {
-		return true
+		emptyFields = append(emptyFields, "ResidentId")
 	} else if permit.StartDate.IsZero() {
-		return true
+		emptyFields = append(emptyFields, "StartDate")
 	} else if permit.EndDate.IsZero() {
-		return true
+		emptyFields = append(emptyFields, "EndDate")
 	} else if permit.RequestTS == 0 {
-		return true
+		emptyFields = append(emptyFields, "RequestTS")
 	} else if permit.AffectsDays == false {
 		// this is okay so do nothing
 	}
 
-	return false
+	return
 }

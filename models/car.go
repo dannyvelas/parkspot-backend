@@ -70,18 +70,18 @@ func (car Car) Validate() error {
 	return nil
 }
 
-func (car Car) hasEmptyValue() bool {
+func (car Car) EmptyFields() (emptyFields []string) {
 	if car.Id == "" {
-		return true
+		emptyFields = append(emptyFields, "Id")
 	} else if car.LicensePlate == "" {
-		return true
+		emptyFields = append(emptyFields, "LicensePlate")
 	} else if car.Color == "" {
-		return true
+		emptyFields = append(emptyFields, "Color")
 	} else if car.Make == "" {
-		return true
+		emptyFields = append(emptyFields, "Make")
 	} else if car.Model == "" {
-		return true
+		emptyFields = append(emptyFields, "Model")
 	}
 
-	return false
+	return
 }
