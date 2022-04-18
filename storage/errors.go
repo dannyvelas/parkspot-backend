@@ -16,6 +16,7 @@ var (
 	ErrDatabaseExec    = sentinelError{"Error executing database command"}
 	ErrGetRowsAffected = sentinelError{"Error getting rows affected"}
 	ErrMissingField    = sentinelError{"Error: missing field"}
+	ErrInvalidField    = sentinelError{"Error: invalid field"}
 )
 
 func (e sentinelError) Error() string {

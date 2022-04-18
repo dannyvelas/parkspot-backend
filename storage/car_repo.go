@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/typesafe"
 )
 
 type carRepo struct {
@@ -59,9 +58,13 @@ func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 }
 
 func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
-	zeroValFields := typesafe.ZeroValFields(car)
-	if len(zeroValFields) > 0 {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w", errMissingFields(zeroValFields))
+	emptyFields := car.EmptyFields()
+	if len(emptyFields) > 0 {
+		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrMissingField, emptyFields)
+	}
+
+	if err := car.Validate(); err != nil {
+		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrInvalidField, err)
 	}
 
 	const query = `
