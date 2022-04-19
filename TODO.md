@@ -11,19 +11,22 @@
     ✓ creating a car with a missing field doesn't work
     ✓ creating a car that already exists just returns that car with no error
 ## Mid priority
+- [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
+- [x] probably fix the way that car and permit repo are tied together.
+- [x] moved typesafe package to models repo
+- [x] make errMissingFields a typesafe.error instead of having duplicate storage.ErrMissingFields and api.ErrMissingFields
+- [x] split up permits getall test
+- [ ] make squirrel errors a new error type
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
     * creating a permit that already exists doesn't work
 ## Low priority
-- [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
-- [x] probably fix the way that car and permit repo are tied together.
 - [ ] change error format to be filename.func so that only errors are separated by :
-- [ ] moved typesafe package to models repo
+- [ ] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
 - [ ] add a list of colors to use as a dropdown
 - [ ] add common sentinel errors to api package like errQuery errDecoding
-- [ ] make errMissingFields a typesafe.error instead of having duplicate storage.ErrMissingFields and api.ErrMissingFields
 - [ ] change the string phrasing in storage.ErrMissingFields
 - [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [ ] add CONVENTIONS doc and mention in it that the storage models use <model-name>Id for id fields
@@ -34,8 +37,13 @@
 - [ ] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [ ] make insert repo functions actually query the inserted values from the database instead of just returning their arguments. also test that the values are the same
 - [ ] probably remove the return from `StartServer` function
+- [ ] move comment about // check that they're equal not using suite.Equal because... to CONVENTIONS.md
 ## Blocked
 - [ ] decide how much of car repo should be private
 ## Keep in mind
 - [ ] whether i should make empty-field checking a decorator in repo functions
 - [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
+- [ ] maybe make carRepo, permitRepo, adminRepo, ... fields on `storage.Database` and make all the receiving funcs of those repos receivers of storage.Database. that way repo funcs can easily call repo funcs of a different model
+- [ ] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type
+- [ ] Validate repo func decorator that could be defined in `models`
+- [ ] mention in conventions that the error msg is `file_name.func_name: error: wrapped-error`. func name and wrapped-error are optional wrapped-error will be %v if it's a 3rd party error and %w if its an error defined within this code
