@@ -11,6 +11,7 @@ var (
 	ErrNoRows          = sentinelError{"No rows found"}
 	ErrDatabaseExec    = sentinelError{"Error executing database command"}
 	ErrEmptyIDArg      = sentinelError{"ID argument is the zero value for its type"}
+	ErrInvalidArg      = sentinelError{"Invalid argument"}
 	ErrBuildingQuery   = sentinelError{"Error building query"}
 )
 
