@@ -10,10 +10,11 @@ import (
 	"net/http"
 )
 
-func PermitRouter(permitRepo storage.PermitRepo) func(chi.Router) {
+func PermitRouter(permitRepo storage.PermitRepo, carRepo storage.CarRepo) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Get("/active", getActive(permitRepo))
 		r.Get("/all", getAll(permitRepo))
+		r.Get("/create", create(permitRepo, carRepo))
 	}
 }
 
@@ -55,7 +56,7 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	}
 }
 
-func create(permitRepo storage.PermitRepo) http.HandlerFunc {
+func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var permit models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&permit); err != nil {

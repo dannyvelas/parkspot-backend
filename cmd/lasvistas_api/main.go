@@ -36,6 +36,7 @@ func main() {
 	// initialize repos
 	adminRepo := storage.NewAdminRepo(database)
 	permitRepo := storage.NewPermitRepo(database)
+	carRepo := storage.NewCarRepo(database)
 
 	// initialize JWTMiddleware
 	jwtMiddleware := api.NewJWTMiddleware(config.Token())
@@ -47,7 +48,7 @@ func main() {
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
 			adminRouter.Use(jwtMiddleware.Authenticate)
 			adminRouter.Route("/hello", api.HelloRouter())
-			adminRouter.Route("/permits", api.PermitRouter(permitRepo))
+			adminRouter.Route("/permits", api.PermitRouter(permitRepo, carRepo))
 		})
 	})
 
