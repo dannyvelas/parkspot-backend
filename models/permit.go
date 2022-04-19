@@ -17,30 +17,6 @@ type Permit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
-func NewPermit(id int, residentId string, car Car, startString string, endString string, requestTS int64, affectsDays bool) (Permit, error) {
-	const dateFormat = "2006-01-02"
-
-	startDate, err := time.ParseInLocation(dateFormat, startString, time.Local)
-	if err != nil {
-		return Permit{}, fmt.Errorf("Error parsing startDate: %v", err)
-	}
-
-	endDate, err := time.ParseInLocation(dateFormat, endString, time.Local)
-	if err != nil {
-		return Permit{}, fmt.Errorf("Error parsing endDate: %v", err)
-	}
-
-	return Permit{
-		Id:          id,
-		ResidentId:  residentId,
-		Car:         car,
-		StartDate:   startDate,
-		EndDate:     endDate,
-		RequestTS:   requestTS,
-		AffectsDays: affectsDays,
-	}, nil
-}
-
 func (self Permit) Equal(other Permit) bool {
 	if self.Id != other.Id {
 		return false
