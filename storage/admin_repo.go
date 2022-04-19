@@ -20,9 +20,9 @@ func (adminRepo AdminRepo) GetOne(id string) (Admin, error) {
 	err := adminRepo.database.driver.QueryRow(query, id).
 		Scan(&admin.Id, &admin.Password)
 	if err == sql.ErrNoRows {
-		return Admin{}, fmt.Errorf("admin_repo: GetOne: %w", ErrNoRows)
+		return Admin{}, fmt.Errorf("admin_repo.GetOne: %w", ErrNoRows)
 	} else if err != nil {
-		return Admin{}, fmt.Errorf("admin_repo: GetOne: %w: %v", ErrQueryScanOneRow, err)
+		return Admin{}, fmt.Errorf("admin_repo.GetOne: %w: %v", ErrQueryScanOneRow, err)
 	}
 
 	return admin, nil

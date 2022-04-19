@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -25,7 +27,7 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		activePermits, err := permitRepo.GetActive(boundedSize, offset)
 		if err != nil {
-			err := fmt.Errorf("permit_router: GetActive: Error querying permitRepo: %v", err)
+			err := fmt.Errorf("permit_router.GetActive: Error querying permitRepo: %v", err)
 			respondError(w, err, errInternalServerError)
 			return
 		}
@@ -44,11 +46,32 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		allPermits, err := permitRepo.GetAll(boundedSize, offset)
 		if err != nil {
-			err = fmt.Errorf("permit_router: getAll: Error querying permitRepo: %v", err)
+			err := fmt.Errorf("permit_router.getAll: Error querying permitRepo: %v", err)
 			respondError(w, err, errInternalServerError)
 			return
 		}
 
 		respondJSON(w, http.StatusOK, allPermits)
+	}
+}
+
+func create(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var permit models.Permit
+		if err := json.NewDecoder(r.Body).Decode(&permit); err != nil {
+			err = fmt.Errorf("permit_router.create: Error decoding credentials body: %v", err)
+			respondError(w, err, errBadRequest)
+			return
+		}
+
+		if err := permit.Validate(); err != nil {
+			err := fmt.Errorf("permit_router.create: Invalid fields: %v", err)
+			respondError(w, err, errBadRequest)
+			return
+		}
+
+		// TODO: check if resident exists
+
+		// TODO: check if licensePlate has active permit
 	}
 }

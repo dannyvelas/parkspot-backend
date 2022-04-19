@@ -17,7 +17,7 @@ func NewCarRepo(database Database) CarRepo {
 
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	if id == "" {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", ErrEmptyIDArg)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", ErrEmptyIDArg)
 	}
 
 	const query = `
@@ -34,9 +34,9 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	car := car{}
 	err := carRepo.database.driver.Get(&car, query, id)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", ErrNoRows)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", ErrNoRows)
 	} else if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w: %v", ErrDatabaseQuery, err)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return car.toModels(), nil
@@ -46,11 +46,11 @@ func (carRepo CarRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 	// not checking for empty/invalid fields because that already happens in GetOne and Create
 	outCar, err := carRepo.GetOne(inCar.Id)
 	if err != nil && !errors.Is(err, ErrNoRows) {
-		return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
+		return models.Car{}, fmt.Errorf("car_repo.CreateIfNotExists: %w", err)
 	} else if errors.Is(err, ErrNoRows) {
 		outCar, err = carRepo.Create(inCar)
 		if err != nil {
-			return models.Car{}, fmt.Errorf("car_repo: CreateIfNotExists: %w", err)
+			return models.Car{}, fmt.Errorf("car_repo.CreateIfNotExists: %w", err)
 		}
 	}
 
@@ -59,7 +59,7 @@ func (carRepo CarRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 
 func (carRepo CarRepo) Create(car models.Car) (models.Car, error) {
 	if err := car.Validate(); err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w", err)
+		return models.Car{}, fmt.Errorf("car_repo.Create: %w", err)
 	}
 
 	const query = `
@@ -70,7 +70,7 @@ func (carRepo CarRepo) Create(car models.Car) (models.Car, error) {
 	_, err := carRepo.database.driver.Exec(query, car.Id, car.LicensePlate, car.Color,
 		car.Make, car.Model)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo: Create: %w: %v", ErrDatabaseExec, err)
+		return models.Car{}, fmt.Errorf("car_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
 	return car, nil
