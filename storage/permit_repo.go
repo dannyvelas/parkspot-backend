@@ -37,7 +37,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
@@ -55,7 +55,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error)
 		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
