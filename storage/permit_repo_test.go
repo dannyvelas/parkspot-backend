@@ -18,6 +18,7 @@ type permitRepoSuite struct {
 	location   *time.Location
 	permitRepo PermitRepo
 	migrator   *migrate.Migrate
+	dateFormat string
 }
 
 func TestPermitRepo(t *testing.T) {
@@ -42,6 +43,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 	if err := suite.migrator.Up(); err != nil {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
+
+	suite.dateFormat = "2006-01-02"
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
@@ -86,6 +89,13 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
+func (suite permitRepoSuite) TestGetActivePermits_NonEmpty_Positive() {
+	// check that length is not 0
+	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
+	suite.NoError(err, "no error getting all permits when the table is not empty")
+	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
+}
+
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	f, err := os.Create("testout/all_permits.txt")
@@ -93,15 +103,31 @@ func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	defer f.Close()
 
 	for _, permit := range permits {
-		const dateFormat = "2006-01-02"
-		_, err := f.WriteString(fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t\n",
-			permit.Id,
-			permit.ResidentId,
-			permit.Car.Id,
-			permit.StartDate.Format(dateFormat),
-			permit.EndDate.Format(dateFormat),
-			permit.RequestTS,
-			permit.AffectsDays))
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
 		suite.NoError(err, "No error when writing line")
 	}
+}
+
+func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
+	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
+	f, err := os.Create("testout/active_permits.txt")
+	suite.NoError(err, "No error creating active_permits file")
+	defer f.Close()
+
+	for _, permit := range permits {
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
+		suite.NoError(err, "No error when writing line")
+	}
+}
+
+func permitToString(permit models.Permit, dateFormat string) string {
+	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t\n",
+		permit.Id,
+		permit.ResidentId,
+		permit.Car.Id,
+		permit.StartDate.Format(dateFormat),
+		permit.EndDate.Format(dateFormat),
+		permit.RequestTS,
+		permit.AffectsDays,
+	)
 }
