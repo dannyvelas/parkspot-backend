@@ -7,15 +7,15 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
-type carRepo struct {
+type CarRepo struct {
 	database Database
 }
 
-func newCarRepo(database Database) carRepo {
-	return carRepo{database: database}
+func NewCarRepo(database Database) CarRepo {
+	return CarRepo{database: database}
 }
 
-func (carRepo carRepo) GetOne(id string) (models.Car, error) {
+func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	if id == "" {
 		return models.Car{}, fmt.Errorf("car_repo: GetOne: %w", ErrEmptyIDArg)
 	}
@@ -42,7 +42,7 @@ func (carRepo carRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
-func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
+func (carRepo CarRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 	// not checking for empty/invalid fields because that already happens in GetOne and Create
 	outCar, err := carRepo.GetOne(inCar.Id)
 	if err != nil && !errors.Is(err, ErrNoRows) {
@@ -57,7 +57,7 @@ func (carRepo carRepo) CreateIfNotExists(inCar models.Car) (models.Car, error) {
 	return outCar, nil
 }
 
-func (carRepo carRepo) Create(car models.Car) (models.Car, error) {
+func (carRepo CarRepo) Create(car models.Car) (models.Car, error) {
 	if err := car.Validate(); err != nil {
 		return models.Car{}, fmt.Errorf("car_repo: Create: %w", err)
 	}

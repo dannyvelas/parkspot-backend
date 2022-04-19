@@ -13,7 +13,7 @@ import (
 
 type carRepoSuite struct {
 	suite.Suite
-	carRepo                carRepo
+	carRepo                CarRepo
 	migrator               *migrate.Migrate
 	existingCar            models.Car
 	existingCarEmptyFields models.Car
@@ -31,7 +31,7 @@ func (suite *carRepoSuite) SetupSuite() {
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
 	}
-	suite.carRepo = newCarRepo(database)
+	suite.carRepo = NewCarRepo(database)
 
 	migrator, err := GetV1Migrator(database)
 	if err != nil {
