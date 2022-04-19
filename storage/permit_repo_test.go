@@ -1,12 +1,14 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 	"time"
 )
@@ -82,17 +84,24 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "no error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
+}
 
-	if len(permits) > 1 {
-		// create test permit
-		testCar := models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
-		testPermit, err := models.NewPermit(1, "T1043321", testCar, "2022-02-22", "2022-03-05", 1645487283, true)
-		suite.NoError(err, "no error creating testPermit")
+func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	f, err := os.Create("testout/all_permits.txt")
+	suite.NoError(err, "No error creating all_permits file")
+	defer f.Close()
 
-		// get first permit
-		firstPermit := permits[0]
-
-		// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
-		suite.Empty(cmp.Diff(firstPermit, testPermit), "firstPermit should be equal to testPermit")
+	for _, permit := range permits {
+		const dateFormat = "2006-01-02"
+		_, err := f.WriteString(fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t\n",
+			permit.Id,
+			permit.ResidentId,
+			permit.Car.Id,
+			permit.StartDate.Format(dateFormat),
+			permit.EndDate.Format(dateFormat),
+			permit.RequestTS,
+			permit.AffectsDays))
+		suite.NoError(err, "No error when writing line")
 	}
 }
