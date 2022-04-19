@@ -16,6 +16,11 @@
 - [x] moved typesafe package to models repo
 - [x] make errMissingFields a typesafe.error instead of having duplicate storage.ErrMissingFields and api.ErrMissingFields
 - [x] split up permits getall test
+- [ ] find out how to make dateFormat global
+- [ ] change storage.erremtpyidarg to generic errinput
+- [ ] replace "No error" assert messages in tests with "error"
+- [ ] add much more validation to permit type
+- [ ] switch int64 timestamp types to uint64
 - [ ] make squirrel errors a new error type
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
