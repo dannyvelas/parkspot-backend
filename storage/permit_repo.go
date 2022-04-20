@@ -65,23 +65,28 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error) {
-	if err := permit.Validate(); err != nil {
+func (permitRepo PermitRepo) Create(permitFields models.PermitFields) (models.Permit, error) {
+	if err := permitFields.Validate(); err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.Create: %w", err)
 	}
 
 	const query = `
-    INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
-    VALUES($1, $2, $3, $4, $5, $6, $7);
+    INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
+    VALUES($1, $2, $3, $4, $5, $6)
+    RETURNING id
   `
 
-	_, err := permitRepo.database.driver.Exec(query, permit.Id, permit.ResidentId, permit.Car.Id,
-		permit.StartDate.Unix(), permit.EndDate.Unix(), permit.RequestTS, permit.AffectsDays)
+	var id int
+	err := permitRepo.database.driver.Get(&id, query, permitFields.ResidentId, permitFields.Car.Id,
+		permitFields.StartDate.Unix(), permitFields.EndDate.Unix(), permitFields.RequestTS, permitFields.AffectsDays)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
-	return permit, nil
+	return models.Permit{
+		Id:           id,
+		PermitFields: permitFields,
+	}, nil
 }
 
 func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate time.Time) ([]models.Permit, error) {

@@ -21,6 +21,9 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Info().Msg("Initializing app...")
 
+	// set global values
+	const dateFormat = "2006-01-02"
+
 	// load config
 	config := config.NewConfig()
 
@@ -47,7 +50,7 @@ func main() {
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
 			adminRouter.Use(jwtMiddleware.Authenticate)
 			adminRouter.Route("/hello", api.HelloRouter())
-			adminRouter.Route("/permits", api.PermitRouter(permitRepo, carRepo))
+			adminRouter.Route("/permits", api.PermitRouter(permitRepo, carRepo, dateFormat))
 		})
 	})
 

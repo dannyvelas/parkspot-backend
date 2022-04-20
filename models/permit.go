@@ -8,13 +8,8 @@ import (
 )
 
 type Permit struct {
-	Id          int       `json:"id"`
-	ResidentId  string    `json:"residentId"`
-	Car         Car       `json:"car"`
-	StartDate   time.Time `json:"startDate"`
-	EndDate     time.Time `json:"endDate"`
-	RequestTS   int64     `json:"requestTS"`
-	AffectsDays bool      `json:"affectsDays"`
+	Id int `json:"id"`
+	PermitFields
 }
 
 func (self Permit) Equal(other Permit) bool {
@@ -37,20 +32,27 @@ func (self Permit) Equal(other Permit) bool {
 	return true
 }
 
-func (permit Permit) emptyFields() error {
+type PermitFields struct {
+	ResidentId  string    `json:"residentId"`
+	Car         Car       `json:"car"`
+	StartDate   time.Time `json:"startDate"`
+	EndDate     time.Time `json:"endDate"`
+	RequestTS   int64     `json:"requestTS"`
+	AffectsDays bool      `json:"affectsDays"`
+}
+
+func (permitFields PermitFields) emptyFields() error {
 	emptyFields := []string{}
 
-	if permit.Id == 0 {
-		emptyFields = append(emptyFields, "Id")
-	} else if permit.ResidentId == "" {
+	if permitFields.ResidentId == "" {
 		emptyFields = append(emptyFields, "ResidentId")
-	} else if permit.StartDate.IsZero() {
+	} else if permitFields.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "StartDate")
-	} else if permit.EndDate.IsZero() {
+	} else if permitFields.EndDate.IsZero() {
 		emptyFields = append(emptyFields, "EndDate")
-	} else if permit.RequestTS == 0 {
+	} else if permitFields.RequestTS == 0 {
 		emptyFields = append(emptyFields, "RequestTS")
-	} else if permit.AffectsDays == false {
+	} else if permitFields.AffectsDays == false {
 		// this is okay so do nothing
 	}
 
@@ -61,14 +63,14 @@ func (permit Permit) emptyFields() error {
 	return nil
 }
 
-func (permit Permit) invalidFields() error {
+func (permitFields PermitFields) invalidFields() error {
 	errors := []string{}
 
-	if permit.ResidentId[0] == 'P' {
+	if permitFields.ResidentId[0] == 'P' {
 		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
 	}
 
-	if err := permit.Car.Validate(); err != nil {
+	if err := permitFields.Car.Validate(); err != nil {
 		errors = append(errors, fmt.Sprintf("invalid car: %v", err))
 	}
 
@@ -79,12 +81,12 @@ func (permit Permit) invalidFields() error {
 	return nil
 }
 
-func (permit Permit) Validate() error {
-	if err := permit.emptyFields(); err != nil {
+func (permitFields PermitFields) Validate() error {
+	if err := permitFields.emptyFields(); err != nil {
 		return err
 	}
 
-	if err := permit.invalidFields(); err != nil {
+	if err := permitFields.invalidFields(); err != nil {
 		return err
 	}
 

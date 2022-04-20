@@ -10,11 +10,11 @@ import (
 	"net/http"
 )
 
-func PermitRouter(permitRepo storage.PermitRepo, carRepo storage.CarRepo) func(chi.Router) {
+func PermitRouter(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat string) func(chi.Router) {
 	return func(r chi.Router) {
 		r.Get("/active", getActive(permitRepo))
 		r.Get("/all", getAll(permitRepo))
-		r.Get("/create", create(permitRepo, carRepo))
+		r.Post("/create", create(permitRepo, carRepo, dateFormat))
 	}
 }
 
@@ -56,16 +56,16 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	}
 }
 
-func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo) http.HandlerFunc {
+func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var permit models.Permit
-		if err := json.NewDecoder(r.Body).Decode(&permit); err != nil {
+		var permitFields models.PermitFields
+		if err := json.NewDecoder(r.Body).Decode(&permitFields); err != nil {
 			err = fmt.Errorf("permit_router.create: Error decoding credentials body: %v", err)
 			respondError(w, err, errBadRequest)
 			return
 		}
 
-		if err := permit.Validate(); err != nil {
+		if err := permitFields.Validate(); err != nil {
 			err := fmt.Errorf("permit_router.create: Invalid fields: %v", err)
 			respondError(w, err, errBadRequest)
 			return
@@ -73,6 +73,6 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo) http.Handler
 
 		// TODO: check if resident exists
 
-		// TODO: check if licensePlate has active permit
+		respondJSON(w, 200, permitFields)
 	}
 }
