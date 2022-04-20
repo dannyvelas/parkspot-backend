@@ -18,7 +18,6 @@ type permitRepoSuite struct {
 	location   *time.Location
 	permitRepo PermitRepo
 	migrator   *migrate.Migrate
-	dateFormat string
 }
 
 func TestPermitRepo(t *testing.T) {
@@ -32,7 +31,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
 	}
-	suite.permitRepo = NewPermitRepo(database)
+	suite.permitRepo = NewPermitRepo(database, "2006-01-02")
 
 	migrator, err := GetV1Migrator(database)
 	if err != nil {
@@ -43,8 +42,6 @@ func (suite *permitRepoSuite) SetupSuite() {
 	if err := suite.migrator.Up(); err != nil {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
-
-	suite.dateFormat = "2006-01-02"
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
@@ -98,24 +95,45 @@ func (suite permitRepoSuite) TestGetActivePermits_NonEmpty_Positive() {
 
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	suite.NoError(err, "No error when getting all permits")
+
 	f, err := os.Create("testout/all_permits.txt")
 	suite.NoError(err, "No error creating all_permits file")
 	defer f.Close()
 
 	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
+		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
 		suite.NoError(err, "No error when writing line")
 	}
 }
 
 func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
+	suite.NoError(err, "No error when getting active permits")
+
 	f, err := os.Create("testout/active_permits.txt")
 	suite.NoError(err, "No error creating active_permits file")
 	defer f.Close()
 
 	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
+		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
+		suite.NoError(err, "No error when writing line")
+	}
+}
+
+func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
+	const carId = "05539a50-6fac-c50d-b290-4e7372c573e9"
+	const startDate = "2022-04-05"
+	const endDate = "2022-04-16"
+	permits, err := suite.permitRepo.GetActiveOfCarDuring(carId, startDate, endDate)
+	suite.NoError(err, "No error when getting active permits of car during two timestamps")
+
+	f, err := os.Create(fmt.Sprintf("testout/active_during_%s_%s.txt", startDate, endDate))
+	suite.NoError(err, "No error creating file")
+	defer f.Close()
+
+	for _, permit := range permits {
+		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
 		suite.NoError(err, "No error when writing line")
 	}
 }

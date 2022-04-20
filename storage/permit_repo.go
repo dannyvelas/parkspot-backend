@@ -8,10 +8,11 @@ import (
 
 type PermitRepo struct {
 	database     Database
+	dateFormat   string
 	permitSelect squirrel.SelectBuilder
 }
 
-func NewPermitRepo(database Database) PermitRepo {
+func NewPermitRepo(database Database, dateFormat string) PermitRepo {
 	permitSelect := squirrel.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
@@ -26,7 +27,7 @@ func NewPermitRepo(database Database) PermitRepo {
 		"permit.affects_days",
 	).From("permit").LeftJoin("car ON permit.car_id = car.id")
 
-	return PermitRepo{database: database, permitSelect: permitSelect}
+	return PermitRepo{database: database, dateFormat: dateFormat, permitSelect: permitSelect}
 }
 
 func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
@@ -84,4 +85,28 @@ func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error)
 	}
 
 	return permit, nil
+}
+
+func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate string) ([]models.Permit, error) {
+	startTime, endTime, err := parseStartEndDate(permitRepo.dateFormat, startDate, endDate)
+	if err != nil {
+		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrInvalidArg, err)
+	}
+
+	query, args, err := permitRepo.permitSelect.
+		Where("car_id = $1", carId).
+		Where("permit.start_ts <= $2", endTime.Unix()).
+		Where("permit.end_ts >= $3", startTime.Unix()).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
 }

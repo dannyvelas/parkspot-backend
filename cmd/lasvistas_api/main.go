@@ -16,11 +16,13 @@ import (
 	"time"
 )
 
-const projectName = "lasvistas_api"
-
 func main() {
+	// logging setup
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Info().Msg("Initializing app...")
+
+	// set global values
+	const dateFormat = "2006-01-02"
 
 	// load config
 	config := config.NewConfig()
@@ -35,7 +37,7 @@ func main() {
 
 	// initialize repos
 	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
+	permitRepo := storage.NewPermitRepo(database, dateFormat)
 	carRepo := storage.NewCarRepo(database)
 
 	// initialize JWTMiddleware
