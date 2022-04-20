@@ -47,34 +47,34 @@ func (suite *permitRepoSuite) SetupSuite() {
 func (suite permitRepoSuite) TearDownSuite() {
 	err := suite.migrator.Down()
 	if err != nil {
-		suite.NoError(err, "No error migrating all the way down")
+		suite.NoError(err, "Error migrating all the way down")
 	}
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 	err := suite.migrator.Migrate(1)
-	suite.NoError(err, "No error when migrating down to v1")
+	suite.NoError(err, "Error when migrating down to v1")
 	defer func() {
 		err := suite.migrator.Up()
-		suite.NoError(err, "No error when migrating all the way up again")
+		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
-	suite.NoError(err, "no error getting all permit when the table is empty")
+	suite.NoError(err, "Error getting all permit when the table is empty")
 	suite.Equal(0, len(permits), "length of permit should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 	err := suite.migrator.Migrate(1)
-	suite.NoError(err, "No error when migrating down to v1")
+	suite.NoError(err, "Error when migrating down to v1")
 	defer func() {
 		err := suite.migrator.Up()
-		suite.NoError(err, "No error when migrating all the way up again")
+		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
-	suite.NoError(err, "no error getting active permits when the table is empty")
+	suite.NoError(err, "Error getting active permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permits should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
@@ -82,42 +82,42 @@ func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	// check that length is not 0
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
-	suite.NoError(err, "no error getting all permits when the table is not empty")
+	suite.NoError(err, "Error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
 func (suite permitRepoSuite) TestGetActivePermits_NonEmpty_Positive() {
 	// check that length is not 0
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
-	suite.NoError(err, "no error getting all permits when the table is not empty")
+	suite.NoError(err, "Error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
-	suite.NoError(err, "No error when getting all permits")
+	suite.NoError(err, "Error when getting all permits")
 
 	f, err := os.Create("testout/all_permits.txt")
-	suite.NoError(err, "No error creating all_permits file")
+	suite.NoError(err, "Error creating all_permits file")
 	defer f.Close()
 
 	for _, permit := range permits {
 		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
-		suite.NoError(err, "No error when writing line")
+		suite.NoError(err, "Error when writing line")
 	}
 }
 
 func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
-	suite.NoError(err, "No error when getting active permits")
+	suite.NoError(err, "Error when getting active permits")
 
 	f, err := os.Create("testout/active_permits.txt")
-	suite.NoError(err, "No error creating active_permits file")
+	suite.NoError(err, "Error creating active_permits file")
 	defer f.Close()
 
 	for _, permit := range permits {
 		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
-		suite.NoError(err, "No error when writing line")
+		suite.NoError(err, "Error when writing line")
 	}
 }
 
@@ -126,15 +126,15 @@ func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
 	const startDate = "2022-04-05"
 	const endDate = "2022-04-16"
 	permits, err := suite.permitRepo.GetActiveOfCarDuring(carId, startDate, endDate)
-	suite.NoError(err, "No error when getting active permits of car during two timestamps")
+	suite.NoError(err, "Error when getting active permits of car during two timestamps")
 
 	f, err := os.Create(fmt.Sprintf("testout/active_during_%s_%s.txt", startDate, endDate))
-	suite.NoError(err, "No error creating file")
+	suite.NoError(err, "Error creating file")
 	defer f.Close()
 
 	for _, permit := range permits {
 		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
-		suite.NoError(err, "No error when writing line")
+		suite.NoError(err, "Error when writing line")
 	}
 }
 

@@ -51,7 +51,7 @@ func (suite *carRepoSuite) SetupSuite() {
 func (suite carRepoSuite) TearDownSuite() {
 	err := suite.migrator.Down()
 	if err != nil {
-		suite.NoError(err, "No error migrating all the way down")
+		suite.NoError(err, "Error migrating all the way down")
 	}
 }
 
@@ -64,7 +64,7 @@ func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
 	existingCarEmptyFields := suite.existingCarEmptyFields
 
 	foundCar, err := suite.carRepo.GetOne(existingCarEmptyFields.Id)
-	suite.NoError(err, "no errors when getting one car with empty fields")
+	suite.NoError(err, "Error when getting one car with empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
 	suite.Empty(cmp.Diff(foundCar, existingCarEmptyFields), "car should be equal to testCar")
@@ -74,7 +74,7 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 	existingCar := suite.existingCar
 
 	foundCar, err := suite.carRepo.GetOne(existingCar.Id)
-	suite.NoError(err, "no errors when getting one car without any empty fields")
+	suite.NoError(err, "Error when getting one car without any empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
 	suite.Empty(cmp.Diff(foundCar, existingCar), "car should be equal to testCar")
