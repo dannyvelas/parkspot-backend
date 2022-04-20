@@ -31,12 +31,12 @@ func NewPermitRepo(database Database, dateFormat string) PermitRepo {
 	return PermitRepo{database: database, dateFormat: dateFormat, permitSelect: permitSelect}
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.start_ts <= extract(epoch from now())").
 		Where("permit.end_ts >= extract(epoch from now())").
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrBuildingQuery, err)
@@ -51,10 +51,10 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint) ([]models.Permit, err
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetAll(limit, offset uint) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)

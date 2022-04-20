@@ -2,17 +2,17 @@ package api
 
 import "strconv"
 
-func toUint(value string) uint {
+func toUint(value string) uint64 {
 	if value == "" {
 		return 0
 	} else if parsed, err := strconv.ParseUint(value, 10, 32); err != nil {
 		return 0
 	} else {
-		return uint(parsed)
+		return uint64(parsed)
 	}
 }
 
-func getBoundedSizeAndOffset(size, page uint) (boundedSize, offset uint) {
+func getBoundedSizeAndOffset(size, page uint64) (boundedSize, offset uint64) {
 	if size > maxPageSize {
 		boundedSize = maxPageSize
 	} else if size <= 0 {
