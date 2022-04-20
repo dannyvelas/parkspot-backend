@@ -9,11 +9,10 @@ import (
 
 type PermitRepo struct {
 	database     Database
-	dateFormat   string
 	permitSelect squirrel.SelectBuilder
 }
 
-func NewPermitRepo(database Database, dateFormat string) PermitRepo {
+func NewPermitRepo(database Database) PermitRepo {
 	permitSelect := squirrel.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
@@ -28,7 +27,7 @@ func NewPermitRepo(database Database, dateFormat string) PermitRepo {
 		"permit.affects_days",
 	).From("permit").LeftJoin("car ON permit.car_id = car.id")
 
-	return PermitRepo{database: database, dateFormat: dateFormat, permitSelect: permitSelect}
+	return PermitRepo{database: database, permitSelect: permitSelect}
 }
 
 func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, error) {

@@ -21,9 +21,6 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Info().Msg("Initializing app...")
 
-	// set global values
-	const dateFormat = "2006-01-02"
-
 	// load config
 	config := config.NewConfig()
 
@@ -37,7 +34,7 @@ func main() {
 
 	// initialize repos
 	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database, dateFormat)
+	permitRepo := storage.NewPermitRepo(database)
 	carRepo := storage.NewCarRepo(database)
 
 	// initialize JWTMiddleware

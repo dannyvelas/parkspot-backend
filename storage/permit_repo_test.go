@@ -18,6 +18,7 @@ type permitRepoSuite struct {
 	location   *time.Location
 	permitRepo PermitRepo
 	migrator   *migrate.Migrate
+	dateFormat string
 }
 
 func TestPermitRepo(t *testing.T) {
@@ -31,7 +32,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
 	}
-	suite.permitRepo = NewPermitRepo(database, "2006-01-02")
+	suite.permitRepo = NewPermitRepo(database)
 
 	migrator, err := GetV1Migrator(database)
 	if err != nil {
@@ -42,6 +43,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 	if err := suite.migrator.Up(); err != nil {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
+
+	suite.dateFormat = "2006-01-02"
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
@@ -102,7 +105,7 @@ func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	defer f.Close()
 
 	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
 		suite.NoError(err, "Error when writing line")
 	}
 }
@@ -116,15 +119,19 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 	defer f.Close()
 
 	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
 		suite.NoError(err, "Error when writing line")
 	}
 }
 
 func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
 	const carId = "05539a50-6fac-c50d-b290-4e7372c573e9"
-	const startDate = "2022-04-05"
-	const endDate = "2022-04-16"
+	startDate, err := time.ParseInLocation(suite.dateFormat, "2022-04-05", time.Local)
+	suite.NoError(err, "Error parsing start date")
+
+	endDate, err := time.ParseInLocation(suite.dateFormat, "2022-04-16", time.Local)
+	suite.NoError(err, "Error parsing end date")
+
 	permits, err := suite.permitRepo.GetActiveOfCarDuring(carId, startDate, endDate)
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
 
@@ -133,7 +140,7 @@ func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
 	defer f.Close()
 
 	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.permitRepo.dateFormat))
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
 		suite.NoError(err, "Error when writing line")
 	}
 }
