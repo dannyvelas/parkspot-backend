@@ -37,24 +37,6 @@ func (self Permit) Equal(other Permit) bool {
 	return true
 }
 
-func (permit Permit) invalidFields() error {
-	errors := []string{}
-
-	if permit.ResidentId[0] == 'P' {
-		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
-	}
-
-	if err := permit.Car.Validate(); err != nil {
-		errors = append(errors, fmt.Sprintf("invalid car: %v", err))
-	}
-
-	if len(errors) > 0 {
-		return fmt.Errorf("%v", strings.Join(errors, ". "))
-	}
-
-	return nil
-}
-
 func (permit Permit) emptyFields() error {
 	emptyFields := []string{}
 
@@ -79,12 +61,30 @@ func (permit Permit) emptyFields() error {
 	return nil
 }
 
+func (permit Permit) invalidFields() error {
+	errors := []string{}
+
+	if permit.ResidentId[0] == 'P' {
+		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
+	}
+
+	if err := permit.Car.Validate(); err != nil {
+		errors = append(errors, fmt.Sprintf("invalid car: %v", err))
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%v", strings.Join(errors, ". "))
+	}
+
+	return nil
+}
+
 func (permit Permit) Validate() error {
-	if err := permit.invalidFields(); err != nil {
+	if err := permit.emptyFields(); err != nil {
 		return err
 	}
 
-	if err := permit.emptyFields(); err != nil {
+	if err := permit.invalidFields(); err != nil {
 		return err
 	}
 

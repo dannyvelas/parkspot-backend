@@ -40,6 +40,28 @@ func (self Car) Equal(other Car) bool {
 	return true
 }
 
+func (car Car) emptyFields() error {
+	emptyFields := []string{}
+
+	if car.Id == "" {
+		emptyFields = append(emptyFields, "Id")
+	} else if car.LicensePlate == "" {
+		emptyFields = append(emptyFields, "LicensePlate")
+	} else if car.Color == "" {
+		emptyFields = append(emptyFields, "Color")
+	} else if car.Make == "" {
+		emptyFields = append(emptyFields, "Make")
+	} else if car.Model == "" {
+		emptyFields = append(emptyFields, "Model")
+	}
+
+	if len(emptyFields) > 0 {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+	}
+
+	return nil
+}
+
 func (car Car) invalidFields() error {
 	errors := []string{}
 	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(car.LicensePlate) {
@@ -70,34 +92,12 @@ func (car Car) invalidFields() error {
 	return nil
 }
 
-func (car Car) emptyFields() error {
-	emptyFields := []string{}
-
-	if car.Id == "" {
-		emptyFields = append(emptyFields, "Id")
-	} else if car.LicensePlate == "" {
-		emptyFields = append(emptyFields, "LicensePlate")
-	} else if car.Color == "" {
-		emptyFields = append(emptyFields, "Color")
-	} else if car.Make == "" {
-		emptyFields = append(emptyFields, "Make")
-	} else if car.Model == "" {
-		emptyFields = append(emptyFields, "Model")
-	}
-
-	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
-	}
-
-	return nil
-}
-
 func (car Car) Validate() error {
-	if err := car.invalidFields(); err != nil {
+	if err := car.emptyFields(); err != nil {
 		return err
 	}
 
-	if err := car.emptyFields(); err != nil {
+	if err := car.invalidFields(); err != nil {
 		return err
 	}
 
