@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"time"
 )
 
 type PermitRepo struct {
@@ -87,16 +88,11 @@ func (permitRepo PermitRepo) Create(permit models.Permit) (models.Permit, error)
 	return permit, nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate string) ([]models.Permit, error) {
-	startTime, endTime, err := parseStartEndDate(permitRepo.dateFormat, startDate, endDate)
-	if err != nil {
-		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrInvalidArg, err)
-	}
-
+func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate time.Time) ([]models.Permit, error) {
 	query, args, err := permitRepo.permitSelect.
 		Where("car_id = $1", carId).
-		Where("permit.start_ts <= $2", endTime.Unix()).
-		Where("permit.end_ts >= $3", startTime.Unix()).
+		Where("permit.start_ts <= $2", endDate.Unix()).
+		Where("permit.end_ts >= $3", startDate.Unix()).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrBuildingQuery, err)
