@@ -1,3 +1,4 @@
+## High Priority
 - [x] make some request_ts's null in test migrations because it is nullable
 - [x] add `Create` to permitRepo
 - [x] add `Get` test to carRepo
@@ -10,6 +11,7 @@
 - [x] add `CreateIfNotExists` test to carRepo
     ✓ creating a car with a missing field doesn't work
     ✓ creating a car that already exists just returns that car with no error
+- [ ] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -21,12 +23,15 @@
 - [x] make squirrel errors a new error type
 - [✗] switch int64 timestamp types to uint64 (won't do)
 - [x] replace "No error" assert messages in tests with "error"
+- [ ] change psql int type to uint64
 - [ ] add much more validation to permit type
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
     * creating a permit that already exists doesn't work
+- [ ] make routing its own thing in `api/`
+- [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
@@ -36,11 +41,12 @@
 - [ ] add common sentinel errors to api package like errQuery errDecoding
 - [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [ ] probably remove the return from `StartServer` function
-## Keep in mind
+## Maybe going to do
 - [ ] whether i should make empty-field checking a decorator in repo functions
 - [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
 - [ ] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type
 - [ ] Validate repo func decorator that could be defined in `models`
+- [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
 - [ ] change all `id` fields in database to be actually `<model-name>_id`
 - [ ] change car to not be embedded in storage.permit for consistency with models schema
