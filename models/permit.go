@@ -49,7 +49,7 @@ func (self Permit) Equal(other Permit) bool {
 
 type CreatePermit struct {
 	ResidentId  string    `json:"residentId"`
-	Car         CreateCar `json:"car"`
+	CreateCar   CreateCar `json:"car"`
 	StartDate   time.Time `json:"startDate"`
 	EndDate     time.Time `json:"endDate"`
 	RequestTS   int64     `json:"requestTS"`
@@ -60,7 +60,7 @@ func (createPermit CreatePermit) ToPermit(permitId int, carId string) Permit {
 	return NewPermit(
 		permitId,
 		createPermit.ResidentId,
-		createPermit.Car.ToCar(carId),
+		createPermit.CreateCar.ToCar(carId),
 		createPermit.StartDate,
 		createPermit.EndDate,
 		createPermit.RequestTS,

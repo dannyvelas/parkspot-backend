@@ -8,12 +8,12 @@ import (
 )
 
 type createPermitReq struct {
-	ResidentId  string       `json:"residentId"`
-	Car         createCarReq `json:"car"`
-	StartDate   time.Time    `json:"startDate"`
-	EndDate     time.Time    `json:"endDate"`
-	RequestTS   int64        `json:"requestTS"`
-	AffectsDays bool         `json:"affectsDays"`
+	ResidentId   string       `json:"residentId"`
+	CreateCarReq createCarReq `json:"car"`
+	StartDate    time.Time    `json:"startDate"`
+	EndDate      time.Time    `json:"endDate"`
+	RequestTS    int64        `json:"requestTS"`
+	AffectsDays  bool         `json:"affectsDays"`
 }
 
 func (createPermitReq createPermitReq) emptyFields() error {
@@ -61,14 +61,14 @@ func (createPermitReq createPermitReq) toModels() (models.CreatePermit, error) {
 		return models.CreatePermit{}, err
 	}
 
-	createCar, err := createPermitReq.Car.toModels()
+	createCar, err := createPermitReq.CreateCarReq.toModels()
 	if err != nil {
 		return models.CreatePermit{}, fmt.Errorf("%w: %v", errInvalidFields, "car")
 	}
 
 	return models.CreatePermit{
 		ResidentId:  createPermitReq.ResidentId,
-		Car:         createCar,
+		CreateCar:   createCar,
 		StartDate:   createPermitReq.StartDate,
 		EndDate:     createPermitReq.EndDate,
 		RequestTS:   createPermitReq.RequestTS,
