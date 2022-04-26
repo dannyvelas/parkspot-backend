@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -58,14 +57,15 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var permitFields models.PermitFields
-		if err := json.NewDecoder(r.Body).Decode(&permitFields); err != nil {
+		var createPermitReq createPermitReq
+		if err := json.NewDecoder(r.Body).Decode(&createPermitReq); err != nil {
 			err = fmt.Errorf("permit_router.create: Error decoding credentials body: %v", err)
 			respondError(w, err, errBadRequest)
 			return
 		}
 
-		if err := permitFields.Validate(); err != nil {
+		createPermit, err := createPermitReq.toModels()
+		if err != nil {
 			err := fmt.Errorf("permit_router.create: Invalid fields: %v", err)
 			respondError(w, err, errBadRequest)
 			return
@@ -73,6 +73,6 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat s
 
 		// TODO: check if resident exists
 
-		respondJSON(w, 200, permitFields)
+		respondJSON(w, 200, createPermit)
 	}
 }
