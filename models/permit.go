@@ -56,11 +56,11 @@ type CreatePermit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
-func (createPermit CreatePermit) ToPermit(permitID int, carID string) Permit {
+func (createPermit CreatePermit) ToPermit(permitId int, carId string) Permit {
 	return NewPermit(
-		permitID,
+		permitId,
 		createPermit.ResidentId,
-		createPermit.Car.ToCar(carID),
+		createPermit.Car.ToCar(carId),
 		createPermit.StartDate,
 		createPermit.EndDate,
 		createPermit.RequestTS,
