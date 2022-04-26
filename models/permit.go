@@ -15,6 +15,18 @@ type Permit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
+func NewPermit(id int, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) Permit {
+	return Permit{
+		Id:          id,
+		ResidentId:  residentId,
+		Car:         car,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		RequestTS:   requestTS,
+		AffectsDays: affectsDays,
+	}
+}
+
 func (self Permit) Equal(other Permit) bool {
 	if self.Id != other.Id {
 		return false
@@ -42,4 +54,15 @@ type CreatePermit struct {
 	EndDate     time.Time `json:"endDate"`
 	RequestTS   int64     `json:"requestTS"`
 	AffectsDays bool      `json:"affectsDays"`
+}
+
+func (createPermit CreatePermit) ToPermit(permitID int, carID string) Permit {
+	return NewPermit(
+		permitID,
+		createPermit.ResidentId,
+		createPermit.Car.ToCar(carID),
+		createPermit.StartDate,
+		createPermit.EndDate,
+		createPermit.RequestTS,
+		createPermit.AffectsDays)
 }

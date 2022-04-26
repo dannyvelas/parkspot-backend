@@ -40,3 +40,7 @@ type CreateCar struct {
 	Make         string `json:"make"`
 	Model        string `json:"model"`
 }
+
+func (createCar CreateCar) ToCar(id string) Car {
+	return NewCar(id, createCar.LicensePlate, createCar.Color, createCar.Make, createCar.Model)
+}
