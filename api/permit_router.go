@@ -54,15 +54,13 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat s
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createPermitReq createPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&createPermitReq); err != nil {
-			log.Error().Msgf("permit_router.create: Error decoding credentials body: %v", err)
 			respondError(w, errBadRequest)
 			return
 		}
 
 		createPermit, err := createPermitReq.toModels()
 		if err != nil {
-			log.Error().Msgf("permit_router.create: Invalid fields: %v", err)
-			respondError(w, errBadRequest)
+			respondErrorWith(w, errBadRequest, err.Error())
 			return
 		}
 
