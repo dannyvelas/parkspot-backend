@@ -25,3 +25,10 @@ func respondJSON(w http.ResponseWriter, statusCode int, data any) {
 func respondError(w http.ResponseWriter, responseErr responseError) {
 	respondJSON(w, responseErr.statusCode, responseErr.message)
 }
+
+func respondErrorWith(w http.ResponseWriter, responseErr responseError, message string) {
+	newResponseErr := responseErr
+	responseErr.message = responseErr.message + ". " + message
+
+	respondError(w, newResponseErr)
+}
