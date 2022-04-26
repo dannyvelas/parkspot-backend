@@ -36,7 +36,6 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
-
 	if err == sql.ErrNoRows {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", ErrNoRows)
 	} else if err != nil {
