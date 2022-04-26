@@ -4,28 +4,20 @@ import (
 	"net/http"
 )
 
-type apiError interface {
-	apiError() (int, string)
-}
-
-type sentinelError struct {
+type responseError struct {
 	statusCode int
 	message    string
 }
 
 var (
-	errUnauthorized        = sentinelError{http.StatusUnauthorized, "Unauthorized"}
-	errBadRequest          = sentinelError{http.StatusBadRequest, "Bad Request"}
-	errEmptyFields         = sentinelError{http.StatusBadRequest, "One or more missing fields"}
-	errInvalidFields       = sentinelError{http.StatusBadRequest, "One or more invalid fields"}
-	errNotFound            = sentinelError{http.StatusNotFound, "Not Found"}
-	errInternalServerError = sentinelError{http.StatusInternalServerError, "Internal Server Error"}
+	errUnauthorized        = responseError{http.StatusUnauthorized, "Unauthorized"}
+	errBadRequest          = responseError{http.StatusBadRequest, "Bad Request"}
+	errEmptyFields         = responseError{http.StatusBadRequest, "One or more missing fields"}
+	errInvalidFields       = responseError{http.StatusBadRequest, "One or more invalid fields"}
+	errNotFound            = responseError{http.StatusNotFound, "Not Found"}
+	errInternalServerError = responseError{http.StatusInternalServerError, "Internal Server Error"}
 )
 
-func (e sentinelError) Error() string {
+func (e responseError) Error() string {
 	return e.message
-}
-
-func (e sentinelError) apiError() (int, string) {
-	return e.statusCode, e.message
 }

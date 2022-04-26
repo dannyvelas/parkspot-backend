@@ -3,8 +3,8 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
@@ -19,19 +19,18 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {
-			err = fmt.Errorf("login_router: Error decoding credentials body: %v", err)
-			respondError(w, err, errBadRequest)
+			log.Error().Msgf("login_router: Error decoding credentials body: %v", err)
+			respondError(w, errBadRequest)
 			return
 		}
 
 		admin, err := adminRepo.GetOne(creds.Id)
 		if errors.Is(err, storage.ErrNoRows) {
-			err = fmt.Errorf("login_router: Rejected Auth: %v", err)
-			respondError(w, err, errUnauthorized)
+			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			err = fmt.Errorf("login_router: Error querying adminRepo: %v", err)
-			respondError(w, err, errInternalServerError)
+			log.Error().Msgf("login_router: Error querying adminRepo: %v", err)
+			respondError(w, errInternalServerError)
 			return
 		}
 
@@ -39,15 +38,14 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 			[]byte(admin.Password),
 			[]byte(creds.Password),
 		); err != nil {
-			err = fmt.Errorf("login_router: Rejected Auth: %v", err)
-			respondError(w, err, errUnauthorized)
+			respondError(w, errUnauthorized)
 			return
 		}
 
 		token, err := jwtMiddleware.newJWT(admin.Id)
 		if err != nil {
-			err = fmt.Errorf("login_router: Error generating JWT: %v", err)
-			respondError(w, err, errInternalServerError)
+			log.Error().Msgf("login_router: Error generating JWT: %v", err)
+			respondError(w, errInternalServerError)
 			return
 		}
 

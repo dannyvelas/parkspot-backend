@@ -1,8 +1,8 @@
 package api
 
 import (
-	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -18,15 +18,15 @@ func sayHello() http.HandlerFunc {
 
 		userId := ctx.Value("id")
 		if userId == nil {
-			err := errors.New("hello_router: key id not found in context")
-			respondError(w, err, errInternalServerError)
+			log.Error().Msg("hello_router: key id not found in context")
+			respondError(w, errInternalServerError)
 			return
 		}
 
 		userIdString, ok := userId.(string)
 		if !ok {
-			err := errors.New("hello_router: key id is not string")
-			respondError(w, err, errInternalServerError)
+			log.Error().Msg("hello_router: context key `id` is not string")
+			respondError(w, errInternalServerError)
 			return
 		}
 

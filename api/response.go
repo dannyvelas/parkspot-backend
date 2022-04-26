@@ -22,12 +22,6 @@ func respondJSON(w http.ResponseWriter, statusCode int, data any) {
 	}
 }
 
-func respondError(w http.ResponseWriter, internalErr error, apiErr apiError) {
-	statusCode, message := apiErr.apiError()
-	if statusCode == http.StatusInternalServerError {
-		log.Error().Msg(internalErr.Error())
-	} else {
-		log.Debug().Msg(internalErr.Error())
-	}
-	respondJSON(w, statusCode, message)
+func respondError(w http.ResponseWriter, responseErr responseError) {
+	respondJSON(w, responseErr.statusCode, responseErr.message)
 }

@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -24,8 +24,8 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		activePermits, err := permitRepo.GetActive(boundedSize, offset)
 		if err != nil {
-			err := fmt.Errorf("permit_router.GetActive: Error querying permitRepo: %v", err)
-			respondError(w, err, errInternalServerError)
+			log.Error().Msgf("permit_router.GetActive: Error querying permitRepo: %v", err)
+			respondError(w, errInternalServerError)
 			return
 		}
 
@@ -41,8 +41,8 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		allPermits, err := permitRepo.GetAll(boundedSize, offset)
 		if err != nil {
-			err := fmt.Errorf("permit_router.getAll: Error querying permitRepo: %v", err)
-			respondError(w, err, errInternalServerError)
+			log.Error().Msgf("permit_router.getAll: Error querying permitRepo: %v", err)
+			respondError(w, errInternalServerError)
 			return
 		}
 
@@ -54,15 +54,15 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat s
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createPermitReq createPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&createPermitReq); err != nil {
-			err = fmt.Errorf("permit_router.create: Error decoding credentials body: %v", err)
-			respondError(w, err, errBadRequest)
+			log.Error().Msgf("permit_router.create: Error decoding credentials body: %v", err)
+			respondError(w, errBadRequest)
 			return
 		}
 
 		createPermit, err := createPermitReq.toModels()
 		if err != nil {
-			err := fmt.Errorf("permit_router.create: Invalid fields: %v", err)
-			respondError(w, err, errBadRequest)
+			log.Error().Msgf("permit_router.create: Invalid fields: %v", err)
+			respondError(w, errBadRequest)
 			return
 		}
 

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/golang-jwt/jwt/v4"
 	"net/http"
@@ -65,15 +64,13 @@ func (jwtMiddleware JWTMiddleware) Authenticate(next http.Handler) http.Handler 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("jwt")
 		if err != nil {
-			err = fmt.Errorf("jwt_middleware: No cookie found: %v", err)
-			respondError(w, err, errUnauthorized)
+			respondError(w, errUnauthorized)
 			return
 		}
 
 		userId, err := jwtMiddleware.parseJWT(cookie.Value)
 		if err != nil {
-			err = fmt.Errorf("jwt_middleware: Error parsing jwt cookie: %v", err)
-			respondError(w, err, errUnauthorized)
+			respondError(w, errUnauthorized)
 			return
 		}
 
