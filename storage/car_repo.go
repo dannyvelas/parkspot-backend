@@ -3,15 +3,25 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
 type CarRepo struct {
-	database Database
+	database  Database
+	carSelect squirrel.SelectBuilder
 }
 
 func NewCarRepo(database Database) CarRepo {
-	return CarRepo{database: database}
+	carSelect := squirrel.Select(
+		"car.id AS car_id",
+		"car.license_plate",
+		"car.color",
+		"car.make",
+		"car.model",
+	).From("car")
+
+	return CarRepo{database: database, carSelect: carSelect}
 }
 
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
@@ -19,23 +29,39 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	}
 
-	const query = `
-    SELECT
-      car.id AS car_id,
-      car.license_plate,
-      car.color,
-      car.make,
-      car.model
-    FROM car
-    WHERE car.id = $1
-  `
+	query, args, err := carRepo.carSelect.Where("car.id = $1", id).ToSql()
+	if err != nil {
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+	}
 
 	car := car{}
-	err := carRepo.database.driver.Get(&car, query, id)
+	err = carRepo.database.driver.Get(&car, query, args...)
+
 	if err == sql.ErrNoRows {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", ErrNoRows)
 	} else if err != nil {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return car.toModels(), nil
+}
+
+func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (models.Car, error) {
+	if licensePlate == "" {
+		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", ErrInvalidArg)
+	}
+
+	query, args, err := carRepo.carSelect.Where("car.license_plate = $1", licensePlate).ToSql()
+	if err != nil {
+		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrBuildingQuery, err)
+	}
+
+	car := car{}
+	err = carRepo.database.driver.Get(&car, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w", ErrNoRows)
+	} else if err != nil {
+		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return car.toModels(), nil
