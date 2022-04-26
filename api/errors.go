@@ -16,6 +16,8 @@ type sentinelError struct {
 var (
 	errUnauthorized        = sentinelError{http.StatusUnauthorized, "Unauthorized"}
 	errBadRequest          = sentinelError{http.StatusBadRequest, "Bad Request"}
+	errEmptyFields         = sentinelError{http.StatusBadRequest, "One or more missing fields"}
+	errInvalidFields       = sentinelError{http.StatusBadRequest, "One or more invalid fields"}
 	errNotFound            = sentinelError{http.StatusNotFound, "Not Found"}
 	errInternalServerError = sentinelError{http.StatusInternalServerError, "Internal Server Error"}
 )
