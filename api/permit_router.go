@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -19,8 +18,6 @@ func PermitRouter(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFo
 
 func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Msg("Get Active Permit Endpoint")
-
 		size := toUint(r.URL.Query().Get("size"))
 		page := toUint(r.URL.Query().Get("page"))
 		boundedSize, offset := getBoundedSizeAndOffset(size, page)
@@ -38,8 +35,6 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Msg("Get All Endpoint")
-
 		size := toUint(r.URL.Query().Get("size"))
 		page := toUint(r.URL.Query().Get("page"))
 		boundedSize, offset := getBoundedSizeAndOffset(size, page)

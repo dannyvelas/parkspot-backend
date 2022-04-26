@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -15,7 +14,6 @@ func HelloRouter() func(chi.Router) {
 
 func sayHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Msg("Hello Endpoint")
 		ctx := r.Context()
 
 		userId := ctx.Value("id")
