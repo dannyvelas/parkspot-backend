@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -62,6 +64,36 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, dateFormat s
 		if err != nil {
 			respondErrorWith(w, errBadRequest, err.Error())
 			return
+		}
+
+		{
+			// check if car exists
+			existingCar, err := carRepo.GetByLicensePlate(createPermit.CreateCar.LicensePlate)
+			if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
+				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+				respondError(w, errInternalServerError)
+				return
+			}
+
+			// if car exists, check if it has active permits during dates requested
+			if err == nil {
+				activePermitsDuring, err := permitRepo.GetActiveOfCarDuring(
+					existingCar.Id, createPermit.StartDate, createPermit.EndDate)
+				if err != nil {
+					log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
+					respondError(w, errInternalServerError)
+					return
+				}
+
+				if len(activePermitsDuring) != 0 {
+					message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
+						"because this car has at least one active permit during that time.",
+						createPermit.StartDate.Format(dateFormat),
+						createPermit.EndDate.Format(dateFormat))
+					respondErrorWith(w, errBadRequest, message)
+					return
+				}
+			}
 		}
 
 		// TODO: check if resident exists
