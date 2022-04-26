@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -43,6 +44,12 @@ func (createPermitReq createPermitReq) invalidFields() error {
 
 	if createPermitReq.ResidentId[0] == 'P' {
 		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
+	} else if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(createPermitReq.ResidentId) {
+		errors = append(errors, "ResidentId must start be a 'B' or a 'T', followed by 7 numbers")
+	}
+
+	if createPermitReq.RequestTS > time.Now().Unix() {
+		errors = append(errors, "RequestTS cannot be in the future")
 	}
 
 	if len(errors) > 0 {
