@@ -6,7 +6,7 @@ import (
 )
 
 type modelType interface {
-	models.Car | models.Permit
+	models.Car | models.Permit | models.CreateCar | models.CreatePermit
 }
 
 // returns a map, where each key is the name of a field

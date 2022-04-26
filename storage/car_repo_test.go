@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"errors"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -16,8 +15,8 @@ type carRepoSuite struct {
 	carRepo                CarRepo
 	migrator               *migrate.Migrate
 	existingCar            models.Car
+	existingCreateCar      models.CreateCar
 	existingCarEmptyFields models.Car
-	nonExistingCar         models.Car
 }
 
 func TestCarRepo(t *testing.T) {
@@ -44,8 +43,8 @@ func (suite *carRepoSuite) SetupSuite() {
 	}
 
 	suite.existingCar = models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
+	suite.existingCreateCar = models.NewCreateCar("VHS1K3A", "orange", "BMW", "X3")
 	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
-	suite.nonExistingCar = models.NewCar("1dc45c1b-e686-4668-a07b-fc49086408cf", "ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -80,34 +79,8 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 	suite.Empty(cmp.Diff(foundCar, existingCar), "car should be equal to testCar")
 }
 
-func (suite carRepoSuite) TestCreate_EmptyFields_Negative() {
-	for emptyFieldName, inCar := range genEmptyFields(suite.nonExistingCar) {
-		outCar, err := suite.carRepo.Create(inCar)
-		condition := errors.Is(err, models.ErrInvalidFields) || errors.Is(err, models.ErrEmptyFields)
-		suite.Truef(condition, "err should be models.ErrInValidFields or models.ErrEmptyFields for car without %s. Was: %v", emptyFieldName, err)
-		suite.Empty(cmp.Diff(outCar, models.Car{}), "car should be equal to Car{}")
-	}
-}
-
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	car, err := suite.carRepo.Create(suite.existingCar)
+	car, err := suite.carRepo.Create(suite.existingCreateCar)
 	suite.NotNil(err, "err from creating existingCar should not be nil")
 	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
-}
-
-func (suite carRepoSuite) TestCreateIfNotExists_EmptyFields_Negative() {
-	for emptyFieldName, inCar := range genEmptyFields(suite.nonExistingCar) {
-		if emptyFieldName != "Id" { // empty Id gives ErrEmptyIDArg from car.GetOne
-			outCar, err := suite.carRepo.CreateIfNotExists(inCar)
-			condition := errors.Is(err, models.ErrInvalidFields) || errors.Is(err, models.ErrEmptyFields)
-			suite.Truef(condition, "err should be models.ErrInValidFields or models.ErrEmptyFields for car without %s. Was: %v", emptyFieldName, err)
-			suite.Empty(cmp.Diff(outCar, models.Car{}), "car returned should be equal to Car{}")
-		}
-	}
-}
-
-func (suite carRepoSuite) TestCreateIfNotExists_CarExists_Positive() {
-	foundCar, err := suite.carRepo.CreateIfNotExists(suite.existingCar)
-	suite.Nil(err, "err from creating existingCar should be nil")
-	suite.Empty(cmp.Diff(foundCar, suite.existingCar), "car found should be equal to the existingCar passed in")
 }
