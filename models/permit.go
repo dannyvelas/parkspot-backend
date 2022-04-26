@@ -6,7 +6,7 @@ import (
 )
 
 type Permit struct {
-	Id          int       `json:"id"`
+	Id          int64     `json:"id"`
 	ResidentId  string    `json:"residentId"`
 	Car         Car       `json:"car"`
 	StartDate   time.Time `json:"startDate"`
@@ -15,7 +15,7 @@ type Permit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
-func NewPermit(id int, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) Permit {
+func NewPermit(id int64, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) Permit {
 	return Permit{
 		Id:          id,
 		ResidentId:  residentId,
@@ -56,7 +56,7 @@ type CreatePermit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
-func (createPermit CreatePermit) ToPermit(permitId int, carId string) Permit {
+func (createPermit CreatePermit) ToPermit(permitId int64, carId string) Permit {
 	return NewPermit(
 		permitId,
 		createPermit.ResidentId,

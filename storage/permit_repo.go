@@ -72,7 +72,7 @@ func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId stri
     RETURNING id
   `
 
-	var id int
+	var id int64
 	err := permitRepo.database.driver.Get(&id, query, createPermit.ResidentId, carId,
 		createPermit.StartDate.Unix(), createPermit.EndDate.Unix(), createPermit.RequestTS, createPermit.AffectsDays)
 	if err != nil {
