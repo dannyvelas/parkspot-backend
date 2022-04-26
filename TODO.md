@@ -23,6 +23,9 @@
 - [x] make squirrel errors a new error type
 - [✗] switch int64 timestamp types to uint64 (won't do)
 - [x] replace "No error" assert messages in tests with "error"
+- [x] remove models/errors.go
+- [ ] add common sentinel errors to api package like errQuery errDecoding and return them in response
+- [ ] create models.NewPermit() func. rename CreatePermit/CreateCar to PermitArgs/CarArgs
 - [ ] change psql int type to uint64
 - [ ] add much more validation to permit type
 - [ ] add `Create` tests to permitRepo:
@@ -38,7 +41,6 @@
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [ ] add a list of colors to use as a dropdown
-- [ ] add common sentinel errors to api package like errQuery errDecoding
 - [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [ ] probably remove the return from `StartServer` function
 ## Maybe going to do
@@ -58,3 +60,4 @@
 - [ ] add CONVENTIONS doc and mention in it that the storage models use <model-name>Id for id fields
 - [ ] mention in conventions that the error msg is `file_name.func_name: error: wrapped-error`. func name and wrapped-error are optional wrapped-error will be %v if it's a 3rd party error and %w if its an error defined within this code
 - [ ] move comment about // check that they're equal not using suite.Equal because... to CONVENTIONS.md
+- [ ] mention that we use Id and not ID
