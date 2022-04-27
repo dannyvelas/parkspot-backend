@@ -77,10 +77,10 @@ func (createCarReq createCarReq) toModels() (models.CreateCar, error) {
 		return models.CreateCar{}, err
 	}
 
-	return models.CreateCar{
-		LicensePlate: createCarReq.LicensePlate,
-		Color:        createCarReq.Color,
-		Make:         createCarReq.Make,
-		Model:        createCarReq.Model,
-	}, nil
+	return models.NewCreateCar(
+		createCarReq.LicensePlate,
+		createCarReq.Color,
+		createCarReq.Make,
+		createCarReq.Model,
+	), nil
 }
