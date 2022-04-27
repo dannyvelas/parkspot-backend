@@ -19,11 +19,14 @@ func (createCarReq createCarReq) emptyFields() error {
 
 	if createCarReq.LicensePlate == "" {
 		emptyFields = append(emptyFields, "LicensePlate")
-	} else if createCarReq.Color == "" {
+	}
+	if createCarReq.Color == "" {
 		emptyFields = append(emptyFields, "Color")
-	} else if createCarReq.Make == "" {
+	}
+	if createCarReq.Make == "" {
 		emptyFields = append(emptyFields, "Make")
-	} else if createCarReq.Model == "" {
+	}
+	if createCarReq.Model == "" {
 		emptyFields = append(emptyFields, "Model")
 	}
 
@@ -36,6 +39,7 @@ func (createCarReq createCarReq) emptyFields() error {
 
 func (createCarReq createCarReq) invalidFields() error {
 	errors := []string{}
+
 	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(createCarReq.LicensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")
 	}
