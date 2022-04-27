@@ -9,12 +9,13 @@ import (
 )
 
 type createPermitReq struct {
-	ResidentId   string       `json:"residentId"`
-	CreateCarReq createCarReq `json:"car"`
-	StartDate    time.Time    `json:"startDate"`
-	EndDate      time.Time    `json:"endDate"`
-	RequestTS    int64        `json:"requestTS"`
-	AffectsDays  bool         `json:"affectsDays"`
+	ResidentId      string       `json:"residentId"`
+	CreateCarReq    createCarReq `json:"car"`
+	StartDate       time.Time    `json:"startDate"`
+	EndDate         time.Time    `json:"endDate"`
+	RequestTS       int64        `json:"requestTS"`
+	AffectsDays     bool         `json:"affectsDays"`
+	ExceptionReason *string      `json:"exceptionReason"`
 }
 
 func (createPermitReq createPermitReq) emptyFields() error {
@@ -22,14 +23,23 @@ func (createPermitReq createPermitReq) emptyFields() error {
 
 	if createPermitReq.ResidentId == "" {
 		emptyFields = append(emptyFields, "ResidentId")
-	} else if createPermitReq.StartDate.IsZero() {
+	}
+	if createPermitReq.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "StartDate")
-	} else if createPermitReq.EndDate.IsZero() {
+	}
+	if createPermitReq.EndDate.IsZero() {
 		emptyFields = append(emptyFields, "EndDate")
-	} else if createPermitReq.RequestTS == 0 {
+	}
+	if createPermitReq.RequestTS == 0 {
 		emptyFields = append(emptyFields, "RequestTS")
-	} else if createPermitReq.AffectsDays == false {
+	}
+	if createPermitReq.AffectsDays == false {
 		// this is okay so do nothing
+	}
+	if createPermitReq.ExceptionReason == nil {
+		// this is okay so do nothing
+	} else if *createPermitReq.ExceptionReason == "" {
+		emptyFields = append(emptyFields, "ExceptionReason")
 	}
 
 	if len(emptyFields) > 0 {
