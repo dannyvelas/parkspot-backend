@@ -83,12 +83,12 @@ func (createPermitReq createPermitReq) toModels() (models.CreatePermit, error) {
 		return models.CreatePermit{}, fmt.Errorf("%w: %v", errInvalidFields, "car")
 	}
 
-	return models.CreatePermit{
-		ResidentId:  createPermitReq.ResidentId,
-		CreateCar:   createCar,
-		StartDate:   createPermitReq.StartDate,
-		EndDate:     createPermitReq.EndDate,
-		RequestTS:   createPermitReq.RequestTS,
-		AffectsDays: createPermitReq.AffectsDays,
-	}, nil
+	return models.NewCreatePermit(
+		createPermitReq.ResidentId,
+		createCar,
+		createPermitReq.StartDate,
+		createPermitReq.EndDate,
+		createPermitReq.RequestTS,
+		createPermitReq.AffectsDays,
+	), nil
 }
