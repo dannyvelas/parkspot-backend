@@ -56,6 +56,17 @@ type CreatePermit struct {
 	AffectsDays bool      `json:"affectsDays"`
 }
 
+func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) CreatePermit {
+	return CreatePermit{
+		ResidentId:  residentId,
+		CreateCar:   createCar,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		RequestTS:   requestTS,
+		AffectsDays: affectsDays,
+	}
+}
+
 func (createPermit CreatePermit) ToPermit(permitId int64, carId string) Permit {
 	return NewPermit(
 		permitId,
