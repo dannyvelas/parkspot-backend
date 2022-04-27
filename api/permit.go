@@ -22,16 +22,16 @@ func (createPermitReq createPermitReq) emptyFields() error {
 	emptyFields := []string{}
 
 	if createPermitReq.ResidentId == "" {
-		emptyFields = append(emptyFields, "ResidentId")
+		emptyFields = append(emptyFields, "residentId")
 	}
 	if createPermitReq.StartDate.IsZero() {
-		emptyFields = append(emptyFields, "StartDate")
+		emptyFields = append(emptyFields, "startDate")
 	}
 	if createPermitReq.EndDate.IsZero() {
-		emptyFields = append(emptyFields, "EndDate")
+		emptyFields = append(emptyFields, "endDate")
 	}
 	if createPermitReq.RequestTS == 0 {
-		emptyFields = append(emptyFields, "RequestTS")
+		emptyFields = append(emptyFields, "requestTS")
 	}
 	if createPermitReq.AffectsDays == false {
 		// this is okay so do nothing
@@ -39,7 +39,7 @@ func (createPermitReq createPermitReq) emptyFields() error {
 	if createPermitReq.ExceptionReason == nil {
 		// this is okay so do nothing
 	} else if *createPermitReq.ExceptionReason == "" {
-		emptyFields = append(emptyFields, "ExceptionReason")
+		emptyFields = append(emptyFields, "exceptionReason")
 	}
 
 	if len(emptyFields) > 0 {
@@ -55,11 +55,15 @@ func (createPermitReq createPermitReq) invalidFields() error {
 	if createPermitReq.ResidentId[0] == 'P' {
 		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
 	} else if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(createPermitReq.ResidentId) {
-		errors = append(errors, "ResidentId must start be a 'B' or a 'T', followed by 7 numbers")
+		errors = append(errors, "residentId must start be a 'B' or a 'T', followed by 7 numbers")
+	}
+
+	if createPermitReq.StartDate.After(createPermitReq.EndDate) {
+		errors = append(errors, "startDate cannot be after endDate")
 	}
 
 	if createPermitReq.RequestTS > time.Now().Unix() {
-		errors = append(errors, "RequestTS cannot be in the future")
+		errors = append(errors, "requestTS cannot be in the future")
 	}
 
 	if len(errors) > 0 {
