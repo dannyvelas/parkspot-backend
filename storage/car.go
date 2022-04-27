@@ -14,11 +14,11 @@ type car struct {
 }
 
 func (car car) toModels() models.Car {
-	return models.Car{
-		Id:           car.CarId,
-		LicensePlate: car.LicensePlate,
-		Color:        car.Color,
-		Make:         car.Make.String,
-		Model:        car.Model.String,
-	}
+	return models.NewCar(
+		car.CarId,
+		car.LicensePlate,
+		car.Color,
+		car.Make.String,
+		car.Model.String,
+	)
 }

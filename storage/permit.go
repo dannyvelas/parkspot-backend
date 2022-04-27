@@ -17,15 +17,15 @@ type permit struct {
 }
 
 func (permit permit) toModels() models.Permit {
-	return models.Permit{
-		Id:          permit.PermitId,
-		ResidentId:  permit.ResidentId,
-		Car:         permit.car.toModels(),
-		StartDate:   time.Unix(permit.StartTS, 0),
-		EndDate:     time.Unix(permit.EndTS, 0),
-		RequestTS:   permit.RequestTS.Int64,
-		AffectsDays: permit.AffectsDays,
-	}
+	return models.NewPermit(
+		permit.PermitId,
+		permit.ResidentId,
+		permit.car.toModels(),
+		time.Unix(permit.StartTS, 0),
+		time.Unix(permit.EndTS, 0),
+		permit.RequestTS.Int64,
+		permit.AffectsDays,
+	)
 }
 
 type permitSlice []permit
