@@ -100,3 +100,22 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDa
 
 	return permits.toModels(), nil
 }
+
+func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startDate, endDate time.Time) ([]models.Permit, error) {
+	query, args, err := permitRepo.permitSelect.
+		Where("permit.resident_id = $1", residentId).
+		Where("permit.start_ts <= $2", endDate.Unix()).
+		Where("permit.end_ts >= $3", startDate.Unix()).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
