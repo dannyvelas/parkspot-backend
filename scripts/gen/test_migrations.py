@@ -116,12 +116,14 @@ class Car:
     color: str
     make: Union[str, None]
     model: Union[str, None]
-    def __init__(self, id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None]):
+    amt_parking_days_used: int
+    def __init__(self, id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None], amt_parking_days_used: int):
         self.id = id
         self.license_plate = license_plate
         self.color = color
         self.make = make
         self.model = model
+        self.amt_parking_days_used = amt_parking_days_used
 
     def as_sql(self) -> str:
         return (f"INSERT INTO car(id, license_plate, color, make, model) VALUES"
@@ -130,6 +132,7 @@ class Car:
             f", '{self.color}'"
             f", {nullable_to_sql(self.make)}"
             f", {nullable_to_sql(self.model)}"
+            f", {self.amt_parking_days_used}"
             f");"
         )
 
@@ -140,6 +143,7 @@ class Car:
             f"\t{self.color}"
             f"\t{nullable_to_csv(self.make)}"
             f"\t{nullable_to_csv(self.model)}"
+            f"\t{self.amt_parking_days_used}"
         )
 
 def get_rand_car() -> Car:
@@ -166,7 +170,8 @@ def get_rand_car() -> Car:
         license_plate = get_rand_lp(),
         color         = get_rand_color(),
         make          = split_line[0] if bool(random.getrandbits(1)) else None,
-        model         = split_line[1] if bool(random.getrandbits(1)) else None
+        model         = split_line[1] if bool(random.getrandbits(1)) else None,
+        amt_parking_days_used= random.randrange(0, 30)
         )
 
 def row_to_car(row: List[str]) -> Car:
@@ -176,6 +181,7 @@ def row_to_car(row: List[str]) -> Car:
       color         = row[2],
       make          = row[3] if row[3] != '' else None,
       model         = row[4] if row[3] != '' else None,
+      amt_parking_days_used= int(row[5])
     )
 
 ########################################
