@@ -42,9 +42,9 @@ func (suite *carRepoSuite) SetupSuite() {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
 
-	suite.existingCar = models.NewCar("8976e334-e281-7efd-ae84-92171d53434b", "VHS1K3A", "orange", "BMW", "X3")
-	suite.existingCreateCar = models.NewCreateCar("VHS1K3A", "orange", "BMW", "X3")
-	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "")
+	suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
+	suite.existingCreateCar = models.NewCreateCar("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
+	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -80,7 +80,7 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	car, err := suite.carRepo.Create(suite.existingCreateCar)
+	carId, err := suite.carRepo.Create(suite.existingCreateCar)
 	suite.NotNil(err, "err from creating existingCar should not be nil")
-	suite.Empty(cmp.Diff(car, models.Car{}), "car should be equal to Car{}")
+	suite.Empty(cmp.Diff(carId, ""), "carId should be equal to \"\"")
 }
