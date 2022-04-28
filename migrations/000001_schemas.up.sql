@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS car(
   color TEXT NOT NULL,
   make TEXT,
   model TEXT
+  amt_parking_days_used SMALLINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS permit(
