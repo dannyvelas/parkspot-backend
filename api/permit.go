@@ -98,5 +98,6 @@ func (createPermitReq createPermitReq) toModels() (models.CreatePermit, error) {
 		createPermitReq.EndDate,
 		createPermitReq.RequestTS,
 		createPermitReq.AffectsDays,
+		createPermitReq.ExceptionReason,
 	), nil
 }

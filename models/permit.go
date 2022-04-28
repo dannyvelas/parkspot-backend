@@ -48,22 +48,24 @@ func (self Permit) Equal(other Permit) bool {
 }
 
 type CreatePermit struct {
-	ResidentId  string    `json:"residentId"`
-	CreateCar   CreateCar `json:"car"`
-	StartDate   time.Time `json:"startDate"`
-	EndDate     time.Time `json:"endDate"`
-	RequestTS   int64     `json:"requestTS"`
-	AffectsDays bool      `json:"affectsDays"`
+	ResidentId      string    `json:"residentId"`
+	CreateCar       CreateCar `json:"car"`
+	StartDate       time.Time `json:"startDate"`
+	EndDate         time.Time `json:"endDate"`
+	RequestTS       int64     `json:"requestTS"`
+	AffectsDays     bool      `json:"affectsDays"`
+	ExceptionReason *string   `json:"exceptionReason"`
 }
 
-func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) CreatePermit {
+func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason *string) CreatePermit {
 	return CreatePermit{
-		ResidentId:  residentId,
-		CreateCar:   createCar,
-		StartDate:   startDate,
-		EndDate:     endDate,
-		RequestTS:   requestTS,
-		AffectsDays: affectsDays,
+		ResidentId:      residentId,
+		CreateCar:       createCar,
+		StartDate:       startDate,
+		EndDate:         endDate,
+		RequestTS:       requestTS,
+		AffectsDays:     affectsDays,
+		ExceptionReason: exceptionReason,
 	}
 }
 
