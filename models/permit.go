@@ -68,14 +68,3 @@ func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time
 		ExceptionReason: exceptionReason,
 	}
 }
-
-func (createPermit CreatePermit) ToPermit(permitId int64, carId string) Permit {
-	return NewPermit(
-		permitId,
-		createPermit.ResidentId,
-		createPermit.CreateCar.ToCar(carId),
-		createPermit.StartDate,
-		createPermit.EndDate,
-		createPermit.RequestTS,
-		createPermit.AffectsDays)
-}

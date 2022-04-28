@@ -66,7 +66,7 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (models.Car, error
 	return car.toModels(), nil
 }
 
-func (carRepo CarRepo) Create(createCar models.CreateCar) (models.Car, error) {
+func (carRepo CarRepo) Create(createCar models.CreateCar) (string, error) {
 	const query = `
     INSERT INTO car(license_plate, color, make, model)
     VALUES($1, $2, $3, $4);
@@ -76,8 +76,8 @@ func (carRepo CarRepo) Create(createCar models.CreateCar) (models.Car, error) {
 	var id string
 	err := carRepo.database.driver.Get(&id, query, createCar.LicensePlate, createCar.Color, createCar.Make, createCar.Model)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return "", fmt.Errorf("car_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
-	return createCar.ToCar(id), nil
+	return id, nil
 }

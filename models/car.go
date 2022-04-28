@@ -49,7 +49,3 @@ func NewCreateCar(licensePlate string, color string, make string, model string) 
 		Model:        model,
 	}
 }
-
-func (createCar CreateCar) ToCar(id string) Car {
-	return NewCar(id, createCar.LicensePlate, createCar.Color, createCar.Make, createCar.Model)
-}
