@@ -62,6 +62,10 @@ func (createPermitReq createPermitReq) invalidFields() error {
 		errors = append(errors, "startDate cannot be after endDate")
 	}
 
+	if createPermitReq.StartDate.Equal(createPermitReq.EndDate) {
+		errors = append(errors, "startDate cannot be equal to endDate")
+	}
+
 	if createPermitReq.RequestTS > time.Now().Unix() {
 		errors = append(errors, "requestTS cannot be in the future")
 	}
