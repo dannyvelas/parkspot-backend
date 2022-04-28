@@ -126,7 +126,7 @@ class Car:
         self.amt_parking_days_used = amt_parking_days_used
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO car(id, license_plate, color, make, model) VALUES"
+        return (f"INSERT INTO car(id, license_plate, color, make, model, amt_parking_days_used) VALUES"
             f"( '{self.id}'"
             f", '{self.license_plate}'"
             f", '{self.color}'"
