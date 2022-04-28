@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS car(
   license_plate VARCHAR(10) UNIQUE NOT NULL,
   color TEXT NOT NULL,
   make TEXT,
-  model TEXT
+  model TEXT,
   amt_parking_days_used SMALLINT NOT NULL DEFAULT 0
 );
 
