@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -67,29 +68,29 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		{ // error out if car exists and has active permits during dates requested
-			existingCar, err := carRepo.GetByLicensePlate(createPermit.CreateCar.LicensePlate)
-			if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+		// check if car exists
+		existingCar, err := carRepo.GetByLicensePlate(createPermit.CreateCar.LicensePlate)
+		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
+			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		// error out if car exists and has active permits during dates requested
+		if existingCar != (models.Car{}) { // car exists
+			activePermitsDuring, err := permitRepo.GetActiveOfCarDuring(
+				existingCar.Id, createPermit.StartDate, createPermit.EndDate)
+			if err != nil {
+				log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
 				respondError(w, errInternalServerError)
 				return
-			}
-
-			if err == nil { // car exists
-				activePermitsDuring, err := permitRepo.GetActiveOfCarDuring(
-					existingCar.Id, createPermit.StartDate, createPermit.EndDate)
-				if err != nil {
-					log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
-					respondError(w, errInternalServerError)
-					return
-				} else if len(activePermitsDuring) != 0 {
-					message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
-						"because this car has at least one active permit during that time.",
-						createPermit.StartDate.Format(dateFormat),
-						createPermit.EndDate.Format(dateFormat))
-					respondErrorWith(w, errBadRequest, message)
-					return
-				}
+			} else if len(activePermitsDuring) != 0 {
+				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
+					"because this car has at least one active permit during that time.",
+					createPermit.StartDate.Format(dateFormat),
+					createPermit.EndDate.Format(dateFormat))
+				respondErrorWith(w, errBadRequest, message)
+				return
 			}
 		}
 
@@ -140,19 +141,31 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 						"\nThis resident must wait until next year to give out new parking passes.", maxParkingDays, maxParkingDays)
 					respondErrorWith(w, errBadRequest, message)
 					return
-				}
-
-				if existingResident.AmtParkingDaysUsed+permitLength > 20 {
+				} else if existingResident.AmtParkingDaysUsed+permitLength > maxParkingDays {
 					message := fmt.Sprintf("Error: This request would exceed the resident's yearly guest parking pass limit of %d days."+
 						"\nThis resident has given out parking permits for a total of %d days."+
 						"\nThis resident can give out max %d more day(s) before reaching their limit."+
-						"\nThis resident can give only give more if they have unlimited days or if their requested permites are"+
+						"\nThis resident only give more permits if they have unlimited days or if their requested permites are"+
 						" exceptions", maxParkingDays, existingResident.AmtParkingDaysUsed, maxParkingDays-existingResident.AmtParkingDaysUsed)
 					respondErrorWith(w, errBadRequest, message)
 					return
 				}
 
-				// TODO: check licensePlate stay
+				if existingCar.AmtParkingDaysUsed >= maxParkingDays {
+					message := fmt.Sprintf("Error: This car has had a combined total of %d parking days or more."+
+						"\nEach car is allowed maximum %d days of parking, unless there is an exception."+
+						"\nThis car must wait until next year to get a new parking permit.", maxParkingDays, maxParkingDays)
+					respondErrorWith(w, errBadRequest, message)
+					return
+				} else if existingCar.AmtParkingDaysUsed+permitLength > maxParkingDays {
+					message := fmt.Sprintf("Error: This request would exceed this car's yearly parking permit limit of %d days."+
+						"\nThis car has received parking permits for a total of %d days."+
+						"\nThis car can receive %d more day(s) before reaching its limit."+
+						"\nThis resident can give only give more permits if they have unlimited days or if their requested permites are"+
+						" exceptions", maxParkingDays, existingCar.AmtParkingDaysUsed, maxParkingDays-existingCar.AmtParkingDaysUsed)
+					respondErrorWith(w, errBadRequest, message)
+					return
+				}
 			}
 		}
 
