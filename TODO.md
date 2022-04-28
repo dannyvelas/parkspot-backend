@@ -11,7 +11,7 @@
 - [x] add `CreateIfNotExists` test to carRepo
     ✓ creating a car with a missing field doesn't work
     ✓ creating a car that already exists just returns that car with no error
-- [ ] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
+- [x] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -24,10 +24,14 @@
 - [✗] switch int64 timestamp types to uint64 (won't do)
 - [x] replace "No error" assert messages in tests with "error"
 - [x] remove models/errors.go
-- [ ] add common sentinel errors to api package like errQuery errDecoding and return them in response
-- [ ] create models.NewPermit() func. rename CreatePermit/CreateCar to PermitArgs/CarArgs
-- [ ] change psql int type to uint64
-- [ ] add much more validation to permit type
+- [x] create models.NewPermit() func
+- [✗] change respondJSON to respondData
+- [✗] add api.error for malformed jwt
+- [✗] add common sentinel errors to api package like errQuery errDecoding and return them in response
+- [x] change psql int type to uint64
+- [x] add much more validation to permit type
+- [ ] make amount of parking days a constant
+- [ ] make models.Permit `make` and `model` fields nullable
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
     * creating a permit with a non-existent car works
@@ -40,13 +44,21 @@
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
+- [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
+- [ ] change storage errors to use errors.New instead of `sentinelError`
 - [ ] add a list of colors to use as a dropdown
 - [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
+- [ ] update all funcs to use squirrel semantics (instead of sql or sqlx)
 - [ ] probably remove the return from `StartServer` function
 ## Maybe going to do
-- [ ] whether i should make empty-field checking a decorator in repo functions
+- [✗] whether i should make empty-field checking a decorator in repo functions
+- [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
+- [ ] remove `json` tags from models, since that is an api concern?
+- [ ] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
+- [ ] delete Car.GetOne if it's not going to be used
+- [ ] whether to change carID to UUID type
+- [ ] difference between using byte[8] for residentID for just string
 - [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
-- [ ] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type
 - [ ] Validate repo func decorator that could be defined in `models`
 - [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
