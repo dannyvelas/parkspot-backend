@@ -6,11 +6,12 @@ import (
 )
 
 type car struct {
-	CarId        string         `db:"car_id"`
-	LicensePlate string         `db:"license_plate"`
-	Color        string         `db:"color"`
-	Make         sql.NullString `db:"make"`
-	Model        sql.NullString `db:"model"`
+	CarId              string         `db:"car_id"`
+	LicensePlate       string         `db:"license_plate"`
+	Color              string         `db:"color"`
+	Make               sql.NullString `db:"make"`
+	Model              sql.NullString `db:"model"`
+	AmtParkingDaysUsed int            `db:"amt_parking_days_used"`
 }
 
 func (car car) toModels() models.Car {
@@ -20,5 +21,5 @@ func (car car) toModels() models.Car {
 		car.Color,
 		car.Make.String,
 		car.Model.String,
-	)
+		car.AmtParkingDaysUsed)
 }

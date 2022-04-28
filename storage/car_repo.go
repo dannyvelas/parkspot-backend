@@ -19,6 +19,7 @@ func NewCarRepo(database Database) CarRepo {
 		"car.color",
 		"car.make",
 		"car.model",
+		"car.amt_parking_days_used",
 	).From("car")
 
 	return CarRepo{database: database, carSelect: carSelect}
