@@ -47,3 +47,17 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 
 	return resident.toModels(), nil
 }
+
+func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
+	const query = `
+    UPDATE resident SET amt_parking_days_used = amt_parking_days_used + $1
+    WHERE id = $2
+  `
+
+	_, err := residentRepo.database.driver.Exec(query, days, id)
+	if err != nil {
+		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}
