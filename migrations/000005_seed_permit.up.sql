@@ -479,3 +479,5 @@ INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affect
 INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days) VALUES( 479, 'T9615607', '2003c81e-8bf5-4fa8-8ae9-1f314674a2f5', 1647147600, 1647835200, 1647107928, True);
 INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days) VALUES( 480, 'T9615607', '2003c81e-8bf5-4fa8-8ae9-1f314674a2f5', 1645246800, 1645419600, NULL, True);
 INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days) VALUES( 481, 'T9615607', '2003c81e-8bf5-4fa8-8ae9-1f314674a2f5', 1649563200, 1649736000, 1649506983, True);
+
+ALTER SEQUENCE permit_id_seq RESTART WITH 482;
