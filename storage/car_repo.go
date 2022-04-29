@@ -70,7 +70,7 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (models.Car, error
 func (carRepo CarRepo) Create(createCar models.CreateCar) (models.Car, error) {
 	const query = `
     INSERT INTO car(license_plate, color, make, model)
-    VALUES($1, $2, $3, $4);
+    VALUES($1, $2, $3, $4)
     RETURNING id
   `
 

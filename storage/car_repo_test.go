@@ -15,8 +15,9 @@ type carRepoSuite struct {
 	carRepo                CarRepo
 	migrator               *migrate.Migrate
 	existingCar            models.Car
-	existingCreateCar      models.CreateCar
 	existingCarEmptyFields models.Car
+	existingCreateCar      models.CreateCar
+	nonExistingCreateCar   models.CreateCar
 }
 
 func TestCarRepo(t *testing.T) {
@@ -43,8 +44,9 @@ func (suite *carRepoSuite) SetupSuite() {
 	}
 
 	suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
-	suite.existingCreateCar = models.NewCreateCar("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
 	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
+	suite.existingCreateCar = models.NewCreateCar("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
+	suite.nonExistingCreateCar = models.NewCreateCar("ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -79,8 +81,28 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 	suite.Empty(cmp.Diff(foundCar, existingCar), "car should be equal to testCar")
 }
 
+func (suite carRepoSuite) TestGetByLicensePlate_Positive() {
+	existingCar := suite.existingCar
+
+	foundCar, err := suite.carRepo.GetByLicensePlate(existingCar.LicensePlate)
+	suite.NoError(err, "Error when getting one car by its license plate")
+
+	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
+	suite.Empty(cmp.Diff(foundCar, existingCar), "car should be equal to testCar")
+}
+
+func (suite carRepoSuite) TestGetByLicensePlate_Negative() {
+	_, err := suite.carRepo.GetByLicensePlate("ABCD123") // non-existent license plate
+	suite.ErrorIs(err, ErrNoRows, "err should be equal to storage.ErrNoRows")
+}
+
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	carId, err := suite.carRepo.Create(suite.existingCreateCar)
-	suite.NotNil(err, "err from creating existingCar should not be nil")
-	suite.Empty(cmp.Diff(carId, ""), "carId should be equal to \"\"")
+	_, err := suite.carRepo.Create(suite.existingCreateCar)
+	suite.Errorf(err, "err from creating existing car %v should not be nil", suite.existingCar)
+}
+
+func (suite carRepoSuite) TestCreate_CarDNE_Postitve() {
+	newCar, err := suite.carRepo.Create(suite.nonExistingCreateCar)
+	suite.NoErrorf(err, "err from creating non-existing car %v should not be nil")
+	suite.Empty(cmp.Diff(newCar, suite.nonExistingCreateCar.ToCar(newCar.Id)), "newCar should be equal to nonExistingCreateCar")
 }
