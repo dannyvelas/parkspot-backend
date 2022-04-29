@@ -32,14 +32,15 @@
 - [x] add much more validation to permit type
 - [x] make amount of parking days a constant
 - [x] figure out if to have CreateCar.ToCar(id string) func and CreatePermit.ToPermit(id int64) func
-- [ ] add check to make sure permit request start date is not in past
-- [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
-- [ ] make models.Permit `make` and `model` fields nullable
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
     * creating a permit that already exists doesn't work
+- [ ] add check to make sure permit request start date is not in past
+- [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
+- [ ] make models.Permit `make` and `model` fields nullable
+- [ ] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [ ] make routing its own thing in `api/`
 - [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 ## Low priority
@@ -67,6 +68,7 @@
 - [ ] Validate repo func decorator that could be defined in `models`
 - [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
+- [ ] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
 - [ ] change all `id` fields in database to be actually `<model-name>_id`
 - [ ] change car to not be embedded in storage.permit for consistency with models schema
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
