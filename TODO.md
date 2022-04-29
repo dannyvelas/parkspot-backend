@@ -12,6 +12,7 @@
     ✓ creating a car with a missing field doesn't work
     ✓ creating a car that already exists just returns that car with no error
 - [x] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
+- [ ] create exceptions table and allow requests to create exceptional permits
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -32,44 +33,46 @@
 - [x] add much more validation to permit type
 - [x] make amount of parking days a constant
 - [x] figure out if to have CreateCar.ToCar(id string) func and CreatePermit.ToPermit(id int64) func
-- [ ] add `Create` tests to permitRepo:
+- [x] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
-    * creating a permit that already exists doesn't work
+- [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
+- [ ] add more testing resident repo
+- [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
-- [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
 - [ ] make models.Permit `make` and `model` fields nullable
-- [ ] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
-- [ ] make routing its own thing in `api/`
-- [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
+- [x] probably remove the return from `StartServer` function
 - [ ] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
+- [ ] make routing its own thing in `api/`
+- [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 - [ ] change storage errors to use errors.New instead of `sentinelError`
 - [ ] add a list of colors to use as a dropdown
 - [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [ ] update all funcs to use squirrel semantics (instead of sql or sqlx)
-- [ ] probably remove the return from `StartServer` function
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
+- [ ] move `migrations/` dir inside of `storage`
 - [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
+- [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
 - [ ] remove `json` tags from models, since that is an api concern?
-- [ ] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
 - [ ] delete Car.GetOne if it's not going to be used
 - [ ] whether to change carID to UUID type
 - [ ] difference between using byte[8] for residentID for just string
 - [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
-- [ ] Validate repo func decorator that could be defined in `models`
 - [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
 - [ ] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
 - [ ] change all `id` fields in database to be actually `<model-name>_id`
+- [ ] Validate repo func decorator that could be defined in `models`
+- [ ] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
 - [ ] change car to not be embedded in storage.permit for consistency with models schema
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] add a test to check that any combination of missing fields doesn't work when creating a car
