@@ -15,10 +15,12 @@ import (
 
 type permitRepoSuite struct {
 	suite.Suite
-	location   *time.Location
-	permitRepo PermitRepo
-	migrator   *migrate.Migrate
-	dateFormat string
+	location          *time.Location
+	permitRepo        PermitRepo
+	migrator          *migrate.Migrate
+	dateFormat        string
+	existingCar       models.Car
+	existingCarPermit models.Permit
 }
 
 func TestPermitRepo(t *testing.T) {
@@ -45,6 +47,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 	}
 
 	suite.dateFormat = "2006-01-02"
+	suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
+	suite.existingCarPermit = models.NewPermit(1, "T1043321", suite.existingCar, time.Unix(1645419600, 0), time.Unix(1645678800, 0), 1645279579, false)
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
@@ -124,25 +128,17 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 	}
 }
 
-func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
-	const carId = "05539a50-6fac-c50d-b290-4e7372c573e9"
-	startDate, err := time.ParseInLocation(suite.dateFormat, "2022-04-05", time.Local)
-	suite.NoError(err, "Error parsing start date")
+func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBeforeEndBeforeEmpty_Positive() {
+	permits, err := func() ([]models.Permit, error) {
+		startDate := time.Date(2022, 02, 15, 0, 0, 0, 0, time.Local)
+		endDate := time.Date(2022, 02, 20, 0, 0, 0, 0, time.Local)
+		suite.True(endDate.Before(suite.existingCarPermit.StartDate)) // this interval starts and ends before our test permit
 
-	endDate, err := time.ParseInLocation(suite.dateFormat, "2022-04-16", time.Local)
-	suite.NoError(err, "Error parsing end date")
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+	}()
 
-	permits, err := suite.permitRepo.GetActiveOfCarDuring(carId, startDate, endDate)
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
-
-	f, err := os.Create(fmt.Sprintf("testout/active_during_%s_%s.txt", startDate, endDate))
-	suite.NoError(err, "Error creating file")
-	defer f.Close()
-
-	for _, permit := range permits {
-		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
-		suite.NoError(err, "Error when writing line")
-	}
+	suite.Equal(0, len(permits), "length of permit should be 0")
 }
 
 func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
@@ -153,8 +149,7 @@ func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
 		return models.NewCreatePermit(existingResidentId, models.CreateCar{}, startDate, endDate, time.Now().Unix(), false, nil)
 	}()
 
-	existingCarId := "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e"
-	_, err := suite.permitRepo.Create(nonExistingCreatePermit, existingCarId)
+	_, err := suite.permitRepo.Create(nonExistingCreatePermit, suite.existingCar.Id)
 	suite.NoError(err, "err from creating non-existing permit should be nil")
 }
 
