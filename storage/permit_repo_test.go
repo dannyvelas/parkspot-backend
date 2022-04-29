@@ -145,6 +145,19 @@ func (suite permitRepoSuite) TestWriteActivePermitsOfCarDuring_Positive() {
 	}
 }
 
+func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
+	nonExistingCreatePermit := func() models.CreatePermit {
+		existingResidentId := "T1043321"
+		startDate := time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local)
+		endDate := time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local)
+		return models.NewCreatePermit(existingResidentId, models.CreateCar{}, startDate, endDate, time.Now().Unix(), false, nil)
+	}()
+
+	existingCarId := "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e"
+	_, err := suite.permitRepo.Create(nonExistingCreatePermit, existingCarId)
+	suite.NoError(err, "err from creating non-existing permit should be nil")
+}
+
 func permitToString(permit models.Permit, dateFormat string) string {
 	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t\n",
 		permit.Id,
