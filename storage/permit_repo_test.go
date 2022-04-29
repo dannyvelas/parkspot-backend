@@ -47,8 +47,19 @@ func (suite *permitRepoSuite) SetupSuite() {
 	}
 
 	suite.dateFormat = "2006-01-02"
-	suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.existingCarPermit = models.NewPermit(1, "T1043321", suite.existingCar, time.Unix(1645419600, 0), time.Unix(1645678800, 0), 1645279579, false)
+	{
+		suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
+
+		// an existing permit beloning to `suite.existingCar`
+		suite.existingCarPermit = models.NewPermit(
+			1,
+			"T1043321",
+			suite.existingCar,
+			time.Unix(1645419600, 0), // February 21, 2022
+			time.Unix(1645678800, 0), // February 24, 2022
+			1645279579,
+			false)
+	}
 }
 
 func (suite permitRepoSuite) TearDownSuite() {
@@ -128,7 +139,7 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 	}
 }
 
-func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBeforeEndBeforeEmpty_Positive() {
+func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
 	permits, err := func() ([]models.Permit, error) {
 		startDate := time.Date(2022, 02, 15, 0, 0, 0, 0, time.Local)
 		endDate := time.Date(2022, 02, 20, 0, 0, 0, 0, time.Local)
@@ -139,6 +150,46 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBeforeEndBefor
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
 	suite.Equal(0, len(permits), "length of permit should be 0")
+}
+
+func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBeg_NonEmpty() {
+	permits, err := func() ([]models.Permit, error) {
+		startDate := time.Date(2022, 02, 15, 0, 0, 0, 0, time.Local)
+		endDate := time.Date(2022, 02, 21, 0, 0, 0, 0, time.Local)
+		suite.True(endDate.Equal(suite.existingCarPermit.StartDate)) // this interval starts before but ends at the beginning of our test permit
+
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+	}()
+
+	suite.NoError(err, "Error when getting active permits of car during two timestamps")
+	suite.Equal(1, len(permits), "length of permit should be 1")
+}
+
+func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter_NonEmpty() {
+	permits, err := func() ([]models.Permit, error) {
+		startDate := time.Date(2022, 02, 24, 0, 0, 0, 0, time.Local)
+		endDate := time.Date(2022, 02, 26, 0, 0, 0, 0, time.Local)
+		suite.True(startDate.Equal(suite.existingCarPermit.EndDate)) // this interval starts at the end of our test permit
+
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+	}()
+
+	suite.NoError(err, "Error when getting active permits of car during two timestamps")
+	suite.Equal(1, len(permits), "length of permit should be 1")
+}
+
+func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd_NonEmpty() {
+	permits, err := func() ([]models.Permit, error) {
+		startDate := time.Date(2022, 02, 21, 0, 0, 0, 0, time.Local)
+		endDate := time.Date(2022, 02, 24, 0, 0, 0, 0, time.Local)
+		suite.True(startDate.Equal(suite.existingCarPermit.StartDate))
+		suite.True(endDate.Equal(suite.existingCarPermit.EndDate)) // this interval starts and ends at the same dates
+
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+	}()
+
+	suite.NoError(err, "Error when getting active permits of car during two timestamps")
+	suite.Equal(1, len(permits), "length of permit should be 1")
 }
 
 func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
