@@ -309,6 +309,12 @@ if __name__ == '__main__':
             with open(migration_in_file_name('permit'), 'r') as file_in:
                 with open(migration_out_file_name(5, 'permit'), 'w') as file_out:
                     reader = csv.reader(file_in, delimiter='\t')
+
+                    amt_rows = 0
                     for _, row in enumerate(reader):
                         permit = row_to_permit(row)
                         file_out.write(f'{permit.as_sql()}\n')
+
+                        amt_rows += 1
+
+                    file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
