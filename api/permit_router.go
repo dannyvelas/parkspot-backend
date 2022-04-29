@@ -107,9 +107,8 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
+		permitLength := int(createPermit.EndDate.Sub(createPermit.StartDate).Hours() / 24)
 		if createPermit.ExceptionReason == nil { // if not exception
-			permitLength := int(createPermit.EndDate.Sub(createPermit.StartDate).Hours() / 24)
-
 			if permitLength > maxPermitLength {
 				message := fmt.Sprintf("Error: Requests cannot be longer than %d days, unless there is an exception."+
 					" If this resident wants their guest to park for more than %d days, they can request"+
@@ -167,6 +166,43 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 					return
 				}
 			}
+		}
+
+		// checks successful: proceed to create permit
+
+		// get or create car
+		var permitCar models.Car
+		if existingCar != (models.Car{}) {
+			permitCar = existingCar
+		} else {
+			carId, err := carRepo.Create(createPermit.CreateCar)
+			if err != nil {
+				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+				respondError(w, errInternalServerError)
+				return
+			}
+			permitCar = models.NewCar(carId, createPermit.CreateCar.LicensePlate, createPermit.CreateCar.Color, createPermit.CreateCar.Make, createPermit.CreateCar.Model, 0)
+		}
+
+		err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
+		if err != nil {
+			log.Error().Msgf("permit_router: Error querying residentRepo: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		err = carRepo.AddToAmtParkingDaysUsed(permitCar.Id, permitLength)
+		if err != nil {
+			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		permitId, err := permitRepo.Create(createPermit, permitCar.Id)
+		if err != nil {
+			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			respondError(w, errInternalServerError)
+			return
 		}
 
 		respondJSON(w, 200, createPermit)
