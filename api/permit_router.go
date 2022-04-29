@@ -175,12 +175,14 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		if existingCar != (models.Car{}) {
 			permitCar = existingCar
 		} else {
-			permitCar, err = carRepo.Create(createPermit.CreateCar)
+			carId, err := carRepo.Create(createPermit.CreateCar)
 			if err != nil {
 				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
 				respondError(w, errInternalServerError)
 				return
 			}
+
+			permitCar = createPermit.CreateCar.ToCar(carId)
 		}
 
 		err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
@@ -197,12 +199,14 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		newPermit, err := permitRepo.Create(createPermit, permitCar.Id)
+		permitId, err := permitRepo.Create(createPermit, permitCar.Id)
 		if err != nil {
 			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
+
+		newPermit := createPermit.ToPermit(permitId, permitCar)
 
 		respondJSON(w, 200, newPermit)
 	}

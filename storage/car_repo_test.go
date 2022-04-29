@@ -102,7 +102,6 @@ func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 }
 
 func (suite carRepoSuite) TestCreate_CarDNE_Positive() {
-	newCar, err := suite.carRepo.Create(suite.nonExistingCreateCar)
+	_, err := suite.carRepo.Create(suite.nonExistingCreateCar)
 	suite.NoError(err, "err from creating non-existing car should not be nil")
-	suite.Empty(cmp.Diff(newCar, suite.nonExistingCreateCar.ToCar(newCar.Id)), "newCar should be equal to nonExistingCreateCar")
 }
