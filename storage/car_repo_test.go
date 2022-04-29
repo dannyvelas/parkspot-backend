@@ -98,11 +98,11 @@ func (suite carRepoSuite) TestGetByLicensePlate_Negative() {
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
 	_, err := suite.carRepo.Create(suite.existingCreateCar)
-	suite.Errorf(err, "err from creating existing car %v should not be nil", suite.existingCar)
+	suite.Error(err, "err from creating existing car should not be nil")
 }
 
 func (suite carRepoSuite) TestCreate_CarDNE_Positive() {
 	newCar, err := suite.carRepo.Create(suite.nonExistingCreateCar)
-	suite.NoErrorf(err, "err from creating non-existing car %v should not be nil")
+	suite.NoError(err, "err from creating non-existing car should not be nil")
 	suite.Empty(cmp.Diff(newCar, suite.nonExistingCreateCar.ToCar(newCar.Id)), "newCar should be equal to nonExistingCreateCar")
 }
