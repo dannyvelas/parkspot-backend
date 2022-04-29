@@ -30,7 +30,10 @@
 - [✗] add common sentinel errors to api package like errQuery errDecoding and return them in response
 - [x] change psql int type to uint64
 - [x] add much more validation to permit type
-- [ ] make amount of parking days a constant
+- [x] make amount of parking days a constant
+- [x] figure out if to have CreateCar.ToCar(id string) func and CreatePermit.ToPermit(id int64) func
+- [ ] add check to make sure permit request start date is not in past
+- [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
 - [ ] make models.Permit `make` and `model` fields nullable
 - [ ] add `Create` tests to permitRepo:
     * creating a permit with a missing field doesn't work
@@ -44,6 +47,7 @@
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
+- [ ] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
 - [ ] change storage errors to use errors.New instead of `sentinelError`
 - [ ] add a list of colors to use as a dropdown
@@ -53,6 +57,7 @@
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
+- [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
 - [ ] remove `json` tags from models, since that is an api concern?
 - [ ] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
 - [ ] delete Car.GetOne if it's not going to be used
