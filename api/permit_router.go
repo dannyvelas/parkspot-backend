@@ -55,19 +55,19 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo storage.ResidentRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var createPermitReq createPermitReq
-		if err := json.NewDecoder(r.Body).Decode(&createPermitReq); err != nil {
+		var newPermitReq newPermitReq
+		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
 			respondError(w, errBadRequest)
 			return
 		}
 
-		if err := createPermitReq.validate(); err != nil {
+		if err := newPermitReq.validate(); err != nil {
 			respondErrorWith(w, errBadRequest, err.Error())
 			return
 		}
 
 		// check if car exists
-		existingCar, err := carRepo.GetByLicensePlate(createPermitReq.createCarReq.licensePlate)
+		existingCar, err := carRepo.GetByLicensePlate(newPermitReq.NewCarReq.LicensePlate)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
 			respondError(w, errInternalServerError)
@@ -77,7 +77,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		// error out if car exists and has active permits during dates requested
 		if existingCar != (models.Car{}) { // car exists
 			activePermitsDuring, err := permitRepo.GetActiveOfCarDuring(
-				existingCar.Id, createPermitReq.startDate, createPermitReq.endDate)
+				existingCar.Id, newPermitReq.StartDate, newPermitReq.EndDate)
 			if err != nil {
 				log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
 				respondError(w, errInternalServerError)
@@ -85,15 +85,15 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			} else if len(activePermitsDuring) != 0 {
 				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
 					"because this car has at least one active permit during that time.",
-					createPermitReq.startDate.Format(dateFormat),
-					createPermitReq.endDate.Format(dateFormat))
+					newPermitReq.StartDate.Format(dateFormat),
+					newPermitReq.EndDate.Format(dateFormat))
 				respondErrorWith(w, errBadRequest, message)
 				return
 			}
 		}
 
 		// error out if resident DNE
-		existingResident, err := residentRepo.GetOne(createPermitReq.residentId)
+		existingResident, err := residentRepo.GetOne(newPermitReq.ResidentId)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 			log.Error().Msgf("permit_router: Error querying residentRepo: %v", err)
 			respondError(w, errInternalServerError)
@@ -105,8 +105,8 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		permitLength := int(createPermitReq.endDate.Sub(createPermitReq.startDate).Hours() / 24)
-		if createPermitReq.exceptionReason == nil { // if not exception
+		permitLength := int(newPermitReq.EndDate.Sub(newPermitReq.StartDate).Hours() / 24)
+		if newPermitReq.ExceptionReason == nil { // if not exception
 			if permitLength > maxPermitLength {
 				message := fmt.Sprintf("Error: Requests cannot be longer than %d days, unless there is an exception."+
 					" If this resident wants their guest to park for more than %d days, they can request"+
@@ -116,7 +116,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			}
 
 			activePermitsDuring, err := permitRepo.GetActiveOfResidentDuring(
-				existingResident.Id, createPermitReq.startDate, createPermitReq.endDate)
+				existingResident.Id, newPermitReq.StartDate, newPermitReq.EndDate)
 			if err != nil {
 				log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
 				respondError(w, errInternalServerError)
@@ -124,8 +124,8 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			} else if len(activePermitsDuring) != 0 {
 				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
 					"because this resident has at least one active permit during that time.",
-					createPermitReq.startDate.Format(dateFormat),
-					createPermitReq.endDate.Format(dateFormat))
+					newPermitReq.StartDate.Format(dateFormat),
+					newPermitReq.EndDate.Format(dateFormat))
 				respondErrorWith(w, errBadRequest, message)
 				return
 			}
@@ -173,7 +173,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		if existingCar != (models.Car{}) {
 			permitCar = existingCar
 		} else {
-			newCarArgs := createPermitReq.createCarReq.toNewCarArgs()
+			newCarArgs := newPermitReq.NewCarReq.toNewCarArgs()
 			carId, err := carRepo.Create(newCarArgs)
 			if err != nil {
 				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
@@ -198,7 +198,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		newPermitArgs := createPermitReq.toNewPermitArgs(permitCar.Id)
+		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id)
 		permitId, err := permitRepo.Create(newPermitArgs)
 		if err != nil {
 			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
