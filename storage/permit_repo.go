@@ -119,3 +119,17 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startD
 
 	return permits.toModels(), nil
 }
+
+func (permitRepo PermitRepo) Delete(id int64) error {
+	if id <= 0 {
+		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+	}
+	const query = `DELETE FROM permit WHERE id = $1`
+
+	_, err := permitRepo.database.driver.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("permit_repo.Delete: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}
