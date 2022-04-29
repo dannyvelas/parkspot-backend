@@ -8,25 +8,25 @@ import (
 )
 
 type createCarReq struct {
-	LicensePlate string `json:"licensePlate"`
-	Color        string `json:"color"`
-	Make         string `json:"make"`
-	Model        string `json:"model"`
+	licensePlate string `json:"licensePlate"`
+	color        string `json:"color"`
+	make         string `json:"make"`
+	model        string `json:"model"`
 }
 
 func (createCarReq createCarReq) emptyFields() error {
 	emptyFields := []string{}
 
-	if createCarReq.LicensePlate == "" {
+	if createCarReq.licensePlate == "" {
 		emptyFields = append(emptyFields, "LicensePlate")
 	}
-	if createCarReq.Color == "" {
+	if createCarReq.color == "" {
 		emptyFields = append(emptyFields, "Color")
 	}
-	if createCarReq.Make == "" {
+	if createCarReq.make == "" {
 		emptyFields = append(emptyFields, "Make")
 	}
-	if createCarReq.Model == "" {
+	if createCarReq.model == "" {
 		emptyFields = append(emptyFields, "Model")
 	}
 
@@ -40,24 +40,24 @@ func (createCarReq createCarReq) emptyFields() error {
 func (createCarReq createCarReq) invalidFields() error {
 	errors := []string{}
 
-	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(createCarReq.LicensePlate) {
+	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(createCarReq.licensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")
 	}
 
-	if len(createCarReq.LicensePlate) > 8 {
+	if len(createCarReq.licensePlate) > 8 {
 		errors = append(errors, "licensePlate can be maximum 8 characters")
 	}
 
-	if !regexp.MustCompile("^[A-Za-z]+$").MatchString(createCarReq.Color) {
+	if !regexp.MustCompile("^[A-Za-z]+$").MatchString(createCarReq.color) {
 		errors = append(errors, "color must be one word only letters")
 	}
 
 	makeAndModelRe := regexp.MustCompile("^[A-Za-z0-9 -]+$")
-	if !makeAndModelRe.MatchString(createCarReq.Make) {
+	if !makeAndModelRe.MatchString(createCarReq.make) {
 		errors = append(errors, "make can only have spaces, letters, numbers, and dashes")
 	}
 
-	if !makeAndModelRe.MatchString(createCarReq.Model) {
+	if !makeAndModelRe.MatchString(createCarReq.model) {
 		errors = append(errors, "model can only have spaces, letters, numbers, and dashes")
 	}
 
@@ -68,19 +68,23 @@ func (createCarReq createCarReq) invalidFields() error {
 	return nil
 }
 
-func (createCarReq createCarReq) toModels() (models.CreateCar, error) {
+func (createCarReq createCarReq) validate() error {
 	if err := createCarReq.emptyFields(); err != nil {
-		return models.CreateCar{}, err
+		return err
 	}
 
 	if err := createCarReq.invalidFields(); err != nil {
-		return models.CreateCar{}, err
+		return err
 	}
 
-	return models.NewCreateCar(
-		createCarReq.LicensePlate,
-		createCarReq.Color,
-		createCarReq.Make,
-		createCarReq.Model,
-	), nil
+	return nil
+}
+
+func (createCarReq createCarReq) toNewCarArgs() models.NewCarArgs {
+	return models.NewNewCarArgs(
+		createCarReq.licensePlate,
+		createCarReq.color,
+		createCarReq.make,
+		createCarReq.model,
+	)
 }

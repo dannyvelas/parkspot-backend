@@ -16,8 +16,8 @@ type carRepoSuite struct {
 	migrator               *migrate.Migrate
 	existingCar            models.Car
 	existingCarEmptyFields models.Car
-	existingCreateCar      models.CreateCar
-	nonExistingCreateCar   models.CreateCar
+	existingNewCarArgs     models.NewCarArgs
+	nonExistingNewCarArgs  models.NewCarArgs
 }
 
 func TestCarRepo(t *testing.T) {
@@ -45,8 +45,8 @@ func (suite *carRepoSuite) SetupSuite() {
 
 	suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
 	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.existingCreateCar = models.NewCreateCar("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
-	suite.nonExistingCreateCar = models.NewCreateCar("ABC123", "red", "toyota", "tercel")
+	suite.existingNewCarArgs = models.NewNewCarArgs("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
+	suite.nonExistingNewCarArgs = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -97,11 +97,11 @@ func (suite carRepoSuite) TestGetByLicensePlate_Negative() {
 }
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	_, err := suite.carRepo.Create(suite.existingCreateCar)
+	_, err := suite.carRepo.Create(suite.existingNewCarArgs)
 	suite.Error(err, "err from creating existing car should not be nil")
 }
 
 func (suite carRepoSuite) TestCreate_CarDNE_Positive() {
-	_, err := suite.carRepo.Create(suite.nonExistingCreateCar)
+	_, err := suite.carRepo.Create(suite.nonExistingNewCarArgs)
 	suite.NoError(err, "err from creating non-existing car should not be nil")
 }

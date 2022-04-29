@@ -65,7 +65,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId string) (int64, error) {
+func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
     VALUES($1, $2, $3, $4, $5, $6)
@@ -73,8 +73,8 @@ func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId stri
   `
 
 	var id int64
-	err := permitRepo.database.driver.Get(&id, query, createPermit.ResidentId, carId,
-		createPermit.StartDate.Unix(), createPermit.EndDate.Unix(), createPermit.RequestTS, createPermit.AffectsDays)
+	err := permitRepo.database.driver.Get(&id, query, newPermitArgs.ResidentId, newPermitArgs.CarId,
+		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.RequestTS, newPermitArgs.AffectsDays)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}

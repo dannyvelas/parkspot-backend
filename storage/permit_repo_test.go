@@ -20,7 +20,7 @@ type permitRepoSuite struct {
 	migrator    *migrate.Migrate
 	dateFormat  string
 	existingCar models.Car
-	newPermit   models.CreatePermit
+	newPermit   models.NewPermitArgs
 }
 
 func TestPermitRepo(t *testing.T) {
@@ -48,7 +48,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 
 	suite.dateFormat = "2006-01-02"
 	suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.newPermit = models.NewCreatePermit("T1043321", models.CreateCar{},
+	suite.newPermit = models.NewNewPermitArgs("T1043321", "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e",
 		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
 		1645279579,
@@ -132,7 +132,7 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
 	permits, err := func() ([]models.Permit, error) {
@@ -146,7 +146,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefo
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBeg_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
 	permits, err := func() ([]models.Permit, error) {
@@ -160,7 +160,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBe
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
 	permits, err := func() ([]models.Permit, error) {
@@ -174,7 +174,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
 	permits, err := suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, suite.newPermit.StartDate, suite.newPermit.EndDate)
@@ -184,14 +184,14 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd
 }
 
 func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
-	permitId, err := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, err := suite.permitRepo.Create(suite.newPermit)
 	suite.NoError(err, "err from creating non-existing permit should be nil")
 
 	suite.permitRepo.Delete(permitId)
 }
 
 func (suite permitRepoSuite) TestDelete_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit, suite.existingCar.Id)
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 
 	err := suite.permitRepo.Delete(permitId)
 	suite.NoError(err, "err from deleting permit should be nil")

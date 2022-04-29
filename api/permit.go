@@ -9,36 +9,36 @@ import (
 )
 
 type createPermitReq struct {
-	ResidentId      string       `json:"residentId"`
-	CreateCarReq    createCarReq `json:"car"`
-	StartDate       time.Time    `json:"startDate"`
-	EndDate         time.Time    `json:"endDate"`
-	RequestTS       int64        `json:"requestTS"`
-	AffectsDays     bool         `json:"affectsDays"`
-	ExceptionReason *string      `json:"exceptionReason"`
+	residentId      string       `json:"residentId"`
+	createCarReq    createCarReq `json:"car"`
+	startDate       time.Time    `json:"startDate"`
+	endDate         time.Time    `json:"endDate"`
+	requestTS       int64        `json:"requestTS"`
+	affectsDays     bool         `json:"affectsDays"`
+	exceptionReason *string      `json:"exceptionReason"`
 }
 
 func (createPermitReq createPermitReq) emptyFields() error {
 	emptyFields := []string{}
 
-	if createPermitReq.ResidentId == "" {
+	if createPermitReq.residentId == "" {
 		emptyFields = append(emptyFields, "residentId")
 	}
-	if createPermitReq.StartDate.IsZero() {
+	if createPermitReq.startDate.IsZero() {
 		emptyFields = append(emptyFields, "startDate")
 	}
-	if createPermitReq.EndDate.IsZero() {
+	if createPermitReq.endDate.IsZero() {
 		emptyFields = append(emptyFields, "endDate")
 	}
-	if createPermitReq.RequestTS == 0 {
+	if createPermitReq.requestTS == 0 {
 		emptyFields = append(emptyFields, "requestTS")
 	}
-	if createPermitReq.AffectsDays == false {
+	if createPermitReq.affectsDays == false {
 		// this is okay so do nothing
 	}
-	if createPermitReq.ExceptionReason == nil {
+	if createPermitReq.exceptionReason == nil {
 		// this is okay so do nothing
-	} else if *createPermitReq.ExceptionReason == "" {
+	} else if *createPermitReq.exceptionReason == "" {
 		emptyFields = append(emptyFields, "exceptionReason")
 	}
 
@@ -52,21 +52,25 @@ func (createPermitReq createPermitReq) emptyFields() error {
 func (createPermitReq createPermitReq) invalidFields() error {
 	errors := []string{}
 
-	if createPermitReq.ResidentId[0] == 'P' {
+	if createPermitReq.residentId[0] == 'P' {
 		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
-	} else if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(createPermitReq.ResidentId) {
+	} else if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(createPermitReq.residentId) {
 		errors = append(errors, "residentId must start be a 'B' or a 'T', followed by 7 numbers")
 	}
 
-	if createPermitReq.StartDate.After(createPermitReq.EndDate) {
+	if err := createPermitReq.createCarReq.validate(); err != nil {
+		errors = append(errors, err.Error())
+	}
+
+	if createPermitReq.startDate.After(createPermitReq.endDate) {
 		errors = append(errors, "startDate cannot be after endDate")
 	}
 
-	if createPermitReq.StartDate.Equal(createPermitReq.EndDate) {
+	if createPermitReq.startDate.Equal(createPermitReq.endDate) {
 		errors = append(errors, "startDate cannot be equal to endDate")
 	}
 
-	if createPermitReq.RequestTS > time.Now().Unix() {
+	if createPermitReq.requestTS > time.Now().Unix() {
 		errors = append(errors, "requestTS cannot be in the future")
 	}
 
@@ -77,27 +81,26 @@ func (createPermitReq createPermitReq) invalidFields() error {
 	return nil
 }
 
-func (createPermitReq createPermitReq) toModels() (models.CreatePermit, error) {
+func (createPermitReq createPermitReq) validate() error {
 	if err := createPermitReq.emptyFields(); err != nil {
-		return models.CreatePermit{}, err
+		return err
 	}
 
 	if err := createPermitReq.invalidFields(); err != nil {
-		return models.CreatePermit{}, err
+		return err
 	}
 
-	createCar, err := createPermitReq.CreateCarReq.toModels()
-	if err != nil {
-		return models.CreatePermit{}, fmt.Errorf("%w: %v", errInvalidFields, "car")
-	}
+	return nil
+}
 
-	return models.NewCreatePermit(
-		createPermitReq.ResidentId,
-		createCar,
-		createPermitReq.StartDate,
-		createPermitReq.EndDate,
-		createPermitReq.RequestTS,
-		createPermitReq.AffectsDays,
-		createPermitReq.ExceptionReason,
-	), nil
+func (createPermitReq createPermitReq) toNewPermitArgs(carId string) models.NewPermitArgs {
+	return models.NewNewPermitArgs(
+		createPermitReq.residentId,
+		carId,
+		createPermitReq.startDate,
+		createPermitReq.endDate,
+		createPermitReq.requestTS,
+		createPermitReq.affectsDays,
+		createPermitReq.exceptionReason,
+	)
 }

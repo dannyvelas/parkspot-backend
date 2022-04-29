@@ -47,20 +47,20 @@ func (self Permit) Equal(other Permit) bool {
 	return true
 }
 
-type CreatePermit struct {
-	ResidentId      string    `json:"residentId"`
-	CreateCar       CreateCar `json:"car"`
-	StartDate       time.Time `json:"startDate"`
-	EndDate         time.Time `json:"endDate"`
-	RequestTS       int64     `json:"requestTS"`
-	AffectsDays     bool      `json:"affectsDays"`
-	ExceptionReason *string   `json:"exceptionReason"`
+type NewPermitArgs struct {
+	ResidentId      string
+	CarId           string
+	StartDate       time.Time
+	EndDate         time.Time
+	RequestTS       int64
+	AffectsDays     bool
+	ExceptionReason *string
 }
 
-func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason *string) CreatePermit {
-	return CreatePermit{
+func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason *string) NewPermitArgs {
+	return NewPermitArgs{
 		ResidentId:      residentId,
-		CreateCar:       createCar,
+		CarId:           carId,
 		StartDate:       startDate,
 		EndDate:         endDate,
 		RequestTS:       requestTS,
@@ -69,13 +69,13 @@ func NewCreatePermit(residentId string, createCar CreateCar, startDate time.Time
 	}
 }
 
-func (createPermit CreatePermit) ToPermit(permitId int64, car Car) Permit {
+func (newPermitArgs NewPermitArgs) ToPermit(permitId int64, car Car) Permit {
 	return NewPermit(
 		permitId,
-		createPermit.ResidentId,
+		newPermitArgs.ResidentId,
 		car,
-		createPermit.StartDate,
-		createPermit.EndDate,
-		createPermit.RequestTS,
-		createPermit.AffectsDays)
+		newPermitArgs.StartDate,
+		newPermitArgs.EndDate,
+		newPermitArgs.RequestTS,
+		newPermitArgs.AffectsDays)
 }

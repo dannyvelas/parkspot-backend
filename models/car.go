@@ -38,15 +38,15 @@ func (self Car) Equal(other Car) bool {
 	return true
 }
 
-type CreateCar struct {
+type NewCarArgs struct {
 	LicensePlate string `json:"licensePlate"`
 	Color        string `json:"color"`
 	Make         string `json:"make"`
 	Model        string `json:"model"`
 }
 
-func NewCreateCar(licensePlate string, color string, make string, model string) CreateCar {
-	return CreateCar{
+func NewNewCarArgs(licensePlate string, color string, make string, model string) NewCarArgs {
+	return NewCarArgs{
 		LicensePlate: licensePlate,
 		Color:        color,
 		Make:         make,
@@ -54,6 +54,6 @@ func NewCreateCar(licensePlate string, color string, make string, model string) 
 	}
 }
 
-func (createCar CreateCar) ToCar(id string) Car {
-	return NewCar(id, createCar.LicensePlate, createCar.Color, createCar.Make, createCar.Model, 0)
+func (newCarArgs NewCarArgs) ToCar(id string) Car {
+	return NewCar(id, newCarArgs.LicensePlate, newCarArgs.Color, newCarArgs.Make, newCarArgs.Model, 0)
 }
