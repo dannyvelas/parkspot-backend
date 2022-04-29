@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-migrate/migrate/v4"
@@ -61,7 +60,6 @@ func (suite residentRepoSuite) TestGetOne_Positive() {
 
 	foundResident, err := suite.residentRepo.GetOne(existingResident.Id)
 	suite.NoError(err, "Error when getting one existing resident")
-	fmt.Println("idhere: " + existingResident.Id)
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
 	suite.Empty(cmp.Diff(foundResident, existingResident), "resident found should be equal to existing resident")
