@@ -65,7 +65,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId string) (int64, error) {
+func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId string) (models.Permit, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
     VALUES($1, $2, $3, $4, $5, $6)
@@ -76,10 +76,10 @@ func (permitRepo PermitRepo) Create(createPermit models.CreatePermit, carId stri
 	err := permitRepo.database.driver.Get(&id, query, createPermit.ResidentId, carId,
 		createPermit.StartDate.Unix(), createPermit.EndDate.Unix(), createPermit.RequestTS, createPermit.AffectsDays)
 	if err != nil {
-		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return models.Permit{}, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
-	return id, nil
+	return createPermit.ToPermit(id, carId), nil
 }
 
 func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate time.Time) ([]models.Permit, error) {
