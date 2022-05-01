@@ -38,6 +38,7 @@
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
+- [ ] add `started server at URL:PORT` to main message
 - [ ] add more testing resident repo
 - [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
