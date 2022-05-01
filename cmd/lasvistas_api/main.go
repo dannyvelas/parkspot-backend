@@ -7,6 +7,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -27,6 +28,7 @@ func main() {
 	// load config
 	config := config.NewConfig()
 
+	/************************************** DATABASE *********************************/
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
 	database, err := storage.NewDatabase(config.Postgres())
@@ -35,17 +37,35 @@ func main() {
 	}
 	log.Info().Msg("Connected to Database.")
 
-	// initialize repos
 	adminRepo := storage.NewAdminRepo(database)
 	permitRepo := storage.NewPermitRepo(database)
 	carRepo := storage.NewCarRepo(database)
 	residentRepo := storage.NewResidentRepo(database)
+	/************************************** DATABASE *********************************/
+
+	/************************************** HTTP *********************************/
+	httpConfig := config.Http()
 
 	// initialize JWTMiddleware
 	jwtMiddleware := api.NewJWTMiddleware(config.Token())
 
-	// set routes
+	// config router
 	router := chi.NewRouter()
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   httpConfig.CORSAllowedOrigins(),
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	httpServer := http.Server{
+		Addr:         fmt.Sprintf("%s:%d", httpConfig.Host(), httpConfig.Port()),
+		Handler:      router,
+		ReadTimeout:  httpConfig.ReadTimeout(),
+		WriteTimeout: httpConfig.WriteTimeout(),
+		IdleTimeout:  httpConfig.IdleTimeout(),
+	}
+
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", api.Login(jwtMiddleware, adminRepo))
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
@@ -54,16 +74,7 @@ func main() {
 			adminRouter.Route("/permits", api.PermitRouter(permitRepo, carRepo, residentRepo, dateFormat))
 		})
 	})
-
-	// configure http server
-	httpConfig := config.Http()
-	httpServer := http.Server{
-		Addr:         fmt.Sprintf("%s:%d", httpConfig.Host(), httpConfig.Port()),
-		Handler:      router,
-		ReadTimeout:  httpConfig.ReadTimeout(),
-		WriteTimeout: httpConfig.WriteTimeout(),
-		IdleTimeout:  httpConfig.IdleTimeout(),
-	}
+	/************************************** HTTP *********************************/
 
 	// initialize error channel
 	errChannel := make(chan error)

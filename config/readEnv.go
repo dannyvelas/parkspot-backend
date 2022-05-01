@@ -1,9 +1,11 @@
 package config
 
 import (
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,7 +28,8 @@ func readEnvUint(envKey string, defaultValue uint) uint {
 
 	parsed, err := strconv.ParseUint(envValueString, 10, 64)
 	if err != nil {
-		log.Warn().Msg(newConversionError(envKey, "uint", defaultValue).Error())
+		conversionErr := newConversionError(envKey, "duration", defaultValue)
+		log.Warn().Msg(fmt.Sprintf("%v: %v", conversionErr, err))
 		return defaultValue
 	}
 
@@ -42,9 +45,25 @@ func readEnvDuration(envKey string, defaultValue uint) time.Duration {
 
 	parsed, err := time.ParseDuration(envValueString)
 	if err != nil {
-		log.Warn().Msg(newConversionError(envKey, "duration", defaultValue).Error())
+		conversionErr := newConversionError(envKey, "duration", defaultValue)
+		log.Warn().Msg(fmt.Sprintf("%v: %v", conversionErr, err))
 		return time.Duration(defaultValue) * time.Second
 	}
 
-	return parsed * time.Second
+	return parsed
+}
+
+func readEnvStringList(envKey string, defaultValue []string) []string {
+	envValue := os.Getenv(envKey)
+	if envValue == "" {
+		log.Warn().Msg(newNotFoundError(envKey, defaultValue).Error())
+		return defaultValue
+	}
+
+	values := strings.Split(envValue, ",")
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+	}
+
+	return values
 }

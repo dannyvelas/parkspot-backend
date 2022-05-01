@@ -5,11 +5,12 @@ import (
 )
 
 type HttpConfig struct {
-	host         string
-	port         uint
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	idleTimeout  time.Duration
+	host               string
+	port               uint
+	readTimeout        time.Duration
+	writeTimeout       time.Duration
+	idleTimeout        time.Duration
+	corsAllowedOrigins []string
 }
 
 const (
@@ -20,13 +21,18 @@ const (
 	defaultHttpIdleTimeout  = 120
 )
 
+var (
+	defaultCORSAllowedOrigins = []string{"http://*"}
+)
+
 func newHttpConfig() HttpConfig {
 	return HttpConfig{
-		host:         readEnvString("HTTP_HOST", defaultHttpHost),
-		port:         readEnvUint("HTTP_PORT", defaultHttpPort),
-		readTimeout:  readEnvDuration("HTTP_READTIMEOUT", defaultHttpReadTimeout),
-		writeTimeout: readEnvDuration("HTTP_WRITETIMEOUT", defaultHttpWriteTimeout),
-		idleTimeout:  readEnvDuration("HTTP_IDLETIMEOUT", defaultHttpIdleTimeout),
+		host:               readEnvString("HTTP_HOST", defaultHttpHost),
+		port:               readEnvUint("HTTP_PORT", defaultHttpPort),
+		readTimeout:        readEnvDuration("HTTP_READTIMEOUT", defaultHttpReadTimeout),
+		writeTimeout:       readEnvDuration("HTTP_WRITETIMEOUT", defaultHttpWriteTimeout),
+		idleTimeout:        readEnvDuration("HTTP_IDLETIMEOUT", defaultHttpIdleTimeout),
+		corsAllowedOrigins: readEnvStringList("HTTP_CORSALLOWEDORIGINS", defaultCORSAllowedOrigins),
 	}
 }
 
@@ -48,4 +54,8 @@ func (httpConfig HttpConfig) WriteTimeout() time.Duration {
 
 func (httpConfig HttpConfig) IdleTimeout() time.Duration {
 	return httpConfig.idleTimeout
+}
+
+func (httpConfig HttpConfig) CORSAllowedOrigins() []string {
+	return httpConfig.corsAllowedOrigins
 }
