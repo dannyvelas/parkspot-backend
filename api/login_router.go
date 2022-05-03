@@ -51,5 +51,7 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 
 		cookie := http.Cookie{Name: "jwt", Value: token, HttpOnly: true, Path: "/"}
 		http.SetCookie(w, &cookie)
+
+		respondJSON(w, http.StatusOK, admin)
 	}
 }

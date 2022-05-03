@@ -1,0 +1,21 @@
+package models
+
+type Admin struct {
+	Id           string `json:"id"`
+	FirstName    string `json:"firstName"`
+	LastName     string `json:"lastName"`
+	Email        string `json:"email"`
+	Password     string `json:"-"`
+	IsPrivileged bool   `json:"isPrivileged"`
+}
+
+func NewAdmin(id string, firstName string, lastName string, email string, password string, isPrivileged bool) Admin {
+	return Admin{
+		Id:           id,
+		FirstName:    firstName,
+		LastName:     lastName,
+		Email:        email,
+		Password:     password,
+		IsPrivileged: isPrivileged,
+	}
+}
