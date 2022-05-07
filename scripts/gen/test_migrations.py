@@ -311,7 +311,7 @@ if __name__ == '__main__':
         
         with open(csv_out_file_name('exception'), 'w') as e_file_out:
             with open(csv_in_file_name('sentances'), 'r') as sentances:
-                for i in range(amt_permits):
+                for i in range(1, amt_permits):
                     if bool(random.getrandbits(1)):
                         rand_sentance = next(sentances)
                         if rand_sentance:
