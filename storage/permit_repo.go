@@ -65,6 +65,25 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 	return permits.toModels(), nil
 }
 
+func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permit, error) {
+	query, _, err := permitRepo.permitSelect.
+		RightJoin("permit_exception ON permit.id = permit_exception.permit_id").
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
+
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
