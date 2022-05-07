@@ -348,8 +348,8 @@ if __name__ == '__main__':
 
                     file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
                     
-            with open(migration_in_file_name('exception'), 'r') as file_in:
-                with open(migration_out_file_name(6, 'exception'), 'w') as file_out:
+            with open(migration_in_file_name('permit_exception'), 'r') as file_in:
+                with open(migration_out_file_name(6, 'permit_exception'), 'w') as file_out:
                     reader = csv.reader(file_in, delimiter='\t')
                     for _, row in enumerate(reader):
                         exception = row_to_exception(row)
