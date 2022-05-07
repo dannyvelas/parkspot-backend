@@ -240,7 +240,6 @@ def csv_in_row_to_resident(row: List[str]) -> Resident:
         )
 
 def csv_out_row_to_resident(row: List[str]) -> Resident:
-
     return Resident(
       id                    = row[0],
       first_name            = row[1],
@@ -252,6 +251,28 @@ def csv_out_row_to_resident(row: List[str]) -> Resident:
       amt_parking_days_used = int(row[7]),
         )
 
+########################################
+## Exception_
+########################################
+class Exception_:
+    id: int
+    reason: str
+    def __init__(self, id: int, reason: str):
+        self.id = id
+        self.reason = reason
+
+    def as_sql(self) -> str:
+        escaped_reason = self.reason.replace("'", "''")
+        return (f"INSERT INTO exception(id, reason) VALUES"
+            f"( {self.id}"
+            f", '{escaped_reason}'"
+            f");")
+
+def row_to_exception(row: List[str]) -> Exception_:
+    return Exception_(
+        id           = int(row[0]),
+        reason = row[1]
+    )
 ########################################
 ## MAIN
 ########################################
@@ -269,12 +290,12 @@ if __name__ == '__main__':
         def csv_in_file_name(model: str) -> str: return f'./scripts/gen/csv_in/{model}.csv'
         def csv_out_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
 
+        amt_permits = 0
         with open(csv_out_file_name('resident'), 'w') as r_file_out:
             with open(csv_out_file_name('car'), 'w') as c_file_out:
                 with open(csv_out_file_name('permit'), 'w') as p_file_out:
                     with open(csv_in_file_name('resident'), 'r') as file_in:
                         reader = csv.reader(file_in, delimiter='\t')
-                        permit_id = 1
 
                         for _, row in enumerate(reader):
                             resident = csv_in_row_to_resident(row)
@@ -284,9 +305,17 @@ if __name__ == '__main__':
                             c_file_out.write(f'{car.as_csv()}\n')
 
                             for _ in range(random.randrange(5)):
-                                permit = get_rand_permit(permit_id, resident.id, car.id)
+                                permit = get_rand_permit(amt_permits + 1, resident.id, car.id)
                                 p_file_out.write(f'{permit.as_csv()}\n')
-                                permit_id += 1
+                                amt_permits += 1
+        
+        with open(csv_out_file_name('exception'), 'w') as e_file_out:
+            with open(csv_in_file_name('sentances'), 'r') as sentances:
+                for i in range(amt_permits):
+                    if bool(random.getrandbits(1)):
+                        rand_sentance = next(sentances)
+                        if rand_sentance:
+                            e_file_out.write(f'{i}\t{rand_sentance}')
 
     elif file_out == 'migration':
         def migration_in_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
@@ -318,3 +347,10 @@ if __name__ == '__main__':
                         amt_rows += 1
 
                     file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
+                    
+            with open(migration_in_file_name('exception'), 'r') as file_in:
+                with open(migration_out_file_name(6, 'exception'), 'w') as file_out:
+                    reader = csv.reader(file_in, delimiter='\t')
+                    for _, row in enumerate(reader):
+                        exception = row_to_exception(row)
+                        file_out.write(f'{exception.as_sql()}\n')
