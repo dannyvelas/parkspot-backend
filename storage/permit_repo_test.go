@@ -72,7 +72,7 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 	}()
 
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
-	suite.NoError(err, "Error getting all permit when the table is empty")
+	suite.NoError(err, "Error getting all permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permit should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
@@ -99,7 +99,7 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 
 func (suite permitRepoSuite) TestGetActivePermits_NonEmpty_Positive() {
 	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
-	suite.NoError(err, "Error getting all permits when the table is not empty")
+	suite.NoError(err, "Error getting active permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
@@ -123,6 +123,20 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 
 	f, err := os.Create("testout/active_permits.txt")
 	suite.NoError(err, "Error creating active_permits file")
+	defer f.Close()
+
+	for _, permit := range permits {
+		_, err := f.WriteString(permitToString(permit, suite.dateFormat))
+		suite.NoError(err, "Error when writing line")
+	}
+}
+
+func (suite permitRepoSuite) TestWritePermitExceptions_Positive() {
+	permits, err := suite.permitRepo.GetExceptions(defaultLimit, defaultOffset)
+	suite.NoError(err, "Error when getting permit exceptions")
+
+	f, err := os.Create("testout/permit_exceptions.txt")
+	suite.NoError(err, "Error creating permit_exceptions file")
 	defer f.Close()
 
 	for _, permit := range permits {
