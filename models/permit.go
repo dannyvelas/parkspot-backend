@@ -6,24 +6,26 @@ import (
 )
 
 type Permit struct {
-	Id          int64     `json:"id"`
-	ResidentId  string    `json:"residentId"`
-	Car         Car       `json:"car"`
-	StartDate   time.Time `json:"startDate"`
-	EndDate     time.Time `json:"endDate"`
-	RequestTS   int64     `json:"requestTS"`
-	AffectsDays bool      `json:"affectsDays"`
+	Id              int64     `json:"id"`
+	ResidentId      string    `json:"residentId"`
+	Car             Car       `json:"car"`
+	StartDate       time.Time `json:"startDate"`
+	EndDate         time.Time `json:"endDate"`
+	RequestTS       int64     `json:"requestTS"`
+	AffectsDays     bool      `json:"affectsDays"`
+	ExceptionReason string    `json:"exceptionReason"`
 }
 
-func NewPermit(id int64, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool) Permit {
+func NewPermit(id int64, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
 	return Permit{
-		Id:          id,
-		ResidentId:  residentId,
-		Car:         car,
-		StartDate:   startDate,
-		EndDate:     endDate,
-		RequestTS:   requestTS,
-		AffectsDays: affectsDays,
+		Id:              id,
+		ResidentId:      residentId,
+		Car:             car,
+		StartDate:       startDate,
+		EndDate:         endDate,
+		RequestTS:       requestTS,
+		AffectsDays:     affectsDays,
+		ExceptionReason: exceptionReason,
 	}
 }
 
@@ -42,6 +44,8 @@ func (self Permit) Equal(other Permit) bool {
 		return false
 	} else if self.AffectsDays != other.AffectsDays {
 		return false
+	} else if self.ExceptionReason != other.ExceptionReason {
+		return false
 	}
 
 	return true
@@ -54,10 +58,10 @@ type NewPermitArgs struct {
 	EndDate         time.Time
 	RequestTS       int64
 	AffectsDays     bool
-	ExceptionReason *string
+	ExceptionReason string
 }
 
-func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason *string) NewPermitArgs {
+func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) NewPermitArgs {
 	return NewPermitArgs{
 		ResidentId:      residentId,
 		CarId:           carId,
@@ -77,5 +81,6 @@ func (newPermitArgs NewPermitArgs) ToPermit(permitId int64, car Car) Permit {
 		newPermitArgs.StartDate,
 		newPermitArgs.EndDate,
 		newPermitArgs.RequestTS,
-		newPermitArgs.AffectsDays)
+		newPermitArgs.AffectsDays,
+		newPermitArgs.ExceptionReason)
 }

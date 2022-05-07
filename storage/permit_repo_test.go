@@ -53,7 +53,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
 		1645279579,
 		false,
-		nil)
+		"")
 }
 
 func (suite permitRepoSuite) TearDownSuite() {

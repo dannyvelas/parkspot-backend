@@ -15,7 +15,7 @@ type newPermitReq struct {
 	EndDate         time.Time `json:"endDate"`
 	RequestTS       int64     `json:"requestTS"`
 	AffectsDays     bool      `json:"affectsDays"`
-	ExceptionReason *string   `json:"exceptionReason"`
+	ExceptionReason string    `json:"exceptionReason"`
 }
 
 func (newPermitReq newPermitReq) emptyFields() error {
@@ -35,11 +35,8 @@ func (newPermitReq newPermitReq) emptyFields() error {
 	}
 	if newPermitReq.AffectsDays == false {
 		// this is okay so do nothing
-	}
-	if newPermitReq.ExceptionReason == nil {
+	} else if newPermitReq.ExceptionReason == "" {
 		// this is okay so do nothing
-	} else if *newPermitReq.ExceptionReason == "" {
-		emptyFields = append(emptyFields, "exceptionReason")
 	}
 
 	if len(emptyFields) > 0 {
