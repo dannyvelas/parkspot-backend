@@ -309,7 +309,7 @@ if __name__ == '__main__':
                                 p_file_out.write(f'{permit.as_csv()}\n')
                                 amt_permits += 1
         
-        with open(csv_out_file_name('exception'), 'w') as e_file_out:
+        with open(csv_out_file_name('permit_exception'), 'w') as e_file_out:
             with open(csv_in_file_name('sentances'), 'r') as sentances:
                 for i in range(1, amt_permits):
                     if bool(random.getrandbits(1)):
