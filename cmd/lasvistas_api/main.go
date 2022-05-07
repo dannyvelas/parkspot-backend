@@ -54,7 +54,7 @@ func main() {
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   httpConfig.CORSAllowedOrigins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
