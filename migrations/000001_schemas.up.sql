@@ -41,4 +41,9 @@ CREATE TABLE IF NOT EXISTS permit(
   affects_days BOOLEAN NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS permit_exception(
+  id INT REFERENCES permit(id) ON DELETE CASCADE NOT NULL,
+  reason TEXT NOT NULL
+);
+
 COMMIT;
