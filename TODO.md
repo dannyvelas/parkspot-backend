@@ -39,16 +39,17 @@
     * creating a permit with an existent car works
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [ ] add `started server at URL:PORT` to main message
-- [ ] add more testing resident repo
+- [ ] add `AddToAmtParkingDaysUsed` testing to resident repo
 - [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
-- [ ] make models.Permit `make` and `model` fields nullable
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [x] probably remove the return from `StartServer` function
+- [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
+- [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
 - [ ] make routing its own thing in `api/`
@@ -60,6 +61,7 @@
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
+- [x] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
 - [ ] move `migrations/` dir inside of `storage`
 - [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
 - [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
@@ -70,12 +72,13 @@
 - [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
 - [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
-- [ ] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
-- [ ] change all `id` fields in database to be actually `<model-name>_id`
+- [ ] make models.Permit `make` and `model` fields nullable
+    * it's probably fine: their existence as an empty string communicates their non-existence. there is no way that an empty string will ever be communicated as a valid existing value.
+    * we could add the "omitEmpty" flag to the json tag if we ever wanted to distinguish. but that's not necessary now. this would only be nice for consistency reasons if we had future fields that could are nullable and did have valid empty values like `amtCars` (does 0 mean that there are no cars or that this field was never set?). but, that's not the case now.
+- [ ] change all `id` fields in database to be actually `<model-name>_id`. not necessary. the way it is now is consistent (all database models have `id`, storage models have `<modelName>Id` and regular models have `Id`.) 
 - [ ] Validate repo func decorator that could be defined in `models`
 - [ ] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
 - [ ] change car to not be embedded in storage.permit for consistency with models schema
-- [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] add a test to check that any combination of missing fields doesn't work when creating a car
 - [ ] maybe make carRepo, permitRepo, adminRepo, ... fields on `storage.Database` and make all the receiving funcs of those repos receivers of storage.Database. that way repo funcs can easily call repo funcs of a different model
 - [ ] make insert repo functions actually query the inserted values from the database instead of just returning their arguments. also test that the values are the same
