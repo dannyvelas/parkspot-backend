@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS permit(
 );
 
 CREATE TABLE IF NOT EXISTS permit_exception(
-  id INT REFERENCES permit(id) ON DELETE CASCADE NOT NULL,
+  permit_id INT REFERENCES permit(id) ON DELETE CASCADE NOT NULL,
   reason TEXT NOT NULL
 );
 
