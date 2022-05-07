@@ -50,6 +50,7 @@
 - [x] probably remove the return from `StartServer` function
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
+- [ ] make python script also generate down migrations
 - [ ] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
 - [ ] make routing its own thing in `api/`
