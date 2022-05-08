@@ -212,7 +212,7 @@ func (suite permitRepoSuite) TestDelete_Positive() {
 }
 
 func permitToString(permit models.Permit, dateFormat string) string {
-	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t\n",
+	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t,%s\n",
 		permit.Id,
 		permit.ResidentId,
 		permit.Car.Id,
@@ -220,5 +220,6 @@ func permitToString(permit models.Permit, dateFormat string) string {
 		permit.EndDate.Format(dateFormat),
 		permit.RequestTS,
 		permit.AffectsDays,
+		permit.ExceptionReason,
 	)
 }
