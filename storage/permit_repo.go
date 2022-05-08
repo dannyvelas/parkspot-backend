@@ -25,7 +25,10 @@ func NewPermitRepo(database Database) PermitRepo {
 		"permit.end_ts",
 		"permit.request_ts",
 		"permit.affects_days",
-	).From("permit").LeftJoin("car ON permit.car_id = car.id")
+		"permit_exception.reason AS exception_reason",
+	).From("permit").
+		LeftJoin("car ON permit.car_id = car.id").
+		LeftJoin("permit_exception ON permit.id = permit_exception.permit_id")
 
 	return PermitRepo{database: database, permitSelect: permitSelect}
 }
@@ -34,6 +37,7 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, e
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.start_ts <= extract(epoch from now())").
 		Where("permit.end_ts >= extract(epoch from now())").
+		OrderBy("permit.id ASC").
 		Limit(getBoundedLimit(limit)).
 		Offset(offset).
 		ToSql()
@@ -51,7 +55,11 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, e
 }
 
 func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
-	query, _, err := permitRepo.permitSelect.Limit(getBoundedLimit(limit)).Offset(offset).ToSql()
+	query, _, err := permitRepo.permitSelect.
+		OrderBy("permit.id ASC").
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
+		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
 	}
@@ -67,7 +75,8 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 
 func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
-		RightJoin("permit_exception ON permit.id = permit_exception.permit_id").
+		Where("permit_exception.reason IS NOT NULL").
+		OrderBy("permit.id ASC").
 		Limit(getBoundedLimit(limit)).
 		Offset(offset).
 		ToSql()
@@ -106,6 +115,7 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDa
 		Where("car_id = $1", carId).
 		Where("permit.start_ts <= $2", endDate.Unix()).
 		Where("permit.end_ts >= $3", startDate.Unix()).
+		OrderBy("permit.id ASC").
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrBuildingQuery, err)
@@ -125,6 +135,7 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startD
 		Where("permit.resident_id = $1", residentId).
 		Where("permit.start_ts <= $2", endDate.Unix()).
 		Where("permit.end_ts >= $3", startDate.Unix()).
+		OrderBy("permit.id ASC").
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", ErrBuildingQuery, err)
