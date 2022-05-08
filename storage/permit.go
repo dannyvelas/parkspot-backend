@@ -10,11 +10,11 @@ type permit struct {
 	PermitId   int64  `db:"permit_id"`
 	ResidentId string `db:"resident_id"`
 	car
-	StartTS         int64         `db:"start_ts"`
-	EndTS           int64         `db:"end_ts"`
-	RequestTS       sql.NullInt64 `db:"request_ts"`
-	AffectsDays     bool          `db:"affects_days"`
-	ExceptionReason string        `db:"exception_reason"`
+	StartTS         int64          `db:"start_ts"`
+	EndTS           int64          `db:"end_ts"`
+	RequestTS       sql.NullInt64  `db:"request_ts"`
+	AffectsDays     bool           `db:"affects_days"`
+	ExceptionReason sql.NullString `db:"exception_reason"`
 }
 
 func (permit permit) toModels() models.Permit {
@@ -26,7 +26,7 @@ func (permit permit) toModels() models.Permit {
 		time.Unix(permit.EndTS, 0),
 		permit.RequestTS.Int64,
 		permit.AffectsDays,
-		permit.ExceptionReason,
+		permit.ExceptionReason.String,
 	)
 }
 
