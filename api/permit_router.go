@@ -106,7 +106,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		}
 
 		permitLength := int(newPermitReq.EndDate.Sub(newPermitReq.StartDate).Hours() / 24)
-		if newPermitReq.ExceptionReason == nil { // if not exception
+		if newPermitReq.ExceptionReason == "" { // if not exception
 			if permitLength > maxPermitLength {
 				message := fmt.Sprintf("Error: Requests cannot be longer than %d days, unless there is an exception."+
 					" If this resident wants their guest to park for more than %d days, they can request"+
