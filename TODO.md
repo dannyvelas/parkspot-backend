@@ -38,6 +38,7 @@
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
+- [ ] 
 - [ ] add `started server at URL:PORT` to main message
 - [ ] add `AddToAmtParkingDaysUsed` testing to resident repo
 - [ ] add api layer testing
@@ -50,6 +51,7 @@
 - [x] probably remove the return from `StartServer` function
 - [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] add dateFormat to golang config
+- [ ] add expiration JWT time to constants
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] make python script also generate down migrations
@@ -64,6 +66,10 @@
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
 - [x] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
+- [ ] implement double-submit tokens
+    * implement double-submit tokens without REDIS
+    * implement double-submit tokens with REDIS
+    * for fun: replace r.context() with struct?
 - [ ] move `migrations/` dir inside of `storage`
 - [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
 - [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
