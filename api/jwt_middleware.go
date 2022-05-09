@@ -15,8 +15,13 @@ var (
 	errInvalidToken         = errors.New("jwt: Invalid Token")
 )
 
+type jwtPayload struct {
+	Id   string `json:"id"`
+	Role Role   `json:"role"`
+}
+
 type jwtClaims struct {
-	Id string `json:"id"`
+	jwtPayload
 	jwt.StandardClaims
 }
 
@@ -28,9 +33,12 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) JWTMiddleware {
 	return JWTMiddleware{tokenSecret: []byte(tokenConfig.Secret())}
 }
 
-func (jwtMiddleware JWTMiddleware) newJWT(id string) (string, error) {
+func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) {
 	claims := jwtClaims{
-		id,
+		jwtPayload{
+			id,
+			role,
+		},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
 	}
 
@@ -39,7 +47,7 @@ func (jwtMiddleware JWTMiddleware) newJWT(id string) (string, error) {
 	return token.SignedString(jwtMiddleware.tokenSecret)
 }
 
-func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (string, error) {
+func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtPayload, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -48,15 +56,15 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (string, error) 
 		return jwtMiddleware.tokenSecret, nil
 	})
 	if err != nil {
-		return "", err
+		return jwtPayload{}, err
 	}
 
 	if claims, ok := token.Claims.(*jwtClaims); !ok {
-		return "", errCastingJWTClaims
+		return jwtPayload{}, errCastingJWTClaims
 	} else if !token.Valid {
-		return "", errInvalidToken
+		return jwtPayload{}, errInvalidToken
 	} else {
-		return claims.Id, nil
+		return claims.jwtPayload, nil
 	}
 }
 
