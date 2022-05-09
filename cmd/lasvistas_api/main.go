@@ -6,8 +6,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/api"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -46,17 +44,8 @@ func main() {
 	/************************************** HTTP *********************************/
 	httpConfig := config.Http()
 
-	// initialize JWTMiddleware
-	jwtMiddleware := api.NewJWTMiddleware(config.Token())
-
-	// config router
-	router := chi.NewRouter()
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   httpConfig.CORSAllowedOrigins(),
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	router := api.NewRouter(httpConfig, config.Token(), dateFormat,
+		adminRepo, permitRepo, carRepo, residentRepo)
 
 	httpServer := http.Server{
 		Addr:         fmt.Sprintf("%s:%d", httpConfig.Host(), httpConfig.Port()),
@@ -65,15 +54,6 @@ func main() {
 		WriteTimeout: httpConfig.WriteTimeout(),
 		IdleTimeout:  httpConfig.IdleTimeout(),
 	}
-
-	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Post("/login", api.Login(jwtMiddleware, adminRepo))
-		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			adminRouter.Use(jwtMiddleware.Authenticate)
-			adminRouter.Route("/hello", api.HelloRouter())
-			adminRouter.Route("/permits", api.PermitRouter(permitRepo, carRepo, residentRepo, dateFormat))
-		})
-	})
 	/************************************** HTTP *********************************/
 
 	// initialize error channel
