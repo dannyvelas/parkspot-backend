@@ -6,20 +6,9 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
-	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
-
-func PermitRouter(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo storage.ResidentRepo, dateFormat string) func(chi.Router) {
-	return func(r chi.Router) {
-		r.Get("/active", getActive(permitRepo))
-		r.Get("/all", getAll(permitRepo))
-		r.Get("/exceptions", getExceptions(permitRepo))
-		r.Get("/expired", getExpired(permitRepo))
-		r.Post("/create", create(permitRepo, carRepo, residentRepo, dateFormat))
-	}
-}
 
 func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

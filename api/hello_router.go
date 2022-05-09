@@ -1,16 +1,9 @@
 package api
 
 import (
-	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
-
-func HelloRouter() func(chi.Router) {
-	return func(r chi.Router) {
-		r.Get("/", sayHello())
-	}
-}
 
 func sayHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
