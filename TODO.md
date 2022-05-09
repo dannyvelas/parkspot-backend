@@ -48,10 +48,10 @@
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [x] probably remove the return from `StartServer` function
+- [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] make python script also generate down migrations
-- [ ] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
 - [ ] make routing its own thing in `api/`
 - [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
