@@ -15,13 +15,13 @@ var (
 	errInvalidToken         = errors.New("jwt: Invalid Token")
 )
 
-type jwtPayload struct {
+type jwtUser struct {
 	Id   string `json:"id"`
 	Role Role   `json:"role"`
 }
 
 type jwtClaims struct {
-	jwtPayload
+	jwtUser
 	jwt.StandardClaims
 }
 
@@ -35,7 +35,7 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) JWTMiddleware {
 
 func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) {
 	claims := jwtClaims{
-		jwtPayload{
+		jwtUser{
 			id,
 			role,
 		},
@@ -47,7 +47,7 @@ func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) 
 	return token.SignedString(jwtMiddleware.tokenSecret)
 }
 
-func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtPayload, error) {
+func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtUser, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -56,15 +56,15 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtPayload, err
 		return jwtMiddleware.tokenSecret, nil
 	})
 	if err != nil {
-		return jwtPayload{}, err
+		return jwtUser{}, err
 	}
 
 	if claims, ok := token.Claims.(*jwtClaims); !ok {
-		return jwtPayload{}, errCastingJWTClaims
+		return jwtUser{}, errCastingJWTClaims
 	} else if !token.Valid {
-		return jwtPayload{}, errInvalidToken
+		return jwtUser{}, errInvalidToken
 	} else {
-		return claims.jwtPayload, nil
+		return claims.jwtUser, nil
 	}
 }
 
@@ -76,14 +76,14 @@ func (jwtMiddleware JWTMiddleware) Authenticate(next http.Handler) http.Handler 
 			return
 		}
 
-		userId, err := jwtMiddleware.parseJWT(cookie.Value)
+		user, err := jwtMiddleware.parseJWT(cookie.Value)
 		if err != nil {
 			respondError(w, errUnauthorized)
 			return
 		}
 
 		ctx := r.Context()
-		updatedCtx := context.WithValue(ctx, "id", userId)
+		updatedCtx := context.WithValue(ctx, "user", user)
 		updatedReq := r.WithContext(updatedCtx)
 
 		next.ServeHTTP(w, updatedReq)
