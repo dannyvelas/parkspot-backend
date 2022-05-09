@@ -21,7 +21,7 @@ type jwtUser struct {
 }
 
 type jwtClaims struct {
-	jwtUser
+	JwtUser jwtUser `json:"user"`
 	jwt.StandardClaims
 }
 
@@ -64,7 +64,7 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtUser, error)
 	} else if !token.Valid {
 		return jwtUser{}, errInvalidToken
 	} else {
-		return claims.jwtUser, nil
+		return claims.JwtUser, nil
 	}
 }
 
