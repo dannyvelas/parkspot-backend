@@ -93,6 +93,27 @@ func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permi
 	return permits.toModels(), nil
 }
 
+func (permitRepo PermitRepo) GetExpired(limit, offset, window uint64) ([]models.Permit, error) {
+	query, args, err := permitRepo.permitSelect.
+		Where("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", window).
+		Where("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))").
+		OrderBy("permit.id ASC").
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetExpired: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetExpired: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
+
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
