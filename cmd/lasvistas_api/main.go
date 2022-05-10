@@ -26,7 +26,6 @@ func main() {
 	// load config
 	config := config.NewConfig()
 
-	/************************************** DATABASE *********************************/
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
 	database, err := storage.NewDatabase(config.Postgres())
@@ -35,13 +34,13 @@ func main() {
 	}
 	log.Info().Msg("Connected to Database.")
 
+	// init repos
 	adminRepo := storage.NewAdminRepo(database)
 	permitRepo := storage.NewPermitRepo(database)
 	carRepo := storage.NewCarRepo(database)
 	residentRepo := storage.NewResidentRepo(database)
-	/************************************** DATABASE *********************************/
 
-	/************************************** HTTP *********************************/
+	// http setup
 	httpConfig := config.Http()
 
 	router := api.NewRouter(httpConfig, config.Token(), dateFormat,
@@ -54,7 +53,6 @@ func main() {
 		WriteTimeout: httpConfig.WriteTimeout(),
 		IdleTimeout:  httpConfig.IdleTimeout(),
 	}
-	/************************************** HTTP *********************************/
 
 	// initialize error channel
 	errChannel := make(chan error)
