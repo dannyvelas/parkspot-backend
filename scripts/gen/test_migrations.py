@@ -36,7 +36,8 @@ class Permit:
     end_ts: int
     request_ts: Union[int, None]
     affects_days: bool
-    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: Union[int,None], affects_days: bool):
+    exception_reason: Union[str, None]
+    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: Union[int,None], affects_days: bool, exception_reason: Union[str,None]):
         self.id = id
         self.resident_id = resident_id
         self.car_id = car_id
@@ -44,9 +45,11 @@ class Permit:
         self.end_ts = end_ts
         self.request_ts = request_ts
         self.affects_days = affects_days
+        self.exception_reason = exception_reason
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days) VALUES"
+        escaped_reason = self.exception_reason.replace("'", "''") if self.exception_reason else None
+        return (f"INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason) VALUES"
             f"( {self.id}"
             f", '{self.resident_id}'"
             f", '{self.car_id}'"
@@ -54,7 +57,7 @@ class Permit:
             f", {self.end_ts}"
             f", {nullable_to_sql(self.request_ts)}"
             f", {self.affects_days}"
-            f");")
+            f", {nullable_to_sql(escaped_reason)});")
 
     def as_csv(self) -> str:
         return (
@@ -65,6 +68,7 @@ class Permit:
             f"\t{self.end_ts}"
             f"\t{nullable_to_csv(self.request_ts)}"
             f"\t{self.affects_days}"
+            f"\t{nullable_to_csv(self.exception_reason)}"
             )
 
 def row_to_permit(row: List[str]) -> Permit:
@@ -75,7 +79,8 @@ def row_to_permit(row: List[str]) -> Permit:
         start_ts   = int(row[3]),
         end_ts     = int(row[4]),
         request_ts   = int(row[5]) if row[5] != '' else None,
-        affects_days = row[6] == 'True'
+        affects_days = row[6] == 'True',
+        exception_reason = row[7]
     )
 
 def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
@@ -95,6 +100,14 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
 
         return (int(start_date.timestamp()), int(end_date.timestamp()))
 
+    def get_rand_sentance() -> str:
+        with open('./scripts/gen/csv_in/sentances.csv', 'r') as in_file:
+            random_line = next(in_file)
+            for i, line in enumerate(in_file, 2):
+                if random.randrange(i) == 0:
+                    random_line = line
+            return random_line.replace('\n', '')
+
     start_ts, end_ts = get_rand_tss()
     request_ts = start_ts - random.randrange(0, 259200)
 
@@ -105,7 +118,8 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
 		start_ts,
 		end_ts,
 		int(request_ts) if bool(random.getrandbits(1)) else None,
-		bool(random.getrandbits(1))
+		bool(random.getrandbits(1)),
+        get_rand_sentance() if bool(random.getrandbits(1)) else None,
     )
 ########################################
 ## Car
@@ -309,14 +323,6 @@ if __name__ == '__main__':
                                 p_file_out.write(f'{permit.as_csv()}\n')
                                 amt_permits += 1
         
-        with open(csv_out_file_name('permit_exception'), 'w') as e_file_out:
-            with open(csv_in_file_name('sentances'), 'r') as sentances:
-                for i in range(1, amt_permits):
-                    if bool(random.getrandbits(1)):
-                        rand_sentance = next(sentances)
-                        if rand_sentance:
-                            e_file_out.write(f'{i}\t{rand_sentance}')
-
     elif file_out == 'migration':
         def migration_in_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
         def migration_out_file_name(version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'
@@ -347,10 +353,3 @@ if __name__ == '__main__':
                         amt_rows += 1
 
                     file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
-                    
-            with open(migration_in_file_name('permit_exception'), 'r') as file_in:
-                with open(migration_out_file_name(6, 'permit_exception'), 'w') as file_out:
-                    reader = csv.reader(file_in, delimiter='\t')
-                    for _, row in enumerate(reader):
-                        exception = row_to_exception(row)
-                        file_out.write(f'{exception.as_sql()}\n')
