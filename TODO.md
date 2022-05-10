@@ -50,6 +50,7 @@
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [x] probably remove the return from `StartServer` function
 - [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
+- [ ] remove "No error when" messages from repo_tests. unnecessary
 - [ ] add dateFormat to golang config
 - [ ] add expiration JWT time to constants
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
