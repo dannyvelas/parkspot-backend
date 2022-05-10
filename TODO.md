@@ -12,7 +12,7 @@
     ✓ creating a car with a missing field doesn't work
     ✓ creating a car that already exists just returns that car with no error
 - [x] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
-- [ ] create exceptions table and allow requests to create exceptional permits
+- [x] create exceptions table and allow requests to create exceptional permits
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -38,8 +38,8 @@
     * creating a permit with a non-existent car works
     * creating a permit with an existent car works
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
-- [ ] 
-- [ ] add `started server at URL:PORT` to main message
+- [x] add `started server at URL:PORT` to main message
+- [ ] change error messages for residents when they're creating a permit
 - [ ] add `AddToAmtParkingDaysUsed` testing to resident repo
 - [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
@@ -50,23 +50,21 @@
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [x] probably remove the return from `StartServer` function
 - [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
+- [x] add dateFormat to golang config
+- [x] make routing its own thing in `api/`
+- [x] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [ ] remove "No error when" messages from repo_tests. unnecessary
-- [ ] add dateFormat to golang config
 - [ ] add expiration JWT time to constants
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] make python script also generate down migrations
 - [ ] change WHERE db stmts in car_repo to be like `WHERE license_plate = ..` and not `WHERE car.license_plate = ...` same thing for `car.id`
-- [ ] make routing its own thing in `api/`
-- [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
-- [ ] change storage errors to use errors.New instead of `sentinelError`
 - [ ] add a list of colors to use as a dropdown
-- [ ] update getoneadmin with sqlx semantics (use get instead of query.scan)
-- [ ] update all funcs to use squirrel semantics (instead of sql or sqlx)
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
 - [x] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
+- [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 - [ ] implement double-submit tokens
     * implement double-submit tokens without REDIS
     * implement double-submit tokens with REDIS
