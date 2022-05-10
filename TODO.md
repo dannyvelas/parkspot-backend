@@ -40,7 +40,7 @@
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [x] add `started server at URL:PORT` to main message
 - [ ] change error messages for residents when they're creating a permit
-- [ ] add `AddToAmtParkingDaysUsed` testing to resident repo
+- [ ] add `AddToAmtParkingDaysUsed` and `GetAll` testing to resident repo
 - [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
 ## Low priority
