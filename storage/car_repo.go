@@ -96,3 +96,17 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 
 	return nil
 }
+
+func (carRepo CarRepo) Delete(id string) error {
+	if id == "" {
+		return fmt.Errorf("car_repo.Delete: %w: empty string ID argument", ErrInvalidArg)
+	}
+	const query = `DELETE FROM car WHERE id = $1`
+
+	_, err := carRepo.database.driver.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("car_repo.Delete: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}
