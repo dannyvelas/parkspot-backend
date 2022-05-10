@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/golang-jwt/jwt/v4"
@@ -15,13 +14,8 @@ var (
 	errInvalidToken         = errors.New("jwt: Invalid Token")
 )
 
-type jwtUser struct {
-	Id   string `json:"id"`
-	Role Role   `json:"role"`
-}
-
 type jwtClaims struct {
-	JwtUser jwtUser `json:"user"`
+	User user `json:"user"`
 	jwt.StandardClaims
 }
 
@@ -35,7 +29,7 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) JWTMiddleware {
 
 func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) {
 	claims := jwtClaims{
-		jwtUser{
+		user{
 			id,
 			role,
 		},
@@ -47,7 +41,7 @@ func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) 
 	return token.SignedString(jwtMiddleware.tokenSecret)
 }
 
-func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtUser, error) {
+func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (user, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -56,15 +50,15 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (jwtUser, error)
 		return jwtMiddleware.tokenSecret, nil
 	})
 	if err != nil {
-		return jwtUser{}, err
+		return user{}, err
 	}
 
 	if claims, ok := token.Claims.(*jwtClaims); !ok {
-		return jwtUser{}, errCastingJWTClaims
+		return user{}, errCastingJWTClaims
 	} else if !token.Valid {
-		return jwtUser{}, errInvalidToken
+		return user{}, errInvalidToken
 	} else {
-		return claims.JwtUser, nil
+		return claims.User, nil
 	}
 }
 
@@ -83,7 +77,7 @@ func (jwtMiddleware JWTMiddleware) Authenticate(next http.Handler) http.Handler 
 		}
 
 		ctx := r.Context()
-		updatedCtx := context.WithValue(ctx, "user", user)
+		updatedCtx := ctxWithUser(ctx, user)
 		updatedReq := r.WithContext(updatedCtx)
 
 		next.ServeHTTP(w, updatedReq)
