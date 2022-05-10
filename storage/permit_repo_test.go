@@ -46,7 +46,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
 
-	suite.dateFormat = "2006-01-02"
+	suite.dateFormat = config.Constants().DateFormat()
+
 	suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
 	suite.newPermit = models.NewNewPermitArgs("T1043321", "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e",
 		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
