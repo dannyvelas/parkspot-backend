@@ -27,3 +27,13 @@ func (resident resident) toModels() models.Resident {
 		AmtParkingDaysUsed: resident.AmtParkingDaysUsed,
 	}
 }
+
+type residentSlice []resident
+
+func (residents residentSlice) toModels() []models.Resident {
+	modelsResidents := make([]models.Resident, 0, len(residents))
+	for _, resident := range residents {
+		modelsResidents = append(modelsResidents, resident.toModels())
+	}
+	return modelsResidents
+}

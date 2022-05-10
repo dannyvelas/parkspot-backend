@@ -48,6 +48,21 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 	return resident.toModels(), nil
 }
 
+func (residentRepo ResidentRepo) GetAll(limit, offset uint64) ([]models.Resident, error) {
+	query, _, err := residentRepo.residentSelect.OrderBy("resident.id ASC").ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrBuildingQuery, err)
+	}
+
+	residents := residentSlice{}
+	err = residentRepo.database.driver.Select(&residents, query)
+	if err != nil {
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return residents.toModels(), nil
+}
+
 func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	const query = `
     UPDATE resident SET amt_parking_days_used = amt_parking_days_used + $1
