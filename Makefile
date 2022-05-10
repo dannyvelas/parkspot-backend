@@ -13,6 +13,9 @@ all: build
 build: $(MAIN)
 	go build -v -o $(EXEC) $< || exit
 
+test_storage:
+	go test -v ./storage/
+
 run: build
 	$(EXEC)
 
@@ -48,4 +51,4 @@ gen_test_csvs:
 gen_test_migrations:
 	python3 scripts/gen/test_migrations.py migration
 
-.PHONY: clean migrate_up migrate_up_step migrate_down migrate_down_step migrate_force_version migrate_create migrate_version gen_test_csvs gen_test_migrations
+.PHONY: test_storage clean migrate_up migrate_up_step migrate_down migrate_down_step migrate_force_version migrate_create migrate_version gen_test_csvs gen_test_migrations
