@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	http     HttpConfig
-	postgres PostgresConfig
-	token    TokenConfig
+	http      HttpConfig
+	postgres  PostgresConfig
+	token     TokenConfig
+	constants Constants
 }
 
 const projectName = "go-lasvistas_api"
@@ -34,9 +35,10 @@ func NewConfig() Config {
 	}
 
 	return Config{
-		http:     newHttpConfig(),
-		postgres: newPostgresConfig(),
-		token:    newTokenConfig(),
+		http:      newHttpConfig(),
+		postgres:  newPostgresConfig(),
+		token:     newTokenConfig(),
+		constants: newConstants(),
 	}
 }
 
@@ -50,4 +52,8 @@ func (config Config) Postgres() PostgresConfig {
 
 func (config Config) Token() TokenConfig {
 	return config.token
+}
+
+func (config Config) Constants() Constants {
+	return config.constants
 }
