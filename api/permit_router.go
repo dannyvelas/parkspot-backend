@@ -99,7 +99,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		// check if car exists
 		existingCar, err := carRepo.GetByLicensePlate(newPermitReq.NewCarReq.LicensePlate)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
@@ -125,7 +125,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		// error out if resident DNE
 		existingResident, err := residentRepo.GetOne(newPermitReq.ResidentId)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-			log.Error().Msgf("permit_router: Error querying residentRepo: %v", err)
+			log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		} else if errors.Is(err, storage.ErrNoRows) { // resident does not exist
@@ -206,7 +206,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			newCarArgs := newPermitReq.NewCarReq.toNewCarArgs()
 			carId, err := carRepo.Create(newCarArgs)
 			if err != nil {
-				log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
 				respondError(w, errInternalServerError)
 				return
 			}
@@ -216,14 +216,14 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 
 		err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
 		if err != nil {
-			log.Error().Msgf("permit_router: Error querying residentRepo: %v", err)
+			log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
 
 		err = carRepo.AddToAmtParkingDaysUsed(permitCar.Id, permitLength)
 		if err != nil {
-			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
@@ -231,7 +231,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id)
 		permitId, err := permitRepo.Create(newPermitArgs)
 		if err != nil {
-			log.Error().Msgf("permit_router: Error querying carRepo: %v", err)
+			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
