@@ -14,10 +14,8 @@ type carRepoSuite struct {
 	suite.Suite
 	carRepo                CarRepo
 	migrator               *migrate.Migrate
-	existingCar            models.Car
 	existingCarEmptyFields models.Car
-	existingNewCarArgs     models.NewCarArgs
-	nonExistingNewCarArgs  models.NewCarArgs
+	newCar                 models.NewCarArgs
 }
 
 func TestCarRepo(t *testing.T) {
@@ -43,10 +41,11 @@ func (suite *carRepoSuite) SetupSuite() {
 		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
 	}
 
-	suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
 	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.existingNewCarArgs = models.NewNewCarArgs("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
-	suite.nonExistingNewCarArgs = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
+	suite.newCar = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
+	//suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
+	//suite.existingNewCarArgs = models.NewNewCarArgs("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
+	//suite.nonExistingNewCarArgs = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
@@ -72,9 +71,11 @@ func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
-	existingCar := suite.existingCar
+	carId, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carId)
+	existingCar := suite.newCar.ToCar(carId)
 
-	foundCar, err := suite.carRepo.GetOne(existingCar.Id)
+	foundCar, err := suite.carRepo.GetOne(carId)
 	suite.NoError(err, "Error when getting one car without any empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
@@ -82,7 +83,9 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestGetByLicensePlate_Positive() {
-	existingCar := suite.existingCar
+	carId, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carId)
+	existingCar := suite.newCar.ToCar(carId)
 
 	foundCar, err := suite.carRepo.GetByLicensePlate(existingCar.LicensePlate)
 	suite.NoError(err, "Error when getting one car by its license plate")
@@ -92,16 +95,28 @@ func (suite carRepoSuite) TestGetByLicensePlate_Positive() {
 }
 
 func (suite carRepoSuite) TestGetByLicensePlate_Negative() {
-	_, err := suite.carRepo.GetByLicensePlate("ABCD123") // non-existent license plate
+	_, err := suite.carRepo.GetByLicensePlate("ABC123") // non-existent license plate
 	suite.ErrorIs(err, ErrNoRows, "err should be equal to storage.ErrNoRows")
 }
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	_, err := suite.carRepo.Create(suite.existingNewCarArgs)
+	carId, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carId)
+
+	_, err := suite.carRepo.Create(suite.newCar)
 	suite.Error(err, "err from creating existing car should not be nil")
 }
 
 func (suite carRepoSuite) TestCreate_CarDNE_Positive() {
-	_, err := suite.carRepo.Create(suite.nonExistingNewCarArgs)
+	carId, err := suite.carRepo.Create(suite.newCar)
 	suite.NoError(err, "err from creating non-existing car should not be nil")
+
+	suite.carRepo.Delete(carId)
+}
+
+func (suite carRepoSuite) TestDelete_Positive() {
+	carId, _ := suite.carRepo.Create(suite.newCar)
+
+	err := suite.carRepo.Delete(carId)
+	suite.NoError(err, "err from deleting car should be nil")
 }
