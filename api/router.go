@@ -32,11 +32,11 @@ func NewRouter(httpConfig config.HttpConfig,
 			adminRouter.Use(jwtMiddleware.Authenticate)
 			adminRouter.Get("/hello", sayHello())
 			adminRouter.Get("/permits/active", getActive(permitRepo))
-			adminRouter.Get("/permits/all", getAll(permitRepo))
+			adminRouter.Get("/permits", getAll(permitRepo))
 			adminRouter.Get("/permits/exceptions", getExceptions(permitRepo))
 			adminRouter.Get("/permits/expired", getExpired(permitRepo))
 			adminRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
-			adminRouter.Get("/residents/all", getAllResidents(residentRepo))
+			adminRouter.Get("/residents", getAllResidents(residentRepo))
 		})
 		apiRouter.Route("/resident", func(residentRouter chi.Router) {
 			residentRouter.Use(jwtMiddleware.Authenticate)
