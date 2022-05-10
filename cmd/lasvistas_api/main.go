@@ -75,6 +75,7 @@ func main() {
 }
 
 func StartServer(httpServer http.Server) error {
+	log.Info().Msgf("Server started on: %s", httpServer.Addr)
 	if err := httpServer.ListenAndServe(); err != nil {
 		return fmt.Errorf("Failed to start server: %v", err)
 	}
