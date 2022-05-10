@@ -57,7 +57,7 @@ func main() {
 
 	// receive errors from startup or signal interrupt
 	go func() {
-		errChannel <- StartServer(httpServer)
+		errChannel <- startServer(httpServer)
 	}()
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -71,7 +71,7 @@ func main() {
 	shutdownGracefully(30*time.Second, httpServer)
 }
 
-func StartServer(httpServer http.Server) error {
+func startServer(httpServer http.Server) error {
 	log.Info().Msgf("Server started on: %s", httpServer.Addr)
 	if err := httpServer.ListenAndServe(); err != nil {
 		return fmt.Errorf("Failed to start server: %v", err)
