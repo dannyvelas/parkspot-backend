@@ -25,10 +25,9 @@ func NewPermitRepo(database Database) PermitRepo {
 		"permit.end_ts",
 		"permit.request_ts",
 		"permit.affects_days",
-		"permit_exception.reason AS exception_reason",
+		"permit.exception_reason",
 	).From("permit").
-		LeftJoin("car ON permit.car_id = car.id").
-		LeftJoin("permit_exception ON permit.id = permit_exception.permit_id")
+		LeftJoin("car ON permit.car_id = car.id")
 
 	return PermitRepo{database: database, permitSelect: permitSelect}
 }
@@ -75,7 +74,7 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 
 func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
-		Where("permit_exception.reason IS NOT NULL").
+		Where("permit.exception_reason IS NOT NULL").
 		OrderBy("permit.id ASC").
 		Limit(getBoundedLimit(limit)).
 		Offset(offset).
@@ -116,14 +115,15 @@ func (permitRepo PermitRepo) GetExpired(limit, offset, window uint64) ([]models.
 
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
 	const query = `
-    INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days)
-    VALUES($1, $2, $3, $4, $5, $6)
+    INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason)
+    VALUES($1, $2, $3, $4, $5, $6, $7)
     RETURNING id
   `
 
 	var id int64
 	err := permitRepo.database.driver.Get(&id, query, newPermitArgs.ResidentId, newPermitArgs.CarId,
-		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.RequestTS, newPermitArgs.AffectsDays)
+		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.RequestTS, newPermitArgs.AffectsDays,
+		toNullable(newPermitArgs.ExceptionReason))
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
