@@ -38,12 +38,8 @@ CREATE TABLE IF NOT EXISTS permit(
   start_ts BIGINT NOT NULL,
   end_ts BIGINT NOT NULL,
   request_ts BIGINT,
-  affects_days BOOLEAN NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS permit_exception(
-  permit_id INT REFERENCES permit(id) ON DELETE CASCADE NOT NULL,
-  reason TEXT NOT NULL
+  affects_days BOOLEAN NOT NULL,
+  exception_reason TEXT NOT NULL,
 );
 
 COMMIT;
