@@ -85,6 +85,8 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo storage.ResidentRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
 			respondError(w, errBadRequest)
@@ -93,6 +95,19 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 
 		if err := newPermitReq.validate(); err != nil {
 			respondErrorWith(w, errBadRequest, err.Error())
+			return
+		}
+
+		user, err := ctxGetUser(ctx)
+		if err != nil {
+			log.Error().Msgf("permit_router.create: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		if user.Role == ResidentRole && newPermitReq.ExceptionReason != "" {
+			message := "Residents cannot request parking permits with exceptions"
+			respondErrorWith(w, errBadRequest, message)
 			return
 		}
 
@@ -172,7 +187,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 					message := fmt.Sprintf("Error: This request would exceed the resident's yearly guest parking pass limit of %d days."+
 						"\nThis resident has given out parking permits for a total of %d days."+
 						"\nThis resident can give out max %d more day(s) before reaching their limit."+
-						"\nThis resident only give more permits if they have unlimited days or if their requested permites are"+
+						"\nThis resident can only give more permits if they have unlimited days or if their requested permites are"+
 						" exceptions", maxParkingDays, existingResident.AmtParkingDaysUsed, maxParkingDays-existingResident.AmtParkingDaysUsed)
 					respondErrorWith(w, errBadRequest, message)
 					return
