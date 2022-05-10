@@ -20,9 +20,6 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Info().Msg("Initializing app...")
 
-	// set global values
-	const dateFormat = "2006-01-02"
-
 	// load config
 	config := config.NewConfig()
 
@@ -43,7 +40,7 @@ func main() {
 	// http setup
 	httpConfig := config.Http()
 
-	router := api.NewRouter(httpConfig, config.Token(), dateFormat,
+	router := api.NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
 		adminRepo, permitRepo, carRepo, residentRepo)
 
 	httpServer := http.Server{
