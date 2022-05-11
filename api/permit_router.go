@@ -18,7 +18,7 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		activePermits, err := permitRepo.GetActive(boundedSize, offset)
 		if err != nil {
-			log.Error().Msgf("permit_router.GetActive: Error querying permitRepo: %v", err)
+			log.Error().Msgf("permit_router.getActive: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
@@ -52,7 +52,7 @@ func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		exceptionPermits, err := permitRepo.GetExceptions(boundedSize, offset)
 		if err != nil {
-			log.Error().Msgf("permit_router.GetExceptions: Error querying permitRepo: %v", err)
+			log.Error().Msgf("permit_router.getExceptions: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
@@ -74,7 +74,7 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		expiredPermits, err := permitRepo.GetExpired(boundedSize, offset, window)
 		if err != nil {
-			log.Error().Msgf("permit_router.GetExpired: Error querying permitRepo: %v", err)
+			log.Error().Msgf("permit_router.getExpired: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
@@ -85,8 +85,6 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo storage.ResidentRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
 			respondError(w, errBadRequest)
@@ -98,6 +96,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
+		ctx := r.Context()
 		user, err := ctxGetUser(ctx)
 		if err != nil {
 			log.Error().Msgf("permit_router.create: %v", err)
