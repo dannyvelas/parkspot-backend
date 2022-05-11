@@ -266,28 +266,6 @@ def csv_out_row_to_resident(row: List[str]) -> Resident:
         )
 
 ########################################
-## Exception_
-########################################
-class PermitException:
-    permit_id: int
-    reason: str
-    def __init__(self, permit_id: int, reason: str):
-        self.permit_id = permit_id
-        self.reason = reason
-
-    def as_sql(self) -> str:
-        escaped_reason = self.reason.replace("'", "''")
-        return (f"INSERT INTO permit_exception(permit_id, reason) VALUES"
-            f"( {self.permit_id}"
-            f", '{escaped_reason}'"
-            f");")
-
-def row_to_exception(row: List[str]) -> PermitException:
-    return PermitException(
-        permit_id = int(row[0]),
-        reason = row[1]
-    )
-########################################
 ## MAIN
 ########################################
 
