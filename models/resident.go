@@ -1,14 +1,14 @@
 package models
 
 type Resident struct {
-	Id                 string
-	FirstName          string
-	LastName           string
-	Phone              string
-	Email              string
-	Password           string
-	UnlimDays          bool
-	AmtParkingDaysUsed int
+	Id                 string `json:"id"`
+	FirstName          string `json:"firstName"`
+	LastName           string `json:"lastName"`
+	Phone              string `json:"phone"`
+	Email              string `json:"email"`
+	Password           string `json:"password"`
+	UnlimDays          bool   `json:"unlimDays"`
+	AmtParkingDaysUsed int    `json:"amtParkingDaysUsed"`
 }
 
 func NewResident(
