@@ -49,7 +49,11 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 }
 
 func (residentRepo ResidentRepo) GetAll(limit, offset uint64) ([]models.Resident, error) {
-	query, _, err := residentRepo.residentSelect.OrderBy("resident.id ASC").ToSql()
+	query, _, err := residentRepo.residentSelect.
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
+		OrderBy("resident.id ASC").
+		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrBuildingQuery, err)
 	}
