@@ -12,11 +12,11 @@ import (
 
 func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		size := toUint(r.URL.Query().Get("size"))
+		limit := toUint(r.URL.Query().Get("limit"))
 		page := toUint(r.URL.Query().Get("page"))
-		boundedSize, offset := getBoundedSizeAndOffset(size, page)
+		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		activePermits, err := permitRepo.GetActive(boundedSize, offset)
+		activePermits, err := permitRepo.GetActive(boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("permit_router.getActive: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
@@ -29,11 +29,11 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		size := toUint(r.URL.Query().Get("size"))
+		limit := toUint(r.URL.Query().Get("limit"))
 		page := toUint(r.URL.Query().Get("page"))
-		boundedSize, offset := getBoundedSizeAndOffset(size, page)
+		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allPermits, err := permitRepo.GetAll(boundedSize, offset)
+		allPermits, err := permitRepo.GetAll(boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("permit_router.getAll: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
@@ -46,11 +46,11 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		size := toUint(r.URL.Query().Get("size"))
+		limit := toUint(r.URL.Query().Get("limit"))
 		page := toUint(r.URL.Query().Get("page"))
-		boundedSize, offset := getBoundedSizeAndOffset(size, page)
+		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		exceptionPermits, err := permitRepo.GetExceptions(boundedSize, offset)
+		exceptionPermits, err := permitRepo.GetExceptions(boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("permit_router.getExceptions: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
@@ -63,16 +63,16 @@ func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		size := toUint(r.URL.Query().Get("size"))
+		limit := toUint(r.URL.Query().Get("limit"))
 		page := toUint(r.URL.Query().Get("page"))
-		boundedSize, offset := getBoundedSizeAndOffset(size, page)
+		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		window := toUint(r.URL.Query().Get("window"))
 		if window == 0 {
 			window = defaultExpirationWindow
 		}
 
-		expiredPermits, err := permitRepo.GetExpired(boundedSize, offset, window)
+		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, window)
 		if err != nil {
 			log.Error().Msgf("permit_router.getExpired: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)

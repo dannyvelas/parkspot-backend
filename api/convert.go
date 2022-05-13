@@ -12,19 +12,19 @@ func toUint(value string) uint64 {
 	}
 }
 
-func getBoundedSizeAndOffset(size, page uint64) (boundedSize, offset uint64) {
-	if size > maxPageSize {
-		boundedSize = maxPageSize
-	} else if size <= 0 {
-		boundedSize = defaultPageSize
+func getBoundedLimitAndOffset(limit, page uint64) (boundedLimit, offset uint64) {
+	if limit > maxPageLimit {
+		boundedLimit = maxPageLimit
+	} else if limit <= 0 {
+		boundedLimit = defaultPageLimit
 	} else {
-		boundedSize = size
+		boundedLimit = limit
 	}
 
 	if page <= 1 {
 		offset = 0
 	} else {
-		offset = (page - 1) * boundedSize
+		offset = (page - 1) * boundedLimit
 	}
 
 	return
