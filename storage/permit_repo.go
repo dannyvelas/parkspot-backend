@@ -32,6 +32,25 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{database: database, permitSelect: permitSelect}
 }
 
+func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
+	query, _, err := permitRepo.permitSelect.
+		OrderBy("permit.id ASC").
+		Limit(getBoundedLimit(limit)).
+		Offset(offset).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
+
 func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.start_ts <= extract(epoch from now())").
@@ -48,25 +67,6 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, e
 	err = permitRepo.database.driver.Select(&permits, query)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return permits.toModels(), nil
-}
-
-func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
-	query, _, err := permitRepo.permitSelect.
-		OrderBy("permit.id ASC").
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
-	}
-
-	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query)
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return permits.toModels(), nil
