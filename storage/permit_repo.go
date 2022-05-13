@@ -10,6 +10,7 @@ import (
 type PermitRepo struct {
 	database     Database
 	permitSelect squirrel.SelectBuilder
+	countSelect  squirrel.SelectBuilder
 }
 
 func NewPermitRepo(database Database) PermitRepo {
@@ -29,7 +30,9 @@ func NewPermitRepo(database Database) PermitRepo {
 	).From("permit").
 		LeftJoin("car ON permit.car_id = car.id")
 
-	return PermitRepo{database: database, permitSelect: permitSelect}
+	countSelect := squirrel.Select("count(*)").From("permit")
+
+	return PermitRepo{database: database, permitSelect: permitSelect, countSelect: countSelect}
 }
 
 func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
@@ -49,6 +52,21 @@ func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, erro
 	}
 
 	return permits.toModels(), nil
+}
+
+func (permitRepo PermitRepo) GetAllTotalAmount() (int, error) {
+	query, _, err := permitRepo.countSelect.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetAllTotalAmount: %w: %v", ErrBuildingQuery, err)
+	}
+
+	var totalAmount int
+	err = permitRepo.database.driver.Get(&totalAmount, query)
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return totalAmount, nil
 }
 
 func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, error) {
@@ -72,6 +90,24 @@ func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, e
 	return permits.toModels(), nil
 }
 
+func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
+	query, _, err := permitRepo.countSelect.
+		Where("permit.start_ts <= extract(epoch from now())").
+		Where("permit.end_ts >= extract(epoch from now())").
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetActiveTotalAmount: %w: %v", ErrBuildingQuery, err)
+	}
+
+	var totalAmount int
+	err = permitRepo.database.driver.Get(&totalAmount, query)
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetActiveTotalAmount: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return totalAmount, nil
+}
+
 func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permit, error) {
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.exception_reason IS NOT NULL").
@@ -92,7 +128,24 @@ func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permi
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetExpired(limit, offset, window uint64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
+	query, _, err := permitRepo.countSelect.
+		Where("permit.exception_reason IS NOT NULL").
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetExceptionsTotalAmount: %w: %v", ErrBuildingQuery, err)
+	}
+
+	var totalAmount int
+	err = permitRepo.database.driver.Get(&totalAmount, query)
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.GetExceptionsTotalAmount: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return totalAmount, nil
+}
+
+func (permitRepo PermitRepo) GetExpired(limit, offset uint64, window int) ([]models.Permit, error) {
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", window).
 		Where("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))").
