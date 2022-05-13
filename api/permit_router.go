@@ -18,12 +18,21 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		allPermits, err := permitRepo.GetAll(boundedLimit, offset)
 		if err != nil {
-			log.Error().Msgf("permit_router.getAll: Error querying permitRepo: %v", err)
+			log.Error().Msgf("permit_router.getAll: Error getting permits: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
 
-		respondJSON(w, http.StatusOK, allPermits)
+		totalAmount, err := permitRepo.GetAllTotalAmount()
+		if err != nil {
+			log.Error().Msgf("permit_router.getAll: Error getting total amount: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		permitsWithMetadata := newListWithMetadata(allPermits, totalAmount)
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 
@@ -40,7 +49,16 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, activePermits)
+		totalAmount, err := permitRepo.GetActiveTotalAmount()
+		if err != nil {
+			log.Error().Msgf("permit_router.getActive: Error getting total amount: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		permitsWithMetadata := newListWithMetadata(activePermits, totalAmount)
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 
@@ -57,7 +75,16 @@ func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, exceptionPermits)
+		totalAmount, err := permitRepo.GetExceptionsTotalAmount()
+		if err != nil {
+			log.Error().Msgf("permit_router.getExceptions: Error getting total amount: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		permitsWithMetadata := newListWithMetadata(exceptionPermits, totalAmount)
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 
@@ -72,14 +99,16 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 			window = defaultExpirationWindow
 		}
 
-		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, window)
+		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, int(window))
 		if err != nil {
 			log.Error().Msgf("permit_router.getExpired: Error querying permitRepo: %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
 
-		respondJSON(w, http.StatusOK, expiredPermits)
+		permitsWithMetadata := newListWithMetadata(expiredPermits, len(expiredPermits))
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 
