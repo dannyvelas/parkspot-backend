@@ -12,6 +12,7 @@ func toUint(value string) uint64 {
 	}
 }
 
+// uint64 because this is expected by squirrel Limit and Offset funcs
 func getBoundedLimitAndOffset(limit, page uint64) (boundedLimit, offset uint64) {
 	if limit > maxPageLimit {
 		boundedLimit = maxPageLimit
