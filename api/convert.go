@@ -21,10 +21,10 @@ func getBoundedSizeAndOffset(size, page uint64) (boundedSize, offset uint64) {
 		boundedSize = size
 	}
 
-	if page > 1 {
-		offset = (page - 1) * boundedSize
-	} else {
+	if page <= 1 {
 		offset = 0
+	} else {
+		offset = (page - 1) * boundedSize
 	}
 
 	return
