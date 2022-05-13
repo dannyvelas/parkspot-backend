@@ -54,6 +54,7 @@
 - [x] add dateFormat to golang config
 - [x] make routing its own thing in `api/`
 - [x] update getoneadmin with sqlx semantics (use get instead of query.scan)
+- [x] rename `limit` query parameter to `limit`
 - [ ] remove "No error when" messages from repo_tests. unnecessary
 - [ ] add expiration JWT time to constants
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
