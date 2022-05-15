@@ -98,12 +98,6 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
-func (suite permitRepoSuite) TestGetActivePermits_NonEmpty_Positive() {
-	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
-	suite.NoError(err, "Error getting active permits when the table is not empty")
-	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
-}
-
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
 	suite.NoError(err, "Error when getting all permits")
