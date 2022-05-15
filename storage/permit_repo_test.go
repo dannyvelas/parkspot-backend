@@ -140,6 +140,19 @@ func (suite permitRepoSuite) TestWritePermitExceptions_Positive() {
 	}
 }
 
+func (suite permitRepoSuite) TestGetOnePermit_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permit, err := suite.permitRepo.GetOne(uint64(permitId))
+	suite.NoError(err)
+
+	suite.Equal(permit.ResidentId, suite.newPermit.ResidentId)
+	suite.Equal(permit.Car.Id, suite.newPermit.CarId)
+	suite.Equal(permit.StartDate, suite.newPermit.StartDate)
+	suite.Equal(permit.EndDate, suite.newPermit.EndDate)
+}
+
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)

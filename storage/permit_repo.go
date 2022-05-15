@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -164,6 +165,27 @@ func (permitRepo PermitRepo) GetExpired(limit, offset uint64, window int) ([]mod
 	}
 
 	return permits.toModels(), nil
+}
+
+func (permitRepo PermitRepo) GetOne(id uint64) (models.Permit, error) {
+	if id == 0 {
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+	}
+
+	query, args, err := permitRepo.permitSelect.Where("permit.id = $1", id).ToSql()
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permit := permit{}
+	err = permitRepo.database.driver.Get(&permit, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", ErrNoRows)
+	} else if err != nil {
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permit.toModels(), nil
 }
 
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
