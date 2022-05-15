@@ -6,17 +6,17 @@ import (
 )
 
 type Permit struct {
-	Id              int64     `json:"id"`
+	Id              int       `json:"id"`
 	ResidentId      string    `json:"residentId"`
 	Car             Car       `json:"car"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
-	RequestTS       int64     `json:"requestTS"`
+	RequestTS       int64     `json:"requestTS"` // int64: type used by time package for unix time
 	AffectsDays     bool      `json:"affectsDays"`
 	ExceptionReason string    `json:"exceptionReason"`
 }
 
-func NewPermit(id int64, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
+func NewPermit(id int, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
 	return Permit{
 		Id:              id,
 		ResidentId:      residentId,
@@ -73,7 +73,7 @@ func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endD
 	}
 }
 
-func (newPermitArgs NewPermitArgs) ToPermit(permitId int64, car Car) Permit {
+func (newPermitArgs NewPermitArgs) ToPermit(permitId int, car Car) Permit {
 	return NewPermit(
 		permitId,
 		newPermitArgs.ResidentId,
