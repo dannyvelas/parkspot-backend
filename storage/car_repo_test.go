@@ -43,9 +43,6 @@ func (suite *carRepoSuite) SetupSuite() {
 
 	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
 	suite.newCar = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
-	//suite.existingCar = models.NewCar("9b3080d5-6fb7-8271-504d-281fc9535b63", "HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO", 23)
-	//suite.existingNewCarArgs = models.NewNewCarArgs("HYMQC1A7", "red", "SKI-DOO", "SKANDIC WT E-TEC 600 HO")
-	//suite.nonExistingNewCarArgs = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
 }
 
 func (suite carRepoSuite) TearDownSuite() {
