@@ -29,7 +29,7 @@ func NewRouter(httpConfig config.HttpConfig,
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", Login(jwtMiddleware, adminRepo))
 		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			adminRouter.Use(jwtMiddleware.Authenticate)
+			adminRouter.Use(jwtMiddleware.Authenticate) // jwtMiddleware.AuthenticateAdmin
 			adminRouter.Get("/hello", sayHello())
 			adminRouter.Get("/permits/active", getActive(permitRepo))
 			adminRouter.Get("/permits", getAll(permitRepo))
@@ -38,10 +38,8 @@ func NewRouter(httpConfig config.HttpConfig,
 			adminRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
 			adminRouter.Get("/residents", getAllResidents(residentRepo))
 		})
-		apiRouter.Route("/resident", func(residentRouter chi.Router) {
-			residentRouter.Use(jwtMiddleware.Authenticate)
-			residentRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
-		})
+		//apiRouter.Use(jwtMiddleware.AuthenticateUser)
+		apiRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
 	})
 
 	return
