@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
@@ -109,6 +110,21 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 		permitsWithMetadata := newListWithMetadata(expiredPermits, len(expiredPermits))
 
 		respondJSON(w, http.StatusOK, permitsWithMetadata)
+	}
+}
+
+func getOne(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := toUint(chi.URLParam(r, "id"))
+
+		permit, err := permitRepo.GetOne(id)
+		if err != nil {
+			log.Error().Msgf("permit_router.getOne: Error getting permit: %v", err)
+			respondError(w, errInternalServerError)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, permit)
 	}
 }
 

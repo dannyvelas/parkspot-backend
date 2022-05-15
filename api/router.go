@@ -40,6 +40,7 @@ func NewRouter(httpConfig config.HttpConfig,
 		})
 		//apiRouter.Use(jwtMiddleware.AuthenticateUser)
 		apiRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
+		apiRouter.Get("/permit/{id:[0-9]+}", getOne(permitRepo))
 	})
 
 	return
