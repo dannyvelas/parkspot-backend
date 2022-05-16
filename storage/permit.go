@@ -7,7 +7,7 @@ import (
 )
 
 type permit struct {
-	PermitId   int64  `db:"permit_id"`
+	PermitId   int    `db:"permit_id"`
 	ResidentId string `db:"resident_id"`
 	car
 	StartTS         int64          `db:"start_ts"`
