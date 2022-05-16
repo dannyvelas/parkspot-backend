@@ -39,6 +39,7 @@
     * creating a permit with an existent car works
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [x] add `started server at URL:PORT` to main message
+- [x] change PORT env variable to string
 - [ ] test out what happens with `omitempty` flag for exceptionReason
 - [ ] change error messages for residents when they're creating a permit
 - [ ] add `AddToAmtParkingDaysUsed` and `GetAll` testing to resident repo
