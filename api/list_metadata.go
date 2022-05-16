@@ -12,13 +12,13 @@ type metadata struct {
 	TotalAmount int `json:"totalAmount"`
 }
 
-type listAndMetadata[T listType] struct {
+type listWithMetadata[T listType] struct {
 	Records  []T      `json:"records"`
 	Metadata metadata `json:"metadata"`
 }
 
-func newListWithMetadata[T listType](list []T, totalAmount int) listAndMetadata[T] {
-	return listAndMetadata[T]{
+func newListWithMetadata[T listType](list []T, totalAmount int) listWithMetadata[T] {
+	return listWithMetadata[T]{
 		Records: list,
 		Metadata: metadata{
 			TotalAmount: totalAmount,
