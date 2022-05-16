@@ -1,6 +1,9 @@
 package api
 
-import "strconv"
+import (
+	"regexp"
+	"strconv"
+)
 
 func toPosInt(value string) int {
 	if len(value) > 0 && value[0] == '-' {
@@ -30,4 +33,9 @@ func getBoundedLimitAndOffset(limit, page int) (boundedLimit, offset int) {
 	}
 
 	return
+}
+
+func isValidUUID(id string) bool {
+	re := regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$")
+	return re.MatchString(id)
 }
