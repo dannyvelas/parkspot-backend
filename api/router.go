@@ -28,17 +28,18 @@ func NewRouter(httpConfig config.HttpConfig,
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", Login(jwtMiddleware, adminRepo))
-		apiRouter.Route("/admin", func(adminRouter chi.Router) {
-			adminRouter.Use(jwtMiddleware.Authenticate) // jwtMiddleware.AuthenticateAdmin
-			adminRouter.Get("/hello", sayHello())
+
+		apiRouter.Route("/", func(adminRouter chi.Router) {
+			adminRouter.Use(jwtMiddleware.Authenticate) // jwtMiddleware.AuthenticateOffice (admin/security)
 			adminRouter.Get("/permits/active", getActive(permitRepo))
 			adminRouter.Get("/permits", getAll(permitRepo))
 			adminRouter.Get("/permits/exceptions", getExceptions(permitRepo))
 			adminRouter.Get("/permits/expired", getExpired(permitRepo))
-			adminRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
 			adminRouter.Get("/residents", getAllResidents(residentRepo))
 		})
-		//apiRouter.Use(jwtMiddleware.AuthenticateUser)
+
+		//apiRouter.Use(jwtMiddleware.AuthenticateUser) (admin/security/resident)
+		apiRouter.Get("/hello", sayHello())
 		apiRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
 		apiRouter.Get("/permit/{id:[0-9]+}", getOne(permitRepo))
 	})
