@@ -8,8 +8,8 @@ import (
 
 func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toUint(r.URL.Query().Get("limit"))
-		page := toUint(r.URL.Query().Get("page"))
+		limit := toPosInt(r.URL.Query().Get("limit"))
+		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		allResidents, err := residentRepo.GetAll(boundedLimit, offset)
