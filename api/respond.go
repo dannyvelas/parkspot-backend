@@ -28,7 +28,7 @@ func respondError(w http.ResponseWriter, responseErr responseError) {
 
 func respondErrorWith(w http.ResponseWriter, responseErr responseError, message string) {
 	newResponseErr := responseErr
-	responseErr.message = responseErr.message + ". " + message
+	newResponseErr.message = responseErr.message + ". " + message
 
 	respondError(w, newResponseErr)
 }
