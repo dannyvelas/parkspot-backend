@@ -1,6 +1,6 @@
 package storage
 
-func getBoundedLimit(limit uint64) uint64 {
+func getBoundedLimit(limit int) int {
 	if limit > maxLimit {
 		return maxLimit
 	} else {
