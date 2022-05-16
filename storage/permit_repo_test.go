@@ -144,7 +144,7 @@ func (suite permitRepoSuite) TestGetOnePermit_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permit, err := suite.permitRepo.GetOne(uint64(permitId))
+	permit, err := suite.permitRepo.GetOne(permitId)
 	suite.NoError(err)
 
 	suite.Equal(permit.ResidentId, suite.newPermit.ResidentId)
