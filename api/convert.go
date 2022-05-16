@@ -2,18 +2,19 @@ package api
 
 import "strconv"
 
-func toUint(value string) uint64 {
-	if value == "" {
-		return 0
-	} else if parsed, err := strconv.ParseUint(value, 10, 32); err != nil {
+func toPosInt(value string) int {
+	if len(value) > 0 && value[0] == '-' {
+		value = value[1:]
+	}
+
+	if parsed, err := strconv.Atoi(value); err != nil {
 		return 0
 	} else {
-		return uint64(parsed)
+		return parsed
 	}
 }
 
-// uint64 because this is expected by squirrel Limit and Offset funcs
-func getBoundedLimitAndOffset(limit, page uint64) (boundedLimit, offset uint64) {
+func getBoundedLimitAndOffset(limit, page int) (boundedLimit, offset int) {
 	if limit > maxPageLimit {
 		boundedLimit = maxPageLimit
 	} else if limit <= 0 {
