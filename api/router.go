@@ -43,6 +43,7 @@ func NewRouter(httpConfig config.HttpConfig,
 		apiRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
 		//apiRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
 		apiRouter.Get("/car/{id}", getOneCar(carRepo))
+		apiRouter.Put("/car/{id}", editCar(carRepo))
 	})
 
 	return
