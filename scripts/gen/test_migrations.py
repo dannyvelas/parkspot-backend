@@ -180,7 +180,7 @@ def get_rand_car() -> Car:
     split_line = line.split('\t')
 
     return Car(
-        id            = str(uuid.UUID(int=random.getrandbits(128))),
+        id            = str(uuid.UUID(int=random.getrandbits(128), version=4)),
         license_plate = get_rand_lp(),
         color         = get_rand_color(),
         make          = split_line[0] if bool(random.getrandbits(1)) else None,
