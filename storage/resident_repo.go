@@ -48,10 +48,14 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 	return resident.toModels(), nil
 }
 
-func (residentRepo ResidentRepo) GetAll(limit, offset uint64) ([]models.Resident, error) {
+func (residentRepo ResidentRepo) GetAll(limit, offset int) ([]models.Resident, error) {
+	if limit < 0 || offset < 0 {
+		return nil, fmt.Errorf("permit_repo.GetActive: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
 	query, _, err := residentRepo.residentSelect.
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
+		Limit(uint64(getBoundedLimit(limit))).
+		Offset(uint64(offset)).
 		OrderBy("resident.id ASC").
 		ToSql()
 	if err != nil {

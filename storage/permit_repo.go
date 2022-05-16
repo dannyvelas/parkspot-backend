@@ -36,11 +36,15 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{database: database, permitSelect: permitSelect, countSelect: countSelect}
 }
 
-func (permitRepo PermitRepo) GetAll(limit, offset uint64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetAll(limit, offset int) ([]models.Permit, error) {
+	if limit < 0 || offset < 0 {
+		return nil, fmt.Errorf("permit_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
 	query, _, err := permitRepo.permitSelect.
 		OrderBy("permit.id ASC").
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
+		Limit(uint64(getBoundedLimit(limit))).
+		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
@@ -70,13 +74,17 @@ func (permitRepo PermitRepo) GetAllTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset uint64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
+	if limit < 0 || offset < 0 {
+		return nil, fmt.Errorf("permit_repo.GetActive: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.start_ts <= extract(epoch from now())").
 		Where("permit.end_ts >= extract(epoch from now())").
 		OrderBy("permit.id ASC").
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
+		Limit(uint64(getBoundedLimit(limit))).
+		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrBuildingQuery, err)
@@ -109,12 +117,16 @@ func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetExceptions(limit, offset uint64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetExceptions(limit, offset int) ([]models.Permit, error) {
+	if limit < 0 || offset < 0 {
+		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.exception_reason IS NOT NULL").
 		OrderBy("permit.id ASC").
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
+		Limit(uint64(getBoundedLimit(limit))).
+		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: %v", ErrBuildingQuery, err)
@@ -146,13 +158,17 @@ func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetExpired(limit, offset uint64, window int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetExpired(limit, offset, window int) ([]models.Permit, error) {
+	if limit < 0 || offset < 0 {
+		return nil, fmt.Errorf("permit_repo.GetExpired: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", window).
 		Where("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))").
 		OrderBy("permit.id ASC").
-		Limit(getBoundedLimit(limit)).
-		Offset(offset).
+		Limit(uint64(getBoundedLimit(limit))).
+		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetExpired: %w: %v", ErrBuildingQuery, err)
@@ -167,7 +183,7 @@ func (permitRepo PermitRepo) GetExpired(limit, offset uint64, window int) ([]mod
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetOne(id uint64) (models.Permit, error) {
+func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	if id == 0 {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	}
@@ -188,14 +204,14 @@ func (permitRepo PermitRepo) GetOne(id uint64) (models.Permit, error) {
 	return permit.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int64, error) {
+func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason)
     VALUES($1, $2, $3, $4, $5, $6, $7)
     RETURNING id
   `
 
-	var id int64
+	var id int
 	err := permitRepo.database.driver.Get(&id, query, newPermitArgs.ResidentId, newPermitArgs.CarId,
 		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.RequestTS, newPermitArgs.AffectsDays,
 		toNullable(newPermitArgs.ExceptionReason))
@@ -246,7 +262,7 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startD
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Delete(id int64) error {
+func (permitRepo PermitRepo) Delete(id int) error {
 	if id <= 0 {
 		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
 	}
