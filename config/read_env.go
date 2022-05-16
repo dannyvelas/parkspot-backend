@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -17,23 +16,6 @@ func readEnvString(envKey string, defaultValue string) string {
 	}
 
 	return envValue
-}
-
-func readEnvUint(envKey string, defaultValue uint) uint {
-	envValueString := os.Getenv(envKey)
-	if envValueString == "" {
-		log.Warn().Msg(newNotFoundError(envKey, defaultValue).Error())
-		return defaultValue
-	}
-
-	parsed, err := strconv.ParseUint(envValueString, 10, 64)
-	if err != nil {
-		conversionErr := newConversionError(envKey, "duration", defaultValue)
-		log.Warn().Msg(fmt.Sprintf("%v: %v", conversionErr, err))
-		return defaultValue
-	}
-
-	return uint(parsed)
 }
 
 func readEnvDuration(envKey string, defaultValue uint) time.Duration {

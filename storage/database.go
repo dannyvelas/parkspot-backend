@@ -13,7 +13,7 @@ type Database struct {
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		postgresConfig.Host(),
 		postgresConfig.Port(),
 		postgresConfig.User(),
