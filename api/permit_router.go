@@ -13,8 +13,8 @@ import (
 
 func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toUint(r.URL.Query().Get("limit"))
-		page := toUint(r.URL.Query().Get("page"))
+		limit := toPosInt(r.URL.Query().Get("limit"))
+		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		allPermits, err := permitRepo.GetAll(boundedLimit, offset)
@@ -39,8 +39,8 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toUint(r.URL.Query().Get("limit"))
-		page := toUint(r.URL.Query().Get("page"))
+		limit := toPosInt(r.URL.Query().Get("limit"))
+		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		activePermits, err := permitRepo.GetActive(boundedLimit, offset)
@@ -65,8 +65,8 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toUint(r.URL.Query().Get("limit"))
-		page := toUint(r.URL.Query().Get("page"))
+		limit := toPosInt(r.URL.Query().Get("limit"))
+		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		exceptionPermits, err := permitRepo.GetExceptions(boundedLimit, offset)
@@ -91,11 +91,11 @@ func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toUint(r.URL.Query().Get("limit"))
-		page := toUint(r.URL.Query().Get("page"))
+		limit := toPosInt(r.URL.Query().Get("limit"))
+		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		window := toUint(r.URL.Query().Get("window"))
+		window := toPosInt(r.URL.Query().Get("window"))
 		if window == 0 {
 			window = defaultExpirationWindow
 		}
@@ -115,7 +115,7 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 func getOne(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := toUint(chi.URLParam(r, "id"))
+		id := toPosInt(chi.URLParam(r, "id"))
 
 		permit, err := permitRepo.GetOne(id)
 		if err != nil {
