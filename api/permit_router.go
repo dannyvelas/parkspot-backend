@@ -144,7 +144,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		ctx := r.Context()
 		user, err := ctxGetUser(ctx)
 		if err != nil {
-			log.Error().Msgf("permit_router.create: %v", err)
+			log.Error().Msgf("permit_router.create: error getting using %v", err)
 			respondError(w, errInternalServerError)
 			return
 		}
