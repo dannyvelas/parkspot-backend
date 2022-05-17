@@ -15,7 +15,7 @@ func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		allResidents, err := residentRepo.GetAll(boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("resident_router.getAll: Error querying residentRepo: %v", err)
-			respondError(w, errInternalServerError)
+			respondInternalError(w)
 			return
 		}
 

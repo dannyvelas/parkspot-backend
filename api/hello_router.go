@@ -12,7 +12,7 @@ func sayHello() http.HandlerFunc {
 		user, err := ctxGetUser(ctx)
 		if err != nil {
 			log.Error().Msgf("hello_router.sayHello: %v", err)
-			respondError(w, errInternalServerError)
+			respondInternalError(w)
 			return
 		}
 

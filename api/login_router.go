@@ -19,8 +19,7 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
 		if err != nil {
-			log.Error().Msgf("login_router: Error decoding credentials body: %v", err)
-			respondError(w, errBadRequest)
+			respondError(w, newErrMalformed("Credentials"))
 			return
 		}
 
@@ -30,7 +29,7 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 			return
 		} else if err != nil {
 			log.Error().Msgf("login_router: Error querying adminRepo: %v", err)
-			respondError(w, errInternalServerError)
+			respondInternalError(w)
 			return
 		}
 
@@ -45,7 +44,7 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 		token, err := jwtMiddleware.newJWT(admin.Id, AdminRole)
 		if err != nil {
 			log.Error().Msgf("login_router: Error generating JWT: %v", err)
-			respondError(w, errInternalServerError)
+			respondInternalError(w)
 			return
 		}
 
