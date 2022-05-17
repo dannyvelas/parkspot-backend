@@ -44,7 +44,6 @@
 - [ ] change error messages for residents when they're creating a permit
 - [ ] add `AddToAmtParkingDaysUsed` and `GetAll` testing to resident repo
 - [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo  func: `AddToAmtParkingDaysUsed`
-- [ ] add api layer testing
 - [ ] add check to make sure permit request start date is not in past
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
@@ -68,6 +67,8 @@
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
 - [x] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
+- [x] remove `admin/` and `resident/` prefix for adminonly and residentonly routes, respectively, since there are many routes that are shared between both
+- [ ] maybe use validator
 - [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 - [ ] implement double-submit tokens
     * implement double-submit tokens without REDIS
