@@ -31,25 +31,14 @@ func (suite *carRepoSuite) SetupSuite() {
 	}
 	suite.carRepo = NewCarRepo(database)
 
-	migrator, err := GetV1Migrator(database)
+	migrator, err := GetUpMigrator(database)
 	if err != nil {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
 	suite.migrator = migrator
 
-	if err := suite.migrator.Up(); err != nil {
-		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
-	}
-
-	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
+	suite.existingCarEmptyFields = models.NewCar("fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
 	suite.newCar = models.NewNewCarArgs("ABC123", "red", "toyota", "tercel")
-}
-
-func (suite carRepoSuite) TearDownSuite() {
-	err := suite.migrator.Down()
-	if err != nil {
-		suite.NoError(err, "Error migrating all the way down")
-	}
 }
 
 func (suite carRepoSuite) TestGetOne_Negative() {

@@ -30,24 +30,13 @@ func (suite *residentRepoSuite) SetupSuite() {
 	}
 	suite.residentRepo = NewResidentRepo(database)
 
-	migrator, err := GetV1Migrator(database)
+	migrator, err := GetUpMigrator(database)
 	if err != nil {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
 	suite.migrator = migrator
 
-	if err := suite.migrator.Up(); err != nil {
-		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
-	}
-
 	suite.existingResident = models.NewResident("T1043321", "John", "Gibson", "(894) 280-4660", "john.gibson@gmail.com", "5730ec12ad69b442d69319417dce5869", true, 13)
-}
-
-func (suite residentRepoSuite) TearDownSuite() {
-	err := suite.migrator.Down()
-	if err != nil {
-		suite.NoError(err, "Error migrating all the way down")
-	}
 }
 
 func (suite residentRepoSuite) TestGetOne_Negative() {

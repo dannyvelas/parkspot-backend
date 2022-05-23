@@ -36,13 +36,18 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{database: database, permitSelect: permitSelect, countSelect: countSelect}
 }
 
-func (permitRepo PermitRepo) GetAll(limit, offset int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetAll(limit, offset int, reversed bool) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("permit_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
+	orderSQL := "permit.id ASC"
+	if reversed {
+		orderSQL = "permit.id DESC"
+	}
+
 	query, _, err := permitRepo.permitSelect.
-		OrderBy("permit.id ASC").
+		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
@@ -74,15 +79,20 @@ func (permitRepo PermitRepo) GetAllTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActive(limit, offset int, reversed bool) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("permit_repo.GetActive: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
+	orderSQL := "permit.id ASC"
+	if reversed {
+		orderSQL = "permit.id DESC"
 	}
 
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.start_ts <= extract(epoch from now())").
 		Where("permit.end_ts >= extract(epoch from now())").
-		OrderBy("permit.id ASC").
+		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
@@ -117,14 +127,19 @@ func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetExceptions(limit, offset int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetExceptions(limit, offset int, reversed bool) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
+	orderSQL := "permit.id ASC"
+	if reversed {
+		orderSQL = "permit.id DESC"
+	}
+
 	query, _, err := permitRepo.permitSelect.
 		Where("permit.exception_reason IS NOT NULL").
-		OrderBy("permit.id ASC").
+		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
@@ -158,15 +173,20 @@ func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetExpired(limit, offset, window int) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetExpired(limit, offset int, reversed bool, window int) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("permit_repo.GetExpired: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
+	orderSQL := "permit.id ASC"
+	if reversed {
+		orderSQL = "permit.id DESC"
 	}
 
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", window).
 		Where("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))").
-		OrderBy("permit.id ASC").
+		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()

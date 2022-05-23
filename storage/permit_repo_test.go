@@ -36,32 +36,21 @@ func (suite *permitRepoSuite) SetupSuite() {
 	}
 	suite.permitRepo = NewPermitRepo(database)
 
-	migrator, err := GetV1Migrator(database)
+	migrator, err := GetUpMigrator(database)
 	if err != nil {
 		log.Fatal().Msgf("Failed to get migrator: %v", err)
 	}
 	suite.migrator = migrator
 
-	if err := suite.migrator.Up(); err != nil {
-		log.Fatal().Msgf("Error when migrating all the way up: %v", err)
-	}
-
 	suite.dateFormat = config.Constants().DateFormat()
 
-	suite.existingCar = models.NewCar("fc377a4c-4a15-544d-c5e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.newPermit = models.NewNewPermitArgs("T1043321", "fc377a4c-4a15-544d-c5e7-ce8a3a578a8e",
+	suite.existingCar = models.NewCar("fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
+	suite.newPermit = models.NewNewPermitArgs("T1043321", "fc377a4c-4a15-444d-85e7-ce8a3a578a8e",
 		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
 		1645279579,
 		false,
 		"")
-}
-
-func (suite permitRepoSuite) TearDownSuite() {
-	err := suite.migrator.Down()
-	if err != nil {
-		suite.NoError(err, "Error migrating all the way down")
-	}
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
@@ -72,7 +61,7 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting all permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permit should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
@@ -86,20 +75,20 @@ func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
-	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting active permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permits should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting all permits")
 
 	f, err := os.Create("testout/all_permits.txt")
@@ -113,7 +102,7 @@ func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 }
 
 func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
-	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting active permits")
 
 	f, err := os.Create("testout/active_permits.txt")
@@ -127,7 +116,7 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 }
 
 func (suite permitRepoSuite) TestWritePermitExceptions_Positive() {
-	permits, err := suite.permitRepo.GetExceptions(defaultLimit, defaultOffset)
+	permits, err := suite.permitRepo.GetExceptions(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting permit exceptions")
 
 	f, err := os.Create("testout/permit_exceptions.txt")
@@ -149,8 +138,8 @@ func (suite permitRepoSuite) TestGetOnePermit_Positive() {
 
 	suite.Equal(permit.ResidentId, suite.newPermit.ResidentId)
 	suite.Equal(permit.Car.Id, suite.newPermit.CarId)
-	suite.Equal(permit.StartDate, suite.newPermit.StartDate)
-	suite.Equal(permit.EndDate, suite.newPermit.EndDate)
+	suite.Empty(cmp.Diff(permit.StartDate, suite.newPermit.StartDate))
+	suite.Empty(cmp.Diff(permit.EndDate, suite.newPermit.EndDate))
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
