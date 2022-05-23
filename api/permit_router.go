@@ -15,9 +15,11 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		reversed := toBool(r.URL.Query().Get("reversed"))
+
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allPermits, err := permitRepo.GetAll(boundedLimit, offset)
+		allPermits, err := permitRepo.GetAll(boundedLimit, offset, reversed)
 		if err != nil {
 			log.Error().Msgf("permit_router.getAll: Error getting permits: %v", err)
 			respondInternalError(w)
@@ -41,9 +43,11 @@ func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		reversed := toBool(r.URL.Query().Get("reversed"))
+
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		activePermits, err := permitRepo.GetActive(boundedLimit, offset)
+		activePermits, err := permitRepo.GetActive(boundedLimit, offset, reversed)
 		if err != nil {
 			log.Error().Msgf("permit_router.getActive: Error querying permitRepo: %v", err)
 			respondInternalError(w)
@@ -67,9 +71,11 @@ func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		reversed := toBool(r.URL.Query().Get("reversed"))
+
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		exceptionPermits, err := permitRepo.GetExceptions(boundedLimit, offset)
+		exceptionPermits, err := permitRepo.GetExceptions(boundedLimit, offset, reversed)
 		if err != nil {
 			log.Error().Msgf("permit_router.getExceptions: Error querying permitRepo: %v", err)
 			respondInternalError(w)
@@ -93,6 +99,8 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		reversed := toBool(r.URL.Query().Get("reversed"))
+
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		window := toPosInt(r.URL.Query().Get("window"))
@@ -100,7 +108,7 @@ func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
 			window = defaultExpirationWindow
 		}
 
-		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, int(window))
+		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, reversed, int(window))
 		if err != nil {
 			log.Error().Msgf("permit_router.getExpired: Error querying permitRepo: %v", err)
 			respondInternalError(w)
