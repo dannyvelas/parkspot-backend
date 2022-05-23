@@ -44,6 +44,7 @@ func NewRouter(httpConfig config.HttpConfig,
 		//apiRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
 		apiRouter.Get("/car/{id}", getOneCar(carRepo))
 		apiRouter.Put("/car/{id}", editCar(carRepo))
+		apiRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo))
 	})
 
 	return

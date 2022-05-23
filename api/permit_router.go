@@ -308,3 +308,21 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		respondJSON(w, 200, newPermit)
 	}
 }
+
+func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := toPosInt(chi.URLParam(r, "id"))
+
+		err := permitRepo.Delete(id)
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("permit"))
+			return
+		} else if err != nil {
+			log.Error().Msgf("permit_router.deletePermit: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, 200, nil)
+	}
+}
