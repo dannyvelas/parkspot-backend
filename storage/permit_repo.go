@@ -288,9 +288,15 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	}
 	const query = `DELETE FROM permit WHERE id = $1`
 
-	_, err := permitRepo.database.driver.Exec(query, id)
+	res, err := permitRepo.database.driver.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("permit_repo.Delete: %w: %v", ErrDatabaseExec, err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("permit_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+	} else if rowsAffected == 0 {
+		return fmt.Errorf("permit_repo.Delete: %w", ErrNoRows)
 	}
 
 	return nil

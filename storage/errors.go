@@ -12,6 +12,7 @@ var (
 	ErrDatabaseExec    = sentinelError{"Error executing database command"}
 	ErrInvalidArg      = sentinelError{"Invalid argument"}
 	ErrBuildingQuery   = sentinelError{"Error building query"}
+	ErrGetRowsAffected = sentinelError{"Error getting rows affected"}
 )
 
 func (e sentinelError) Error() string {
