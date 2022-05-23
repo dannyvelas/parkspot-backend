@@ -87,6 +87,23 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
+func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, _ := suite.permitRepo.GetAll(defaultLimit, defaultOffset, true)
+	if len(permits) == 0 {
+		suite.NotEqual(len(permits), 0, "length of permits should not be 0")
+		return
+	}
+
+	first := permits[0]
+	suite.Equal(first.ResidentId, suite.newPermit.ResidentId)
+	suite.Equal(first.Car.Id, suite.newPermit.CarId)
+	suite.Empty(cmp.Diff(first.StartDate, suite.newPermit.StartDate))
+	suite.Empty(cmp.Diff(first.EndDate, suite.newPermit.EndDate))
+}
+
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting all permits")
