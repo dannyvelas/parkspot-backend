@@ -41,7 +41,7 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 			return
 		}
 
-		token, err := jwtMiddleware.newJWT(admin.Id, AdminRole)
+		token, err := jwtMiddleware.newJWT(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole)
 		if err != nil {
 			log.Error().Msgf("login_router: Error generating JWT: %v", err)
 			respondInternalError(w)
