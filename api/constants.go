@@ -1,9 +1,9 @@
 package api
 
 const (
-	maxPageLimit             = 150
-	defaultPageLimit         = 100
+	maxPageLimit            = 1000
+	defaultPageLimit        = 100
 	maxParkingDays          = 20
 	maxPermitLength         = 15 // in days
-	defaultExpirationWindow = 15
+	defaultExpirationWindow = 15 // in days
 )
