@@ -27,12 +27,9 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) JWTMiddleware {
 	return JWTMiddleware{tokenSecret: []byte(tokenConfig.Secret())}
 }
 
-func (jwtMiddleware JWTMiddleware) newJWT(id string, role Role) (string, error) {
+func (jwtMiddleware JWTMiddleware) newJWT(id string, firstName string, lastName string, email string, role Role) (string, error) {
 	claims := jwtClaims{
-		user{
-			id,
-			role,
-		},
+		user{id, firstName, lastName, email, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
 	}
 
