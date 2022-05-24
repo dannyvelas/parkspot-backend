@@ -1,9 +1,8 @@
 package api
 
-type Role uint8
+type Role string
 
 const (
-	UndefinedRole Role = iota
-	AdminRole
-	ResidentRole
+	AdminRole    Role = "admin"
+	ResidentRole      = "resident"
 )
