@@ -10,8 +10,11 @@ type userCtxKeyType string
 const userCtxKey userCtxKeyType = "user"
 
 type user struct {
-	Id   string `json:"id"`
-	Role Role   `json:"role"`
+	Id        string `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Role      Role   `json:"role"`
 }
 
 func ctxWithUser(ctx context.Context, user user) context.Context {
