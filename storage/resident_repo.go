@@ -71,6 +71,18 @@ func (residentRepo ResidentRepo) GetAll(limit, offset int) ([]models.Resident, e
 	return residents.toModels(), nil
 }
 
+func (residentRepo ResidentRepo) GetAllTotalAmount() (int, error) {
+	const query = "SELECT count(*) FROM resident"
+
+	var totalAmount int
+	err := residentRepo.database.driver.Get(&totalAmount, query)
+	if err != nil {
+		return 0, fmt.Errorf("resident_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return totalAmount, nil
+}
+
 func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	const query = `
     UPDATE resident SET amt_parking_days_used = amt_parking_days_used + $1
