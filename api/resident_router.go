@@ -19,6 +19,15 @@ func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, allResidents)
+		totalAmount, err := residentRepo.GetAllTotalAmount()
+		if err != nil {
+			log.Error().Msgf("resident_router.getAll: Error getting total amount: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		residentsWithMetadata := newListWithMetadata(allResidents, totalAmount)
+
+		respondJSON(w, http.StatusOK, residentsWithMetadata)
 	}
 }
