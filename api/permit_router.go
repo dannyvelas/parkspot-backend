@@ -323,6 +323,6 @@ func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, 200, nil)
+		respondJSON(w, 200, emptyResponse{Ok: true})
 	}
 }
