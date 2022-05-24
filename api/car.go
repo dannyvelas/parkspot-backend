@@ -95,7 +95,7 @@ type editCarReq struct {
 
 func (editCarReq editCarReq) validate() error {
 	if editCarReq.Color == "" && editCarReq.Make == "" && editCarReq.Model == "" {
-		return fmt.Errorf("%w: %v", errInvalidFields, "all edit fields cannot be empty")
+		return fmt.Errorf("%w: %v", errEmptyFields, "all edit fields cannot be empty")
 	}
 
 	if colorMakeModelErrors := invalidColorMakeModel(
