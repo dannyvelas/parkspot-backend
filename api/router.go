@@ -28,6 +28,7 @@ func NewRouter(httpConfig config.HttpConfig,
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Post("/login", Login(jwtMiddleware, adminRepo))
+		apiRouter.Post("/logout", Logout())
 
 		apiRouter.Route("/", func(adminRouter chi.Router) {
 			adminRouter.Use(jwtMiddleware.Authenticate) // jwtMiddleware.AuthenticateOffice (admin/security)

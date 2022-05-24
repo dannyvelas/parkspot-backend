@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"time"
 )
 
 type credentials struct {
@@ -52,5 +53,14 @@ func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.Handle
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, admin)
+	}
+}
+
+func Logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
+		http.SetCookie(w, &cookie)
+
+		respondJSON(w, http.StatusOK, emptyResponse{Ok: true})
 	}
 }
