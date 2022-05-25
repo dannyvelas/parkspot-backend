@@ -45,7 +45,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 	suite.dateFormat = config.Constants().DateFormat()
 
 	suite.existingCar = models.NewCar("fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.newPermit = models.NewNewPermitArgs("T1043321", "fc377a4c-4a15-444d-85e7-ce8a3a578a8e",
+	suite.newPermit = models.NewNewPermitArgs("T1043321", suite.existingCar.Id,
 		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
 		1645279579,
@@ -91,15 +91,18 @@ func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, _ := suite.permitRepo.GetAll(defaultLimit, defaultOffset, true)
-	if len(permits) == 0 {
-		suite.NotEqual(len(permits), 0, "length of permits should not be 0")
+	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, true)
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEqual(len(permits), 0, "no permits found")
 		return
 	}
 
 	first := permits[0]
-	suite.Equal(first.ResidentId, suite.newPermit.ResidentId)
-	suite.Equal(first.Car.Id, suite.newPermit.CarId)
+	suite.Equal(suite.newPermit.ResidentId, first.ResidentId)
+	suite.Equal(suite.newPermit.CarId, first.Car.Id)
 	suite.Empty(cmp.Diff(first.StartDate, suite.newPermit.StartDate))
 	suite.Empty(cmp.Diff(first.EndDate, suite.newPermit.EndDate))
 }
@@ -225,6 +228,60 @@ func (suite permitRepoSuite) TestDelete_Positive() {
 	suite.NoError(err, "err from deleting permit should be nil")
 }
 
+func (suite permitRepoSuite) TestSearch_PermitId_FullString_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId))
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEqual(len(permits), 0, "no search matches")
+		return
+	}
+
+	foundPermit := containsId(permits, permitId)
+
+	suite.True(foundPermit, "newly created permit was not among search matches")
+}
+
+func (suite permitRepoSuite) TestSearch_PermitId_SubString_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:])
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEqual(len(permits), 0, "no search matches")
+		return
+	}
+
+	foundPermit := containsId(permits, permitId)
+
+	suite.True(foundPermit, "newly created permit was not among search matches")
+}
+
+func (suite permitRepoSuite) TestSearch_LicensePlate_SubString_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:])
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEqual(len(permits), 0, "no search matches")
+		return
+	}
+
+	foundPermit := containsId(permits, permitId)
+
+	suite.True(foundPermit, "newly created permit was not among search matches")
+}
+
 func permitToString(permit models.Permit, dateFormat string) string {
 	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t,%s\n",
 		permit.Id,
@@ -236,4 +293,13 @@ func permitToString(permit models.Permit, dateFormat string) string {
 		permit.AffectsDays,
 		permit.ExceptionReason,
 	)
+}
+
+func containsId(permits []models.Permit, id int) bool {
+	for _, permit := range permits {
+		if permit.Id == id {
+			return true
+		}
+	}
+	return false
 }
