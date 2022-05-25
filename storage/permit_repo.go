@@ -301,3 +301,32 @@ func (permitRepo PermitRepo) Delete(id int) error {
 
 	return nil
 }
+
+func (permitRepo PermitRepo) Search(searchStr string) ([]models.Permit, error) {
+	if searchStr == "" {
+		return nil, fmt.Errorf("permit_repo.Search: %w: Empty search argument", ErrInvalidArg)
+	}
+
+	query, args, err := permitRepo.permitSelect.
+		Where(squirrel.Or{
+			squirrel.Expr("CAST(permit.id AS TEXT) LIKE $1", "%"+searchStr+"%"),
+			squirrel.Expr("permit.resident_id LIKE $1"),
+			squirrel.Expr("car.license_plate LIKE $1"),
+			squirrel.Expr("car.color LIKE $1"),
+			squirrel.Expr("car.make LIKE $1"),
+			squirrel.Expr("car.model LIKE $1"),
+		}).
+		OrderBy("permit.id ASC").
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.Search: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.Search: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
