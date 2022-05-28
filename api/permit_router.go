@@ -326,3 +326,24 @@ func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 		respondJSON(w, 200, emptyResponse{Ok: true})
 	}
 }
+
+func searchPermits(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		searchStr := r.URL.Query().Get("search")
+		if searchStr == "" {
+			respondJSON(w, http.StatusOK, []models.Permit{})
+			return
+		}
+
+		permits, err := permitRepo.Search(searchStr)
+		if err != nil {
+			log.Error().Msgf("permit_router.searchPermits: Error getting permits: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		permitsWithMetadata := newListWithMetadata(permits, len(permits))
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
+	}
+}
