@@ -309,12 +309,12 @@ func (permitRepo PermitRepo) Search(searchStr string) ([]models.Permit, error) {
 
 	query, args, err := permitRepo.permitSelect.
 		Where(squirrel.Or{
-			squirrel.Expr("CAST(permit.id AS TEXT) LIKE $1", "%"+searchStr+"%"),
-			squirrel.Expr("permit.resident_id LIKE $1"),
-			squirrel.Expr("car.license_plate LIKE $1"),
-			squirrel.Expr("car.color LIKE $1"),
-			squirrel.Expr("car.make LIKE $1"),
-			squirrel.Expr("car.model LIKE $1"),
+			squirrel.Expr("CAST(permit.id AS TEXT) ILIKE $1", "%"+searchStr+"%"),
+			squirrel.Expr("permit.resident_id ILIKE $1"),
+			squirrel.Expr("car.license_plate ILIKE $1"),
+			squirrel.Expr("car.color ILIKE $1"),
+			squirrel.Expr("car.make ILIKE $1"),
+			squirrel.Expr("car.model ILIKE $1"),
 		}).
 		OrderBy("permit.id ASC").
 		ToSql()
