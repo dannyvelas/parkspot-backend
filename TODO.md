@@ -40,7 +40,8 @@
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [x] add `started server at URL:PORT` to main message
 - [x] change PORT env variable to string
-- [ ] test out what happens with `omitempty` flag for exceptionReason
+- [ ] created a new `api.ErrMalformed` error meant for json unmarsheling errors
+- [ ] make exceptionReason, make, and model, nullable pointer strings
 - [ ] change error messages for residents when they're creating a permit
 - [ ] add `AddToAmtParkingDaysUsed` and `GetAll` testing to resident repo
 - [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo  func: `AddToAmtParkingDaysUsed`
