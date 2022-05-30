@@ -26,28 +26,32 @@ func NewRouter(httpConfig config.HttpConfig,
 
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
 
-	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Post("/login", Login(jwtMiddleware, adminRepo))
-		apiRouter.Post("/logout", Logout())
-
-		apiRouter.Route("/", func(adminRouter chi.Router) {
-			adminRouter.Use(jwtMiddleware.Authenticate) // jwtMiddleware.AuthenticateOffice (admin/security)
-			adminRouter.Get("/permits/active", getActive(permitRepo))
-			adminRouter.Get("/permits", getAll(permitRepo))
-			adminRouter.Get("/permits/exceptions", getExceptions(permitRepo))
-			adminRouter.Get("/permits/expired", getExpired(permitRepo))
-			adminRouter.Get("/residents", getAllResidents(residentRepo))
-			adminRouter.Get("/resident/{id}", getOneResident(residentRepo))
+	router.Route("/api", func(r chi.Router) {
+		r.Group(func(anyoneRouter chi.Router) {
+			anyoneRouter.Post("/login", Login(jwtMiddleware, adminRepo))
+			anyoneRouter.Post("/logout", Logout())
 		})
 
-		//apiRouter.Use(jwtMiddleware.AuthenticateUser) (admin/security/resident)
-		apiRouter.Get("/hello", sayHello())
-		apiRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
-		//apiRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
-		apiRouter.Get("/car/{id}", getOneCar(carRepo))
-		apiRouter.Put("/car/{id}", editCar(carRepo))
-		apiRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo))
-		apiRouter.Get("/permits/search", searchPermits(permitRepo))
+		r.Group(func(officeRouter chi.Router) {
+			officeRouter.Use(jwtMiddleware.Authenticate(AdminRole)) //, SecurityRole
+			officeRouter.Get("/permits/active", getActive(permitRepo))
+			officeRouter.Get("/permits", getAll(permitRepo))
+			officeRouter.Get("/permits/exceptions", getExceptions(permitRepo))
+			officeRouter.Get("/permits/expired", getExpired(permitRepo))
+			officeRouter.Get("/residents", getAllResidents(residentRepo))
+			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
+		})
+
+		r.Group(func(userRouter chi.Router) {
+			userRouter.Use(jwtMiddleware.Authenticate(AdminRole, ResidentRole)) //, SecurityRole
+			userRouter.Get("/hello", sayHello())
+			userRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
+			//userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
+			userRouter.Get("/car/{id}", getOneCar(carRepo))
+			userRouter.Put("/car/{id}", editCar(carRepo))
+			userRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo))
+			userRouter.Get("/permits/search", searchPermits(permitRepo))
+		})
 	})
 
 	return

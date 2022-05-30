@@ -59,24 +59,39 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (user, error) {
 	}
 }
 
-func (jwtMiddleware JWTMiddleware) Authenticate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("jwt")
-		if err != nil {
-			respondError(w, errUnauthorized)
-			return
-		}
+func (jwtMiddleware JWTMiddleware) Authenticate(role Role, roles ...Role) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cookie, err := r.Cookie("jwt")
+			if err != nil {
+				respondError(w, errUnauthorized)
+				return
+			}
 
-		user, err := jwtMiddleware.parseJWT(cookie.Value)
-		if err != nil {
-			respondError(w, errUnauthorized)
-			return
-		}
+			user, err := jwtMiddleware.parseJWT(cookie.Value)
+			if err != nil {
+				respondError(w, errUnauthorized)
+				return
+			}
 
-		ctx := r.Context()
-		updatedCtx := ctxWithUser(ctx, user)
-		updatedReq := r.WithContext(updatedCtx)
+			permittedRoles := append([]Role{role}, roles...)
+			userHasPermittedRole := func() bool {
+				for _, role := range permittedRoles {
+					if user.Role == role {
+						return true
+					}
+				}
+				return false
+			}()
+			if !userHasPermittedRole {
+				respondError(w, errUnauthorized)
+			}
 
-		next.ServeHTTP(w, updatedReq)
-	})
+			ctx := r.Context()
+			updatedCtx := ctxWithUser(ctx, user)
+			updatedReq := r.WithContext(updatedCtx)
+
+			next.ServeHTTP(w, updatedReq)
+		})
+	}
 }
