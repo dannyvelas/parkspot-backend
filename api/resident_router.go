@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
@@ -29,5 +30,24 @@ func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		residentsWithMetadata := newListWithMetadata(allResidents, totalAmount)
 
 		respondJSON(w, http.StatusOK, residentsWithMetadata)
+	}
+}
+
+func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			return
+		}
+
+		resident, err := residentRepo.GetOne(id)
+		if err != nil {
+			log.Error().Msgf("resident_router.getOne: Error getting resident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, resident)
 	}
 }

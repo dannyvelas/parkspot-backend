@@ -37,6 +37,7 @@ func NewRouter(httpConfig config.HttpConfig,
 			adminRouter.Get("/permits/exceptions", getExceptions(permitRepo))
 			adminRouter.Get("/permits/expired", getExpired(permitRepo))
 			adminRouter.Get("/residents", getAllResidents(residentRepo))
+			adminRouter.Get("/resident/{id}", getOneResident(residentRepo))
 		})
 
 		//apiRouter.Use(jwtMiddleware.AuthenticateUser) (admin/security/resident)
