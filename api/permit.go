@@ -10,7 +10,7 @@ import (
 
 type newPermitReq struct {
 	ResidentId      string    `json:"residentId"`
-	NewCarReq       newCarReq `json:"car"`
+	Car             newCarReq `json:"car"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
 	ExceptionReason string    `json:"exceptionReason"`
@@ -48,7 +48,7 @@ func (newPermitReq newPermitReq) invalidFields() error {
 		errors = append(errors, "residentId must start be a 'B' or a 'T', followed by 7 numbers")
 	}
 
-	if err := newPermitReq.NewCarReq.validate(); err != nil {
+	if err := newPermitReq.Car.validate(); err != nil {
 		errors = append(errors, err.Error())
 	}
 

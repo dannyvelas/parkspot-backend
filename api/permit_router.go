@@ -164,7 +164,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		}
 
 		// check if car exists
-		existingCar, err := carRepo.GetByLicensePlate(newPermitReq.NewCarReq.LicensePlate)
+		existingCar, err := carRepo.GetByLicensePlate(newPermitReq.Car.LicensePlate)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
 			respondInternalError(w)
@@ -270,7 +270,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 		if existingCar != (models.Car{}) {
 			permitCar = existingCar
 		} else {
-			newCarArgs := newPermitReq.NewCarReq.toNewCarArgs()
+			newCarArgs := newPermitReq.Car.toNewCarArgs()
 			carId, err := carRepo.Create(newCarArgs)
 			if err != nil {
 				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
