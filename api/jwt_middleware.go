@@ -85,6 +85,7 @@ func (jwtMiddleware JWTMiddleware) Authenticate(role Role, roles ...Role) func(h
 			}()
 			if !userHasPermittedRole {
 				respondError(w, errUnauthorized)
+				return
 			}
 
 			ctx := r.Context()
