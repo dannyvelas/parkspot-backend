@@ -19,15 +19,15 @@ type jwtClaims struct {
 	jwt.StandardClaims
 }
 
-type JWTMiddleware struct {
+type jwtMiddleware struct {
 	tokenSecret []byte
 }
 
-func NewJWTMiddleware(tokenConfig config.TokenConfig) JWTMiddleware {
-	return JWTMiddleware{tokenSecret: []byte(tokenConfig.Secret())}
+func NewJWTMiddleware(tokenConfig config.TokenConfig) jwtMiddleware {
+	return jwtMiddleware{tokenSecret: []byte(tokenConfig.Secret())}
 }
 
-func (jwtMiddleware JWTMiddleware) newJWT(id string, firstName string, lastName string, email string, role Role) (string, error) {
+func (jwtMiddleware jwtMiddleware) newJWT(id string, firstName string, lastName string, email string, role Role) (string, error) {
 	claims := jwtClaims{
 		user{id, firstName, lastName, email, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
@@ -38,7 +38,7 @@ func (jwtMiddleware JWTMiddleware) newJWT(id string, firstName string, lastName 
 	return token.SignedString(jwtMiddleware.tokenSecret)
 }
 
-func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (user, error) {
+func (jwtMiddleware jwtMiddleware) parseJWT(tokenString string) (user, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -59,7 +59,7 @@ func (jwtMiddleware JWTMiddleware) parseJWT(tokenString string) (user, error) {
 	}
 }
 
-func (jwtMiddleware JWTMiddleware) Authenticate(role Role, roles ...Role) func(http.Handler) http.Handler {
+func (jwtMiddleware jwtMiddleware) Authenticate(role Role, roles ...Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("jwt")

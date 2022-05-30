@@ -15,7 +15,7 @@ type credentials struct {
 	Password string
 }
 
-func Login(jwtMiddleware JWTMiddleware, adminRepo storage.AdminRepo) http.HandlerFunc {
+func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
