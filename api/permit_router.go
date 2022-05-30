@@ -335,7 +335,13 @@ func searchPermits(permitRepo storage.PermitRepo) http.HandlerFunc {
 			return
 		}
 
-		permits, err := permitRepo.Search(searchStr)
+		listType := r.URL.Query().Get("listType")
+		permitFilter, err := storage.NewPermitFilter(listType)
+		if err != nil {
+			respondError(w, newErrBadRequest("invalid listType value"))
+		}
+
+		permits, err := permitRepo.Search(searchStr, permitFilter)
 		if err != nil {
 			log.Error().Msgf("permit_router.searchPermits: Error getting permits: %v", err)
 			respondInternalError(w)
