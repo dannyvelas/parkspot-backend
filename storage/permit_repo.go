@@ -253,13 +253,13 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int, error) {
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason)
-    VALUES($1, $2, $3, $4, $5, $6, $7)
+    VALUES($1, $2, $3, $4, extract(epoch from now()), $5, $6)
     RETURNING id
   `
 
 	var id int
 	err := permitRepo.database.driver.Get(&id, query, newPermitArgs.ResidentId, newPermitArgs.CarId,
-		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.RequestTS, newPermitArgs.AffectsDays,
+		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.AffectsDays,
 		toNullable(newPermitArgs.ExceptionReason))
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)

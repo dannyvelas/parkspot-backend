@@ -13,8 +13,6 @@ type newPermitReq struct {
 	NewCarReq       newCarReq `json:"car"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
-	RequestTS       int64     `json:"requestTS"`
-	AffectsDays     bool      `json:"affectsDays"`
 	ExceptionReason string    `json:"exceptionReason"`
 }
 
@@ -30,12 +28,7 @@ func (newPermitReq newPermitReq) emptyFields() error {
 	if newPermitReq.EndDate.IsZero() {
 		emptyFields = append(emptyFields, "endDate")
 	}
-	if newPermitReq.RequestTS == 0 {
-		emptyFields = append(emptyFields, "requestTS")
-	}
-	if newPermitReq.AffectsDays == false {
-		// this is okay so do nothing
-	} else if newPermitReq.ExceptionReason == "" {
+	if newPermitReq.ExceptionReason == "" {
 		// this is okay so do nothing
 	}
 
@@ -67,10 +60,6 @@ func (newPermitReq newPermitReq) invalidFields() error {
 		errors = append(errors, "startDate cannot be equal to endDate")
 	}
 
-	if newPermitReq.RequestTS > time.Now().Unix() {
-		errors = append(errors, "requestTS cannot be in the future")
-	}
-
 	if len(errors) > 0 {
 		return fmt.Errorf("%w: %v", errInvalidFields, strings.Join(errors, ". "))
 	}
@@ -90,14 +79,13 @@ func (newPermitReq newPermitReq) validate() error {
 	return nil
 }
 
-func (newPermitReq newPermitReq) toNewPermitArgs(carId string) models.NewPermitArgs {
+func (newPermitReq newPermitReq) toNewPermitArgs(carId string, affectsDays bool) models.NewPermitArgs {
 	return models.NewNewPermitArgs(
 		newPermitReq.ResidentId,
 		carId,
 		newPermitReq.StartDate,
 		newPermitReq.EndDate,
-		newPermitReq.RequestTS,
-		newPermitReq.AffectsDays,
+		affectsDays,
 		newPermitReq.ExceptionReason,
 	)
 }

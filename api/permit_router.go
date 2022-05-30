@@ -295,7 +295,8 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id)
+		affectsDays := newPermitReq.ExceptionReason != "" || existingResident.UnlimDays
+		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id, affectsDays)
 		permitId, err := permitRepo.Create(newPermitArgs)
 		if err != nil {
 			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
@@ -303,9 +304,14 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			return
 		}
 
-		newPermit := newPermitArgs.ToPermit(permitId, permitCar)
+		newPermit, err := permitRepo.GetOne(permitId)
+		if err != nil {
+			log.Error().Msgf("permit_router.create: Error getting permit: %v", err)
+			respondInternalError(w)
+			return
+		}
 
-		respondJSON(w, 200, newPermit)
+		respondJSON(w, http.StatusOK, newPermit)
 	}
 }
 
@@ -323,7 +329,7 @@ func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, 200, emptyResponse{Ok: true})
+		respondJSON(w, http.StatusOK, emptyResponse{Ok: true})
 	}
 }
 

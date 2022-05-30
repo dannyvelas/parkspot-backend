@@ -48,7 +48,6 @@ func (suite *permitRepoSuite) SetupSuite() {
 	suite.newPermit = models.NewNewPermitArgs("T1043321", suite.existingCar.Id,
 		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
 		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
-		1645279579,
 		false,
 		"")
 }

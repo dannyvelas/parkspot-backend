@@ -56,31 +56,17 @@ type NewPermitArgs struct {
 	CarId           string
 	StartDate       time.Time
 	EndDate         time.Time
-	RequestTS       int64
 	AffectsDays     bool
 	ExceptionReason string
 }
 
-func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) NewPermitArgs {
+func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, affectsDays bool, exceptionReason string) NewPermitArgs {
 	return NewPermitArgs{
 		ResidentId:      residentId,
 		CarId:           carId,
 		StartDate:       startDate,
 		EndDate:         endDate,
-		RequestTS:       requestTS,
 		AffectsDays:     affectsDays,
 		ExceptionReason: exceptionReason,
 	}
-}
-
-func (newPermitArgs NewPermitArgs) ToPermit(permitId int, car Car) Permit {
-	return NewPermit(
-		permitId,
-		newPermitArgs.ResidentId,
-		car,
-		newPermitArgs.StartDate,
-		newPermitArgs.EndDate,
-		newPermitArgs.RequestTS,
-		newPermitArgs.AffectsDays,
-		newPermitArgs.ExceptionReason)
 }
