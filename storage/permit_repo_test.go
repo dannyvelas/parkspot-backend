@@ -232,7 +232,7 @@ func (suite permitRepoSuite) TestSearch_PermitId_FullString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId))
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId), All)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -250,7 +250,7 @@ func (suite permitRepoSuite) TestSearch_PermitId_SubString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:])
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:], All)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -268,7 +268,7 @@ func (suite permitRepoSuite) TestSearch_LicensePlate_SubString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:])
+	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:], All)
 	if err != nil {
 		suite.NoError(err)
 		return
