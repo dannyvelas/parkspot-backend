@@ -2,14 +2,12 @@ package api
 
 import (
 	"bytes"
-	//"encoding/json"
 	"fmt"
-	"io"
-	//"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -107,5 +105,45 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_Negative() {
 	suite.Equal(http.StatusBadRequest, response.StatusCode)
 
 	responseMsg := fmt.Sprintf("\"%v: startDate, endDate\"\n", errEmptyFields)
+	suite.Equal(responseMsg, string(bodyBytes))
+}
+
+func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_Negative() {
+	requestBody := []byte(`{
+    "residentId":"T1043321",
+    "car": {
+      "licensePlate":"OGYR3X",
+      "color":"blue",
+      "make":"",
+      "model":""
+    },
+    "startDate": "",
+    "endDate": ""
+  }`)
+	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/permit", bytes.NewBuffer(requestBody))
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+
+	cookie := http.Cookie{Name: "jwt", Value: suite.jwtToken, HttpOnly: true, Path: "/"}
+	request.AddCookie(&cookie)
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+	defer response.Body.Close()
+
+	bodyBytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+
+	suite.Equal(http.StatusBadRequest, response.StatusCode)
+
+	responseMsg := fmt.Sprintf("\"%v\"\n", newErrMalformed("NewPermitReq"))
 	suite.Equal(responseMsg, string(bodyBytes))
 }
