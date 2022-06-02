@@ -3,8 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -23,32 +21,11 @@ func TestAuthRouter(t *testing.T) {
 }
 
 func (suite *authRouterSuite) SetupSuite() {
-	config := config.NewConfig()
-
-	suite.testServer = func() *httptest.Server {
-		database, err := storage.NewDatabase(config.Postgres())
-		if err != nil {
-			log.Fatal().Msgf("Failed to start database: %v", err)
-		}
-		log.Info().Msg("Connected to Database.")
-
-		// init repos
-		adminRepo := storage.NewAdminRepo(database)
-		permitRepo := storage.NewPermitRepo(database)
-		carRepo := storage.NewCarRepo(database)
-		residentRepo := storage.NewResidentRepo(database)
-
-		// http setup
-		httpConfig := config.Http()
-
-		router := NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
-			adminRepo, permitRepo, carRepo, residentRepo)
-
-		testServer := httptest.NewServer(router)
-		log.Info().Msgf("Server started on: %s", testServer.URL)
-
-		return testServer
-	}()
+	testServer, err := newTestServer()
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
+	suite.testServer = testServer
 }
 
 func (suite authRouterSuite) TearDownSuite() {
