@@ -9,14 +9,12 @@ import (
 )
 
 type PermitRepo struct {
-	database       Database
-	permitSelect   squirrel.SelectBuilder
-	countSelect    squirrel.SelectBuilder
-	activeWhere    squirrel.And
-	exceptionWhere squirrel.Sqlizer
-	expiredWhere   func(int) squirrel.And
-	permitASC      string
-	permitDESC     string
+	database     Database
+	permitSelect squirrel.SelectBuilder
+	countSelect  squirrel.SelectBuilder
+	filterToSQL  map[models.PermitFilter]squirrel.Sqlizer
+	permitASC    string
+	permitDESC   string
 }
 
 func NewPermitRepo(database Database) PermitRepo {
@@ -38,32 +36,27 @@ func NewPermitRepo(database Database) PermitRepo {
 
 	countSelect := squirrel.Select("count(*)").From("permit")
 
-	activeWhere := squirrel.And{
+	filterToSQL := make(map[models.PermitFilter]squirrel.Sqlizer)
+	filterToSQL[models.ActivePermits] = squirrel.And{
 		squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
 		squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
 	}
-
-	exceptionWhere := squirrel.Expr("permit.exception_reason IS NOT NULL")
-
-	expiredWhere := func(window int) squirrel.And {
-		return squirrel.And{
-			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", window),
-			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
-		}
+	filterToSQL[models.ExceptionPermits] = squirrel.Expr("permit.exception_reason IS NOT NULL")
+	filterToSQL[models.ExpiredPermits] = squirrel.And{
+		squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", 15),
+		squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
 	}
 
 	permitASC := "permit.id ASC"
 	permitDESC := "permit.id DESC"
 
 	return PermitRepo{
-		database:       database,
-		permitSelect:   permitSelect,
-		countSelect:    countSelect,
-		activeWhere:    activeWhere,
-		exceptionWhere: exceptionWhere,
-		expiredWhere:   expiredWhere,
-		permitASC:      permitASC,
-		permitDESC:     permitDESC,
+		database:     database,
+		permitSelect: permitSelect,
+		countSelect:  countSelect,
+		filterToSQL:  filterToSQL,
+		permitASC:    permitASC,
+		permitDESC:   permitDESC,
 	}
 }
 
@@ -73,16 +66,9 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 	}
 
 	permitWhere := permitRepo.permitSelect
-
-	switch filter {
-	case models.ActivePermits:
-		permitWhere = permitWhere.Where(permitRepo.activeWhere)
-	case models.ExpiredPermits:
-		permitWhere = permitWhere.Where(permitRepo.expiredWhere(15))
-	case models.ExceptionPermits:
-		permitWhere = permitWhere.Where(permitRepo.exceptionWhere)
-	case models.AllPermits:
-		// do not add a where clause in this case
+	whereSQL, ok := permitRepo.filterToSQL[filter]
+	if ok {
+		permitWhere = permitWhere.Where(whereSQL)
 	}
 
 	orderSQL := permitRepo.permitASC
@@ -110,16 +96,9 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 
 func (permitRepo PermitRepo) GetCount(filter models.PermitFilter) (int, error) {
 	countWhere := permitRepo.countSelect
-
-	switch filter {
-	case models.ActivePermits:
-		countWhere = countWhere.Where(permitRepo.activeWhere)
-	case models.ExpiredPermits:
-		countWhere = countWhere.Where(permitRepo.expiredWhere(15))
-	case models.ExceptionPermits:
-		countWhere = countWhere.Where(permitRepo.exceptionWhere)
-	case models.AllPermits:
-		// do not add a where clause in this case
+	whereSQL, ok := permitRepo.filterToSQL[filter]
+	if ok {
+		countWhere = countWhere.Where(whereSQL)
 	}
 
 	query, _, err := countWhere.ToSql()
@@ -249,16 +228,9 @@ func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter
 			squirrel.Expr("car.make ILIKE $1"),
 			squirrel.Expr("car.model ILIKE $1"),
 		})
-
-	switch filter {
-	case models.ActivePermits:
-		permitWhere = permitWhere.Where(permitRepo.activeWhere)
-	case models.ExpiredPermits:
-		permitWhere = permitWhere.Where(permitRepo.expiredWhere(15))
-	case models.ExceptionPermits:
-		permitWhere = permitWhere.Where(permitRepo.exceptionWhere)
-	case models.AllPermits:
-		// do not add a where clause in this case
+	whereSQL, ok := permitRepo.filterToSQL[filter]
+	if ok {
+		permitWhere = permitWhere.Where(whereSQL)
 	}
 
 	query, args, err := permitWhere.OrderBy(permitRepo.permitASC).ToSql()
