@@ -108,23 +108,21 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetAllTotalAmount() (int, error) {
-	query, _, err := permitRepo.countSelect.ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetAllTotalAmount: %w: %v", ErrBuildingQuery, err)
+func (permitRepo PermitRepo) GetCount(filter models.PermitFilter) (int, error) {
+	countWhere := permitRepo.countSelect
+
+	switch filter {
+	case models.ActivePermits:
+		countWhere = countWhere.Where(permitRepo.activeWhere)
+	case models.ExpiredPermits:
+		countWhere = countWhere.Where(permitRepo.expiredWhere(15))
+	case models.ExceptionPermits:
+		countWhere = countWhere.Where(permitRepo.exceptionWhere)
+	case models.AllPermits:
+		// do not add a where clause in this case
 	}
 
-	var totalAmount int
-	err = permitRepo.database.driver.Get(&totalAmount, query)
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return totalAmount, nil
-}
-
-func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
-	query, _, err := permitRepo.countSelect.Where(permitRepo.activeWhere).ToSql()
+	query, _, err := countWhere.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetActiveTotalAmount: %w: %v", ErrBuildingQuery, err)
 	}
@@ -133,23 +131,6 @@ func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
 	err = permitRepo.database.driver.Get(&totalAmount, query)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetActiveTotalAmount: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return totalAmount, nil
-}
-
-func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
-	query, _, err := permitRepo.countSelect.
-		Where(permitRepo.exceptionWhere).
-		ToSql()
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetExceptionsTotalAmount: %w: %v", ErrBuildingQuery, err)
-	}
-
-	var totalAmount int
-	err = permitRepo.database.driver.Get(&totalAmount, query)
-	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetExceptionsTotalAmount: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return totalAmount, nil

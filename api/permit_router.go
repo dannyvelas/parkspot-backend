@@ -26,7 +26,7 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 			return
 		}
 
-		totalAmount, err := permitRepo.GetAllTotalAmount()
+		totalAmount, err := permitRepo.GetCount(permitFilter)
 		if err != nil {
 			log.Error().Msgf("permit_router.getAll: Error getting total amount: %v", err)
 			respondInternalError(w)
