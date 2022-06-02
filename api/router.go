@@ -28,7 +28,7 @@ func NewRouter(httpConfig config.HttpConfig,
 
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login", Login(jwtMiddleware, adminRepo))
+			anyoneRouter.Post("/login", Login(jwtMiddleware, adminRepo, residentRepo))
 			anyoneRouter.Post("/logout", Logout())
 		})
 

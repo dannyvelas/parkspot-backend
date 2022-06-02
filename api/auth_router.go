@@ -3,10 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"regexp"
 	"time"
 )
 
@@ -15,7 +17,7 @@ type credentials struct {
 	Password string
 }
 
-func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo) http.HandlerFunc {
+func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
@@ -24,25 +26,17 @@ func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo) http.Handle
 			return
 		}
 
-		admin, err := adminRepo.GetOne(creds.Id)
-		if errors.Is(err, storage.ErrNoRows) {
+		user, err := getUser(creds.Id, creds.Password, adminRepo, residentRepo)
+		if err != nil && errors.Is(err, errUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msgf("login_router: Error querying adminRepo: %v", err)
+			log.Error().Msgf("login_router: Error getting: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		if err = bcrypt.CompareHashAndPassword(
-			[]byte(admin.Password),
-			[]byte(creds.Password),
-		); err != nil {
-			respondError(w, errUnauthorized)
-			return
-		}
-
-		token, err := jwtMiddleware.newJWT(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole)
+		token, err := jwtMiddleware.newJWT(user.Id, user.FirstName, user.LastName, user.Email, user.Role)
 		if err != nil {
 			log.Error().Msgf("login_router: Error generating JWT: %v", err)
 			respondInternalError(w)
@@ -52,8 +46,44 @@ func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo) http.Handle
 		cookie := http.Cookie{Name: "jwt", Value: token, HttpOnly: true, Path: "/"}
 		http.SetCookie(w, &cookie)
 
-		respondJSON(w, http.StatusOK, admin)
+		respondJSON(w, http.StatusOK, user)
 	}
+}
+
+func getUser(username, password string, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) (user, error) {
+	var userFound user
+	var hash string
+
+	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(username) {
+		admin, err := adminRepo.GetOne(username)
+		if errors.Is(err, storage.ErrNoRows) {
+			return user{}, errUnauthorized
+		} else if err != nil {
+			return user{}, fmt.Errorf("Error querying adminRepo: %v", err)
+		}
+
+		userFound = newUser(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole)
+		hash = admin.Password
+	} else {
+		resident, err := residentRepo.GetOne(username)
+		if errors.Is(err, storage.ErrNoRows) {
+			return user{}, errUnauthorized
+		} else if err != nil {
+			return user{}, fmt.Errorf("Error querying residentRepo: %v", err)
+		}
+
+		userFound = newUser(resident.Id, resident.FirstName, resident.LastName, resident.Email, ResidentRole)
+		hash = resident.Password
+	}
+
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(hash),
+		[]byte(password),
+	); err != nil {
+		return user{}, errUnauthorized
+	}
+
+	return userFound, nil
 }
 
 func Logout() http.HandlerFunc {

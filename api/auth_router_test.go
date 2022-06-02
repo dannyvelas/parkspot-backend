@@ -61,3 +61,33 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	suite.Equal(http.StatusOK, response.StatusCode)
 	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
 }
+
+func (suite authRouterSuite) TestLogin_Resident_Positive() {
+	requestBody := []byte(`{
+    "id":"T1043321",
+    "password":"notapassword"
+  }`)
+	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+	defer response.Body.Close()
+
+	var userResponse user
+	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
+		suite.NoError(err)
+		return
+	}
+
+	expectedUser := newUser("T1043321", "John", "Gibson", "john.gibson@gmail.com", ResidentRole)
+
+	suite.Equal(http.StatusOK, response.StatusCode)
+	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
+}
