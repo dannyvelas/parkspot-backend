@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,39 +73,14 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	}
 	defer response.Body.Close()
 
-	bodyBytes, err := io.ReadAll(response.Body)
-	if err != nil {
+	var userResponse user
+	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	expectedResponse, err := compressJSON([]byte(`{
-    "id": "cca1e5d1-065b-47eb-98e7-731bfecd7a24",
-    "firstName": "Daniel",
-    "lastName": "Velasquez",
-    "email": "email@example.com",
-    "role": "admin"
-  }`))
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-
-	actualResponse, err := compressJSON(bodyBytes)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
+	expectedUser := newUser("cca1e5d1-065b-47eb-98e7-731bfecd7a24", "Daniel", "Velasquez", "email@example.com", AdminRole)
 
 	suite.Equal(http.StatusOK, response.StatusCode)
-	suite.Empty(cmp.Diff(expectedResponse, actualResponse), "response body was not the same")
-}
-
-func compressJSON(jsonb []byte) ([]byte, error) {
-	buffer := new(bytes.Buffer)
-	if err := json.Compact(buffer, jsonb); err != nil {
-		return []byte{}, err
-	}
-
-	return buffer.Bytes(), nil
+	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
 }
