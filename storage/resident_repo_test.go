@@ -36,7 +36,7 @@ func (suite *residentRepoSuite) SetupSuite() {
 	}
 	suite.migrator = migrator
 
-	suite.existingResident = models.NewResident("T1043321", "John", "Gibson", "(894) 280-4660", "john.gibson@gmail.com", "5730ec12ad69b442d69319417dce5869", true, 13)
+	suite.existingResident = models.NewResident("T1043321", "John", "Gibson", "(894) 280-4660", "john.gibson@gmail.com", "$2a$12$RwfoAooW.NM6Gj6j6BeqC.NpXCfOmdmIzGf3BrmMwfm7bdS5q7yty", true, 13)
 }
 
 func (suite residentRepoSuite) TestGetOne_Negative() {
