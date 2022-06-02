@@ -27,7 +27,7 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) jwtMiddleware {
 	return jwtMiddleware{tokenSecret: []byte(tokenConfig.Secret())}
 }
 
-func (jwtMiddleware jwtMiddleware) newJWT(id string, firstName string, lastName string, email string, role Role) (string, error) {
+func (jwtMiddleware jwtMiddleware) newJWT(id string, firstName string, lastName string, email string, role role) (string, error) {
 	claims := jwtClaims{
 		user{id, firstName, lastName, email, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
@@ -59,7 +59,7 @@ func (jwtMiddleware jwtMiddleware) parseJWT(tokenString string) (user, error) {
 	}
 }
 
-func (jwtMiddleware jwtMiddleware) Authenticate(role Role, roles ...Role) func(http.Handler) http.Handler {
+func (jwtMiddleware jwtMiddleware) Authenticate(firstRole role, roles ...role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("jwt")
@@ -74,7 +74,7 @@ func (jwtMiddleware jwtMiddleware) Authenticate(role Role, roles ...Role) func(h
 				return
 			}
 
-			permittedRoles := append([]Role{role}, roles...)
+			permittedRoles := append([]role{firstRole}, roles...)
 			userHasPermittedRole := func() bool {
 				for _, role := range permittedRoles {
 					if user.Role == role {

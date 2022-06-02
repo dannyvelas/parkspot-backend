@@ -14,10 +14,10 @@ type user struct {
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
-	Role      Role   `json:"role"`
+	Role      role   `json:"role"`
 }
 
-func newUser(id string, firstName string, lastName string, email string, role Role) user {
+func newUser(id string, firstName string, lastName string, email string, role role) user {
 	return user{
 		Id:        id,
 		FirstName: firstName,

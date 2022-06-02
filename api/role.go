@@ -1,8 +1,8 @@
 package api
 
-type Role string
+type role string
 
 const (
-	AdminRole    Role = "admin"
+	AdminRole    role = "admin"
 	ResidentRole      = "resident"
 )
