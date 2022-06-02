@@ -67,9 +67,22 @@ func NewPermitRepo(database Database) PermitRepo {
 	}
 }
 
-func (permitRepo PermitRepo) GetAll(limit, offset int, reversed bool) ([]models.Permit, error) {
+func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, reversed bool) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
+	}
+
+	permitWhere := permitRepo.permitSelect
+
+	switch filter {
+	case models.ActivePermits:
+		permitWhere = permitWhere.Where(permitRepo.activeWhere)
+	case models.ExpiredPermits:
+		permitWhere = permitWhere.Where(permitRepo.expiredWhere(15))
+	case models.ExceptionPermits:
+		permitWhere = permitWhere.Where(permitRepo.exceptionWhere)
+	case models.AllPermits:
+		// do not add a where clause in this case
 	}
 
 	orderSQL := permitRepo.permitASC
@@ -77,19 +90,19 @@ func (permitRepo PermitRepo) GetAll(limit, offset int, reversed bool) ([]models.
 		orderSQL = permitRepo.permitDESC
 	}
 
-	query, _, err := permitRepo.permitSelect.
+	query, _, err := permitWhere.
 		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("permit_repo.Get: %w: %v", ErrBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
 	err = permitRepo.database.driver.Select(&permits, query)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.Get: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return permits.toModels(), nil
@@ -110,35 +123,6 @@ func (permitRepo PermitRepo) GetAllTotalAmount() (int, error) {
 	return totalAmount, nil
 }
 
-func (permitRepo PermitRepo) GetActive(limit, offset int, reversed bool) ([]models.Permit, error) {
-	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.GetActive: %w: limit or offset cannot be zero", ErrInvalidArg)
-	}
-
-	orderSQL := permitRepo.permitASC
-	if reversed {
-		orderSQL = permitRepo.permitDESC
-	}
-
-	query, _, err := permitRepo.permitSelect.
-		Where(permitRepo.activeWhere).
-		OrderBy(orderSQL).
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrBuildingQuery, err)
-	}
-
-	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query)
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActive: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return permits.toModels(), nil
-}
-
 func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
 	query, _, err := permitRepo.countSelect.Where(permitRepo.activeWhere).ToSql()
 	if err != nil {
@@ -152,35 +136,6 @@ func (permitRepo PermitRepo) GetActiveTotalAmount() (int, error) {
 	}
 
 	return totalAmount, nil
-}
-
-func (permitRepo PermitRepo) GetExceptions(limit, offset int, reversed bool) ([]models.Permit, error) {
-	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: limit or offset cannot be zero", ErrInvalidArg)
-	}
-
-	orderSQL := permitRepo.permitASC
-	if reversed {
-		orderSQL = permitRepo.permitDESC
-	}
-
-	query, _, err := permitRepo.permitSelect.
-		Where(permitRepo.exceptionWhere).
-		OrderBy(orderSQL).
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: %v", ErrBuildingQuery, err)
-	}
-
-	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query)
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetExceptions: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return permits.toModels(), nil
 }
 
 func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
@@ -198,35 +153,6 @@ func (permitRepo PermitRepo) GetExceptionsTotalAmount() (int, error) {
 	}
 
 	return totalAmount, nil
-}
-
-func (permitRepo PermitRepo) GetExpired(limit, offset int, reversed bool, window int) ([]models.Permit, error) {
-	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.GetExpired: %w: limit or offset cannot be zero", ErrInvalidArg)
-	}
-
-	orderSQL := permitRepo.permitASC
-	if reversed {
-		orderSQL = permitRepo.permitDESC
-	}
-
-	query, args, err := permitRepo.permitSelect.
-		Where(permitRepo.expiredWhere(window)).
-		OrderBy(orderSQL).
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetExpired: %w: %v", ErrBuildingQuery, err)
-	}
-
-	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetExpired: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return permits.toModels(), nil
 }
 
 func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
@@ -328,7 +254,7 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	return nil
 }
 
-func (permitRepo PermitRepo) Search(searchStr string, filter permitFilter) ([]models.Permit, error) {
+func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter) ([]models.Permit, error) {
 	if searchStr == "" {
 		return nil, fmt.Errorf("permit_repo.Search: %w: Empty search argument", ErrInvalidArg)
 	}
@@ -344,13 +270,13 @@ func (permitRepo PermitRepo) Search(searchStr string, filter permitFilter) ([]mo
 		})
 
 	switch filter {
-	case Active:
+	case models.ActivePermits:
 		permitWhere = permitWhere.Where(permitRepo.activeWhere)
-	case Expired:
+	case models.ExpiredPermits:
 		permitWhere = permitWhere.Where(permitRepo.expiredWhere(15))
-	case Exceptions:
+	case models.ExceptionPermits:
 		permitWhere = permitWhere.Where(permitRepo.exceptionWhere)
-	case All:
+	case models.AllPermits:
 		// do not add a where clause in this case
 	}
 

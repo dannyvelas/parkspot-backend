@@ -60,7 +60,7 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting all permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permit should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
@@ -74,14 +74,14 @@ func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 		suite.NoError(err, "Error when migrating all the way up again")
 	}()
 
-	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.ActivePermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting active permits when the table is empty")
 	suite.Equal(0, len(permits), "length of permits should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting all permits when the table is not empty")
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
@@ -90,7 +90,7 @@ func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, true)
+	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, true)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -107,7 +107,7 @@ func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
 }
 
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
-	permits, err := suite.permitRepo.GetAll(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting all permits")
 
 	f, err := os.Create("testout/all_permits.txt")
@@ -121,7 +121,7 @@ func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 }
 
 func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
-	permits, err := suite.permitRepo.GetActive(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.ActivePermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting active permits")
 
 	f, err := os.Create("testout/active_permits.txt")
@@ -135,7 +135,7 @@ func (suite permitRepoSuite) TestWriteActivePermits_Positive() {
 }
 
 func (suite permitRepoSuite) TestWritePermitExceptions_Positive() {
-	permits, err := suite.permitRepo.GetExceptions(defaultLimit, defaultOffset, false)
+	permits, err := suite.permitRepo.Get(models.ExceptionPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting permit exceptions")
 
 	f, err := os.Create("testout/permit_exceptions.txt")
@@ -231,7 +231,7 @@ func (suite permitRepoSuite) TestSearch_PermitId_FullString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId), All)
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId), models.AllPermits)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -249,7 +249,7 @@ func (suite permitRepoSuite) TestSearch_PermitId_SubString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:], All)
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:], models.AllPermits)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -267,7 +267,7 @@ func (suite permitRepoSuite) TestSearch_LicensePlate_SubString_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:], All)
+	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:], models.AllPermits)
 	if err != nil {
 		suite.NoError(err)
 		return

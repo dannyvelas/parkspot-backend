@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
+func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
@@ -19,7 +19,7 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allPermits, err := permitRepo.GetAll(boundedLimit, offset, reversed)
+		allPermits, err := permitRepo.Get(permitFilter, boundedLimit, offset, reversed)
 		if err != nil {
 			log.Error().Msgf("permit_router.getAll: Error getting permits: %v", err)
 			respondInternalError(w)
@@ -34,88 +34,6 @@ func getAll(permitRepo storage.PermitRepo) http.HandlerFunc {
 		}
 
 		permitsWithMetadata := newListWithMetadata(allPermits, totalAmount)
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
-	}
-}
-
-func getActive(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
-		reversed := toBool(r.URL.Query().Get("reversed"))
-
-		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-
-		activePermits, err := permitRepo.GetActive(boundedLimit, offset, reversed)
-		if err != nil {
-			log.Error().Msgf("permit_router.getActive: Error querying permitRepo: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		totalAmount, err := permitRepo.GetActiveTotalAmount()
-		if err != nil {
-			log.Error().Msgf("permit_router.getActive: Error getting total amount: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(activePermits, totalAmount)
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
-	}
-}
-
-func getExceptions(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
-		reversed := toBool(r.URL.Query().Get("reversed"))
-
-		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-
-		exceptionPermits, err := permitRepo.GetExceptions(boundedLimit, offset, reversed)
-		if err != nil {
-			log.Error().Msgf("permit_router.getExceptions: Error querying permitRepo: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		totalAmount, err := permitRepo.GetExceptionsTotalAmount()
-		if err != nil {
-			log.Error().Msgf("permit_router.getExceptions: Error getting total amount: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(exceptionPermits, totalAmount)
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
-	}
-}
-
-func getExpired(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
-		reversed := toBool(r.URL.Query().Get("reversed"))
-
-		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-
-		window := toPosInt(r.URL.Query().Get("window"))
-		if window == 0 {
-			window = defaultExpirationWindow
-		}
-
-		expiredPermits, err := permitRepo.GetExpired(boundedLimit, offset, reversed, int(window))
-		if err != nil {
-			log.Error().Msgf("permit_router.getExpired: Error querying permitRepo: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(expiredPermits, len(expiredPermits))
 
 		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
@@ -342,9 +260,10 @@ func searchPermits(permitRepo storage.PermitRepo) http.HandlerFunc {
 		}
 
 		listType := r.URL.Query().Get("listType")
-		permitFilter, err := storage.NewPermitFilter(listType)
+		permitFilter, err := models.NewPermitFilter(listType)
 		if err != nil {
 			respondError(w, newErrBadRequest("invalid listType value"))
+			return
 		}
 
 		permits, err := permitRepo.Search(searchStr, permitFilter)

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -34,10 +35,10 @@ func NewRouter(httpConfig config.HttpConfig,
 
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(jwtMiddleware.Authenticate(AdminRole)) //, SecurityRole
-			officeRouter.Get("/permits/active", getActive(permitRepo))
-			officeRouter.Get("/permits", getAll(permitRepo))
-			officeRouter.Get("/permits/exceptions", getExceptions(permitRepo))
-			officeRouter.Get("/permits/expired", getExpired(permitRepo))
+			officeRouter.Get("/permits/active", getPermits(permitRepo, models.ActivePermits))
+			officeRouter.Get("/permits", getPermits(permitRepo, models.AllPermits))
+			officeRouter.Get("/permits/exceptions", getPermits(permitRepo, models.ExceptionPermits))
+			officeRouter.Get("/permits/expired", getPermits(permitRepo, models.ExpiredPermits))
 			officeRouter.Get("/residents", getAllResidents(residentRepo))
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
 		})
