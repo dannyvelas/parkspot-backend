@@ -56,7 +56,7 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	expectedUser := newUser("cca1e5d1-065b-47eb-98e7-731bfecd7a24", "Daniel", "Velasquez", "email@example.com", AdminRole)
+	expectedUser := newUser("b1394468-0018-47f5-afe5-1cc77118d161", "Daniel", "Velasquez", "email@example.com", AdminRole)
 
 	suite.Equal(http.StatusOK, response.StatusCode)
 	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")

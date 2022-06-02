@@ -1,12 +1,14 @@
 BEGIN;
 
 INSERT INTO admin(
+  id,
   first_name,
   last_name,
   email,
   password,
   is_privileged
 ) VALUES(
+  'b1394468-0018-47f5-afe5-1cc77118d161',
   'Daniel',
   'Velasquez',
   'email@example.com',
