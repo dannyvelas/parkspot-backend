@@ -36,15 +36,16 @@ func NewPermitRepo(database Database) PermitRepo {
 
 	countSelect := squirrel.Select("count(*)").From("permit")
 
-	filterToSQL := make(map[models.PermitFilter]squirrel.Sqlizer)
-	filterToSQL[models.ActivePermits] = squirrel.And{
-		squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
-		squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
-	}
-	filterToSQL[models.ExceptionPermits] = squirrel.Expr("permit.exception_reason IS NOT NULL")
-	filterToSQL[models.ExpiredPermits] = squirrel.And{
-		squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", 15),
-		squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
+	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
+		models.ActivePermits: squirrel.And{
+			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
+			squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
+		},
+		models.ExceptionPermits: squirrel.Expr("permit.exception_reason IS NOT NULL"),
+		models.ExpiredPermits: squirrel.And{
+			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", 15),
+			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
+		},
 	}
 
 	permitASC := "permit.id ASC"
