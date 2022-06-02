@@ -31,14 +31,14 @@ func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msgf("login_router: Error getting: %v", err)
+			log.Error().Msgf("auth_router: Error getting: %v", err)
 			respondInternalError(w)
 			return
 		}
 
 		token, err := jwtMiddleware.newJWT(user.Id, user.FirstName, user.LastName, user.Email, user.Role)
 		if err != nil {
-			log.Error().Msgf("login_router: Error generating JWT: %v", err)
+			log.Error().Msgf("auth_router: Error generating JWT: %v", err)
 			respondInternalError(w)
 			return
 		}
