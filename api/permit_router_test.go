@@ -14,9 +14,8 @@ import (
 
 type permitRouterSuite struct {
 	suite.Suite
-	testServer  *httptest.Server
-	jwtToken    string
-	existingCar newCarReq
+	testServer *httptest.Server
+	jwtToken   string
 }
 
 func TestPermitRouter(t *testing.T) {
@@ -42,8 +41,6 @@ func (suite *permitRouterSuite) SetupSuite() {
 
 		return jwtToken
 	}()
-
-	suite.existingCar = newCarReq{"OGYR3X", "blue", "", ""}
 }
 
 func (suite permitRouterSuite) TearDownSuite() {
