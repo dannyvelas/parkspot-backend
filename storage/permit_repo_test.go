@@ -82,7 +82,10 @@ func (suite permitRepoSuite) TestGetActivePermits_EmptySlice_Positive() {
 
 func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
-	suite.NoError(err, "Error getting all permits when the table is not empty")
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
 	suite.NotEqual(len(permits), 0, "length of permits should not be 0")
 }
 
@@ -104,6 +107,11 @@ func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
 	suite.Equal(suite.newPermit.CarId, first.Car.Id)
 	suite.Empty(cmp.Diff(first.StartDate, suite.newPermit.StartDate))
 	suite.Empty(cmp.Diff(first.EndDate, suite.newPermit.EndDate))
+}
+
+func (suite permitRepoSuite) TestGetExpiredPermits_NonEmpty_Positive() {
+	_, err := suite.permitRepo.Get(models.ExpiredPermits, defaultLimit, defaultOffset, false)
+	suite.NoError(err)
 }
 
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
