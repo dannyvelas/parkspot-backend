@@ -175,7 +175,39 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDa
 	return permits.toModels(), nil
 }
 
+func (permitRepo PermitRepo) GetActiveOfResident(residentId string) ([]models.Permit, error) {
+	if residentId == "" {
+		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResident: %w: Empty ID argument", ErrInvalidArg)
+	}
+
+	whereSQL, ok := permitRepo.filterToSQL[models.ActivePermits]
+	if !ok {
+		return []models.Permit{}, fmt.Errorf("permit_repo:GetActiveOfResident: %w: active permit filter not defined", ErrBuildingQuery)
+	}
+
+	query, args, err := permitRepo.permitSelect.
+		Where("permit.resident_id = $1", residentId).
+		Where(whereSQL).
+		OrderBy(permitRepo.permitASC).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResident: %w: %v", ErrBuildingQuery, err)
+	}
+
+	permits := permitSlice{}
+	err = permitRepo.database.driver.Select(&permits, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResident: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return permits.toModels(), nil
+}
+
 func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startDate, endDate time.Time) ([]models.Permit, error) {
+	if residentId == "" {
+		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", ErrInvalidArg)
+	}
+
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.resident_id = $1", residentId).
 		Where("permit.start_ts <= $2", endDate.Unix()).
