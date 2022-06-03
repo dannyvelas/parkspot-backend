@@ -78,7 +78,7 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 		permitWhere = permitWhere.OrderBy(permitRepo.permitDESC)
 	}
 
-	query, _, err := permitWhere.
+	query, args, err := permitWhere.
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
@@ -87,7 +87,7 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 	}
 
 	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query)
+	err = permitRepo.database.driver.Select(&permits, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.Get: %w: %v", ErrDatabaseQuery, err)
 	}
