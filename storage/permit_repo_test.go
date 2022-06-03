@@ -114,6 +114,26 @@ func (suite permitRepoSuite) TestGetExpiredPermits_NonEmpty_Positive() {
 	suite.NoError(err)
 }
 
+func (suite permitRepoSuite) TestGetCount_All_Positive() {
+	_, err := suite.permitRepo.GetCount(models.AllPermits)
+	suite.NoError(err)
+}
+
+func (suite permitRepoSuite) TestGetCount_Active_Positive() {
+	_, err := suite.permitRepo.GetCount(models.ActivePermits)
+	suite.NoError(err)
+}
+
+func (suite permitRepoSuite) TestGetCount_Expired_Positive() {
+	_, err := suite.permitRepo.GetCount(models.ExpiredPermits)
+	suite.NoError(err)
+}
+
+func (suite permitRepoSuite) TestGetCount_Exception_Positive() {
+	_, err := suite.permitRepo.GetCount(models.ExceptionPermits)
+	suite.NoError(err)
+}
+
 func (suite permitRepoSuite) TestWriteAllPermits_Positive() {
 	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error when getting all permits")
