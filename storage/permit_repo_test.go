@@ -189,6 +189,26 @@ func (suite permitRepoSuite) TestGetOnePermit_Positive() {
 	suite.Empty(cmp.Diff(permit.EndDate, suite.newPermit.EndDate))
 }
 
+func (suite permitRepoSuite) TestGetAllPermitsOfResident_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, err := suite.permitRepo.GetAllOfResident(suite.newPermit.ResidentId)
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEmpty(permits, "length of permits should not be zero")
+		return
+	}
+
+	last := permits[len(permits)-1]
+	suite.Equal(suite.newPermit.ResidentId, last.ResidentId)
+	suite.Equal(suite.newPermit.CarId, last.Car.Id)
+	suite.Empty(cmp.Diff(suite.newPermit.StartDate, last.StartDate))
+	suite.Empty(cmp.Diff(suite.newPermit.EndDate, last.EndDate))
+}
+
 func (suite permitRepoSuite) TestGetActivePermitsOfResident_Positive() {
 	permitId, _ := suite.permitRepo.Create(suite.newPermit)
 	defer suite.permitRepo.Delete(permitId)
