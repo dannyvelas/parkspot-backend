@@ -102,13 +102,13 @@ func (permitRepo PermitRepo) GetCount(filter models.PermitFilter) (int, error) {
 		countWhere = countWhere.Where(whereSQL)
 	}
 
-	query, _, err := countWhere.ToSql()
+	query, args, err := countWhere.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", ErrBuildingQuery, err)
 	}
 
 	var totalAmount int
-	err = permitRepo.database.driver.Get(&totalAmount, query)
+	err = permitRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", ErrDatabaseQuery, err)
 	}
