@@ -62,7 +62,7 @@ func (suite permitRepoSuite) TestGetAllPermits_EmptySlice_Positive() {
 
 	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, false)
 	suite.NoError(err, "Error getting all permits when the table is empty")
-	suite.Equal(0, len(permits), "length of permit should be 0")
+	suite.Equal(0, len(permits), "length of permits should be 0")
 	suite.True(cmp.Equal(permits, []models.Permit{}), "permit should be an empty slice")
 }
 
@@ -214,7 +214,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBe
 	}()
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
-	suite.Equal(1, len(permits), "length of permit should be 1")
+	suite.Equal(1, len(permits), "length of permits should be 1")
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter_NonEmpty() {
@@ -228,7 +228,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter
 	}()
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
-	suite.Equal(1, len(permits), "length of permit should be 1")
+	suite.Equal(1, len(permits), "length of permits should be 1")
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd_NonEmpty() {
@@ -238,7 +238,7 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd
 	permits, err := suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, suite.newPermit.StartDate, suite.newPermit.EndDate)
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
 
-	suite.Equal(1, len(permits), "length of permit should be 1")
+	suite.Equal(1, len(permits), "length of permits should be 1")
 }
 
 func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
