@@ -46,8 +46,8 @@ func (suite *permitRepoSuite) SetupSuite() {
 
 	suite.existingCar = models.NewCar("fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
 	suite.newPermit = models.NewNewPermitArgs("T1043321", suite.existingCar.Id,
-		time.Date(2022, 06, 18, 0, 0, 0, 0, time.Local),
-		time.Date(2022, 06, 29, 0, 0, 0, 0, time.Local),
+		time.Now().Truncate(time.Second),
+		time.Now().Add(time.Duration(24)*time.Hour).Truncate(time.Second),
 		false,
 		"")
 }
@@ -187,6 +187,26 @@ func (suite permitRepoSuite) TestGetOnePermit_Positive() {
 	suite.Equal(permit.Car.Id, suite.newPermit.CarId)
 	suite.Empty(cmp.Diff(permit.StartDate, suite.newPermit.StartDate))
 	suite.Empty(cmp.Diff(permit.EndDate, suite.newPermit.EndDate))
+}
+
+func (suite permitRepoSuite) TestGetActivePermitsOfResident_Positive() {
+	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitId)
+
+	permits, err := suite.permitRepo.GetActiveOfResident(suite.newPermit.ResidentId)
+	if err != nil {
+		suite.NoError(err)
+		return
+	} else if len(permits) == 0 {
+		suite.NotEmpty(permits, "length of permits should not be zero")
+		return
+	}
+
+	last := permits[len(permits)-1]
+	suite.Equal(suite.newPermit.ResidentId, last.ResidentId)
+	suite.Equal(suite.newPermit.CarId, last.Car.Id)
+	suite.Empty(cmp.Diff(suite.newPermit.StartDate, last.StartDate))
+	suite.Empty(cmp.Diff(suite.newPermit.EndDate, last.EndDate))
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
