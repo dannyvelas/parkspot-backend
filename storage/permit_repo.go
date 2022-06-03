@@ -72,13 +72,13 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 		permitWhere = permitWhere.Where(whereSQL)
 	}
 
-	orderSQL := permitRepo.permitASC
-	if reversed {
-		orderSQL = permitRepo.permitDESC
+	if !reversed {
+		permitWhere = permitWhere.OrderBy(permitRepo.permitASC)
+	} else {
+		permitWhere = permitWhere.OrderBy(permitRepo.permitDESC)
 	}
 
 	query, _, err := permitWhere.
-		OrderBy(orderSQL).
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
