@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -42,9 +43,12 @@ func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		}
 
 		resident, err := residentRepo.GetOne(id)
-		if err != nil {
+		if err != nil && !errors.Is(err, storage.ErrNoRows) {
 			log.Error().Msgf("resident_router.getOne: Error getting resident: %v", err)
 			respondInternalError(w)
+			return
+		} else if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("resident"))
 			return
 		}
 
