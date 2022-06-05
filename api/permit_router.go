@@ -54,6 +54,27 @@ func getOne(permitRepo storage.PermitRepo) http.HandlerFunc {
 	}
 }
 
+func getAllPermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			return
+		}
+
+		permits, err := permitRepo.GetAllOfResident(id)
+		if err != nil {
+			log.Error().Msgf("permit_router.getActivePermitsOfResident: Error getting permits: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		permitsWithMetadata := newListWithMetadata(permits, len(permits))
+
+		respondJSON(w, http.StatusOK, permitsWithMetadata)
+	}
+}
+
 func getActivePermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
