@@ -73,29 +73,20 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
       "model":""
     }
   }`)
-	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/permit", bytes.NewBuffer(requestBody))
+	responseBody, statusCode, err := newRequestWithCookie("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+	defer responseBody.Close()
+
+	bodyBytes, err := io.ReadAll(responseBody)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	cookie := http.Cookie{Name: "jwt", Value: suite.jwtToken, HttpOnly: true, Path: "/"}
-	request.AddCookie(&cookie)
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-	defer response.Body.Close()
-
-	bodyBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-
-	suite.Equal(http.StatusBadRequest, response.StatusCode)
+	suite.Equal(http.StatusBadRequest, statusCode)
 
 	responseMsg := fmt.Sprintf("\"%v: startDate, endDate\"\n", errEmptyFields)
 	suite.Equal(responseMsg, string(bodyBytes))
@@ -113,29 +104,20 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
     "startDate": "",
     "endDate": ""
   }`)
-	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/permit", bytes.NewBuffer(requestBody))
+	responseBody, statusCode, err := newRequestWithCookie("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	if err != nil {
+		suite.NoError(err)
+		return
+	}
+	defer responseBody.Close()
+
+	bodyBytes, err := io.ReadAll(responseBody)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	cookie := http.Cookie{Name: "jwt", Value: suite.jwtToken, HttpOnly: true, Path: "/"}
-	request.AddCookie(&cookie)
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-	defer response.Body.Close()
-
-	bodyBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-
-	suite.Equal(http.StatusBadRequest, response.StatusCode)
+	suite.Equal(http.StatusBadRequest, statusCode)
 
 	responseMsg := fmt.Sprintf("\"%v\"\n", newErrMalformed("NewPermitReq"))
 	suite.Equal(responseMsg, string(bodyBytes))
@@ -150,27 +132,17 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	defer deleteTestPermit(suite.testServer.URL, permitId, suite.jwtToken)
 
 	endpoint := fmt.Sprintf("%s/api/resident/%s/permits/active", suite.testServer.URL, suite.residentId)
-
-	request, err := http.NewRequest("GET", endpoint, nil)
+	responseBody, statusCode, err := newRequestWithCookie("GET", endpoint, nil, suite.jwtToken)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
+	defer responseBody.Close()
 
-	cookie := http.Cookie{Name: "jwt", Value: suite.jwtToken, HttpOnly: true, Path: "/"}
-	request.AddCookie(&cookie)
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-	defer response.Body.Close()
-
-	suite.Equal(http.StatusOK, response.StatusCode)
+	suite.Equal(http.StatusOK, statusCode)
 
 	var permitsResponse listWithMetadata[models.Permit]
-	if err := json.NewDecoder(response.Body).Decode(&permitsResponse); err != nil {
+	if err := json.NewDecoder(responseBody).Decode(&permitsResponse); err != nil {
 		suite.NoError(err)
 		return
 	} else if len(permitsResponse.Records) == 0 {
@@ -191,26 +163,18 @@ func createTestPermit(url string, body newPermitReq, jwtToken string) (int, erro
 		return 0, nil
 	}
 
-	request, err := http.NewRequest("POST", url+"/api/permit", bytes.NewBuffer(requestBody))
+	responseBody, statusCode, err := newRequestWithCookie("POST", url+"/api/permit", requestBody, jwtToken)
 	if err != nil {
 		return 0, nil
 	}
+	defer responseBody.Close()
 
-	cookie := http.Cookie{Name: "jwt", Value: jwtToken, HttpOnly: true, Path: "/"}
-	request.AddCookie(&cookie)
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return 0, nil
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
+	if statusCode != http.StatusOK {
 		return 0, fmt.Errorf("Status not OK")
 	}
 
 	var newPermitResponse models.Permit
-	if err := json.NewDecoder(response.Body).Decode(&newPermitResponse); err != nil {
+	if err := json.NewDecoder(responseBody).Decode(&newPermitResponse); err != nil {
 		return 0, nil
 	}
 
@@ -219,23 +183,31 @@ func createTestPermit(url string, body newPermitReq, jwtToken string) (int, erro
 
 func deleteTestPermit(url string, id int, jwtToken string) error {
 	endpoint := fmt.Sprintf("%s/api/permit/%d", url, id)
-	request, err := http.NewRequest("DELETE", endpoint, nil)
+	responseBody, statusCode, err := newRequestWithCookie("DELETE", endpoint, nil, jwtToken)
 	if err != nil {
 		return err
 	}
+	defer responseBody.Close()
 
+	if statusCode != http.StatusOK {
+		return fmt.Errorf("Status not OK")
+	}
+
+	return nil
+}
+
+func newRequestWithCookie(method string, url string, requestBytes []byte, jwtToken string) (io.ReadCloser, int, error) {
+	request, err := http.NewRequest(method, url, bytes.NewBuffer(requestBytes))
+	if err != nil {
+		return nil, 0, err
+	}
 	cookie := http.Cookie{Name: "jwt", Value: jwtToken, HttpOnly: true, Path: "/"}
 	request.AddCookie(&cookie)
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Status not OK")
+		return nil, 0, err
 	}
 
-	return nil
+	return response.Body, response.StatusCode, nil
 }
