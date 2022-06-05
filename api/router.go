@@ -52,6 +52,7 @@ func NewRouter(httpConfig config.HttpConfig,
 			userRouter.Put("/car/{id}", editCar(carRepo))
 			userRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo))
 			userRouter.Get("/permits/search", searchPermits(permitRepo))
+			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
 		})
 	})
 
