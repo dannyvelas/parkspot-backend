@@ -73,7 +73,7 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
       "model":""
     }
   }`)
-	responseBody, statusCode, err := newRequestWithCookie("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -104,7 +104,7 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
     "startDate": "",
     "endDate": ""
   }`)
-	responseBody, statusCode, err := newRequestWithCookie("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -132,7 +132,7 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	defer deleteTestPermit(suite.testServer.URL, permitId, suite.jwtToken)
 
 	endpoint := fmt.Sprintf("%s/api/resident/%s/permits/active", suite.testServer.URL, suite.residentId)
-	responseBody, statusCode, err := newRequestWithCookie("GET", endpoint, nil, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.jwtToken)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -163,7 +163,7 @@ func createTestPermit(url string, body newPermitReq, jwtToken string) (int, erro
 		return 0, nil
 	}
 
-	responseBody, statusCode, err := newRequestWithCookie("POST", url+"/api/permit", requestBody, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/permit", requestBody, jwtToken)
 	if err != nil {
 		return 0, nil
 	}
@@ -183,7 +183,7 @@ func createTestPermit(url string, body newPermitReq, jwtToken string) (int, erro
 
 func deleteTestPermit(url string, id int, jwtToken string) error {
 	endpoint := fmt.Sprintf("%s/api/permit/%d", url, id)
-	responseBody, statusCode, err := newRequestWithCookie("DELETE", endpoint, nil, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwtToken)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func deleteTestPermit(url string, id int, jwtToken string) error {
 	return nil
 }
 
-func newRequestWithCookie(method string, url string, requestBytes []byte, jwtToken string) (io.ReadCloser, int, error) {
+func authenticatedReq(method string, url string, requestBytes []byte, jwtToken string) (io.ReadCloser, int, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(requestBytes))
 	if err != nil {
 		return nil, 0, err
