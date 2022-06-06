@@ -52,7 +52,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 	}()
 
 	suite.residentIdUnlimDays = "T1043321"
-	suite.residentIdNonUnlimDays = "T5030564"
+	suite.residentIdNonUnlimDays = "T2980699"
 	suite.existingCar = newCarReq{"GBTYZME", "green", "ARCTIC CAT", "BEARCAT 2000 LT"}
 	suite.customPermit = func(residentId, exceptionReason string) newPermitReq {
 		return newPermitReq{
@@ -131,46 +131,46 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 
 func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
 	type test struct {
-		permitReq     newPermitReq
+		newPermitReq  newPermitReq
 		shouldAddDays bool
 	}
 	tests := map[string]test{
 		"NoUnlimDays,NoException": {
-			permitReq:     suite.customPermit(suite.residentIdNonUnlimDays, ""),
+			newPermitReq:  suite.customPermit(suite.residentIdNonUnlimDays, ""),
 			shouldAddDays: true,
 		},
 		"UnlimDays,NoException": {
-			permitReq:     suite.customPermit(suite.residentIdUnlimDays, ""),
+			newPermitReq:  suite.customPermit(suite.residentIdUnlimDays, ""),
 			shouldAddDays: false,
 		},
 		"NoUnlimDays,Exception": {
-			permitReq:     suite.customPermit(suite.residentIdNonUnlimDays, "some reason"),
+			newPermitReq:  suite.customPermit(suite.residentIdNonUnlimDays, "some reason"),
 			shouldAddDays: false,
 		},
 		"UnlimDays,Exception": {
-			permitReq:     suite.customPermit(suite.residentIdUnlimDays, "some reason"),
+			newPermitReq:  suite.customPermit(suite.residentIdUnlimDays, "some reason"),
 			shouldAddDays: false,
 		},
 	}
 
 	executeTest := func(testName string, test test) error {
-		residentBefore, err := getTestResident(suite.testServer.URL, test.permitReq.ResidentId, suite.jwtToken)
+		residentBefore, err := getTestResident(suite.testServer.URL, test.newPermitReq.ResidentId, suite.jwtToken)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		permit, err := createTestPermit(suite.testServer.URL, test.permitReq, suite.jwtToken)
+		permit, err := createTestPermit(suite.testServer.URL, test.newPermitReq, suite.jwtToken)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 		defer deleteTestPermit(suite.testServer.URL, permit.Id, suite.jwtToken)
 
-		residentNow, err := getTestResident(suite.testServer.URL, test.permitReq.ResidentId, suite.jwtToken)
+		residentNow, err := getTestResident(suite.testServer.URL, test.newPermitReq.ResidentId, suite.jwtToken)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		lengthOfPermit := test.permitReq.EndDate.Sub(test.permitReq.StartDate)
+		lengthOfPermit := test.newPermitReq.EndDate.Sub(test.newPermitReq.StartDate)
 
 		amtDaysAddedToRes := residentNow.AmtParkingDaysUsed - residentBefore.AmtParkingDaysUsed
 		permitLength := int(lengthOfPermit.Hours() / 24)
@@ -190,6 +190,45 @@ func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
 }
 
 func (suite permitRouterSuite) TestDelete_SubtractsCorrectResDays() {
+	newPermitReqs := map[string]newPermitReq{
+		"NoUnlimDays,NoException": suite.customPermit(suite.residentIdNonUnlimDays, ""),
+		"UnlimDays,NoException":   suite.customPermit(suite.residentIdUnlimDays, ""),
+		"NoUnlimDays,Exception":   suite.customPermit(suite.residentIdNonUnlimDays, "some reason"),
+		"UnlimDays,Exception":     suite.customPermit(suite.residentIdUnlimDays, "some reason"),
+	}
+
+	executeTest := func(testName string, newPermitReq newPermitReq) error {
+		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.jwtToken)
+		if err != nil {
+			return fmt.Errorf("%s failed: %v", testName, err)
+		}
+
+		permit, err := createTestPermit(suite.testServer.URL, newPermitReq, suite.jwtToken)
+		if err != nil {
+			return fmt.Errorf("%s failed: %v", testName, err)
+		}
+
+		err = deleteTestPermit(suite.testServer.URL, permit.Id, suite.jwtToken)
+		if err != nil {
+			return fmt.Errorf("%s failed: %v", testName, err)
+		}
+
+		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.jwtToken)
+		if err != nil {
+			return fmt.Errorf("%s failed: %v", testName, err)
+		}
+
+		if residentBefore.AmtParkingDaysUsed != residentNow.AmtParkingDaysUsed {
+			return fmt.Errorf("%s failed: did not subract days. Resident has %d instead of %d", testName, residentNow.AmtParkingDaysUsed, residentBefore.AmtParkingDaysUsed)
+		}
+
+		return nil
+	}
+
+	for testName, newPermitReq := range newPermitReqs {
+		err := executeTest(testName, newPermitReq)
+		suite.NoError(err)
+	}
 }
 
 func (suite permitRouterSuite) TestDelete_AddsCorrectCarDays() {
