@@ -241,7 +241,7 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			permitCar = newCarArgs.ToCar(carId)
 		}
 
-		affectsDays := newPermitReq.ExceptionReason != "" && !existingResident.UnlimDays
+		affectsDays := newPermitReq.ExceptionReason == "" && !existingResident.UnlimDays
 		if affectsDays {
 			err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
 			if err != nil {
