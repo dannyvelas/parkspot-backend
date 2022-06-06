@@ -241,21 +241,23 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 			permitCar = newCarArgs.ToCar(carId)
 		}
 
-		err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
-		if err != nil {
-			log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
-			respondInternalError(w)
-			return
+		affectsDays := newPermitReq.ExceptionReason != "" && !existingResident.UnlimDays
+		if affectsDays {
+			err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
+			if err != nil {
+				log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
+				respondInternalError(w)
+				return
+			}
+
+			err = carRepo.AddToAmtParkingDaysUsed(permitCar.Id, permitLength)
+			if err != nil {
+				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+				respondInternalError(w)
+				return
+			}
 		}
 
-		err = carRepo.AddToAmtParkingDaysUsed(permitCar.Id, permitLength)
-		if err != nil {
-			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		affectsDays := newPermitReq.ExceptionReason != "" || existingResident.UnlimDays
 		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id, affectsDays)
 		permitId, err := permitRepo.Create(newPermitArgs)
 		if err != nil {
