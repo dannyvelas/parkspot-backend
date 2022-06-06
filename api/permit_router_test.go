@@ -131,38 +131,25 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 
 func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
 	type test struct {
-		permitReq  newPermitReq
-		testFn     func(int, int) bool
-		failureMsg string
+		permitReq     newPermitReq
+		shouldAddDays bool
 	}
 	tests := map[string]test{
-		"NoUnlimDays,NoException Adds Days": {
-			permitReq: suite.customPermit(suite.residentIdNonUnlimDays, ""),
-			testFn: func(amtDaysAddedToRes, permitLength int) bool {
-				return amtDaysAddedToRes == permitLength
-			},
-			failureMsg: "amtDaysAddedToRes was not equal to permitLength",
+		"NoUnlimDays,NoException": {
+			permitReq:     suite.customPermit(suite.residentIdNonUnlimDays, ""),
+			shouldAddDays: true,
 		},
-		"UnlimDays,NoException Adds Days": {
-			permitReq: suite.customPermit(suite.residentIdUnlimDays, ""),
-			testFn: func(amtDaysAddedToRes, permitLength int) bool {
-				return amtDaysAddedToRes == permitLength
-			},
-			failureMsg: "amtDaysAddedToRes was not equal to permitLength",
+		"UnlimDays,NoException": {
+			permitReq:     suite.customPermit(suite.residentIdUnlimDays, ""),
+			shouldAddDays: false,
 		},
-		"NoUnlimDays,Exception Doesn't Add Days": {
-			permitReq: suite.customPermit(suite.residentIdNonUnlimDays, "some reason"),
-			testFn: func(amtDaysAddedToRes, permitLength int) bool {
-				return amtDaysAddedToRes == 0
-			},
-			failureMsg: "amtDaysAddedToRes was not equal to zero",
+		"NoUnlimDays,Exception": {
+			permitReq:     suite.customPermit(suite.residentIdNonUnlimDays, "some reason"),
+			shouldAddDays: false,
 		},
-		"UnlimDays,Exception Doesn't Add Days": {
-			permitReq: suite.customPermit(suite.residentIdUnlimDays, "some reason"),
-			testFn: func(amtDaysAddedToRes, permitLength int) bool {
-				return amtDaysAddedToRes == 0
-			},
-			failureMsg: "amtDaysAddedToRes was not equal to zero",
+		"UnlimDays,Exception": {
+			permitReq:     suite.customPermit(suite.residentIdUnlimDays, "some reason"),
+			shouldAddDays: false,
 		},
 	}
 
@@ -186,9 +173,11 @@ func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
 		lengthOfPermit := test.permitReq.EndDate.Sub(test.permitReq.StartDate)
 
 		amtDaysAddedToRes := residentNow.AmtParkingDaysUsed - residentBefore.AmtParkingDaysUsed
-		testResult := test.testFn(amtDaysAddedToRes, int(lengthOfPermit.Hours()/24))
-		if !testResult {
-			return fmt.Errorf("%s failed: %s", testName, test.failureMsg)
+		permitLength := int(lengthOfPermit.Hours() / 24)
+		if !test.shouldAddDays && amtDaysAddedToRes == permitLength {
+			return fmt.Errorf("%s failed: added days when it shouldn't have", testName)
+		} else if test.shouldAddDays && amtDaysAddedToRes != permitLength {
+			return fmt.Errorf("%s failed: added incorrect amount of days: %d instead of %d", testName, amtDaysAddedToRes, permitLength)
 		}
 
 		return nil
