@@ -44,7 +44,10 @@ func getOnePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 		id := toPosInt(chi.URLParam(r, "id"))
 
 		permit, err := permitRepo.GetOne(id)
-		if err != nil {
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("permit"))
+			return
+		} else if err != nil {
 			log.Error().Msgf("permit_router.getOne: Error getting permit: %v", err)
 			respondInternalError(w)
 			return
@@ -96,7 +99,7 @@ func getActivePermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc 
 	}
 }
 
-func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo storage.ResidentRepo, dateFormat string) http.HandlerFunc {
+func create(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
@@ -277,11 +280,21 @@ func create(permitRepo storage.PermitRepo, carRepo storage.CarRepo, residentRepo
 	}
 }
 
-func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
+func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := toPosInt(chi.URLParam(r, "id"))
 
-		err := permitRepo.Delete(id)
+		permit, err := permitRepo.GetOne(id)
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("permit"))
+			return
+		} else if err != nil {
+			log.Error().Msgf("permit_router.getOne: Error getting permit: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		err = permitRepo.Delete(permit.Id)
 		if errors.Is(err, storage.ErrNoRows) {
 			respondError(w, newErrNotFound("permit"))
 			return
@@ -289,6 +302,23 @@ func deletePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 			log.Error().Msgf("permit_router.deletePermit: %v", err)
 			respondInternalError(w)
 			return
+		}
+
+		permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
+		if permit.AffectsDays {
+			err = residentRepo.AddToAmtParkingDaysUsed(permit.ResidentId, -permitLength)
+			if err != nil {
+				log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
+				respondInternalError(w)
+				return
+			}
+
+			err = carRepo.AddToAmtParkingDaysUsed(permit.Car.Id, -permitLength)
+			if err != nil {
+				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+				respondInternalError(w)
+				return
+			}
 		}
 
 		respondJSON(w, http.StatusOK, emptyResponse{Ok: true})
