@@ -99,7 +99,7 @@ func getActivePermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc 
 	}
 }
 
-func create(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo, dateFormat string) http.HandlerFunc {
+func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo, dateFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
