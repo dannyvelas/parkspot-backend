@@ -39,7 +39,7 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 	}
 }
 
-func getOne(permitRepo storage.PermitRepo) http.HandlerFunc {
+func getOnePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := toPosInt(chi.URLParam(r, "id"))
 

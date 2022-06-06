@@ -47,7 +47,7 @@ func NewRouter(httpConfig config.HttpConfig,
 			userRouter.Use(jwtMiddleware.Authenticate(AdminRole, ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
 			userRouter.Post("/permit", create(permitRepo, carRepo, residentRepo, dateFormat))
-			//userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
+			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
 			userRouter.Get("/car/{id}", getOneCar(carRepo))
 			userRouter.Put("/car/{id}", editCar(carRepo))
 			userRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo))
