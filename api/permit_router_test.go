@@ -129,7 +129,7 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 	suite.Equal(responseMsg, string(bodyBytes))
 }
 
-func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
+func (suite permitRouterSuite) TestCreate_AddsResDays() {
 	type test struct {
 		newPermitReq  newPermitReq
 		shouldAddDays bool
@@ -189,7 +189,7 @@ func (suite permitRouterSuite) TestCreate_AddsCorrectResDays() {
 	}
 }
 
-func (suite permitRouterSuite) TestDelete_SubtractsCorrectResDays() {
+func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 	newPermitReqs := map[string]newPermitReq{
 		"NoUnlimDays,NoException": suite.customPermit(suite.residentIdNonUnlimDays, ""),
 		"UnlimDays,NoException":   suite.customPermit(suite.residentIdUnlimDays, ""),
@@ -231,10 +231,10 @@ func (suite permitRouterSuite) TestDelete_SubtractsCorrectResDays() {
 	}
 }
 
-func (suite permitRouterSuite) TestDelete_AddsCorrectCarDays() {
+func (suite permitRouterSuite) TestDelete_AddsCarDays() {
 }
 
-func (suite permitRouterSuite) TestDelete_SubtractsCorrectCarDays() {
+func (suite permitRouterSuite) TestDelete_SubtractsCarDays() {
 }
 
 func (suite permitRouterSuite) TestCreate_AllFieldsMatch() {
