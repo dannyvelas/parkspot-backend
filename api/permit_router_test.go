@@ -52,8 +52,8 @@ func (suite *permitRouterSuite) SetupSuite() {
 	}()
 
 	suite.residentIdUnlimDays = "T1043321"
-	suite.residentIdNonUnlimDays = "T2980699"
-	suite.existingCar = newCarReq{"GBTYZME", "green", "ARCTIC CAT", "BEARCAT 2000 LT"}
+	suite.residentIdNonUnlimDays = "T8857448"
+	suite.existingCar = newCarReq{"VZFV8YU", "purple", "HARLEY DAVIDSON", "FXDL DYNA LOW RIDER"}
 	suite.customPermit = func(residentId, exceptionReason string) newPermitReq {
 		return newPermitReq{
 			ResidentId:      residentId,
