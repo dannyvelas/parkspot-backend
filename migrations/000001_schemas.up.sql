@@ -42,4 +42,17 @@ CREATE TABLE IF NOT EXISTS permit(
   exception_reason TEXT
 );
 
+
+
+CREATE TYPE relationship AS ENUM('fam/fri', 'contractor');
+CREATE TABLE IF NOT EXISTS visitor(
+  visitor_id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  relationship relationship NOT NULL,
+  access_start BIGINT NOT NULL,
+  access_end BIGINT NOT NULL
+);
+
 COMMIT;
