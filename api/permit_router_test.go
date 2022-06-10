@@ -22,7 +22,7 @@ type permitRouterSuite struct {
 	jwtToken               string
 	residentIdUnlimDays    string
 	residentIdNonUnlimDays string
-	existingCar            newCarReq
+	newCar            newCarReq
 	customPermit           func(string, string) newPermitReq
 	newPermit              newPermitReq
 }
@@ -52,12 +52,12 @@ func (suite *permitRouterSuite) SetupSuite() {
 	}()
 
 	suite.residentIdUnlimDays = "T1043321"
-	suite.residentIdNonUnlimDays = "T8857448"
-	suite.existingCar = newCarReq{"VZFV8YU", "purple", "HARLEY DAVIDSON", "FXDL DYNA LOW RIDER"}
+	suite.residentIdNonUnlimDays = "T4228421"
+	suite.newCar = newCarReq{"ABC123", "red", "toyota", "tercel"}
 	suite.customPermit = func(residentId, exceptionReason string) newPermitReq {
 		return newPermitReq{
 			ResidentId:      residentId,
-			Car:             suite.existingCar,
+			Car:             suite.newCar,
 			StartDate:       time.Now().Truncate(time.Second),
 			EndDate:         time.Now().Add(time.Duration(24) * time.Hour).Truncate(time.Second),
 			ExceptionReason: exceptionReason}
