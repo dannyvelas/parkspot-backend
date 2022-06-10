@@ -50,7 +50,7 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 
 func (residentRepo ResidentRepo) GetAll(limit, offset int) ([]models.Resident, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
 	query, _, err := residentRepo.residentSelect.
