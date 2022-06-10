@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS permit(
 
 CREATE TYPE relationship AS ENUM('fam/fri', 'contractor');
 CREATE TABLE IF NOT EXISTS visitor(
-  id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
   resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
