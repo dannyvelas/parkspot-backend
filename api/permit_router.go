@@ -289,7 +289,7 @@ func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			respondError(w, newErrNotFound("permit"))
 			return
 		} else if err != nil {
-			log.Error().Msgf("permit_router.getOne: Error getting permit: %v", err)
+			log.Error().Msgf("permit_router.deletePermit: Error getting permit: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -308,14 +308,14 @@ func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		if permit.AffectsDays {
 			err = residentRepo.AddToAmtParkingDaysUsed(permit.ResidentId, -permitLength)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
+				log.Error().Msgf("permit_router.deletePermit: Error querying residentRepo: %v", err)
 				respondInternalError(w)
 				return
 			}
 
 			err = carRepo.AddToAmtParkingDaysUsed(permit.Car.Id, -permitLength)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+				log.Error().Msgf("permit_router.deletePermit: Error querying carRepo: %v", err)
 				respondInternalError(w)
 				return
 			}
