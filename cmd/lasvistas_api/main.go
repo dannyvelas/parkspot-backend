@@ -36,12 +36,13 @@ func main() {
 	permitRepo := storage.NewPermitRepo(database)
 	carRepo := storage.NewCarRepo(database)
 	residentRepo := storage.NewResidentRepo(database)
+	visitorRepo := storage.NewVisitorRepo(database)
 
 	// http setup
 	httpConfig := config.Http()
 
 	router := api.NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
-		adminRepo, permitRepo, carRepo, residentRepo)
+		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
 
 	httpServer := http.Server{
 		Addr:         httpConfig.Host() + ":" + httpConfig.Port(),

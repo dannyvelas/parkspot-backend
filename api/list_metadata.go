@@ -5,7 +5,7 @@ import (
 )
 
 type listType interface {
-	models.Car | models.Permit | models.Resident
+	models.Car | models.Permit | models.Resident | models.Visitor
 }
 
 type metadata struct {

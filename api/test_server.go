@@ -20,12 +20,13 @@ func newTestServer() (*httptest.Server, error) {
 	permitRepo := storage.NewPermitRepo(database)
 	carRepo := storage.NewCarRepo(database)
 	residentRepo := storage.NewResidentRepo(database)
+	visitorRepo := storage.NewVisitorRepo(database)
 
 	// http setup
 	httpConfig := config.Http()
 
 	router := NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
-		adminRepo, permitRepo, carRepo, residentRepo)
+		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
 
 	testServer := httptest.NewServer(router)
 
