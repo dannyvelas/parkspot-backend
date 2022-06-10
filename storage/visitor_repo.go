@@ -59,3 +59,27 @@ func (visitorRepo VisitorRepo) GetAllTotalAmount() (int, error) {
 
 	return totalAmount, nil
 }
+
+func (visitorRepo VisitorRepo) Search(searchStr string) ([]models.Visitor, error) {
+	if searchStr == "" {
+		return nil, fmt.Errorf("visitor_repo.Search: %w: Empty search argument", ErrInvalidArg)
+	}
+
+	query, args, err := visitorRepo.visitorSelect.
+		Where(squirrel.Or{
+			squirrel.Expr("visitor.resident_id ILIKE $1", "%"+searchStr+"%"),
+			squirrel.Expr("visitor.first_name ILIKE $1"),
+			squirrel.Expr("visitor.last_name ILIKE $1"),
+		}).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrBuildingQuery, err)
+	}
+
+	visitors := visitorSlice{}
+	err = visitorRepo.database.driver.Select(&visitors, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return visitors.toModels(), nil
+}
