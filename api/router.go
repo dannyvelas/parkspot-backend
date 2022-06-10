@@ -15,7 +15,7 @@ func NewRouter(httpConfig config.HttpConfig,
 	permitRepo storage.PermitRepo,
 	carRepo storage.CarRepo,
 	residentRepo storage.ResidentRepo,
-  visitorRepo storage.VisitorRepo,
+	visitorRepo storage.VisitorRepo,
 ) (router *chi.Mux) {
 	router = chi.NewRouter()
 
@@ -43,6 +43,7 @@ func NewRouter(httpConfig config.HttpConfig,
 			officeRouter.Get("/residents", getAllResidents(residentRepo))
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
 			officeRouter.Get("/visitors", getAllVisitors(visitorRepo))
+			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
 		})
 
 		r.Group(func(userRouter chi.Router) {
