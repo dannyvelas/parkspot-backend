@@ -7,8 +7,8 @@ import (
 	"net/http"
 )
 
-type emptyResponse struct {
-	Ok bool `json:"ok"`
+type message struct {
+	Message string `json:"message"`
 }
 
 func respondJSON(w http.ResponseWriter, statusCode int, data any) {

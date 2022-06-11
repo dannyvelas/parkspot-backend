@@ -91,6 +91,6 @@ func logout() http.HandlerFunc {
 		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
 
-		respondJSON(w, http.StatusOK, emptyResponse{Ok: true})
+		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
 	}
 }

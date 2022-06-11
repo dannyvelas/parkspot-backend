@@ -321,7 +321,7 @@ func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			}
 		}
 
-		respondJSON(w, http.StatusOK, emptyResponse{Ok: true})
+		respondJSON(w, http.StatusOK, message{"Successfully deleted permit"})
 	}
 }
 
