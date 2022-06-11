@@ -17,7 +17,7 @@ type credentials struct {
 	Password string
 }
 
-func Login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var creds credentials
 		err := json.NewDecoder(r.Body).Decode(&creds)
@@ -86,7 +86,7 @@ func getUser(username, password string, adminRepo storage.AdminRepo, residentRep
 	return userFound, nil
 }
 
-func Logout() http.HandlerFunc {
+func logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
