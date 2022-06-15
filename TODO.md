@@ -13,6 +13,9 @@
     ✓ creating a car that already exists just returns that car with no error
 - [x] storage/permit_repo.Create: figure out better way to convert an inserted permit `CreatePermit` type to `Permit` type. maybe with helper func, maybe with psql
 - [x] create exceptions table and allow requests to create exceptional permits
+- [x] make the `filter` argument to permitRepo.Search an enumerated string to disallow invalid values. or at least perform checking for invalid values
+- [x] either A) remove `window` as an option for getting expired permits from repo or B) allow the api to pass in a `window` value when searching for expired permits
+- [ ] (DEPLOY) change parking days yearly limit to 30
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -40,11 +43,16 @@
 - [x] rename `CreatePermit` and `CreateCar` structs to `NewPermitArgs` and `NewCarArgs`
 - [x] add `started server at URL:PORT` to main message
 - [x] change PORT env variable to string
-- [ ] created a new `api.ErrMalformed` error meant for json unmarsheling errors
-- [ ] make exceptionReason, make, and model, nullable pointer strings
+- [x] created a new `api.ErrMalformed` error meant for json unmarsheling errors
+- [x] change login_router instances to auth_router
+- [x] make Role type lowercase.
+- [x] rename permit_router funcs so that they explain that they deal w permits for consistency
+- [ ] add resident edit functionality
 - [ ] change error messages for residents when they're creating a permit
+- [ ] when deleting permits, make sure a resident is never set less than 0 days
+- [ ] add `getAllVisitors` testing to visitor\_router
 - [ ] add `AddToAmtParkingDaysUsed` and `GetAll` testing to resident repo
-- [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo  func: `AddToAmtParkingDaysUsed`
+- [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed`
 - [ ] add check to make sure permit request start date is not in past
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
@@ -52,11 +60,14 @@
 - [x] change the string phrasing in storage.ErrMissingFields
 - [x] add test to check that in car.CreateIfNotExists, creating a car that doesn't exist works
 - [x] probably remove the return from `StartServer` function
-- [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit_repo_test
+- [x] start replacing time.Parse(str) with non-errorable time.Date(...) for brevity in permit\_repo\_test
 - [x] add dateFormat to golang config
 - [x] make routing its own thing in `api/`
 - [x] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [x] rename `limit` query parameter to `limit`
+- [ ] remove constants from config files, just put them inline
+- [ ] add not authorized error message when a create permit payload has a residentID field that does not coincide with the id field of the JWT user payload, when that JWT payload has role === resident.
+- [ ] remove NewPermitArgs NewCarArgs from models. i'd rather send the args individually from the router to the repo, than have a bunch of functions like permitReq.toNewPermitArgs(args...) or newPermitArgs.ToPermit(args..)
 - [ ] remove "No error when" messages from repo_tests. unnecessary
 - [ ] add expiration JWT time to constants
 - [ ] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod
@@ -69,7 +80,11 @@
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
 - [x] change the argument that goes into permitRepo.Create func. rn it is a CreatePermit which has a CreateCar inside of it. but the CreateCar doesn't get used. so change it to a form of CreatePermit that doesn't have a CreateCar.
 - [x] remove `admin/` and `resident/` prefix for adminonly and residentonly routes, respectively, since there are many routes that are shared between both
-- [ ] maybe use validator
+- [x] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
+- [✗] remove `json` tags from models, since that is an api concern? (won't do, json tags are needed when returning Permits)
+- [✗] make exceptionReason, make, and model, nullable pointer strings (won't do, there's no necessary distinction between an empty value and a null value for these fields)
+- [ ] remove \_repo\* tests. we can test the same functionality from the routers
+- [ ] use validator
 - [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 - [ ] implement double-submit tokens
     * implement double-submit tokens without REDIS
@@ -78,11 +93,9 @@
 - [ ] move `migrations/` dir inside of `storage`
 - [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
 - [ ] figure out if to use type aliases for `models` datatype fields like LicensePlate Make, model, AddToAmtParkingDaysUsed, ..StartDate.., etc (this would prevent passing a licensePlate (string) as a `Make` (also string) argument accidentally
-- [ ] remove `json` tags from models, since that is an api concern?
 - [ ] delete Car.GetOne if it's not going to be used
 - [ ] whether to change carID to UUID type
 - [ ] difference between using byte[8] for residentID for just string
-- [ ] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
 - [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
 ## Probably not gonna do
 - [ ] make models.Permit `make` and `model` fields nullable
