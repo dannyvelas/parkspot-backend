@@ -35,7 +35,7 @@ func NewRouter(httpConfig config.HttpConfig,
 		})
 
 		r.Group(func(officeRouter chi.Router) {
-			officeRouter.Use(jwtMiddleware.Authenticate(AdminRole)) //, SecurityRole
+			officeRouter.Use(jwtMiddleware.authenticate(AdminRole)) //, SecurityRole
 			officeRouter.Get("/permits/active", getPermits(permitRepo, models.ActivePermits))
 			officeRouter.Get("/permits", getPermits(permitRepo, models.AllPermits))
 			officeRouter.Get("/permits/exceptions", getPermits(permitRepo, models.ExceptionPermits))
@@ -47,7 +47,7 @@ func NewRouter(httpConfig config.HttpConfig,
 		})
 
 		r.Group(func(userRouter chi.Router) {
-			userRouter.Use(jwtMiddleware.Authenticate(AdminRole, ResidentRole)) //, SecurityRole
+			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
 			userRouter.Post("/permit", createPermit(permitRepo, residentRepo, carRepo, dateFormat))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))

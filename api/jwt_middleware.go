@@ -59,7 +59,7 @@ func (jwtMiddleware jwtMiddleware) parseJWT(tokenString string) (user, error) {
 	}
 }
 
-func (jwtMiddleware jwtMiddleware) Authenticate(firstRole role, roles ...role) func(http.Handler) http.Handler {
+func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("jwt")
