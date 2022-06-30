@@ -14,7 +14,7 @@ type Config struct {
 	constants Constants
 }
 
-const projectName = "go-lasvistas_api"
+const projectName = "go-svelte-lasvistas"
 
 func loadDotEnv() error {
 	cwd, err := os.Getwd()
