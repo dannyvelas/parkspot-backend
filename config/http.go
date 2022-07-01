@@ -27,12 +27,12 @@ var (
 
 func newHttpConfig() HttpConfig {
 	return HttpConfig{
-		host:               readEnvString("HTTP_HOST", defaultHttpHost),
-		port:               readEnvString("HTTP_PORT", defaultHttpPort),
-		readTimeout:        readEnvDuration("HTTP_READTIMEOUT", defaultHttpReadTimeout),
-		writeTimeout:       readEnvDuration("HTTP_WRITETIMEOUT", defaultHttpWriteTimeout),
-		idleTimeout:        readEnvDuration("HTTP_IDLETIMEOUT", defaultHttpIdleTimeout),
-		corsAllowedOrigins: readEnvStringList("HTTP_CORSALLOWEDORIGINS", defaultCORSAllowedOrigins),
+		host:               readEnvString("HOST", defaultHttpHost),
+		port:               readEnvString("PORT", defaultHttpPort),
+		readTimeout:        readEnvDuration("READTIMEOUT", defaultHttpReadTimeout),
+		writeTimeout:       readEnvDuration("WRITETIMEOUT", defaultHttpWriteTimeout),
+		idleTimeout:        readEnvDuration("IDLETIMEOUT", defaultHttpIdleTimeout),
+		corsAllowedOrigins: readEnvStringList("CORSALLOWEDORIGINS", defaultCORSAllowedOrigins),
 	}
 }
 
