@@ -1,3 +1,5 @@
+// +heroku goVersion 1.18
+
 module github.com/dannyvelas/lasvistas_api
 
 go 1.18
