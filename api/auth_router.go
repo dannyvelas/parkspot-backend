@@ -50,6 +50,31 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 	}
 }
 
+func logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
+		http.SetCookie(w, &cookie)
+
+		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
+	}
+}
+
+func getMe() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		user, err := ctxGetUser(ctx)
+		if err != nil {
+			log.Error().Msgf("auth_router.getMe: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, user)
+	}
+}
+
+// helpers
 func getUser(username, password string, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) (user, error) {
 	var userFound user
 	var hash string
@@ -84,13 +109,4 @@ func getUser(username, password string, adminRepo storage.AdminRepo, residentRep
 	}
 
 	return userFound, nil
-}
-
-func logout() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
-		http.SetCookie(w, &cookie)
-
-		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
-	}
 }
