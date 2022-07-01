@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"net/http"
 )
 
 func NewRouter(
@@ -28,6 +29,11 @@ func NewRouter(
 	}))
 
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
+
+	// index
+	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		respondJSON(w, http.StatusOK, "hello world")
+	}))
 
 	// api
 	router.Route("/api", func(r chi.Router) {
