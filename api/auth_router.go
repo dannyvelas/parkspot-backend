@@ -59,21 +59,6 @@ func logout() http.HandlerFunc {
 	}
 }
 
-func getMe() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		user, err := ctxGetUser(ctx)
-		if err != nil {
-			log.Error().Msgf("auth_router.getMe: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		respondJSON(w, http.StatusOK, user)
-	}
-}
-
 // helpers
 func getUser(username, password string, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) (user, error) {
 	var userFound user

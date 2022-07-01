@@ -6,8 +6,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"net/http"
-	"strings"
 )
 
 func NewRouter(
@@ -31,9 +29,6 @@ func NewRouter(
 
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
 
-	// index
-	router.Handle("/*", indexHandler())
-
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
@@ -55,7 +50,6 @@ func NewRouter(
 
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
-			userRouter.Get("/me", getMe())
 			userRouter.Get("/hello", sayHello())
 			userRouter.Post("/permit", createPermit(permitRepo, residentRepo, carRepo, dateFormat))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
@@ -69,15 +63,4 @@ func NewRouter(
 	})
 
 	return
-}
-
-func indexHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/_app") {
-			http.ServeFile(w, r, "client/build"+r.URL.Path)
-			return
-		}
-
-		http.ServeFile(w, r, "client/build/index.html")
-	}
 }
