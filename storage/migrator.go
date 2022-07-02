@@ -7,17 +7,17 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-const highestVersion = 5
+const highestVersion = 6
 
 func GetUpMigrator(database Database) (*migrate.Migrate, error) {
 	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to cast Database.driver to migrate.Driver interface: %v", err)
+		return nil, fmt.Errorf("Call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
 	}
 
 	migrator, err := migrate.NewWithDatabaseInstance("file://../migrations", "postgres", driver)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize migrator: %v", err)
+		return nil, fmt.Errorf("Failed to initialize migrate with migrate.Driver instance: %v", err)
 	}
 
 	if version, dirty, err := migrator.Version(); dirty {
