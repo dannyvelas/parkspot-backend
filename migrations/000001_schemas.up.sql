@@ -42,8 +42,6 @@ CREATE TABLE IF NOT EXISTS permit(
   exception_reason TEXT
 );
 
-
-
 CREATE TYPE relationship AS ENUM('fam/fri', 'contractor');
 CREATE TABLE IF NOT EXISTS visitor(
   id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
