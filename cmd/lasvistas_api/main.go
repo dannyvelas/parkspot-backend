@@ -45,7 +45,7 @@ func main() {
 		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
 
 	httpServer := http.Server{
-		Addr:         httpConfig.Host() + ":" + httpConfig.Port(),
+		Addr:         ":" + httpConfig.Port(),
 		Handler:      router,
 		ReadTimeout:  httpConfig.ReadTimeout(),
 		WriteTimeout: httpConfig.WriteTimeout(),
