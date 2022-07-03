@@ -44,10 +44,11 @@ func NewRouter(
 
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(jwtMiddleware.authenticate(AdminRole)) //, SecurityRole
-			officeRouter.Get("/permits/active", getPermits(permitRepo, models.ActivePermits))
 			officeRouter.Get("/permits", getPermits(permitRepo, models.AllPermits))
+			officeRouter.Get("/permits/active", getPermits(permitRepo, models.ActivePermits))
 			officeRouter.Get("/permits/exceptions", getPermits(permitRepo, models.ExceptionPermits))
 			officeRouter.Get("/permits/expired", getPermits(permitRepo, models.ExpiredPermits))
+			officeRouter.Get("/permits/search", searchPermits(permitRepo))
 			officeRouter.Get("/residents", getAllResidents(residentRepo))
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
 			officeRouter.Get("/visitors", getAllVisitors(visitorRepo))
@@ -62,7 +63,6 @@ func NewRouter(
 			userRouter.Get("/car/{id}", getOneCar(carRepo))
 			userRouter.Put("/car/{id}", editCar(carRepo))
 			userRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo, residentRepo, carRepo))
-			userRouter.Get("/permits/search", searchPermits(permitRepo))
 			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(permitRepo))
 			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
 		})
