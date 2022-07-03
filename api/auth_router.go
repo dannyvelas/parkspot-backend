@@ -31,7 +31,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msgf("auth_router: Error getting: %v", err)
+			log.Error().Msg("auth_router: " + err.Error())
 			respondInternalError(w)
 			return
 		}
