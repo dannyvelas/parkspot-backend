@@ -40,6 +40,7 @@ func NewRouter(
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", login(jwtMiddleware, adminRepo, residentRepo))
 			anyoneRouter.Post("/logout", logout())
+			anyoneRouter.Put("/account/password", sendResetPasswordEmail(jwtMiddleware, adminRepo, residentRepo))
 		})
 
 		r.Group(func(officeRouter chi.Router) {
