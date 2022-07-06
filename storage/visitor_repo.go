@@ -83,3 +83,21 @@ func (visitorRepo VisitorRepo) Search(searchStr string) ([]models.Visitor, error
 
 	return visitors.toModels(), nil
 }
+
+func (visitorRepo VisitorRepo) GetOfResident(residentId string) ([]models.Visitor, error) {
+	query, args, err := visitorRepo.visitorSelect.
+		Where("visitor.resident_id = $1", residentId).
+		OrderBy("visitor.id ASC").
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("visitor_repo.GetOfResident: %w: %v", ErrBuildingQuery, err)
+	}
+
+	visitors := visitorSlice{}
+	err = visitorRepo.database.driver.Select(&visitors, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("visitor_repo.GetOfResident: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return visitors.toModels(), nil
+}

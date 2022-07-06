@@ -66,6 +66,11 @@ func NewRouter(
 			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(permitRepo))
 			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
 		})
+
+		r.Group(func(residentRouter chi.Router) {
+			residentRouter.Use(jwtMiddleware.authenticate(ResidentRole))
+			residentRouter.Get("/me/visitors", getVisitorsOfResident(visitorRepo))
+		})
 	})
 
 	return

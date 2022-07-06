@@ -53,3 +53,27 @@ func searchVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		respondJSON(w, http.StatusOK, visitorsWithMetadata)
 	}
 }
+
+func getVisitorsOfResident(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		user, err := ctxGetUser(ctx)
+		if err != nil {
+			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		visitors, err := visitorRepo.GetOfResident(user.Id)
+		if err != nil {
+			log.Error().Msgf("visitor_router.getVisitorsOfResident: Error querying visitorRepo: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		visitorsWithMetadata := newListWithMetadata(visitors, len(visitors))
+
+		respondJSON(w, http.StatusOK, visitorsWithMetadata)
+	}
+}
