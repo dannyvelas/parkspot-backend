@@ -21,7 +21,10 @@ func main() {
 	log.Info().Msg("Initializing app...")
 
 	// load config
-	config := config.NewConfig()
+	config, err := config.NewConfig()
+	if err != nil {
+		log.Fatal().Msgf("Error loading config: %v", err.Error())
+	}
 
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
@@ -41,8 +44,16 @@ func main() {
 	// http setup
 	httpConfig := config.Http()
 
-	router := api.NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
-		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
+	router := api.NewRouter(
+		httpConfig,
+		config.Token(),
+		config.OAuth(),
+		config.Constants().DateFormat(),
+		adminRepo,
+		permitRepo,
+		carRepo,
+		residentRepo,
+		visitorRepo)
 
 	httpServer := http.Server{
 		Addr:         ":" + httpConfig.Port(),

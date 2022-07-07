@@ -12,6 +12,7 @@ import (
 func NewRouter(
 	httpConfig config.HttpConfig,
 	tokenConfig config.TokenConfig,
+	oauthConfig config.OAuthConfig,
 	dateFormat string,
 	adminRepo storage.AdminRepo,
 	permitRepo storage.PermitRepo,
@@ -40,7 +41,7 @@ func NewRouter(
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", login(jwtMiddleware, adminRepo, residentRepo))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Put("/account/password", sendResetPasswordEmail(jwtMiddleware, adminRepo, residentRepo))
+			anyoneRouter.Put("/account/password", sendResetPasswordEmail(jwtMiddleware, oauthConfig, adminRepo, residentRepo))
 		})
 
 		r.Group(func(officeRouter chi.Router) {

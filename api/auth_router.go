@@ -7,16 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"regexp"
 	"time"
 )
@@ -76,7 +74,7 @@ func logout() http.HandlerFunc {
 	}
 }
 
-func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var idStruct struct{ Id string }
 		if err := json.NewDecoder(r.Body).Decode(&idStruct); err != nil {
@@ -94,7 +92,7 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, adminRepo storage.Admin
 			return
 		}
 
-		service, err := getGmailService(r.Context())
+		service, err := getGmailService(r.Context(), oauthConfig)
 		if err != nil {
 			log.Error().Msgf(err.Error())
 			respondInternalError(w)
@@ -177,21 +175,26 @@ func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (gmail.Message
 	return gmailMessage, nil
 }
 
-func getGmailService(ctx context.Context) (*gmail.Service, error) {
-	bytes, err := ioutil.ReadFile("credentials.json")
-	if err != nil {
-		return nil, fmt.Errorf("Unable to read client secret file: %v", err)
+func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmail.Service, error) {
+	config := &oauth2.Config{
+		ClientID:     oauthConfig.ClientID(),
+		ClientSecret: oauthConfig.ClientSecret(),
+		RedirectURL:  oauthConfig.RedirectURL(),
+		Scopes:       []string{oauthConfig.Scope()},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  oauthConfig.AuthURL(),
+			TokenURL: oauthConfig.TokenURL(),
+		},
 	}
 
-	config, err := google.ConfigFromJSON(bytes, gmail.GmailComposeScope)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse client secret file to config: %v", err)
+	token := &oauth2.Token{
+		AccessToken:  oauthConfig.AccessToken(),
+		RefreshToken: oauthConfig.RefreshToken(),
+		TokenType:    oauthConfig.TokenType(),
+		Expiry:       oauthConfig.Expiry(),
 	}
 
-	client, err := getClient(config)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to get client from config: %v", err)
-	}
+	client := config.Client(ctx, token)
 
 	service, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -199,62 +202,4 @@ func getGmailService(ctx context.Context) (*gmail.Service, error) {
 	}
 
 	return service, nil
-}
-
-// Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) (*http.Client, error) {
-	// The file token.json stores the user's access and refresh tokens, and is
-	// created automatically when the authorization flow completes for the first
-	// time.
-	tokFile := "token.json"
-	tok, err := tokenFromFile(tokFile)
-	if err != nil {
-		log.Info().Msg("Error reading tokenFromFile")
-		tok, err = getTokenFromWeb(config)
-		if err != nil {
-			return nil, err
-		}
-		saveToken(tokFile, tok)
-	}
-	return config.Client(context.Background(), tok), nil // TODO: should i pass in the request context here?
-}
-
-func tokenFromFile(file string) (*oauth2.Token, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	tok := &oauth2.Token{}
-	err = json.NewDecoder(f).Decode(tok)
-	return tok, err
-}
-
-func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
-
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		return nil, fmt.Errorf("Unable to read authorization code: %v", err)
-	}
-
-	token, err := config.Exchange(context.TODO(), authCode)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve token from web: %v", err)
-	}
-	return token, nil
-}
-
-func saveToken(path string, token *oauth2.Token) error {
-	fmt.Printf("Saving credential file to: %s\n", path)
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("Unable to cache oauth token: %v", err)
-	}
-	defer f.Close()
-	json.NewEncoder(f).Encode(token)
-
-	return nil
 }

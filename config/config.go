@@ -11,6 +11,7 @@ type Config struct {
 	http      HttpConfig
 	postgres  PostgresConfig
 	token     TokenConfig
+	oauth     OAuthConfig
 	constants Constants
 }
 
@@ -28,18 +29,24 @@ func loadDotEnv() error {
 	return godotenv.Load(string(rootPath) + `/.env`)
 }
 
-func NewConfig() Config {
+func NewConfig() (Config, error) {
 	err := loadDotEnv()
 	if err != nil {
 		log.Warn().Msgf("config: .env file not found: %v", err)
+	}
+
+	oauthConfig, err := newOAuthConfig()
+	if err != nil {
+		return Config{}, err
 	}
 
 	return Config{
 		http:      newHttpConfig(),
 		postgres:  newPostgresConfig(),
 		token:     newTokenConfig(),
+		oauth:     oauthConfig,
 		constants: newConstants(),
-	}
+	}, nil
 }
 
 func (config Config) Http() HttpConfig {
@@ -52,6 +59,10 @@ func (config Config) Postgres() PostgresConfig {
 
 func (config Config) Token() TokenConfig {
 	return config.token
+}
+
+func (config Config) OAuth() OAuthConfig {
+	return config.oauth
 }
 
 func (config Config) Constants() Constants {

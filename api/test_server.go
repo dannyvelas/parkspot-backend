@@ -8,7 +8,10 @@ import (
 )
 
 func newTestServer() (*httptest.Server, error) {
-	config := config.NewConfig()
+	config, err := config.NewConfig()
+	if err != nil {
+		return nil, fmt.Errorf("Error loading config: %v", err.Error())
+	}
 
 	database, err := storage.NewDatabase(config.Postgres())
 	if err != nil {
@@ -25,7 +28,7 @@ func newTestServer() (*httptest.Server, error) {
 	// http setup
 	httpConfig := config.Http()
 
-	router := NewRouter(httpConfig, config.Token(), config.Constants().DateFormat(),
+	router := NewRouter(httpConfig, config.Token(), config.OAuth(), config.Constants().DateFormat(),
 		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
 
 	testServer := httptest.NewServer(router)
