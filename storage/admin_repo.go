@@ -15,6 +15,10 @@ func NewAdminRepo(database Database) AdminRepo {
 }
 
 func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
+	if id == "" {
+		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+	}
+
 	const query = `SELECT id, first_name, last_name, email, password, is_privileged FROM admin WHERE email = $1`
 
 	var admin admin
@@ -26,4 +30,20 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	}
 
 	return admin.toModels(), nil
+}
+
+func (adminRepo AdminRepo) SetPasswordFor(id string, password string) error {
+	if id == "" {
+		return fmt.Errorf("admin_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+	} else if password == "" {
+		return fmt.Errorf("admin_repo.GetOne: %w: Emtpy Password argument", ErrInvalidArg)
+	}
+
+	const query = `UPDATE admin SET password = $1 WHERE id = $2`
+	_, err := adminRepo.database.driver.Exec(query, password, id)
+	if err != nil {
+		return fmt.Errorf("admin_repo.SetPasswordFor: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
 }

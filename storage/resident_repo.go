@@ -96,3 +96,19 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 
 	return nil
 }
+
+func (residentRepo ResidentRepo) SetPasswordFor(id string, password string) error {
+	if id == "" {
+		return fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+	} else if password == "" {
+		return fmt.Errorf("resident_repo.GetOne: %w: Emtpy Password argument", ErrInvalidArg)
+	}
+
+	const query = `UPDATE resident SET password = $1 WHERE id = $2`
+	_, err := residentRepo.database.driver.Exec(query, password, id)
+	if err != nil {
+		return fmt.Errorf("resident_repo.SetPasswordFor: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}
