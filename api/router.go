@@ -41,7 +41,8 @@ func NewRouter(
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", login(jwtMiddleware, adminRepo, residentRepo))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Put("/account/password", sendResetPasswordEmail(jwtMiddleware, oauthConfig, adminRepo, residentRepo))
+			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, oauthConfig, adminRepo, residentRepo))
+			anyoneRouter.Put("/account/password", resetPassword(jwtMiddleware, adminRepo, residentRepo))
 		})
 
 		r.Group(func(officeRouter chi.Router) {
