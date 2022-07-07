@@ -148,33 +148,6 @@ func getUserAndHashById(username string, adminRepo storage.AdminRepo, residentRe
 	return userFound, hash, nil
 }
 
-func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (gmail.Message, error) {
-	body := &bytes.Buffer{}
-
-	token, err := jwtMiddleware.newJWT(toUser.Id, toUser.FirstName, toUser.LastName, toUser.Email, toUser.Role)
-	if err != nil {
-		return gmail.Message{}, fmt.Errorf("auth_router: Error generating JWT: %v", err)
-	}
-
-	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")
-	fmt.Fprintf(body, "To: %s %s <%s>\r\n", toUser.FirstName, toUser.LastName, toUser.Email)
-	fmt.Fprintf(body, "Subject: Password Reset\r\n")
-	fmt.Fprintf(body, "MIME-Version: 1.0\r\n")
-	fmt.Fprintf(body, "Content-Type: text/html\r\n")
-	fmt.Fprintf(body, `
-    <body style='text-align: center;'>
-         <h1>Password Reset for Account %s</h1>
-         <p>Hi, a password reset was requested.</p>
-         <p>If you sent the request, please click the button below to reset your password.
-            Otherwise, you can ignore this email.</p>
-         <a href='parkspotapp.com/reset-password?token=%s'>Reset Your Password</a>
-     </body>`, toUser.Id, token)
-
-	gmailMessage := gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
-
-	return gmailMessage, nil
-}
-
 func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmail.Service, error) {
 	config := &oauth2.Config{
 		ClientID:     oauthConfig.ClientID(),
@@ -202,4 +175,31 @@ func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmai
 	}
 
 	return service, nil
+}
+
+func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (gmail.Message, error) {
+	body := &bytes.Buffer{}
+
+	token, err := jwtMiddleware.newJWT(toUser.Id, toUser.FirstName, toUser.LastName, toUser.Email, toUser.Role)
+	if err != nil {
+		return gmail.Message{}, fmt.Errorf("auth_router: Error generating JWT: %v", err)
+	}
+
+	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")
+	fmt.Fprintf(body, "To: %s %s <%s>\r\n", toUser.FirstName, toUser.LastName, toUser.Email)
+	fmt.Fprintf(body, "Subject: Password Reset\r\n")
+	fmt.Fprintf(body, "MIME-Version: 1.0\r\n")
+	fmt.Fprintf(body, "Content-Type: text/html\r\n")
+	fmt.Fprintf(body, `
+    <body style='text-align: center;'>
+         <h1>Password Reset for Account %s</h1>
+         <p>Hi, a password reset was requested.</p>
+         <p>If you sent the request, please click the button below to reset your password.
+            Otherwise, you can ignore this email.</p>
+         <a href='parkspotapp.com/reset-password?token=%s'>Reset Your Password</a>
+     </body>`, toUser.Id, token)
+
+	gmailMessage := gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
+
+	return gmailMessage, nil
 }
