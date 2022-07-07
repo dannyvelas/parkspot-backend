@@ -38,7 +38,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msg("auth_router: " + err.Error())
+			log.Error().Msg("auth_router.login: " + err.Error())
 			respondInternalError(w)
 			return
 		}
@@ -53,7 +53,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 
 		token, err := jwtMiddleware.newJWT(user.Id, user.FirstName, user.LastName, user.Email, user.Role)
 		if err != nil {
-			log.Error().Msgf("auth_router: Error generating JWT: %v", err)
+			log.Error().Msgf("auth_router.login: Error generating JWT: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -76,13 +76,13 @@ func logout() http.HandlerFunc {
 
 func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var idStruct struct{ Id string }
-		if err := json.NewDecoder(r.Body).Decode(&idStruct); err != nil || idStruct.Id == "" {
+		var payload struct{ Id string }
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil || payload.Id == "" {
 			respondError(w, newErrMalformed("id object"))
 			return
 		}
 
-		userFound, _, err := getUserAndHashById(idStruct.Id, adminRepo, residentRepo)
+		userFound, _, err := getUserAndHashById(payload.Id, adminRepo, residentRepo)
 		if errors.Is(err, errUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
@@ -116,6 +116,52 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAut
 		message := message{fmt.Sprintf("Password has been successfully sent to %s."+
 			" Please check your inbox for instructions on resetting your password.", userFound.Email)}
 		respondJSON(w, http.StatusOK, message)
+	}
+}
+
+func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var payload struct{ Password string }
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil || payload.Password == "" {
+			respondError(w, newErrMalformed("password object"))
+			return
+		}
+
+		accessToken := r.Header.Get("Authorization")
+		if accessToken == "" {
+			respondError(w, errUnauthorized)
+			return
+		}
+
+		user, err := jwtMiddleware.parseJWT(accessToken)
+		if err != nil {
+			respondError(w, errUnauthorized)
+			return
+		}
+
+		hashBytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Error().Msg("auth_router.resetPassword: error generating hash:" + err.Error())
+			respondInternalError(w)
+			return
+		}
+		hashString := string(hashBytes)
+
+		err = func() error {
+			if user.Role == ResidentRole {
+				return residentRepo.SetPasswordFor(user.Id, hashString)
+			} else if user.Role == AdminRole {
+				return adminRepo.SetPasswordFor(user.Id, hashString)
+			}
+			return nil
+		}()
+		if err != nil {
+			log.Error().Msg("auth_router.resetPassword: " + err.Error())
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, message{"Password has been successfully reset."})
 	}
 }
 
