@@ -1,5 +1,10 @@
 package models
 
+import (
+	"errors"
+	"regexp"
+)
+
 type Resident struct {
 	Id                 string `json:"id"`
 	FirstName          string `json:"firstName"`
@@ -31,4 +36,12 @@ func NewResident(
 		UnlimDays:          unlimDays,
 		AmtParkingDaysUsed: amtParkingDaysUsed,
 	}
+}
+
+func IsResidentId(s string) error {
+	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(s) {
+		return errors.New("residentId must start be a 'B' or a 'T', followed by 7 numbers")
+	}
+
+	return nil
 }
