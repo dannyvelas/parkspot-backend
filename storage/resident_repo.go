@@ -84,6 +84,10 @@ func (residentRepo ResidentRepo) GetAllTotalAmount() (int, error) {
 }
 
 func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
+	if id == "" {
+		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: Empty ID argument", ErrInvalidArg)
+	}
+
 	const query = `
     UPDATE resident SET amt_parking_days_used = amt_parking_days_used + $1
     WHERE id = $2
