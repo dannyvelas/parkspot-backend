@@ -116,3 +116,27 @@ func (residentRepo ResidentRepo) SetPasswordFor(id string, password string) erro
 
 	return nil
 }
+
+func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, email, hash string) error {
+	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	query, args, err := sq.
+		Insert("resident").
+		SetMap(squirrel.Eq{
+			"id":         residentId,
+			"first_name": firstName,
+			"last_name":  lastName,
+			"phone":      phone,
+			"email":      email,
+			"password":   hash,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("resident_repo.Create: %w: %v", ErrBuildingQuery, err)
+	}
+
+	_, err = residentRepo.database.driver.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("resident_repo.Create: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}
