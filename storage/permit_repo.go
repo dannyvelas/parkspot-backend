@@ -138,6 +138,7 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 }
 
 func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int, error) {
+	// intentionally no empty arg checking. it is assumed this happened at API boundary
 	const query = `
     INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason)
     VALUES($1, $2, $3, $4, extract(epoch from now()), $5, $6)
