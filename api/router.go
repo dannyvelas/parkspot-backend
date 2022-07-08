@@ -26,6 +26,7 @@ func NewRouter(
 		AllowedOrigins:   httpConfig.CORSAllowedOrigins(),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		MaxAge:           300,
 	}))
 
