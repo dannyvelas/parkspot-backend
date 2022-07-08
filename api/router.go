@@ -57,6 +57,7 @@ func NewRouter(
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
 			officeRouter.Get("/visitors", getAllVisitors(visitorRepo))
 			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
+			officeRouter.Post("/account", createResident(residentRepo))
 		})
 
 		r.Group(func(userRouter chi.Router) {
