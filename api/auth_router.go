@@ -16,6 +16,7 @@ import (
 	"google.golang.org/api/option"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -127,11 +128,13 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		accessToken := r.Header.Get("Authorization")
-		if accessToken == "" {
+		authHeader := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			respondError(w, errUnauthorized)
 			return
 		}
+
+		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 
 		user, err := jwtMiddleware.parseJWT(accessToken)
 		if err != nil {
