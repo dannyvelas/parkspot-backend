@@ -20,21 +20,19 @@ import (
 	"time"
 )
 
-type credentials struct {
-	Id       string
-	Password string
-}
-
 func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var creds credentials
-		err := json.NewDecoder(r.Body).Decode(&creds)
+		var credentials struct {
+			Id       string
+			Password string
+		}
+		err := json.NewDecoder(r.Body).Decode(&credentials)
 		if err != nil {
 			respondError(w, newErrMalformed("Credentials"))
 			return
 		}
 
-		user, hash, err := getUserAndHashById(creds.Id, adminRepo, residentRepo)
+		user, hash, err := getUserAndHashById(credentials.Id, adminRepo, residentRepo)
 		if errors.Is(err, errUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
@@ -46,7 +44,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 
 		if err := bcrypt.CompareHashAndPassword(
 			[]byte(hash),
-			[]byte(creds.Password),
+			[]byte(credentials.Password),
 		); err != nil {
 			respondError(w, errUnauthorized)
 			return
@@ -75,11 +73,55 @@ func logout() http.HandlerFunc {
 	}
 }
 
+func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var payload newResidentReq
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			respondError(w, newErrMalformed("NewResidentReq"))
+			return
+		}
+
+		if err := payload.validate(); err != nil {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		}
+
+		if _, err := residentRepo.GetOne(payload.ResidentId); err == nil {
+			respondError(w, newErrBadRequest("Resident with this id already exists. Please delete the old account if necessary."))
+			return
+		} else if !errors.Is(err, storage.ErrNoRows) {
+			log.Error().Msg("auth_router.createResident: " + err.Error())
+			respondInternalError(w)
+			return
+		}
+
+		hashBytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Error().Msg("auth_router.createResident: error generating hash:" + err.Error())
+			respondInternalError(w)
+			return
+		}
+		hashString := string(hashBytes)
+
+		err = residentRepo.Create(payload.ResidentId, payload.FirstName, payload.LastName, payload.Phone, payload.Email, hashString)
+		if err != nil {
+			log.Error().Msgf("auth_router.createResident: Error querying residentRepo: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, message{"Resident successfully created."})
+	}
+}
+
 func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Id string }
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil || payload.Id == "" {
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("id object"))
+			return
+		} else if payload.Id == "" {
+			respondError(w, errEmptyFields)
 			return
 		}
 
@@ -123,8 +165,11 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAut
 func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil || payload.Password == "" {
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("password object"))
+			return
+		} else if payload.Password == "" {
+			respondError(w, errEmptyFields)
 			return
 		}
 
