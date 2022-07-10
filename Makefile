@@ -44,6 +44,14 @@ migrate_create:
 migrate_version:
 	migrate -path migrations -database $(PGCONNECTION) version
 
+migrate_prod_up_step:
+	migrate -path .prodmigrations -database $(PGCONNECTION) -verbose up 1
+.PHONY: migrate_prod_up_step
+
+migrate_prod_down_step:
+	migrate -path .prodmigrations -database $(PGCONNECTION) -verbose down 1
+.PHONY: migrate_prod_down_step
+	
 # test data
 gen_test_csvs:
 	python3 scripts/gen/test_migrations.py csv
