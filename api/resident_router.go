@@ -55,3 +55,31 @@ func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		respondJSON(w, http.StatusOK, resident)
 	}
 }
+
+func deleteResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		resident, err := residentRepo.GetOne(id)
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("resident"))
+			return
+		} else if err != nil {
+			log.Error().Msgf("resident_router.deleteResident: Error getting resident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		err = residentRepo.Delete(resident.Id)
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("resident"))
+			return
+		} else if err != nil {
+			log.Error().Msgf("resident_router.deleteResident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, message{"Successfully deleted resident"})
+	}
+}
