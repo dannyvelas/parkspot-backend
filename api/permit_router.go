@@ -21,14 +21,14 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 
 		allPermits, err := permitRepo.Get(permitFilter, boundedLimit, offset, reversed)
 		if err != nil {
-			log.Error().Msgf("permit_router.getAll: Error getting permits: %v", err)
+			log.Error().Msgf("permit_router.getPermits: Error getting permits: %v", err)
 			respondInternalError(w)
 			return
 		}
 
 		totalAmount, err := permitRepo.GetCount(permitFilter)
 		if err != nil {
-			log.Error().Msgf("permit_router.getAll: Error getting total amount: %v", err)
+			log.Error().Msgf("permit_router.getPermits: Error getting total amount: %v", err)
 			respondInternalError(w)
 			return
 		}
