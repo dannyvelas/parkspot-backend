@@ -25,6 +25,10 @@ def to_sql(value: T) -> str:
     elif isinstance(value, int):
         return f"{value}"
 
+def str_to_ts(s: str) -> int:
+        date_obj = dt.strptime(s, "%Y-%m-%d")
+        return int(date_obj.timestamp())
+
 ########################################
 ## Car
 ########################################
@@ -137,10 +141,6 @@ class Permit:
             )
 
 def row_to_permit(row: List[str]) -> Permit:
-    def str_to_ts(s: str) -> int:
-        date_obj = dt.strptime(s, "%Y-%m-%d")
-        return int(date_obj.timestamp())
-
     return Permit(
             id = int(row[0]),
             resident_id = row[1].upper(),
@@ -153,9 +153,56 @@ def row_to_permit(row: List[str]) -> Permit:
             )
 
 ########################################
+## VISITOR
+########################################
+class Visitor:
+    resident_id: str
+    first_name: str
+    last_name: str
+    relationship: str
+    access_start: int
+    access_end: int
+    def __init__(self, resident_id: str, first_name: str, last_name: str, relationship: str, access_start: int, access_end: int):
+        self.resident_id = resident_id
+        self.first_name = first_name
+        self.last_name = last_name
+        self.relationship = relationship
+        self.access_start = access_start
+        self.access_end = access_end
+
+    def as_sql(self):
+        return (f"INSERT INTO visitor"
+            f"( resident_id"
+            f", first_name"
+            f", last_name"
+            f", relationship"
+            f", access_start"
+            f", access_end"
+            f") VALUES"
+            f"( {to_sql(self.resident_id)}"
+            f", {to_sql(self.first_name)}"
+            f", {to_sql(self.last_name)}"
+            f", {to_sql(self.relationship)}"
+            f", {to_sql(self.access_start)}"
+            f", {to_sql(self.access_end)}"
+            f");"
+            )
+
+def row_to_visitor(row: List[str]) -> Visitor:
+    return Visitor(
+            # ignore row[0], it has an id field we won't use
+            resident_id = row[1].upper(),
+            first_name = row[2],
+            last_name = row[3],
+            relationship = row[4],
+            access_start = str_to_ts(row[5]),
+            access_end = str_to_ts(row[6])
+            )
+
+########################################
 ## MAIN
 ########################################
-allowed_files = [ "permit", "car", "resident" ]
+allowed_files = [ "permit", "car", "resident", "visitor" ]
 if len(sys.argv) < 2:
     print(f"usage: python3 gen_prod_migrations.py [{' | '.join(allowed_files)}]")
     exit(1)
@@ -171,7 +218,7 @@ if not os.path.isfile(file_name) :
     print(f"Error: {file_name} not found")
     exit(1)
 
-with open(file_name, 'r') as file_in:
+with open(file_name, 'r', encoding='latin-1') as file_in:
     reader = csv.reader(file_in, delimiter='\t')
     next(reader) # skip header
     if model == 'car':
@@ -179,13 +226,18 @@ with open(file_name, 'r') as file_in:
             for row in reader:
                 car = row_to_car(row)
                 file_out.write(f'{car.as_sql()}\n')
-    if model == 'resident':
+    elif model == 'resident':
         with open(migration_file_name(4, 'resident'), 'w') as file_out:
             for row in reader:
                 resident = row_to_resident(row)
                 file_out.write(f'{resident.as_sql()}\n')
-    else:
+    elif model == 'permit':
         with open(migration_file_name(5, 'permit'), 'w') as file_out:
             for row in reader:
                 permit = row_to_permit(row)
                 file_out.write(f'{permit.as_sql()}\n')
+    elif model == 'visitor':
+        with open(migration_file_name(6, 'visitor'), 'w') as file_out:
+            for row in reader:
+                visitor = row_to_visitor(row)
+                file_out.write(f'{visitor.as_sql()}\n')
