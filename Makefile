@@ -49,7 +49,7 @@ migrate_force_version:
 migrate_create:
 	migrate create -ext sql -dir migrations -seq $(name)
 .PHONY: migrate_create
-	
+
 migrate_version:
 	migrate -path migrations -database $(PGCONNECTION) version
 .PHONY: migrate_version
@@ -61,7 +61,7 @@ migrate_prod_up_step:
 migrate_prod_down_step:
 	migrate -path .prodmigrations -database $(PGCONNECTION) -verbose down 1
 .PHONY: migrate_prod_down_step
-	
+
 # test data
 gen_test_csvs:
 	python3 scripts/gen/test_data.py csv
