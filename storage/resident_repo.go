@@ -140,3 +140,23 @@ func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, 
 
 	return nil
 }
+
+func (residentRepo ResidentRepo) Delete(residentId string) error {
+	if residentId == "" {
+		return fmt.Errorf("resident_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+	}
+	const query = `DELETE FROM resident WHERE id = $1`
+
+	res, err := residentRepo.database.driver.Exec(query, residentId)
+	if err != nil {
+		return fmt.Errorf("resident_repo.Delete: %w: %v", ErrDatabaseExec, err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("resident_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+	} else if rowsAffected == 0 {
+		return fmt.Errorf("resident_repo.Delete: %w", ErrNoRows)
+	}
+
+	return nil
+}
