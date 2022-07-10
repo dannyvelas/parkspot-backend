@@ -327,11 +327,11 @@ def row_to_visitor(row: List[str]) -> Visitor:
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('usage: python3 scripts/gen/test_migrations.py [ csv | migration ]')
+        print('usage: python3 scripts/gen/test_data.py [ csv | migration ]')
         exit(1)
     file_out = sys.argv[1]
     if file_out not in ['csv', 'migration']:
-        print('usage: python3 scripts/gen/test_migrations.py [ csv | migration ]')
+        print('usage: python3 scripts/gen/test_data.py [ csv | migration ]')
         exit(1)
 
     if file_out == 'csv':
