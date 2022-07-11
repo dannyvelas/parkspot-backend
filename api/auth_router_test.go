@@ -3,9 +3,12 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +17,7 @@ import (
 type authRouterSuite struct {
 	suite.Suite
 	testServer *httptest.Server
+	jwtToken   string
 }
 
 func TestAuthRouter(t *testing.T) {
@@ -21,15 +25,35 @@ func TestAuthRouter(t *testing.T) {
 }
 
 func (suite *authRouterSuite) SetupSuite() {
-	testServer, err := newTestServer()
+	config, err := config.NewConfig()
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
-	suite.testServer = testServer
+
+	suite.testServer, err = newTestServer()
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
+
+	suite.jwtToken, err = getJWTToken(config.Token())
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
+
+	err = createTestResidents(suite.testServer.URL, suite.jwtToken)
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 }
 
 func (suite authRouterSuite) TearDownSuite() {
-	suite.testServer.Close()
+	defer suite.testServer.Close()
+
+	err := deleteTestResidents(suite.testServer.URL, suite.jwtToken)
+	if err != nil {
+		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
+		return
+	}
 }
 
 func (suite authRouterSuite) TestLogin_Admin_Positive() {
@@ -50,23 +74,35 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != http.StatusOK {
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			suite.NoError(err)
+			return
+		}
+		suite.Empty(string(bodyBytes))
+		return
+	}
+
 	var userResponse user
 	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	expectedUser := newUser("b1394468-0018-47f5-afe5-1cc77118d161", "Daniel", "Velasquez", "email@example.com", AdminRole)
-
-	suite.Equal(http.StatusOK, response.StatusCode)
+	expectedUser := newUser("b1394468-0018-47f5-afe5-1cc77118d161",
+		"Daniel",
+		"Velasquez",
+		"email@example.com",
+		AdminRole)
 	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
 }
 
 func (suite authRouterSuite) TestLogin_Resident_Positive() {
-	requestBody := []byte(`{
-    "id":"T1043321",
-    "password":"notapassword"
-  }`)
+	requestBody := []byte(fmt.Sprintf(`{
+    "id":"%s",
+    "password":"%s"
+  }`, testResident.Id, testResident.Password))
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -80,14 +116,26 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != http.StatusOK {
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			suite.NoError(err)
+			return
+		}
+		suite.Empty(string(bodyBytes))
+		return
+	}
+
 	var userResponse user
 	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	expectedUser := newUser("T1043321", "John", "Gibson", "john.gibson@gmail.com", ResidentRole)
-
-	suite.Equal(http.StatusOK, response.StatusCode)
+	expectedUser := newUser(testResident.Id,
+		testResident.FirstName,
+		testResident.LastName,
+		testResident.Email,
+		ResidentRole)
 	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
 }
