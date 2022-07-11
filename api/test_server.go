@@ -35,12 +35,12 @@ var (
 )
 
 func newTestServer() (*httptest.Server, error) {
-	config, err := config.NewConfig()
+	c, err := config.NewConfig()
 	if err != nil {
 		return nil, fmt.Errorf("Error loading config: %v", err.Error())
 	}
 
-	database, err := storage.NewDatabase(config.Postgres())
+	database, err := storage.NewDatabase(c.Postgres())
 	if err != nil {
 		return nil, fmt.Errorf("Failed to start database: %v", err)
 	}
@@ -53,9 +53,9 @@ func newTestServer() (*httptest.Server, error) {
 	visitorRepo := storage.NewVisitorRepo(database)
 
 	// http setup
-	httpConfig := config.Http()
+	httpConfig := c.Http()
 
-	router := NewRouter(httpConfig, config.Token(), config.OAuth(), config.Constants().DateFormat(),
+	router := NewRouter(httpConfig, c.Token(), c.OAuth(), config.DateFormat,
 		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
 
 	testServer := httptest.NewServer(router)

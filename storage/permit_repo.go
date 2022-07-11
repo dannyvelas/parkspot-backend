@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"time"
 )
@@ -43,7 +44,7 @@ func NewPermitRepo(database Database) PermitRepo {
 		},
 		models.ExceptionPermits: squirrel.Expr("permit.exception_reason IS NOT NULL"),
 		models.ExpiredPermits: squirrel.And{
-			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", defaultExpiredWindow),
+			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", config.DefaultExpiredWindow),
 			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
 		},
 	}

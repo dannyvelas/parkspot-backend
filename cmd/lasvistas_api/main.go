@@ -21,14 +21,14 @@ func main() {
 	log.Info().Msg("Initializing app...")
 
 	// load config
-	config, err := config.NewConfig()
+	c, err := config.NewConfig()
 	if err != nil {
 		log.Fatal().Msgf("Error loading config: %v", err.Error())
 	}
 
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
-	database, err := storage.NewDatabase(config.Postgres())
+	database, err := storage.NewDatabase(c.Postgres())
 	if err != nil {
 		log.Fatal().Msgf("Failed to start database: %v", err)
 	}
@@ -42,13 +42,13 @@ func main() {
 	visitorRepo := storage.NewVisitorRepo(database)
 
 	// http setup
-	httpConfig := config.Http()
+	httpConfig := c.Http()
 
 	router := api.NewRouter(
 		httpConfig,
-		config.Token(),
-		config.OAuth(),
-		config.Constants().DateFormat(),
+		c.Token(),
+		c.OAuth(),
+		config.DateFormat,
 		adminRepo,
 		permitRepo,
 		carRepo,

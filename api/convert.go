@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/dannyvelas/lasvistas_api/config"
 	"regexp"
 	"strconv"
 )
@@ -18,10 +19,10 @@ func toPosInt(value string) int {
 }
 
 func getBoundedLimitAndOffset(limit, page int) (boundedLimit, offset int) {
-	if limit > maxPageLimit {
-		boundedLimit = maxPageLimit
+	if limit > config.MaxLimit {
+		boundedLimit = config.MaxLimit
 	} else if limit <= 0 {
-		boundedLimit = defaultPageLimit
+		boundedLimit = config.DefaultLimit
 	} else {
 		boundedLimit = limit
 	}
