@@ -233,9 +233,14 @@ with open(file_name, 'r', encoding='latin-1') as file_in:
                 file_out.write(f'{resident.as_sql()}\n')
     elif model == 'permit':
         with open(migration_file_name(5, 'permit'), 'w') as file_out:
+            last_id = -1
             for row in reader:
                 permit = row_to_permit(row)
                 file_out.write(f'{permit.as_sql()}\n')
+                last_id = permit.id
+
+            # alter sequence needed since permit ids are auto-incrementing
+            file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {last_id+1};\n')
     elif model == 'visitor':
         with open(migration_file_name(6, 'visitor'), 'w') as file_out:
             for row in reader:
