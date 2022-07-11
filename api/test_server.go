@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -10,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 )
 
 var (
@@ -30,7 +28,7 @@ var (
 		"1234567890",
 		"email2@example.com",
 		"notapassword",
-		false,
+		true,
 		0)
 )
 
@@ -98,14 +96,16 @@ func createTestResidents(testServerURL, jwtToken string) error {
       "lastName": "%s",
       "phone": "%s",
       "email": "%s",
-      "password":"%s"
+      "password":"%s",
+      "unlimDays": %t
     }`,
 			testResident.Id,
 			testResident.FirstName,
 			testResident.LastName,
 			testResident.Phone,
 			testResident.Email,
-			testResident.Password))
+			testResident.Password,
+			testResident.UnlimDays))
 
 		responseBody, statusCode, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, jwtToken)
 		if err != nil {
@@ -114,11 +114,12 @@ func createTestResidents(testServerURL, jwtToken string) error {
 		defer responseBody.Close()
 
 		if statusCode != http.StatusOK {
-			errorResponse, err := getErrorResponse(responseBody)
+			bodyBytes, err := io.ReadAll(responseBody)
 			if err != nil {
 				return fmt.Errorf("test_server.createTestResident: error getting error response: %v", err)
 			}
-			return errors.New(errorResponse)
+
+			return fmt.Errorf("test_server.createTestResident: Bad response: %s", string(bodyBytes))
 		}
 
 		return nil
@@ -144,12 +145,12 @@ func deleteTestResidents(testServerURL, jwtToken string) error {
 		defer responseBody.Close()
 
 		if statusCode != http.StatusOK {
-			errorResponse, err := getErrorResponse(responseBody)
+			bodyBytes, err := io.ReadAll(responseBody)
 			if err != nil {
 				return fmt.Errorf("test_server.deleteTestResident: error getting error response: %v", err)
 			}
 
-			return errors.New(errorResponse)
+			return fmt.Errorf("test_server.deleteTestResident: Bad response: %s", string(bodyBytes))
 		}
 
 		return nil
@@ -163,14 +164,4 @@ func deleteTestResidents(testServerURL, jwtToken string) error {
 	}
 
 	return nil
-}
-
-func getErrorResponse(responseBody io.ReadCloser) (string, error) {
-	buf := new(strings.Builder)
-	_, err := io.Copy(buf, responseBody)
-	if err != nil {
-		return "", fmt.Errorf("error decoding response error string: %v", err)
-	}
-
-	return buf.String(), nil
 }
