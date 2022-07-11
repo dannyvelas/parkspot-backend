@@ -103,7 +103,13 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		}
 		hashString := string(hashBytes)
 
-		err = residentRepo.Create(payload.ResidentId, payload.FirstName, payload.LastName, payload.Phone, payload.Email, hashString)
+		err = residentRepo.Create(payload.ResidentId,
+			payload.FirstName,
+			payload.LastName,
+			payload.Phone,
+			payload.Email,
+			hashString,
+			payload.UnlimDays)
 		if err != nil {
 			log.Error().Msgf("auth_router.createResident: Error querying residentRepo: %v", err)
 			respondInternalError(w)
