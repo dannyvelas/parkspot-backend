@@ -117,7 +117,7 @@ func (residentRepo ResidentRepo) SetPasswordFor(id string, password string) erro
 	return nil
 }
 
-func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, email, hash string) error {
+func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, email, hash string, unlimDays bool) error {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("resident").
@@ -128,6 +128,7 @@ func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, 
 			"phone":      phone,
 			"email":      email,
 			"password":   hash,
+			"unlim_days": unlimDays,
 		}).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Create: %w: %v", ErrBuildingQuery, err)
