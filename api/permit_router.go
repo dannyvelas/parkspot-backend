@@ -115,7 +115,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		ctx := r.Context()
 		user, err := ctxGetUser(ctx)
 		if err != nil {
-			log.Error().Msgf("permit_router.create: error getting user: %v", err)
+			log.Error().Msgf("permit_router.createPermit: error getting user: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -129,7 +129,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		// check if car exists
 		existingCar, err := carRepo.GetByLicensePlate(newPermitReq.Car.LicensePlate)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+			log.Error().Msgf("permit_router.createPermit: Error querying carRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -139,7 +139,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			activePermitsDuring, err := permitRepo.GetActiveOfCarDuring(
 				existingCar.Id, newPermitReq.StartDate, newPermitReq.EndDate)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
+				log.Error().Msgf("permit_router.createPermit: Error querying permitRepo: %v", err)
 				respondInternalError(w)
 				return
 			} else if len(activePermitsDuring) != 0 {
@@ -155,7 +155,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		// error out if resident DNE
 		existingResident, err := residentRepo.GetOne(newPermitReq.ResidentId)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-			log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
+			log.Error().Msgf("permit_router.createPermit: Error querying residentRepo: %v", err)
 			respondInternalError(w)
 			return
 		} else if errors.Is(err, storage.ErrNoRows) { // resident does not exist
@@ -178,7 +178,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			activePermitsDuring, err := permitRepo.GetActiveOfResidentDuring(
 				existingResident.Id, newPermitReq.StartDate, newPermitReq.EndDate)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying permitRepo: %v", err)
+				log.Error().Msgf("permit_router.createPermit: Error querying permitRepo: %v", err)
 				respondInternalError(w)
 				return
 			} else if len(activePermitsDuring) != 0 {
@@ -236,7 +236,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			newCarArgs := newPermitReq.Car.toNewCarArgs()
 			carId, err := carRepo.Create(newCarArgs)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+				log.Error().Msgf("permit_router.createPermit: Error querying carRepo: %v", err)
 				respondInternalError(w)
 				return
 			}
@@ -248,14 +248,14 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		if affectsDays {
 			err = residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying residentRepo: %v", err)
+				log.Error().Msgf("permit_router.createPermit: Error querying residentRepo: %v", err)
 				respondInternalError(w)
 				return
 			}
 
 			err = carRepo.AddToAmtParkingDaysUsed(permitCar.Id, permitLength)
 			if err != nil {
-				log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+				log.Error().Msgf("permit_router.createPermit: Error querying carRepo: %v", err)
 				respondInternalError(w)
 				return
 			}
@@ -264,14 +264,14 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id, affectsDays)
 		permitId, err := permitRepo.Create(newPermitArgs)
 		if err != nil {
-			log.Error().Msgf("permit_router.create: Error querying carRepo: %v", err)
+			log.Error().Msgf("permit_router.createPermit: Error querying permitRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
 
 		newPermit, err := permitRepo.GetOne(permitId)
 		if err != nil {
-			log.Error().Msgf("permit_router.create: Error getting permit: %v", err)
+			log.Error().Msgf("permit_router.createPermit: Error getting permit: %v", err)
 			respondInternalError(w)
 			return
 		}
