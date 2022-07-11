@@ -11,7 +11,7 @@ type Resident struct {
 	LastName           string `json:"lastName"`
 	Phone              string `json:"phone"`
 	Email              string `json:"email"`
-	Password           string `json:"password"`
+	Password           string `json:"-"`
 	UnlimDays          bool   `json:"unlimDays"`
 	AmtParkingDaysUsed int    `json:"amtParkingDaysUsed"`
 }
