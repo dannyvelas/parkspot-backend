@@ -14,6 +14,7 @@ type newResidentReq struct {
 	Phone      string `json:"phone"`
 	Email      string `json:"email"`
 	Password   string `json:"password"`
+	UnlimDays  bool   `json:"unlimDays"`
 }
 
 func (newResidentReq newResidentReq) emptyFields() error {
@@ -36,6 +37,9 @@ func (newResidentReq newResidentReq) emptyFields() error {
 	}
 	if newResidentReq.Password == "" {
 		emptyFields = append(emptyFields, "password")
+	}
+	if newResidentReq.UnlimDays == false {
+		// noop: this is okay as this is an optional field
 	}
 
 	if len(emptyFields) > 0 {
