@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"strings"
 	"time"
 )
 
@@ -278,12 +279,12 @@ func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter
 
 	permitWhere := permitRepo.permitSelect.
 		Where(squirrel.Or{
-			squirrel.Expr("CAST(permit.id AS TEXT) ILIKE $1", "%"+searchStr+"%"),
-			squirrel.Expr("permit.resident_id ILIKE $1"),
-			squirrel.Expr("car.license_plate ILIKE $1"),
-			squirrel.Expr("car.color ILIKE $1"),
-			squirrel.Expr("car.make ILIKE $1"),
-			squirrel.Expr("car.model ILIKE $1"),
+			squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(searchStr)),
+			squirrel.Expr("LOWER(permit.resident_id) = $1"),
+			squirrel.Expr("LOWER(car.license_plate) = $1"),
+			squirrel.Expr("LOWER(car.color) = $1"),
+			squirrel.Expr("LOWER(car.make) = $1"),
+			squirrel.Expr("LOWER(car.model) = $1"),
 		})
 	whereSQL, ok := permitRepo.filterToSQL[filter]
 	if ok {
