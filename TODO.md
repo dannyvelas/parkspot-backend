@@ -15,11 +15,14 @@
 - [x] create exceptions table and allow requests to create exceptional permits
 - [x] make the `filter` argument to permitRepo.Search an enumerated string to disallow invalid values. or at least perform checking for invalid values
 - [x] either A) remove `window` as an option for getting expired permits from repo or B) allow the api to pass in a `window` value when searching for expired permits
+- [ ] remove reset password functionality for admins. also make admins sign up with a username instead of an email. probably remove email, first_name, and last_name properties from admin table.
 - [x] (DEPLOY) add DMARC records to mail server domain
 - [x] (DEPLOY) make sure that traffic to parkspotapp.com or any of its subdomains doesn't redirect to the api.lasvistas.parkspotapp or lasvistas.parkspotapp on either port 80 (HTTP) or 443 (HTTPS)
 - [x] (DEPLOY) remove NGINX welcome pages
 - [x] (DEPLOY) set up renewal for app certificates
 - [x] (DEPLOY) set up firewall on server again
+- [x] (DEPLOY) change receiving email of password resets from your personal email to the email of the user
+- [ ] (DEPLOY) use non-root user in vultr server
 - [ ] (DEPLOY) change parking days yearly limit to 20
 - [ ] (DEPLOY) remove api hello world at "/"
 - [ ] (DEPLOY) (not important) remove /api/ prefix from routes
@@ -54,8 +57,10 @@
 - [x] change login_router instances to auth_router
 - [x] make Role type lowercase.
 - [x] rename permit_router funcs so that they explain that they deal w permits for consistency
+- [ ] add a check for the license_plate of a new car being longer than 10 (avoid database truncation)
+- [ ] add a check for unique resident emails
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
-- [ ] add resident edit functionality
+- [ ] add resident edit/delete functionality
 - [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
 - [ ] change error messages for residents when they're creating a permit
@@ -74,7 +79,14 @@
 - [x] update getoneadmin with sqlx semantics (use get instead of query.scan)
 - [x] rename `limit` query parameter to `limit`
 - [x] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod. (cors and acceptCredentials=true is necessary in prod. CORS allows a front-end URL to send a request to the API URL, when they're different domains. acceptCredentials is necessary for the server to be able to read the cookie that comes with the request. [Ref here](https://web.dev/cross-origin-resource-sharing/). But, you can make the CORSALLOWEDORIGINS env variable a specific URL in prod, which makes it safe and appropriate)
+- [x] change `username` instances to `id` for consistency
+- [x] think of a way to define the resident regex once
+- [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
+- [ ] start injecting a `sq` variable of type `StatementBuilderType` to every repo. this will be the variable used to create squirrel statements. this will be done instead of importing squirrel into every repo and using the default statement builder. the `sq` variable will be initialized like this:
+    `sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)`
 - [ ] remove constants from config files, just put them inline
+- [ ] maybe use an interface like { GetOne(), SetPasswordFor() } in the auth_router. this might be better than making if statements where one branch does admin.GetOne(...) and the other does resident.GetOne(...) with redundant error checking logic
+- [ ] make naming more consistent in permit_router_test
 - [ ] add not authorized error message when a create permit payload has a residentID field that does not coincide with the id field of the JWT user payload, when that JWT payload has role === resident.
 - [ ] remove NewPermitArgs NewCarArgs from models. i'd rather send the args individually from the router to the repo, than have a bunch of functions like permitReq.toNewPermitArgs(args...) or newPermitArgs.ToPermit(args..)
 - [ ] remove "No error when" messages from repo_tests. unnecessary
@@ -84,7 +96,7 @@
 - [ ] add a list of colors to use as a dropdown
 ## Tech Debt
 - [ ] move .PHONY to be under each makefile target, instead of sticking all of them at the bottom
-- [ ] change the way that the code connects to postgres from being a bunch of variables to just being a DATABASE\_URL
+- [ ] change the way that the code connects to postgres from being a bunch of variables to just being a DATABASE\_URL. (start using .env variable and add it to .env.example)
 - [ ] make python script also generate down migration file 
 - [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
 - [ ] remove `highestVersion` variable from migrator.go
