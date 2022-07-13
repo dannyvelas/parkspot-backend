@@ -39,7 +39,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.jwtToken, err = getJWTToken(config.Token())
+	suite.jwtToken, err = getAdminJWT(config.Token())
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}

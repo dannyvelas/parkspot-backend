@@ -77,12 +77,28 @@ func authenticatedReq(method string, url string, requestBytes []byte, jwtToken s
 	return response.Body, response.StatusCode, nil
 }
 
-func getJWTToken(tokenConfig config.TokenConfig) (string, error) {
+func getAdminJWT(tokenConfig config.TokenConfig) (string, error) {
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
 
 	jwtToken, err := jwtMiddleware.newJWT("some-uuid", "Daniel", "Velasquez", "example@email.com", AdminRole)
 	if err != nil {
-		return "", fmt.Errorf("Failed to create JWT token: %v", err)
+		return "", fmt.Errorf("Failed to create JWT: %v", err)
+	}
+
+	return jwtToken, nil
+}
+
+func getResidentJWT(tokenConfig config.TokenConfig) (string, error) {
+	jwtMiddleware := NewJWTMiddleware(tokenConfig)
+
+	jwtToken, err := jwtMiddleware.newJWT(
+		testResident.Id,
+		testResident.FirstName,
+		testResident.LastName,
+		testResident.Email,
+		ResidentRole)
+	if err != nil {
+		return "", fmt.Errorf("Failed to create JWT: %v", err)
 	}
 
 	return jwtToken, nil
