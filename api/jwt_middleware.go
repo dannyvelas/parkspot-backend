@@ -10,7 +10,7 @@ import (
 
 var (
 	errNotSigningMethodHMAC = errors.New("jwt: Not using SigningMethodHMAC")
-	errCastingJWTClaims     = errors.New("jwt: Failed to cast JWT token to JWTClaims struct")
+	errCastingJWTClaims     = errors.New("jwt: Failed to cast JWT to JWTClaims struct")
 	errInvalidToken         = errors.New("jwt: Invalid Token")
 )
 
