@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"time"
 )
 
 func getAllVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
@@ -101,6 +102,12 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		if err := payload.validate(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
+		}
+
+		if payload.IsForever {
+			year, month, day := time.Now().Date()
+			payload.AccessStart = time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+			payload.AccessEnd = models.EndOfTime
 		}
 
 		visitorId, err := visitorRepo.Create(user.Id,

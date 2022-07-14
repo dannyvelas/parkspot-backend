@@ -11,6 +11,7 @@ type newVisitorReq struct {
 	FirstName    string    `json:"firstName"`
 	LastName     string    `json:"lastName"`
 	Relationship string    `json:"relationship"`
+	IsForever    bool      `json:"isForever"`
 	AccessStart  time.Time `json:"accessStart"`
 	AccessEnd    time.Time `json:"accessEnd"`
 }
@@ -27,11 +28,13 @@ func (newVisitorReq newVisitorReq) emptyFields() error {
 	if newVisitorReq.Relationship == "" {
 		emptyFields = append(emptyFields, "relationship")
 	}
-	if newVisitorReq.AccessStart.IsZero() {
-		emptyFields = append(emptyFields, "accessStart")
-	}
-	if newVisitorReq.AccessEnd.IsZero() {
-		emptyFields = append(emptyFields, "accessEnd")
+	if !newVisitorReq.IsForever {
+		if newVisitorReq.AccessStart.IsZero() {
+			emptyFields = append(emptyFields, "accessStart")
+		}
+		if newVisitorReq.AccessEnd.IsZero() {
+			emptyFields = append(emptyFields, "accessEnd")
+		}
 	}
 
 	if len(emptyFields) > 0 {
@@ -47,14 +50,16 @@ func (newVisitorReq newVisitorReq) invalidFields() error {
 	if newVisitorReq.Relationship != "fam/fri" && newVisitorReq.Relationship != "contractor" {
 		errors = append(errors, "relationship must be either \"fam/fri\" or \"contractor\"")
 	}
-	if newVisitorReq.AccessStart.After(newVisitorReq.AccessEnd) {
-		errors = append(errors, "accessStart cannot be after accessEnd")
-	}
-	if newVisitorReq.AccessStart.Equal(newVisitorReq.AccessEnd) {
-		errors = append(errors, "accessStart cannot be equal to accessEnd")
-	}
-	if newVisitorReq.AccessEnd.After(models.EndOfTime) {
-		errors = append(errors, "accessEnd cannot be after 9999/12/31")
+	if !newVisitorReq.IsForever {
+		if newVisitorReq.AccessStart.After(newVisitorReq.AccessEnd) {
+			errors = append(errors, "accessStart cannot be after accessEnd")
+		}
+		if newVisitorReq.AccessStart.Equal(newVisitorReq.AccessEnd) {
+			errors = append(errors, "accessStart cannot be equal to accessEnd")
+		}
+		if newVisitorReq.AccessEnd.After(models.EndOfTime) {
+			errors = append(errors, "accessEnd cannot be after 9999/12/31")
+		}
 	}
 
 	if len(errors) > 0 {
