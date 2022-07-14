@@ -41,7 +41,7 @@ func searchVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		searchStr := r.URL.Query().Get("search")
 		if searchStr == "" {
-			respondJSON(w, http.StatusOK, []models.Visitor{})
+			respondJSON(w, http.StatusOK, newListWithMetadata([]models.Visitor{}, 0))
 			return
 		}
 
