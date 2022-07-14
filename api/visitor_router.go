@@ -1,8 +1,12 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
@@ -75,5 +79,70 @@ func getVisitorsOfResident(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		visitorsWithMetadata := newListWithMetadata(visitors, len(visitors))
 
 		respondJSON(w, http.StatusOK, visitorsWithMetadata)
+	}
+}
+
+func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		user, err := ctxGetUser(ctx)
+		if err != nil {
+			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		var payload newVisitorReq
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			respondError(w, newErrMalformed("NewVisitorReq"))
+			return
+		}
+
+		if err := payload.validate(); err != nil {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		}
+
+		fmt.Printf("about to create visitor of resident %s. firstName: %s\n", user.Id, payload.FirstName)
+		visitorId, err := visitorRepo.Create(user.Id,
+			payload.FirstName,
+			payload.LastName,
+			payload.Relationship,
+			payload.AccessStart,
+			payload.AccessEnd)
+		if err != nil {
+			log.Error().Msgf("visitor_router.createVisitor: Error creating visitor: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		visitor, err := visitorRepo.GetOne(visitorId)
+		if err != nil {
+			log.Error().Msgf("visitor_router.createVisitor: Error getting visitor: %v", err)
+			respondInternalError(w)
+			return
+		}
+		fmt.Printf("created visitor with id %s\n. firstName: %s", visitor.Id, visitor.FirstName)
+
+		respondJSON(w, http.StatusOK, visitor)
+	}
+}
+
+func deleteVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		err := visitorRepo.Delete(id)
+		if errors.Is(err, storage.ErrNoRows) {
+			respondError(w, newErrNotFound("visitor"))
+			return
+		} else if err != nil {
+			log.Error().Msgf("visitor_router.deleteVisitor: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, message{"Successfully deleted visitor"})
 	}
 }
