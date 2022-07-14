@@ -129,6 +129,10 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 func deleteVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
+		if !isUUIDV4(id) {
+			respondError(w, newErrBadRequest("id parameter is not a UUID"))
+			return
+		}
 
 		err := visitorRepo.Delete(id)
 		if errors.Is(err, storage.ErrNoRows) {
