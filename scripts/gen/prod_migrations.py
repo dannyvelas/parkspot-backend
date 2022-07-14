@@ -1,6 +1,6 @@
 import csv
 import sys
-from typing import List, Union, TypeVar
+from typing import List, Union, TypeVar, Dict
 from datetime import datetime as dt
 import os
 import uuid
@@ -36,9 +36,22 @@ def str_to_ts(s: str) -> int:
     date_obj = dt.strptime(s, "%Y-%m-%d")
     return int(date_obj.timestamp())
 
+
+def str_to_end_ts(s: str) -> int:
+    date_obj = dt.strptime(s + " 23:59:59", "%Y-%m-%d %H:%M:%S")
+    return int(date_obj.timestamp())
+
 ########################################
 # Admin
 ########################################
+
+
+class Props:
+    def __init__(self, first_name: str, last_name: str, email: str, is_privileged: bool):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.is_privileged = is_privileged
 
 
 class Admin:
@@ -68,14 +81,7 @@ class Admin:
                 f");")
 
 
-def row_to_admin(row: List[str]) -> Union[Admin, None]:
-    class Props:
-        def __init__(self, first_name: str, last_name: str, email: str, is_privileged: bool):
-            self.first_name = first_name
-            self.last_name = last_name
-            self.email = email
-            self.is_privileged = is_privileged
-    id_to_props = {}
+def row_to_admin(row: List[str], id_to_props: Dict[str, Props]) -> Union[Admin, None]:
     if row[0] in id_to_props:
         props = id_to_props[row[0]]
         return Admin(
@@ -84,7 +90,7 @@ def row_to_admin(row: List[str]) -> Union[Admin, None]:
             last_name=props.last_name,
             email=props.email,
             password=row[1],
-            is_privileged=id_to_props[row[0]].is_privileged)
+            is_privileged=props.is_privileged)
     else:
         return None
 
@@ -217,7 +223,7 @@ def row_to_permit(row: List[str]) -> Permit:
         resident_id=row[1].upper(),
         license_plate=row[2],
         start_ts=str_to_ts(row[3]),
-        end_ts=str_to_ts(row[4]),
+        end_ts=str_to_end_ts(row[4]),
         request_ts=int(row[5]) if row[5] != 'NULL' else None,
         affects_days=True if row[6] == '1' else False,
         exception_reason=row[7] if row[7] != 'NULL' else None
@@ -271,7 +277,7 @@ def row_to_visitor(row: List[str]) -> Visitor:
         last_name=row[3],
         relationship=row[4],
         access_start=str_to_ts(row[5]),
-        access_end=str_to_ts(row[6])
+        access_end=str_to_end_ts(row[6])
     )
 
 
@@ -300,11 +306,18 @@ with open(file_name, 'r', encoding='latin-1') as file_in:
     reader = csv.reader(file_in, delimiter='\t')
     next(reader)  # skip header
     if model == 'admin':
-        with open(migration_file_name(2, 'admin'), 'w') as file_out:
-            for row in reader:
-                admin = row_to_admin(row)
-                if admin is not None:
-                    file_out.write(f'{admin.as_sql()}\n')
+        id_to_props = {}
+        if not id_to_props:
+            print(
+                'ERROR: id_to_props is empty.'
+                ' Refusing to run the admin prod migration as the resulting file would be empty.'
+                ' Please update id_to_props')
+        else:
+            with open(migration_file_name(2, 'admin'), 'w') as file_out:
+                for row in reader:
+                    admin = row_to_admin(row, id_to_props)
+                    if admin is not None:
+                        file_out.write(f'{admin.as_sql()}\n')
     elif model == 'car':
         with open(migration_file_name(3, 'car'), 'w') as file_out:
             for row in reader:
