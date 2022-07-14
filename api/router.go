@@ -56,7 +56,7 @@ func NewRouter(
 			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo, residentRepo, carRepo))
 			officeRouter.Get("/residents", getAllResidents(residentRepo))
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
-			officeRouter.Get("/visitors", getAllVisitors(visitorRepo))
+			officeRouter.Get("/visitors", getActiveVisitors(visitorRepo))
 			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
 			officeRouter.Post("/account", createResident(residentRepo))
 			officeRouter.Delete("/account/{id}", deleteResident(residentRepo))

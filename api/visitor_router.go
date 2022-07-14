@@ -11,22 +11,22 @@ import (
 	"time"
 )
 
-func getAllVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allVisitors, err := visitorRepo.GetAll(boundedLimit, offset)
+		allVisitors, err := visitorRepo.Get(true, boundedLimit, offset)
 		if err != nil {
-			log.Error().Msgf("visitor_router.getAll: Error querying visitorRepo: %v", err)
+			log.Error().Msgf("visitor_router.getActiveVisitors: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		totalAmount, err := visitorRepo.GetAllTotalAmount()
+		totalAmount, err := visitorRepo.GetCount(true)
 		if err != nil {
-			log.Error().Msgf("visitor_router.getAll: Error getting total amount: %v", err)
+			log.Error().Msgf("visitor_router.getActiveVisitors: Error getting total amount: %v", err)
 			respondInternalError(w)
 			return
 		}
