@@ -13,7 +13,6 @@ import (
 type PermitRepo struct {
 	database     Database
 	permitSelect squirrel.SelectBuilder
-	countSelect  squirrel.SelectBuilder
 	filterToSQL  map[models.PermitFilter]squirrel.Sqlizer
 	permitASC    string
 	permitDESC   string
@@ -36,8 +35,6 @@ func NewPermitRepo(database Database) PermitRepo {
 	).From("permit").
 		LeftJoin("car ON permit.car_id = car.id")
 
-	countSelect := squirrel.Select("count(*)").From("permit")
-
 	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
 		models.ActivePermits: squirrel.And{
 			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
@@ -56,7 +53,6 @@ func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{
 		database:     database,
 		permitSelect: permitSelect,
-		countSelect:  countSelect,
 		filterToSQL:  filterToSQL,
 		permitASC:    permitASC,
 		permitDESC:   permitDESC,
@@ -98,13 +94,13 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 }
 
 func (permitRepo PermitRepo) GetCount(filter models.PermitFilter) (int, error) {
-	countWhere := permitRepo.countSelect
+	countSelect := squirrel.Select("count(*)").From("permit")
 	whereSQL, ok := permitRepo.filterToSQL[filter]
 	if ok {
-		countWhere = countWhere.Where(whereSQL)
+		countSelect = countSelect.Where(whereSQL)
 	}
 
-	query, args, err := countWhere.ToSql()
+	query, args, err := countSelect.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", ErrBuildingQuery, err)
 	}
