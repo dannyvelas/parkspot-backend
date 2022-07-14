@@ -53,12 +53,14 @@ func NewRouter(
 			officeRouter.Get("/permits/exceptions", getPermits(permitRepo, models.ExceptionPermits))
 			officeRouter.Get("/permits/expired", getPermits(permitRepo, models.ExpiredPermits))
 			officeRouter.Get("/permits/search", searchPermits(permitRepo))
+			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo, residentRepo, carRepo))
 			officeRouter.Get("/residents", getAllResidents(residentRepo))
 			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
 			officeRouter.Get("/visitors", getAllVisitors(visitorRepo))
 			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
 			officeRouter.Post("/account", createResident(residentRepo))
 			officeRouter.Delete("/account/{id}", deleteResident(residentRepo))
+			officeRouter.Put("/car/{id}", editCar(carRepo))
 		})
 
 		r.Group(func(userRouter chi.Router) {
@@ -67,8 +69,6 @@ func NewRouter(
 			userRouter.Post("/permit", createPermit(permitRepo, residentRepo, carRepo, dateFormat))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
 			userRouter.Get("/car/{id}", getOneCar(carRepo))
-			userRouter.Put("/car/{id}", editCar(carRepo))
-			userRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo, residentRepo, carRepo))
 			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(permitRepo))
 			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
 		})
