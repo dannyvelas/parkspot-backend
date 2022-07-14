@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
@@ -104,7 +103,6 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("about to create visitor of resident %s. firstName: %s\n", user.Id, payload.FirstName)
 		visitorId, err := visitorRepo.Create(user.Id,
 			payload.FirstName,
 			payload.LastName,
@@ -123,7 +121,6 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			respondInternalError(w)
 			return
 		}
-		fmt.Printf("created visitor with id %s\n. firstName: %s", visitor.Id, visitor.FirstName)
 
 		respondJSON(w, http.StatusOK, visitor)
 	}
