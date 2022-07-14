@@ -45,7 +45,7 @@ func searchVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			return
 		}
 
-		visitors, err := visitorRepo.Search(searchStr)
+		visitors, err := visitorRepo.Search(searchStr, true)
 		if err != nil {
 			log.Error().Msgf("visitor_router.searchVisitors: Error getting visitors: %v", err)
 			respondInternalError(w)

@@ -85,17 +85,22 @@ func (visitorRepo VisitorRepo) GetCount(onlyActive bool) (int, error) {
 	return totalAmount, nil
 }
 
-func (visitorRepo VisitorRepo) Search(searchStr string) ([]models.Visitor, error) {
+func (visitorRepo VisitorRepo) Search(searchStr string, onlyActive bool) ([]models.Visitor, error) {
 	if searchStr == "" {
 		return nil, fmt.Errorf("visitor_repo.Search: %w: Empty search argument", ErrInvalidArg)
 	}
 
-	query, args, err := visitorRepo.visitorSelect.
+	visitorSelect := visitorRepo.visitorSelect.
 		Where(squirrel.Or{
 			squirrel.Expr("visitor.resident_id ILIKE $1", "%"+searchStr+"%"),
 			squirrel.Expr("visitor.first_name ILIKE $1"),
 			squirrel.Expr("visitor.last_name ILIKE $1"),
-		}).ToSql()
+		})
+	if onlyActive {
+		visitorSelect = visitorSelect.Where(visitorRepo.whereActive)
+	}
+
+	query, args, err := visitorSelect.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrBuildingQuery, err)
 	}
