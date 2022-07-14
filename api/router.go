@@ -76,6 +76,8 @@ func NewRouter(
 		r.Group(func(residentRouter chi.Router) {
 			residentRouter.Use(jwtMiddleware.authenticate(ResidentRole))
 			residentRouter.Get("/me/visitors", getVisitorsOfResident(visitorRepo))
+			residentRouter.Post("/visitor", createVisitor(visitorRepo))
+			residentRouter.Delete("/visitor/{id}", deleteVisitor(visitorRepo))
 		})
 	})
 
