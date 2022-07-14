@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"time"
 )
 
 type VisitorRepo struct {
@@ -100,4 +102,72 @@ func (visitorRepo VisitorRepo) GetOfResident(residentId string) ([]models.Visito
 	}
 
 	return visitors.toModels(), nil
+}
+
+func (visitorRepo VisitorRepo) Create(residentId, firstName, lastName, relationship string, accessStart, accessEnd time.Time) (string, error) {
+	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	query, args, err := sq.
+		Insert("visitor").
+		SetMap(squirrel.Eq{
+			"resident_id":  residentId,
+			"first_name":   firstName,
+			"last_name":    lastName,
+			"relationship": relationship,
+			"access_start": accessStart.Unix(),
+			"access_end":   accessEnd.Unix(),
+		}).
+		Suffix("RETURNING visitor.id").
+		ToSql()
+	if err != nil {
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", ErrBuildingQuery, err)
+	}
+
+	var visitorId string
+	err = visitorRepo.database.driver.Get(&visitorId, query, args...)
+	if err != nil {
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return visitorId, nil
+}
+
+func (visitorRepo VisitorRepo) Delete(visitorId string) error {
+	if visitorId == "" {
+		return fmt.Errorf("visitor_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+	}
+	const query = `DELETE FROM visitor WHERE id = $1`
+
+	res, err := visitorRepo.database.driver.Exec(query, visitorId)
+	if err != nil {
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", ErrDatabaseExec, err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+	} else if rowsAffected == 0 {
+		return fmt.Errorf("visitor_repo.Delete: %w", ErrNoRows)
+	}
+
+	return nil
+}
+
+func (visitorRepo VisitorRepo) GetOne(visitorId string) (models.Visitor, error) {
+	if visitorId == "" {
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+	}
+
+	query, args, err := visitorRepo.visitorSelect.Where("visitor.id = $1", visitorId).ToSql()
+	if err != nil {
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+	}
+
+	visitor := visitor{}
+	err = visitorRepo.database.driver.Get(&visitor, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", ErrNoRows)
+	} else if err != nil {
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return visitor.toModels(), nil
 }
