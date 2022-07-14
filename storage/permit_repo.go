@@ -64,19 +64,18 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
-	permitWhere := permitRepo.permitSelect
-	whereSQL, ok := permitRepo.filterToSQL[filter]
-	if ok {
-		permitWhere = permitWhere.Where(whereSQL)
+	permitSelect := permitRepo.permitSelect
+	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
+		permitSelect = permitSelect.Where(whereSQL)
 	}
 
 	if !reversed {
-		permitWhere = permitWhere.OrderBy(permitRepo.permitASC)
+		permitSelect = permitSelect.OrderBy(permitRepo.permitASC)
 	} else {
-		permitWhere = permitWhere.OrderBy(permitRepo.permitDESC)
+		permitSelect = permitSelect.OrderBy(permitRepo.permitDESC)
 	}
 
-	query, args, err := permitWhere.
+	query, args, err := permitSelect.
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		ToSql()
@@ -95,8 +94,7 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 
 func (permitRepo PermitRepo) GetCount(filter models.PermitFilter) (int, error) {
 	countSelect := squirrel.Select("count(*)").From("permit")
-	whereSQL, ok := permitRepo.filterToSQL[filter]
-	if ok {
+	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
 		countSelect = countSelect.Where(whereSQL)
 	}
 
@@ -273,7 +271,7 @@ func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter
 		return nil, fmt.Errorf("permit_repo.Search: %w: Empty search argument", ErrInvalidArg)
 	}
 
-	permitWhere := permitRepo.permitSelect.
+	permitSelect := permitRepo.permitSelect.
 		Where(squirrel.Or{
 			squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(searchStr)),
 			squirrel.Expr("LOWER(permit.resident_id) = $1"),
@@ -282,12 +280,11 @@ func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter
 			squirrel.Expr("LOWER(car.make) = $1"),
 			squirrel.Expr("LOWER(car.model) = $1"),
 		})
-	whereSQL, ok := permitRepo.filterToSQL[filter]
-	if ok {
-		permitWhere = permitWhere.Where(whereSQL)
+	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
+		permitSelect = permitSelect.Where(whereSQL)
 	}
 
-	query, args, err := permitWhere.OrderBy(permitRepo.permitASC).ToSql()
+	query, args, err := permitSelect.OrderBy(permitRepo.permitASC).ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.Search: %w: %v", ErrBuildingQuery, err)
 	}
