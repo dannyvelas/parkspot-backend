@@ -60,6 +60,7 @@ func NewRouter(
 			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
 			officeRouter.Post("/account", createResident(residentRepo))
 			officeRouter.Delete("/account/{id}", deleteResident(residentRepo))
+			officeRouter.Get("/car/{id}", getOneCar(carRepo))
 			officeRouter.Put("/car/{id}", editCar(carRepo))
 		})
 
@@ -68,7 +69,6 @@ func NewRouter(
 			userRouter.Get("/hello", sayHello())
 			userRouter.Post("/permit", createPermit(permitRepo, residentRepo, carRepo, dateFormat))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
-			userRouter.Get("/car/{id}", getOneCar(carRepo))
 			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(permitRepo))
 			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
 		})
