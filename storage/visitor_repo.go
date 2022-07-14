@@ -11,6 +11,7 @@ import (
 type VisitorRepo struct {
 	database      Database
 	visitorSelect squirrel.SelectBuilder
+	whereActive   squirrel.Sqlizer
 }
 
 func NewVisitorRepo(database Database) VisitorRepo {
@@ -24,15 +25,29 @@ func NewVisitorRepo(database Database) VisitorRepo {
 		"access_end",
 	).From("visitor")
 
-	return VisitorRepo{database: database, visitorSelect: visitorSelect}
+	whereActive := squirrel.And{
+		squirrel.Expr("visitor.access_start <= extract(epoch from now())"),
+		squirrel.Expr("visitor.access_end >= extract(epoch from now())"),
+	}
+
+	return VisitorRepo{
+		database:      database,
+		visitorSelect: visitorSelect,
+		whereActive:   whereActive,
+	}
 }
 
-func (visitorRepo VisitorRepo) GetAll(limit, offset int) ([]models.Visitor, error) {
+func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models.Visitor, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("visitor_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
-	query, _, err := visitorRepo.visitorSelect.
+	visitorSelect := visitorRepo.visitorSelect
+	if onlyActive {
+		visitorSelect = visitorSelect.Where(visitorRepo.whereActive)
+	}
+
+	query, _, err := visitorSelect.
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		OrderBy("visitor.id ASC").
@@ -50,11 +65,19 @@ func (visitorRepo VisitorRepo) GetAll(limit, offset int) ([]models.Visitor, erro
 	return visitors.toModels(), nil
 }
 
-func (visitorRepo VisitorRepo) GetAllTotalAmount() (int, error) {
-	const query = "SELECT count(*) FROM visitor"
+func (visitorRepo VisitorRepo) GetCount(onlyActive bool) (int, error) {
+	countSelect := squirrel.Select("count(*)").From("visitor")
+	if onlyActive {
+		countSelect = countSelect.Where(visitorRepo.whereActive)
+	}
+
+	query, _, err := countSelect.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrBuildingQuery, err)
+	}
 
 	var totalAmount int
-	err := visitorRepo.database.driver.Get(&totalAmount, query)
+	err = visitorRepo.database.driver.Get(&totalAmount, query)
 	if err != nil {
 		return 0, fmt.Errorf("visitor_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
 	}
