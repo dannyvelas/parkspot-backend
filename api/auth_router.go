@@ -90,7 +90,16 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			respondError(w, newErrBadRequest("Resident with this id already exists. Please delete the old account if necessary."))
 			return
 		} else if !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msg("auth_router.createResident: " + err.Error())
+			log.Error().Msgf("auth_router.createResident: error getting resident by id: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		if _, err := residentRepo.GetOneByEmail(payload.Email); err == nil {
+			respondError(w, newErrBadRequest("Resident with this email already exists. Please delete the old account or use a different email."))
+			return
+		} else if !errors.Is(err, storage.ErrNoRows) {
+			log.Error().Msgf("auth_router.createResident error getting resident by email: %v", err)
 			respondInternalError(w)
 			return
 		}
