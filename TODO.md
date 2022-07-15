@@ -59,6 +59,7 @@
 - [x] rename permit_router funcs so that they explain that they deal w permits for consistency
 - [ ] add a check for the license_plate of a new car being longer than 10 (avoid database truncation)
 - [ ] add a check for unique resident emails
+- [ ] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] add resident edit/delete functionality
 - [ ] make sure that residents can't make an API request to create a permit for another person
@@ -69,6 +70,9 @@
 - [ ] change error messages for residents when they're creating a permit
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
 - [ ] add test to make sure that a permit from today to tomorrow is counted as active today
+- [ ] add test that resident can have two active permits at one time, but no more
+- [ ] add test to make sure that the error message for a resident creating a third active permit has the correct dates
+- [ ] add test to make sure license plates get upper-cased
 - [ ] make fatal test errors more informative
 - [ ] probably make resident creation/deletion endpoints consistent (these say `account`, others say `resident`)
 - [ ] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
