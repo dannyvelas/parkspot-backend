@@ -27,12 +27,12 @@ func NewResidentRepo(database Database) ResidentRepo {
 	return ResidentRepo{database: database, residentSelect: residentSelect}
 }
 
-func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
-	if id == "" {
+func (residentRepo ResidentRepo) GetOne(residentId string) (models.Resident, error) {
+	if residentId == "" {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	}
 
-	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", id).ToSql()
+	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentId).ToSql()
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", ErrBuildingQuery, err)
 	}
@@ -43,6 +43,27 @@ func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", ErrNoRows)
 	} else if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+	}
+
+	return resident.toModels(), nil
+}
+
+func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, error) {
+	if email == "" {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: Empty ID argument", ErrInvalidArg)
+	}
+
+	query, args, err := residentRepo.residentSelect.Where("resident.email = $1", email).ToSql()
+	if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", ErrBuildingQuery, err)
+	}
+
+	resident := resident{}
+	err = residentRepo.database.driver.Get(&resident, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", ErrNoRows)
+	} else if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return resident.toModels(), nil
