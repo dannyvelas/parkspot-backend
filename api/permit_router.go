@@ -185,9 +185,9 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 				log.Error().Msgf("permit_router.createPermit: Error querying permitRepo: %v", err)
 				respondInternalError(w)
 				return
-			} else if len(activePermitsDuring) != 0 {
+			} else if len(activePermitsDuring) >= 2 {
 				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
-					"because this resident has at least one active permit during that time.",
+					"because this resident has at least two active permits during that time.",
 					newPermitReq.StartDate.Format(dateFormat),
 					newPermitReq.EndDate.Format(dateFormat))
 				respondError(w, newErrBadRequest(message))
