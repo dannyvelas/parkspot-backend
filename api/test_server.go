@@ -134,7 +134,6 @@ func createTestResidents(testServerURL, jwtToken string) error {
 			if err != nil {
 				return fmt.Errorf("test_server.createTestResident: error getting error response: %v", err)
 			}
-
 			return fmt.Errorf("test_server.createTestResident: Bad response: %s", string(bodyBytes))
 		}
 
@@ -165,7 +164,6 @@ func deleteTestResidents(testServerURL, jwtToken string) error {
 			if err != nil {
 				return fmt.Errorf("test_server.deleteTestResident: error getting error response: %v", err)
 			}
-
 			return fmt.Errorf("test_server.deleteTestResident: Bad response: %s", string(bodyBytes))
 		}
 
