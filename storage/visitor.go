@@ -22,7 +22,7 @@ func (visitor visitor) toModels() models.Visitor {
 		FirstName:    visitor.FirstName,
 		LastName:     visitor.LastName,
 		Relationship: visitor.Relationship,
-		AccessStart:  time.Unix(visitor.AccessStart, 0),
+		AccessStart:  time.Unix(visitor.AccessStart, 0), // time.Unix() returns time in local tz
 		AccessEnd:    time.Unix(visitor.AccessEnd, 0),
 	}
 }

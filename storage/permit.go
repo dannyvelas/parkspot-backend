@@ -22,7 +22,7 @@ func (permit permit) toModels() models.Permit {
 		permit.PermitId,
 		permit.ResidentId,
 		permit.car.toModels(),
-		time.Unix(permit.StartTS, 0),
+		time.Unix(permit.StartTS, 0), // time.Unix() returns time in local tz
 		time.Unix(permit.EndTS, 0),
 		permit.RequestTS.Int64,
 		permit.AffectsDays,
