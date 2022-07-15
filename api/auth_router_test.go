@@ -139,3 +139,38 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		ResidentRole)
 	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
 }
+
+func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
+	requestBody := []byte(fmt.Sprintf(`{
+    "residentId": "B0000000",
+    "firstName": "first",
+    "lastName": "last",
+    "phone": "123456789",
+    "email": "%s",
+    "password":"password",
+    "unlimDays": false
+  }`,
+		testResident.Email))
+
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.jwtToken)
+	if err != nil {
+		suite.NoError(fmt.Errorf("error sending request: %v", err))
+		return
+	}
+	defer responseBody.Close()
+
+	if statusCode == http.StatusOK {
+		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
+		return
+	}
+
+	suite.Equal(http.StatusBadRequest, statusCode, "Expected bad request got: %d", statusCode)
+
+	bodyBytes, err := io.ReadAll(responseBody)
+	if err != nil {
+		suite.NoError(fmt.Errorf("error getting error response: %v", err))
+		return
+	}
+
+	suite.Contains(string(bodyBytes), "email") // assert bad request happened bc of email
+}
