@@ -63,7 +63,15 @@
 - [ ] add resident edit/delete functionality
 - [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
+- [ ] add test to make sure residents can't create exception permits
+- [ ] make sure residents can't create visitors with a start date in the past
+- [ ] add check that contractors can't stay until forever and can stay only for (x) days
 - [ ] change error messages for residents when they're creating a permit
+- [ ] add test to make sure that a permit from yesterday to today is counted as active today
+- [ ] add test to make sure that a permit from today to tomorrow is counted as active today
+- [ ] make fatal test errors more informative
+- [ ] probably make resident creation/deletion endpoints consistent (these say `account`, others say `resident`)
+- [ ] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
 - [ ] add `getAllVisitors` testing to visitor\_router
 - [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed`
 - [ ] add check to make sure permit request start date is not in past
@@ -81,6 +89,7 @@
 - [x] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod. (cors and acceptCredentials=true is necessary in prod. CORS allows a front-end URL to send a request to the API URL, when they're different domains. acceptCredentials is necessary for the server to be able to read the cookie that comes with the request. [Ref here](https://web.dev/cross-origin-resource-sharing/). But, you can make the CORSALLOWEDORIGINS env variable a specific URL in prod, which makes it safe and appropriate)
 - [x] change `username` instances to `id` for consistency
 - [x] think of a way to define the resident regex once
+- [ ] do proper status checking in permit_router_test (not just suite.Equal(http.StatusOK, statusCode)) but an actual if check that returns the error response error message
 - [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] start injecting a `sq` variable of type `StatementBuilderType` to every repo. this will be the variable used to create squirrel statements. this will be done instead of importing squirrel into every repo and using the default statement builder. the `sq` variable will be initialized like this:
     `sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)`
@@ -89,6 +98,7 @@
 - [ ] make naming more consistent in permit_router_test
 - [ ] add not authorized error message when a create permit payload has a residentID field that does not coincide with the id field of the JWT user payload, when that JWT payload has role === resident.
 - [ ] remove NewPermitArgs NewCarArgs from models. i'd rather send the args individually from the router to the repo, than have a bunch of functions like permitReq.toNewPermitArgs(args...) or newPermitArgs.ToPermit(args..)
+- [ ] make a `/visitors` endpoint return all resident visitors if an admin made the query and only a resident's visitors, if that resident made the query. same goes for `permits/*`
 - [ ] remove "No error when" messages from repo_tests. unnecessary
 - [ ] add expiration JWT time to constants
 - [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
