@@ -42,6 +42,10 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 func getOnePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := toPosInt(chi.URLParam(r, "id"))
+		if id == 0 {
+			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			return
+		}
 
 		permit, err := permitRepo.GetOne(id)
 		if errors.Is(err, storage.ErrNoRows) {
@@ -283,6 +287,10 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := toPosInt(chi.URLParam(r, "id"))
+		if id == 0 {
+			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			return
+		}
 
 		permit, err := permitRepo.GetOne(id)
 		if errors.Is(err, storage.ErrNoRows) {
