@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
+	"time"
 )
 
 func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter) http.HandlerFunc {
@@ -149,8 +150,9 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			} else if len(activePermitsDuring) != 0 {
 				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
 					"because this car has at least one active permit during that time.",
-					newPermitReq.StartDate.Format(dateFormat),
-					newPermitReq.EndDate.Format(dateFormat))
+					newPermitReq.StartDate.In(time.Local).Format(dateFormat),
+					newPermitReq.EndDate.In(time.Local).Format(dateFormat))
+
 				respondError(w, newErrBadRequest(message))
 				return
 			}
@@ -188,8 +190,8 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			} else if len(activePermitsDuring) >= 2 {
 				message := fmt.Sprintf("Cannot create a permit during dates %s and %s, "+
 					"because this resident has at least two active permits during that time.",
-					newPermitReq.StartDate.Format(dateFormat),
-					newPermitReq.EndDate.Format(dateFormat))
+					newPermitReq.StartDate.In(time.Local).Format(dateFormat),
+					newPermitReq.EndDate.In(time.Local).Format(dateFormat))
 				respondError(w, newErrBadRequest(message))
 				return
 			}
