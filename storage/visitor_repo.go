@@ -39,7 +39,7 @@ func NewVisitorRepo(database Database) VisitorRepo {
 
 func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models.Visitor, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("visitor_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
 	visitorSelect := visitorRepo.visitorSelect
@@ -53,13 +53,13 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models
 		OrderBy("visitor.id ASC").
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.GetAll: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", ErrBuildingQuery, err)
 	}
 
 	visitors := visitorSlice{}
 	err = visitorRepo.database.driver.Select(&visitors, query)
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return visitors.toModels(), nil
@@ -79,7 +79,7 @@ func (visitorRepo VisitorRepo) GetCount(onlyActive bool) (int, error) {
 	var totalAmount int
 	err = visitorRepo.database.driver.Get(&totalAmount, query)
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
+		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return totalAmount, nil
