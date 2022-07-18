@@ -59,7 +59,7 @@ func NewRouter(
 			officeRouter.Get("/visitors", getActiveVisitors(visitorRepo))
 			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
 			officeRouter.Post("/account", createResident(residentRepo))
-			officeRouter.Delete("/account/{id}", deleteResident(residentRepo))
+			officeRouter.Delete("/resident/{id}", deleteResident(residentRepo))
 			officeRouter.Get("/car/{id}", getOneCar(carRepo))
 			officeRouter.Put("/car/{id}", editCar(carRepo))
 		})

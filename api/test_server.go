@@ -152,7 +152,7 @@ func createTestResidents(testServerURL, jwtToken string) error {
 
 func deleteTestResidents(testServerURL, jwtToken string) error {
 	deleteFn := func(testResident models.Resident) error {
-		endpoint := fmt.Sprintf("%s/api/account/%s", testServerURL, testResident.Id)
+		endpoint := fmt.Sprintf("%s/api/resident/%s", testServerURL, testResident.Id)
 		responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwtToken)
 		if err != nil {
 			return fmt.Errorf("test_server.deleteTestResident: error sending request: %v", err)
