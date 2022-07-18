@@ -57,11 +57,12 @@
 - [x] change login_router instances to auth_router
 - [x] make Role type lowercase.
 - [x] rename permit_router funcs so that they explain that they deal w permits for consistency
-- [ ] add a check for the license_plate of a new car being longer than 10 (avoid database truncation)
-- [ ] add a check for unique resident emails
+- [x] add a check for the license_plate of a new car being longer than 10 (avoid database truncation)
+- [x] add a check for unique resident emails
+- [ ] add resident edit/delete functionality
+- [ ] when an permit request has a license plate of an existing car, if the car object in the payload has non null make and model fields, and the existing car has null make and model fields in the database, have the make/model fields in the car object in the payload overwrite the null make/model fields in the database
 - [ ] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
-- [ ] add resident edit/delete functionality
 - [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
 - [ ] add test to make sure residents can't create exception permits
