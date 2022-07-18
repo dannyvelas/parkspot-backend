@@ -19,9 +19,8 @@ type permitRouterSuite struct {
 	suite.Suite
 	testServer  *httptest.Server
 	jwtToken    string
-	testCar     newCarReq
-	testPermits map[string]newPermitReq // uses testCar
-	testPermit  newPermitReq            // noUnlimDays,noException. uses testCar
+	testPermits map[string]newPermitReq
+	testPermit  newPermitReq // noUnlimDays,noException
 }
 
 func TestPermitRouter(t *testing.T) {
@@ -49,15 +48,14 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.testCar = newCarReq{"one", "one", "one", "one"}
-
+	testCar := newCarReq{"one", "one", "one", "one"}
 	suite.testPermits = map[string]newPermitReq{
-		"NoUnlimDays,NoException": newTestPermit(testResident.Id, suite.testCar, ""),
-		"UnlimDays,NoException":   newTestPermit(testResidentUnlimDays.Id, suite.testCar, ""),
-		"NoUnlimDays,Exception":   newTestPermit(testResident.Id, suite.testCar, "some exception reason"),
-		"UnlimDays,Exception":     newTestPermit(testResidentUnlimDays.Id, suite.testCar, "some exception reason"),
+		"NoUnlimDays,NoException": newTestPermit(testResident.Id, testCar, ""),
+		"UnlimDays,NoException":   newTestPermit(testResidentUnlimDays.Id, testCar, ""),
+		"NoUnlimDays,Exception":   newTestPermit(testResident.Id, testCar, "some exception reason"),
+		"UnlimDays,Exception":     newTestPermit(testResidentUnlimDays.Id, testCar, "some exception reason"),
 	}
-	suite.testPermit = newTestPermit(testResident.Id, suite.testCar, "")
+	suite.testPermit = newTestPermit(testResident.Id, testCar, "")
 }
 
 func (suite permitRouterSuite) TearDownSuite() {
@@ -65,7 +63,7 @@ func (suite permitRouterSuite) TearDownSuite() {
 
 	err := deleteTestResidents(suite.testServer.URL, suite.jwtToken)
 	if err != nil {
-		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
+		log.Error().Msg("permit_router_test.TearDownSuite: " + err.Error())
 		return
 	}
 }
