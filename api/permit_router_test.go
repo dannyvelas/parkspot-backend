@@ -78,15 +78,16 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	resPermitThree := newTestPermit(testResident.Id, newCarReq{"three", "three", "three", "three"}, "")
 
 	// car permit, with the same car as permitOne
-	carPermitTwo := newTestPermit(testResident.Id, suite.testCar, "")
+	carPermitTwo := newTestPermit(testResident.Id, permitOne.Car, "")
 
-	// for each item, create the array of permits, test whether each permit creation fails or succeeds
 	type createPermitTest struct {
 		name       string
 		permit     newPermitReq
 		shouldBeOk bool
 	}
 
+	// create an array of tests
+	// each test is an array of permits to create
 	type testSet []createPermitTest
 	testSets := []testSet{
 		{{"resident second permit", resPermitTwo, true}, {"resident third permit", resPermitThree, false}},
@@ -101,6 +102,7 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	}
 	defer deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
 
+	// see which permit creations succeed/fail
 	for _, testSet := range testSets {
 		createdPermitIds := []int{}
 		for _, createPermitTest := range testSet {
