@@ -57,7 +57,14 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		cookie := http.Cookie{Name: "jwt", Value: token, HttpOnly: true, Path: "/"}
+		cookie := http.Cookie{
+			Name:     "jwt",
+			Value:    token,
+			HttpOnly: true,
+			Path:     "/",
+			SameSite: http.SameSiteNoneMode,
+			Secure:   true,
+		}
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, user)
