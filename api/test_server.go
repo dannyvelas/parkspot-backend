@@ -32,33 +32,9 @@ var (
 		0)
 )
 
-func newTestServer() (*httptest.Server, error) {
-	c, err := config.NewConfig()
-	if err != nil {
-		return nil, fmt.Errorf("Error loading config: %v", err.Error())
-	}
-
-	database, err := storage.NewDatabase(c.Postgres())
-	if err != nil {
-		return nil, fmt.Errorf("Failed to start database: %v", err)
-	}
-
-	// init repos
-	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
-	carRepo := storage.NewCarRepo(database)
-	residentRepo := storage.NewResidentRepo(database)
-	visitorRepo := storage.NewVisitorRepo(database)
-
-	// http setup
-	httpConfig := c.Http()
-
-	router := NewRouter(httpConfig, c.Token(), c.OAuth(), config.DateFormat,
-		adminRepo, permitRepo, carRepo, residentRepo, visitorRepo)
-
-	testServer := httptest.NewServer(router)
-
-	return testServer, nil
+func newTestServer(c config.Config, repos storage.Repos) *httptest.Server {
+	router := NewRouter(c.Http(), c.Token(), c.OAuth(), config.DateFormat, repos)
+	return httptest.NewServer(router)
 }
 
 func authenticatedReq(method string, url string, requestBytes []byte, jwtToken string) (io.ReadCloser, int, error) {

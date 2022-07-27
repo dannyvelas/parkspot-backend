@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -17,8 +18,9 @@ import (
 
 type permitRouterSuite struct {
 	suite.Suite
+	carRepo     storage.CarRepo
 	testServer  *httptest.Server
-	jwtToken    string
+	adminJWT    string
 	testPermits map[string]newPermitReq
 	testPermit  newPermitReq // noUnlimDays,noException
 }
@@ -28,22 +30,26 @@ func TestPermitRouter(t *testing.T) {
 }
 
 func (suite *permitRouterSuite) SetupSuite() {
-	config, err := config.NewConfig()
+	c, err := config.NewConfig()
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.testServer, err = newTestServer()
+	database, err := storage.NewDatabase(c.Postgres())
+	if err != nil {
+		log.Fatal().Msgf("Failed to start database: %v", err)
+	}
+
+	repos := storage.NewRepos(database)
+
+	suite.testServer = newTestServer(c, repos)
+
+	suite.adminJWT, err = getAdminJWT(c.Token())
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.jwtToken, err = getAdminJWT(config.Token())
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-	}
-
-	err = createTestResidents(suite.testServer.URL, suite.jwtToken)
+	err = createTestResidents(suite.testServer.URL, suite.adminJWT)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -61,7 +67,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 func (suite permitRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.testServer.URL, suite.jwtToken)
+	err := deleteTestResidents(suite.testServer.URL, suite.adminJWT)
 	if err != nil {
 		log.Error().Msg("permit_router_test.TearDownSuite: " + err.Error())
 		return
@@ -93,18 +99,18 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	}
 
 	// create permitOne
-	id, err := createTestPermit(suite.testServer.URL, suite.jwtToken, permitOne)
+	id, err := createTestPermit(suite.testServer.URL, suite.adminJWT, permitOne)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
-	defer deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
+	defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
 
 	// see which permit creations succeed/fail
 	for _, testSet := range testSets {
 		createdPermitIds := []int{}
 		for _, createPermitTest := range testSet {
-			id, err := createTestPermit(suite.testServer.URL, suite.jwtToken, createPermitTest.permit)
+			id, err := createTestPermit(suite.testServer.URL, suite.adminJWT, createPermitTest.permit)
 			if err != nil && createPermitTest.shouldBeOk {
 				suite.NoError(fmt.Errorf("%s failed: Error creating permit when it should've been okay: %v", createPermitTest.name, err))
 			} else if err == nil && !createPermitTest.shouldBeOk {
@@ -118,7 +124,7 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 		}
 
 		for _, id := range createdPermitIds {
-			err = deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
+			err = deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
 			if err != nil {
 				suite.NoError(fmt.Errorf("Error deleting test permit: %v", err))
 			}
@@ -136,7 +142,7 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
       "model":""
     }
   }`)
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -167,7 +173,7 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
     "startDate": "",
     "endDate": ""
   }`)
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -188,18 +194,18 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
 	executeTest := func(testName string, testPermit newPermitReq) error {
-		residentBefore, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.jwtToken)
+		residentBefore, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		id, err := createTestPermit(suite.testServer.URL, suite.jwtToken, testPermit)
+		id, err := createTestPermit(suite.testServer.URL, suite.adminJWT, testPermit)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
-		defer deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
+		defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
 
-		residentNow, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.jwtToken)
+		residentNow, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
@@ -229,22 +235,22 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 
 func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 	executeTest := func(testName string, newPermitReq newPermitReq) error {
-		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.jwtToken)
+		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		id, err := createTestPermit(suite.testServer.URL, suite.jwtToken, newPermitReq)
+		id, err := createTestPermit(suite.testServer.URL, suite.adminJWT, newPermitReq)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		err = deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
+		err = deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.jwtToken)
+		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
@@ -272,15 +278,15 @@ func (suite permitRouterSuite) TestCreate_AllFieldsMatch() {
 }
 
 func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
-	id, err := createTestPermit(suite.testServer.URL, suite.jwtToken, suite.testPermit)
+	id, err := createTestPermit(suite.testServer.URL, suite.adminJWT, suite.testPermit)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
-	defer deleteTestPermit(suite.testServer.URL, suite.jwtToken, id)
+	defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
 
 	endpoint := fmt.Sprintf("%s/api/resident/%s/permits/active", suite.testServer.URL, testResident.Id)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -315,7 +321,7 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 
 func (suite permitRouterSuite) TestGetMaxExceptions_Positive() {
 	endpoint := fmt.Sprintf("%s/api/permits/exceptions?limit=%d", suite.testServer.URL, config.MaxLimit)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -357,13 +363,13 @@ func newTestPermit(residentId string, car newCarReq, exceptionReason string) new
 	}
 }
 
-func createTestPermit(url string, jwtToken string, testPermit newPermitReq) (int, error) {
+func createTestPermit(url string, adminJWT string, testPermit newPermitReq) (int, error) {
 	requestBody, err := json.Marshal(testPermit)
 	if err != nil {
 		return 0, fmt.Errorf("Error marshalling: %v", err)
 	}
 
-	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/permit", requestBody, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/permit", requestBody, adminJWT)
 	if err != nil {
 		return 0, fmt.Errorf("Error making request: %v", err)
 	}
@@ -385,9 +391,9 @@ func createTestPermit(url string, jwtToken string, testPermit newPermitReq) (int
 	return newPermitResponse.Id, nil
 }
 
-func deleteTestPermit(url string, jwtToken string, id int) error {
+func deleteTestPermit(url string, adminJWT string, id int) error {
 	endpoint := fmt.Sprintf("%s/api/permit/%d", url, id)
-	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, adminJWT)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
 	}
@@ -404,9 +410,9 @@ func deleteTestPermit(url string, jwtToken string, id int) error {
 	return nil
 }
 
-func getTestResident(url string, residentId string, jwtToken string) (models.Resident, error) {
+func getTestResident(url string, residentId string, adminJWT string) (models.Resident, error) {
 	endpoint := fmt.Sprintf("%s/api/resident/%s", url, residentId)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, adminJWT)
 	if err != nil {
 		return models.Resident{}, err
 	}

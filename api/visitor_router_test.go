@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"io"
@@ -28,22 +29,26 @@ func TestVisitorRouter(t *testing.T) {
 }
 
 func (suite *visitorRouterSuite) SetupSuite() {
-	config, err := config.NewConfig()
+	c, err := config.NewConfig()
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.testServer, err = newTestServer()
+	database, err := storage.NewDatabase(c.Postgres())
+	if err != nil {
+		log.Fatal().Msgf("Failed to start database: %v", err)
+	}
+
+	repos := storage.NewRepos(database)
+
+	suite.testServer = newTestServer(c, repos)
+
+	suite.residentJWT, err = getResidentJWT(c.Token())
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.residentJWT, err = getResidentJWT(config.Token())
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-	}
-
-	suite.adminJWT, err = getAdminJWT(config.Token())
+	suite.adminJWT, err = getAdminJWT(c.Token())
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -123,13 +128,13 @@ func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
 	suite.Equal(suite.testVisitor.LastName, firstVisitor.LastName)
 }
 
-func createTestVisitor(url string, jwtToken string, testVisitor newVisitorReq) (string, error) {
+func createTestVisitor(url string, jwt string, testVisitor newVisitorReq) (string, error) {
 	requestBody, err := json.Marshal(testVisitor)
 	if err != nil {
 		return "", fmt.Errorf("Error marshalling testVisitor")
 	}
 
-	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/visitor", requestBody, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/visitor", requestBody, jwt)
 	if err != nil {
 		return "", fmt.Errorf("Error making request: %v", err)
 	}
@@ -151,9 +156,9 @@ func createTestVisitor(url string, jwtToken string, testVisitor newVisitorReq) (
 	return response.Id, nil
 }
 
-func deleteTestVisitor(url string, jwtToken string, id string) error {
+func deleteTestVisitor(url string, jwt string, id string) error {
 	endpoint := fmt.Sprintf("%s/api/visitor/%s", url, id)
-	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwtToken)
+	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwt)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
 	}

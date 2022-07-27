@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -17,7 +18,7 @@ import (
 type authRouterSuite struct {
 	suite.Suite
 	testServer *httptest.Server
-	jwtToken   string
+	adminJWT   string
 }
 
 func TestAuthRouter(t *testing.T) {
@@ -25,22 +26,24 @@ func TestAuthRouter(t *testing.T) {
 }
 
 func (suite *authRouterSuite) SetupSuite() {
-	config, err := config.NewConfig()
+	c, err := config.NewConfig()
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.testServer, err = newTestServer()
+	database, err := storage.NewDatabase(c.Postgres())
+	if err != nil {
+		log.Fatal().Msgf("Failed to start database: %v", err)
+	}
+
+	suite.testServer = newTestServer(c, storage.NewRepos(database))
+
+	suite.adminJWT, err = getAdminJWT(c.Token())
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.jwtToken, err = getAdminJWT(config.Token())
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-	}
-
-	err = createTestResidents(suite.testServer.URL, suite.jwtToken)
+	err = createTestResidents(suite.testServer.URL, suite.adminJWT)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -49,7 +52,7 @@ func (suite *authRouterSuite) SetupSuite() {
 func (suite authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.testServer.URL, suite.jwtToken)
+	err := deleteTestResidents(suite.testServer.URL, suite.adminJWT)
 	if err != nil {
 		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
 		return
@@ -152,7 +155,7 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
   }`,
 		testResident.Email))
 
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.jwtToken)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminJWT)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error sending request: %v", err))
 		return
