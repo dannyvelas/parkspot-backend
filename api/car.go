@@ -110,14 +110,6 @@ func (editCarReq editCarReq) validate() error {
 	return nil
 }
 
-func (editCarReq editCarReq) toEditCarArgs() models.EditCarArgs {
-	return models.NewEditCarArgs(
-		editCarReq.Color,
-		editCarReq.Make,
-		editCarReq.Model,
-	)
-}
-
 // helpers
 
 func invalidColorMakeModel(color, make, model string) []string {

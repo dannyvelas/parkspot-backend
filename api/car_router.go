@@ -46,9 +46,7 @@ func editCar(carRepo storage.CarRepo) http.HandlerFunc {
 			return
 		}
 
-		editCarArgs := editCarReq.toEditCarArgs()
-
-		err := carRepo.Update(id, editCarArgs)
+		err := carRepo.Update(id, editCarReq.Color, editCarReq.Make, editCarReq.Model)
 		if err != nil {
 			log.Error().Msgf("car_router.editCar: Error updating car: %v", err)
 			respondInternalError(w)

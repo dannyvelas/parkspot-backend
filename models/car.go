@@ -57,17 +57,3 @@ func NewNewCarArgs(licensePlate string, color string, make string, model string)
 func (newCarArgs NewCarArgs) ToCar(id string) Car {
 	return NewCar(id, newCarArgs.LicensePlate, newCarArgs.Color, newCarArgs.Make, newCarArgs.Model, 0)
 }
-
-type EditCarArgs struct {
-	Color string `json:"color"`
-	Make  string `json:"make"`
-	Model string `json:"model"`
-}
-
-func NewEditCarArgs(color, make, model string) EditCarArgs {
-	return EditCarArgs{
-		Color: color,
-		Make:  make,
-		Model: model,
-	}
-}
