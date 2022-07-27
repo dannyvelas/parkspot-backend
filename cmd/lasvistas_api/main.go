@@ -35,25 +35,12 @@ func main() {
 	log.Info().Msg("Connected to Database.")
 
 	// init repos
-	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
-	carRepo := storage.NewCarRepo(database)
-	residentRepo := storage.NewResidentRepo(database)
-	visitorRepo := storage.NewVisitorRepo(database)
+	repos := storage.NewRepos(database)
 
 	// http setup
 	httpConfig := c.Http()
 
-	router := api.NewRouter(
-		httpConfig,
-		c.Token(),
-		c.OAuth(),
-		config.DateFormat,
-		adminRepo,
-		permitRepo,
-		carRepo,
-		residentRepo,
-		visitorRepo)
+	router := api.NewRouter(httpConfig, c.Token(), c.OAuth(), config.DateFormat, repos)
 
 	httpServer := http.Server{
 		Addr:         ":" + httpConfig.Port(),

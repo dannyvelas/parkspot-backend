@@ -14,11 +14,7 @@ func NewRouter(
 	tokenConfig config.TokenConfig,
 	oauthConfig config.OAuthConfig,
 	dateFormat string,
-	adminRepo storage.AdminRepo,
-	permitRepo storage.PermitRepo,
-	carRepo storage.CarRepo,
-	residentRepo storage.ResidentRepo,
-	visitorRepo storage.VisitorRepo,
+	repos storage.Repos,
 ) (router *chi.Mux) {
 	router = chi.NewRouter()
 
@@ -40,44 +36,44 @@ func NewRouter(
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login", login(jwtMiddleware, adminRepo, residentRepo))
+			anyoneRouter.Post("/login", login(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, oauthConfig, adminRepo, residentRepo))
-			anyoneRouter.Put("/account/password", resetPassword(jwtMiddleware, adminRepo, residentRepo))
+			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, oauthConfig, repos.Admin, repos.Resident))
+			anyoneRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 		})
 
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(jwtMiddleware.authenticate(AdminRole)) //, SecurityRole
-			officeRouter.Get("/permits", getPermits(permitRepo, models.AllPermits))
-			officeRouter.Get("/permits/active", getPermits(permitRepo, models.ActivePermits))
-			officeRouter.Get("/permits/exceptions", getPermits(permitRepo, models.ExceptionPermits))
-			officeRouter.Get("/permits/expired", getPermits(permitRepo, models.ExpiredPermits))
-			officeRouter.Get("/permits/search", searchPermits(permitRepo))
-			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(permitRepo, residentRepo, carRepo))
-			officeRouter.Get("/residents", getAllResidents(residentRepo))
-			officeRouter.Get("/resident/{id}", getOneResident(residentRepo))
-			officeRouter.Get("/visitors", getActiveVisitors(visitorRepo))
-			officeRouter.Get("/visitors/search", searchVisitors(visitorRepo))
-			officeRouter.Post("/account", createResident(residentRepo))
-			officeRouter.Delete("/resident/{id}", deleteResident(residentRepo))
-			officeRouter.Get("/car/{id}", getOneCar(carRepo))
-			officeRouter.Put("/car/{id}", editCar(carRepo))
+			officeRouter.Get("/permits", getPermits(repos.Permit, models.AllPermits))
+			officeRouter.Get("/permits/active", getPermits(repos.Permit, models.ActivePermits))
+			officeRouter.Get("/permits/exceptions", getPermits(repos.Permit, models.ExceptionPermits))
+			officeRouter.Get("/permits/expired", getPermits(repos.Permit, models.ExpiredPermits))
+			officeRouter.Get("/permits/search", searchPermits(repos.Permit))
+			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
+			officeRouter.Get("/residents", getAllResidents(repos.Resident))
+			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
+			officeRouter.Get("/visitors", getActiveVisitors(repos.Visitor))
+			officeRouter.Get("/visitors/search", searchVisitors(repos.Visitor))
+			officeRouter.Post("/account", createResident(repos.Resident))
+			officeRouter.Delete("/resident/{id}", deleteResident(repos.Resident))
+			officeRouter.Get("/car/{id}", getOneCar(repos.Car))
+			officeRouter.Put("/car/{id}", editCar(repos.Car))
 		})
 
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
-			userRouter.Post("/permit", createPermit(permitRepo, residentRepo, carRepo, dateFormat))
-			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(permitRepo))
-			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(permitRepo))
-			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(permitRepo))
+			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
+			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(repos.Permit))
+			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(repos.Permit))
+			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(repos.Permit))
 		})
 
 		r.Group(func(residentRouter chi.Router) {
 			residentRouter.Use(jwtMiddleware.authenticate(ResidentRole))
-			residentRouter.Get("/me/visitors", getVisitorsOfResident(visitorRepo))
-			residentRouter.Post("/visitor", createVisitor(visitorRepo))
-			residentRouter.Delete("/visitor/{id}", deleteVisitor(visitorRepo))
+			residentRouter.Get("/me/visitors", getVisitorsOfResident(repos.Visitor))
+			residentRouter.Post("/visitor", createVisitor(repos.Visitor))
+			residentRouter.Delete("/visitor/{id}", deleteVisitor(repos.Visitor))
 		})
 	})
 
