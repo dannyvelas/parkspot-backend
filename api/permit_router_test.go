@@ -58,13 +58,6 @@ func (suite *permitRouterSuite) SetupSuite() {
 	}
 
 	carOneReq := newCarReq{"one", "one", "one", "one"}
-	suite.carOneId, err = suite.carRepo.Create(carOneReq.toNewCarArgs())
-	if err != nil {
-		err := fmt.Errorf("Error creating car directly in carRepo: %v", err)
-		suite.NoError(err)
-		return
-	}
-
 	suite.testPermits = map[string]newPermitReq{
 		"NoUnlimDays,NoException": newTestPermit(testResident.Id, carOneReq, ""),
 		"UnlimDays,NoException":   newTestPermit(testResidentUnlimDays.Id, carOneReq, ""),
@@ -80,13 +73,6 @@ func (suite permitRouterSuite) TearDownSuite() {
 	err := deleteTestResidents(suite.testServer.URL, suite.adminJWT)
 	if err != nil {
 		log.Error().Msg("permit_router_test.TearDownSuite: " + err.Error())
-		return
-	}
-
-	err = suite.carRepo.Delete(suite.carOneId)
-	if err != nil {
-		err := fmt.Errorf("Error deleting car directly in carRepo: %v", err)
-		suite.NoError(err)
 		return
 	}
 }
@@ -116,17 +102,15 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	}
 
 	// create permitOne
-	permit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, permitOne)
+	createdPermitOne, err := createTestPermit(suite.testServer.URL, suite.adminJWT, permitOne)
 	if err != nil {
-		suite.NoError(err)
+		suite.NoError(fmt.Errorf("Error creating permitOne: %v", err))
 		return
 	}
-	defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, permit.Id)
 
 	// see which permit creations succeed/fail
 	for _, testSet := range testSets {
-		createdPermitIds := []int{}
-		createdCarIds := []string{}
+		createdPermits := []models.Permit{}
 		for _, createPermitTest := range testSet {
 			permit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, createPermitTest.permit)
 			if err != nil && createPermitTest.shouldBeOk {
@@ -137,98 +121,65 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 			// else: test passed: err == nil and should be okay OR err != nil and shouldn't be okay
 
 			if err == nil {
-				createdPermitIds = append(createdPermitIds, permit.Id) // if permit was created, mark for deletion
-				createdCarIds = append(createdCarIds, permit.Car.Id)
+				createdPermits = append(createdPermits, permit) // if permit was created, mark for deletion
 			}
 		}
 
-		for _, id := range createdPermitIds {
-			err = deleteTestPermit(suite.testServer.URL, suite.adminJWT, id)
+		for _, permit := range createdPermits {
+			err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, permit.Id, permit.Car.Id, suite.carRepo)
 			if err != nil {
-				suite.NoError(fmt.Errorf("Error deleting test permit: %v", err))
+				suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
 			}
 		}
+	}
 
-		for _, id := range createdCarIds {
-			err = suite.carRepo.Delete(id)
-			if err != nil {
-				err := fmt.Errorf("Error deleting car directly in carRepo: %v", err)
-				suite.NoError(err)
-				return
-			}
-		}
+	// delete permitOne and car associated with it
+	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermitOne.Id, createdPermitOne.Car.Id, suite.carRepo)
+	if err != nil {
+		err := fmt.Errorf("Error deleting test permit: %v", err)
+		suite.NoError(err)
 	}
 }
 
 func (suite permitRouterSuite) TestCreate_FillInCarFields() {
-	// this is the permit that will be created in tests
-	// permit intentionally has its licensePlate equal to the licensePlate of both carToCreate fields
-	// so that when the permit is created, it will use a car that already exists in the database
-	// this way, we can check whether fields are filled in for those existing cars
+	// car that will be seeded in db with missing fields
+	carToCreate := models.NewNewCarArgs("two", "two", "", "")
+
+	// permit that will be created after that car is seeded
+	// lp is the same, so `carToCreate` will be used as the permit's car
 	newCarReq := newCarReq{LicensePlate: "two", Color: "two", Make: "two", Model: "two"}
 	permitToCreate := newTestPermit(testResident.Id, newCarReq, "")
 
-	tests := []struct {
-		name           string
-		carToCreate    models.NewCarArgs
-		permitToCreate newPermitReq
-		hasEmptyFields bool
-	}{
-		{"emptyDBFields", models.NewNewCarArgs("two", "two", "", ""), permitToCreate, true},
-		{"fullDBFields", models.NewNewCarArgs("two", "two", "two", "two"), permitToCreate, false},
+	carId, err := suite.carRepo.Create(carToCreate)
+	if err != nil {
+		err := fmt.Errorf("Error creating car directly in carRepo: %v", err)
+		suite.NoError(err)
+		return
 	}
 
-	for _, test := range tests {
-		carId, err := suite.carRepo.Create(test.carToCreate)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error creating car directly in carRepo: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
-
-		carBefore, err := suite.carRepo.GetOne(carId)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error getting car directly from carRepo: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
-
-		createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, test.permitToCreate)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error creating test permit: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
-
-		err = deleteTestPermit(suite.testServer.URL, suite.adminJWT, createdPermit.Id)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error deleting test permit: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
-
-		carAfter, err := suite.carRepo.GetOne(carId)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error getting car directly from carRepo: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
-
-		if test.hasEmptyFields {
-			suite.Empty(carBefore.Make)
-			suite.Empty(carBefore.Model)
-		}
-
-		suite.NotEmpty(carAfter.Make, "when permit was created, existing car did not get make field filled in")
-		suite.NotEmpty(carAfter.Model, "when permit was created, existing car did not get model field filled in")
-
-		err = suite.carRepo.Delete(carId)
-		if err != nil {
-			err := fmt.Errorf("%s failed: Error deleting car directly in carRepo: %v", test.name, err)
-			suite.NoError(err)
-			return
-		}
+	createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, permitToCreate)
+	if err != nil {
+		err := fmt.Errorf("Error creating test permit: %v", err)
+		suite.NoError(err)
+		return
 	}
+
+	carAfter, err := suite.carRepo.GetOne(carId)
+	if err != nil {
+		err := fmt.Errorf("Error getting car directly from carRepo: %v", err)
+		suite.NoError(err)
+		return
+	}
+
+	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+	if err != nil {
+		err := fmt.Errorf("Error deleting test permit: %v", err)
+		suite.NoError(err)
+		return
+	}
+
+	suite.NotEmpty(carAfter.Make, "when permit was created, existing car did not get make field filled in")
+	suite.NotEmpty(carAfter.Model, "when permit was created, existing car did not get model field filled in")
 }
 
 func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
@@ -292,21 +243,26 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 }
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
-	executeTest := func(testName string, testPermit newPermitReq) error {
+	for testName, testPermit := range suite.testPermits {
 		residentBefore, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			err := fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(err)
+			return
 		}
 
 		createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, testPermit)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			err := fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(err)
+			return
 		}
-		defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, createdPermit.Id)
 
 		residentNow, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			err := fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(err)
+			return
 		}
 
 		// shouldAddDays is true when permit residentId does not have unlim days
@@ -318,17 +274,20 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 		amtDaysAddedToRes := residentNow.AmtParkingDaysUsed - residentBefore.AmtParkingDaysUsed
 		permitLength := int(lengthOfPermit.Hours() / 24)
 		if !shouldAddDays && amtDaysAddedToRes != 0 {
-			return fmt.Errorf("%s failed: added %d days when it shouldn't have. Permit length was: %d", testName, amtDaysAddedToRes, permitLength)
+			err := fmt.Errorf("%s failed: added %d days when it shouldn't have. Permit length was: %d", testName, amtDaysAddedToRes, permitLength)
+			suite.NoError(err)
+			return
 		} else if shouldAddDays && amtDaysAddedToRes != permitLength {
-			return fmt.Errorf("%s failed: added incorrect amount of days: %d instead of %d", testName, amtDaysAddedToRes, permitLength)
+			err := fmt.Errorf("%s failed: added incorrect amount of days: %d instead of %d", testName, amtDaysAddedToRes, permitLength)
+			suite.NoError(err)
+			return
 		}
 
-		return nil
-	}
-
-	for testName, test := range suite.testPermits {
-		err := executeTest(testName, test)
-		suite.NoError(err)
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+		if err != nil {
+			suite.NoError(fmt.Errorf("%s failed: deleting test permit failed: %v", testName, err))
+			return
+		}
 	}
 }
 
@@ -344,7 +303,7 @@ func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
 
-		err = deleteTestPermit(suite.testServer.URL, suite.adminJWT, createdPermit.Id)
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
 		if err != nil {
 			return fmt.Errorf("%s failed: %v", testName, err)
 		}
@@ -379,10 +338,15 @@ func (suite permitRouterSuite) TestCreate_AllFieldsMatch() {
 func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, suite.testPermit)
 	if err != nil {
-		suite.NoError(err)
+		suite.NoError(fmt.Errorf("Error creating permit: %v", err))
 		return
 	}
-	defer deleteTestPermit(suite.testServer.URL, suite.adminJWT, createdPermit.Id)
+	defer func() {
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+		if err != nil {
+			suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
+		}
+	}()
 
 	endpoint := fmt.Sprintf("%s/api/resident/%s/permits/active", suite.testServer.URL, testResident.Id)
 	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
@@ -490,8 +454,8 @@ func createTestPermit(url string, adminJWT string, testPermit newPermitReq) (mod
 	return newPermitResponse, nil
 }
 
-func deleteTestPermit(url string, adminJWT string, id int) error {
-	endpoint := fmt.Sprintf("%s/api/permit/%d", url, id)
+func deleteTestPermitAndCar(url, adminJWT string, permitId int, carId string, carRepo storage.CarRepo) error {
+	endpoint := fmt.Sprintf("%s/api/permit/%d", url, permitId)
 	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, adminJWT)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
@@ -504,6 +468,11 @@ func deleteTestPermit(url string, adminJWT string, id int) error {
 			return fmt.Errorf("Error getting error response: %v", err)
 		}
 		return fmt.Errorf("Bad response: %s", string(bodyBytes))
+	}
+
+	err = carRepo.Delete(carId)
+	if err != nil {
+		return fmt.Errorf("Error deleting car directly in carRepo: %v", err)
 	}
 
 	return nil
