@@ -21,7 +21,6 @@ type permitRouterSuite struct {
 	carRepo     storage.CarRepo
 	testServer  *httptest.Server
 	adminJWT    string
-	carOneId    string
 	testPermits map[string]newPermitReq
 	testPermit  newPermitReq // noUnlimDays,noException
 }
