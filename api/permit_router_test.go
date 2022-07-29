@@ -291,37 +291,35 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 }
 
 func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
-	executeTest := func(testName string, newPermitReq newPermitReq) error {
+	for testName, newPermitReq := range suite.testPermits {
 		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+			return
 		}
 
 		createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, newPermitReq)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+			return
 		}
 
 		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+			return
 		}
 
 		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
 		if err != nil {
-			return fmt.Errorf("%s failed: %v", testName, err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+			return
 		}
 
 		if residentBefore.AmtParkingDaysUsed != residentNow.AmtParkingDaysUsed {
-			return fmt.Errorf("%s failed: did not subract days. Resident has %d instead of %d", testName, residentNow.AmtParkingDaysUsed, residentBefore.AmtParkingDaysUsed)
+			suite.NoError(fmt.Errorf("%s failed: did not subract days. Resident has %d instead of %d", testName, residentNow.AmtParkingDaysUsed, residentBefore.AmtParkingDaysUsed))
+			return
 		}
-
-		return nil
-	}
-
-	for testName, newPermitReq := range suite.testPermits {
-		err := executeTest(testName, newPermitReq)
-		suite.NoError(err)
 	}
 }
 
