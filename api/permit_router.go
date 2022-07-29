@@ -234,20 +234,10 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 
 		// checks successful: proceed to create permit
 
-		// get or create car
-		var permitCar models.Car
-		if existingCar != (models.Car{}) {
-			permitCar = existingCar
-		} else {
-			newCarArgs := newPermitReq.Car.toNewCarArgs()
-			carId, err := carRepo.Create(newCarArgs)
-			if err != nil {
-				log.Error().Msgf("permit_router.createPermit: Error querying carRepo: %v", err)
-				respondInternalError(w)
-				return
-			}
-
-			permitCar = newCarArgs.ToCar(carId)
+		permitCar, err := getOrCreateCar(carRepo, existingCar, newPermitReq.Car)
+		if err != nil {
+			log.Error().Msgf("permit_router.createPermit: %v", err)
+			respondInternalError(w)
 		}
 
 		affectsDays := newPermitReq.ExceptionReason == "" && !existingResident.UnlimDays
@@ -361,4 +351,52 @@ func searchPermits(permitRepo storage.PermitRepo) http.HandlerFunc {
 
 		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
+}
+
+// helpers
+func getOrCreateCar(
+	carRepo storage.CarRepo,
+	existingCar models.Car,
+	newCarReq newCarReq,
+) (models.Car, error) {
+	if existingCar != (models.Car{}) { // car exists
+		if existingCar.Make != "" && existingCar.Model != "" {
+			return existingCar, nil
+		}
+
+		return carWithFilledInFields(carRepo, existingCar, newCarReq)
+	} else { // car DNE create and return car
+		newCarArgs := newCarReq.toNewCarArgs()
+		carId, err := carRepo.Create(newCarArgs)
+		if err != nil {
+			return models.Car{}, fmt.Errorf("Error creating car: %v", err)
+		}
+
+		return models.NewCar(
+			carId,
+			newCarReq.LicensePlate,
+			newCarReq.Color,
+			newCarReq.Make,
+			newCarReq.Model,
+			0), nil
+	}
+}
+
+func carWithFilledInFields(
+	carRepo storage.CarRepo,
+	existingCar models.Car,
+	newCarReq newCarReq,
+) (models.Car, error) {
+	// retroactively fill in fields which are NULL in db
+	err := carRepo.Update(existingCar.Id, newCarReq.Color, newCarReq.Make, newCarReq.Model)
+	if err != nil {
+		return models.Car{}, fmt.Errorf("Error updating car: %v", err)
+	}
+
+	return models.NewCar(existingCar.Id,
+		newCarReq.LicensePlate,
+		newCarReq.Color,
+		newCarReq.Make,
+		newCarReq.Model,
+		existingCar.AmtParkingDaysUsed), nil
 }
