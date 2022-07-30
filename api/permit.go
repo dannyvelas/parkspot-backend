@@ -77,14 +77,3 @@ func (newPermitReq newPermitReq) validate() error {
 
 	return nil
 }
-
-func (newPermitReq newPermitReq) toNewPermitArgs(carId string, affectsDays bool) models.NewPermitArgs {
-	return models.NewNewPermitArgs(
-		newPermitReq.ResidentId,
-		carId,
-		newPermitReq.StartDate,
-		newPermitReq.EndDate,
-		affectsDays,
-		newPermitReq.ExceptionReason,
-	)
-}

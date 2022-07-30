@@ -50,23 +50,3 @@ func (self Permit) Equal(other Permit) bool {
 
 	return true
 }
-
-type NewPermitArgs struct {
-	ResidentId      string
-	CarId           string
-	StartDate       time.Time
-	EndDate         time.Time
-	AffectsDays     bool
-	ExceptionReason string
-}
-
-func NewNewPermitArgs(residentId string, carId string, startDate time.Time, endDate time.Time, affectsDays bool, exceptionReason string) NewPermitArgs {
-	return NewPermitArgs{
-		ResidentId:      residentId,
-		CarId:           carId,
-		StartDate:       startDate,
-		EndDate:         endDate,
-		AffectsDays:     affectsDays,
-		ExceptionReason: exceptionReason,
-	}
-}

@@ -257,8 +257,14 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			}
 		}
 
-		newPermitArgs := newPermitReq.toNewPermitArgs(permitCar.Id, affectsDays)
-		permitId, err := permitRepo.Create(newPermitArgs)
+		permitId, err := permitRepo.Create(
+			newPermitReq.ResidentId,
+			permitCar.Id,
+			newPermitReq.StartDate.Unix(),
+			newPermitReq.EndDate.Unix(),
+			affectsDays,
+			newPermitReq.ExceptionReason,
+		)
 		if err != nil {
 			log.Error().Msgf("permit_router.createPermit: Error querying permitRepo: %v", err)
 			respondInternalError(w)
@@ -379,8 +385,7 @@ func getOrCreateCar(
 	}
 
 	// car DNE
-	newCarArgs := newCarReq.toNewCarArgs()
-	carId, err := carRepo.Create(newCarArgs)
+	carId, err := carRepo.Create(newCarReq.LicensePlate, newCarReq.Color, newCarReq.Make, newCarReq.Model)
 	if err != nil {
 		return models.Car{}, fmt.Errorf("Error creating car: %v", err)
 	}

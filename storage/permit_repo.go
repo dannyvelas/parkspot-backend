@@ -133,23 +133,46 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	return permit.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(newPermitArgs models.NewPermitArgs) (int, error) {
-	// intentionally no empty arg checking. it is assumed this happened at API boundary
-	const query = `
-    INSERT INTO permit(resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason)
-    VALUES($1, $2, $3, $4, extract(epoch from now()), $5, $6)
-    RETURNING id
-  `
+func (permitRepo PermitRepo) Create(
+	residentId,
+	carId string,
+	startTS,
+	endTS int64,
+	affectsDays bool,
+	exceptionReason string,
+) (int, error) {
+	// see whether exceptionReason is empty and convert appropriately
+	// assume everything else is already checked for emptyness
+	nullableReason := sql.NullString{}
+	if exceptionReason != "" {
+		nullableReason = sql.NullString{String: exceptionReason, Valid: true}
+	}
 
-	var id int
-	err := permitRepo.database.driver.Get(&id, query, newPermitArgs.ResidentId, newPermitArgs.CarId,
-		newPermitArgs.StartDate.Unix(), newPermitArgs.EndDate.Unix(), newPermitArgs.AffectsDays,
-		toNullable(newPermitArgs.ExceptionReason))
+	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	query, args, err := sq.
+		Insert("permit").
+		SetMap(squirrel.Eq{
+			"resident_id":      residentId,
+			"car_id":           carId,
+			"start_ts":         startTS,
+			"end_ts":           endTS,
+			"request_ts":       time.Now().Unix(),
+			"affects_days":     affectsDays,
+			"exception_reason": nullableReason,
+		}).
+		Suffix("RETURNING permit.id").
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrBuildingQuery, err)
+	}
+
+	var permitId int
+	err = permitRepo.database.driver.Get(&permitId, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
-	return id, nil
+	return permitId, nil
 }
 
 func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate time.Time) ([]models.Permit, error) {

@@ -142,14 +142,17 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 
 func (suite permitRouterSuite) TestCreate_FillInCarFields() {
 	// car that will be seeded in db with missing fields
-	carToCreate := models.NewNewCarArgs("two", "two", "", "")
+	seedCar_licensePlate := "two"
+	seedCar_color := "two"
+	seedCar_make := ""
+	seedCar_model := ""
 
 	// permit that will be created after that car is seeded
 	// lp is the same, so `carToCreate` will be used as the permit's car
 	newCarReq := newCarReq{LicensePlate: "two", Color: "two", Make: "two", Model: "two"}
 	permitToCreate := newTestPermit(testResident.Id, newCarReq, "")
 
-	carId, err := suite.carRepo.Create(carToCreate)
+	carId, err := suite.carRepo.Create(seedCar_licensePlate, seedCar_color, seedCar_make, seedCar_model)
 	if err != nil {
 		err := fmt.Errorf("Error creating car directly in carRepo: %v", err)
 		suite.NoError(err)

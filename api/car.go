@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/models"
 	"regexp"
 	"strings"
 )
@@ -74,15 +73,6 @@ func (newCarReq newCarReq) validate() error {
 	}
 
 	return nil
-}
-
-func (newCarReq newCarReq) toNewCarArgs() models.NewCarArgs {
-	return models.NewNewCarArgs(
-		newCarReq.LicensePlate,
-		newCarReq.Color,
-		newCarReq.Make,
-		newCarReq.Model,
-	)
 }
 
 // edit car request
