@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"time"
 )
 
 type VisitorRepo struct {
@@ -132,7 +131,13 @@ func (visitorRepo VisitorRepo) GetOfResident(residentId string) ([]models.Visito
 	return visitors.toModels(), nil
 }
 
-func (visitorRepo VisitorRepo) Create(residentId, firstName, lastName, relationship string, accessStart, accessEnd time.Time) (string, error) {
+func (visitorRepo VisitorRepo) Create(residentId,
+	firstName,
+	lastName,
+	relationship string,
+	startTS,
+	endTS int64,
+) (string, error) {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("visitor").
@@ -141,8 +146,8 @@ func (visitorRepo VisitorRepo) Create(residentId, firstName, lastName, relations
 			"first_name":   firstName,
 			"last_name":    lastName,
 			"relationship": relationship,
-			"access_start": accessStart.Unix(),
-			"access_end":   accessEnd.Unix(),
+			"access_start": startTS,
+			"access_end":   endTS,
 		}).
 		Suffix("RETURNING visitor.id").
 		ToSql()
