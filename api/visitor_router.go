@@ -88,7 +88,7 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 
 		user, err := ctxGetUser(ctx)
 		if err != nil {
-			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
+			log.Error().Msgf("visitor_router.createVisitor: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -104,18 +104,18 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			return
 		}
 
+		startTS, endTS := payload.AccessStart.Unix(), payload.AccessEnd.Unix()
 		if payload.IsForever {
-			year, month, day := time.Now().Date()
-			payload.AccessStart = time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-			payload.AccessEnd = models.EndOfTime
+			startTS = time.Now().Unix()
+			endTS = models.EndOfTime.Unix()
 		}
 
 		visitorId, err := visitorRepo.Create(user.Id,
 			payload.FirstName,
 			payload.LastName,
 			payload.Relationship,
-			payload.AccessStart,
-			payload.AccessEnd)
+			startTS,
+			endTS)
 		if err != nil {
 			log.Error().Msgf("visitor_router.createVisitor: Error creating visitor: %v", err)
 			respondInternalError(w)
