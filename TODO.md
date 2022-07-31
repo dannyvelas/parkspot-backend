@@ -15,15 +15,14 @@
 - [x] create exceptions table and allow requests to create exceptional permits
 - [x] make the `filter` argument to permitRepo.Search an enumerated string to disallow invalid values. or at least perform checking for invalid values
 - [x] either A) remove `window` as an option for getting expired permits from repo or B) allow the api to pass in a `window` value when searching for expired permits
-- [ ] remove reset password functionality for admins. also make admins sign up with a username instead of an email. probably remove email, first_name, and last_name properties from admin table.
 - [x] (DEPLOY) add DMARC records to mail server domain
 - [x] (DEPLOY) make sure that traffic to parkspotapp.com or any of its subdomains doesn't redirect to the api.lasvistas.parkspotapp or lasvistas.parkspotapp on either port 80 (HTTP) or 443 (HTTPS)
 - [x] (DEPLOY) remove NGINX welcome pages
 - [x] (DEPLOY) set up renewal for app certificates
 - [x] (DEPLOY) set up firewall on server again
 - [x] (DEPLOY) change receiving email of password resets from your personal email to the email of the user
+- [x] (DEPLOY) change parking days yearly limit to 20
 - [ ] (DEPLOY) use non-root user in vultr server
-- [ ] (DEPLOY) change parking days yearly limit to 20
 - [ ] (DEPLOY) remove api hello world at "/"
 - [ ] (DEPLOY) (not important) remove /api/ prefix from routes
 ## Mid priority
@@ -59,9 +58,9 @@
 - [x] rename permit_router funcs so that they explain that they deal w permits for consistency
 - [x] add a check for the license_plate of a new car being longer than 10 (avoid database truncation)
 - [x] add a check for unique resident emails
+- [x] when an permit request has a license plate of an existing car, if the car object in the payload has non null make and model fields, and the existing car has null make and model fields in the database, have the make/model fields in the car object in the payload overwrite the null make/model fields in the database
+- [x] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [ ] add resident edit/delete functionality
-- [ ] when an permit request has a license plate of an existing car, if the car object in the payload has non null make and model fields, and the existing car has null make and model fields in the database, have the make/model fields in the car object in the payload overwrite the null make/model fields in the database
-- [ ] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
@@ -73,7 +72,6 @@
 - [ ] add test to make sure that a permit from today to tomorrow is counted as active today
 - [ ] add test that resident can have two active permits at one time, but no more
 - [ ] add test to make sure that the error message for a resident creating a third active permit has the correct dates
-- [ ] add test to make sure license plates get upper-cased
 - [ ] make fatal test errors more informative
 - [ ] probably make resident creation/deletion endpoints consistent (these say `account`, others say `resident`)
 - [ ] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
