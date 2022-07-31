@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var EndOfTime = time.Date(9999, time.December, 31, 23, 59, 59, 0, time.Local)
+var EndOfTime = time.Date(9999, time.December, 31, 23, 59, 59, 0, time.UTC)
 
 type Visitor struct {
 	Id           string    `json:"id"`
