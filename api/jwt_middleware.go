@@ -30,7 +30,7 @@ func NewJWTMiddleware(tokenConfig config.TokenConfig) jwtMiddleware {
 func (jwtMiddleware jwtMiddleware) newJWT(id string, firstName string, lastName string, email string, role role) (string, error) {
 	claims := jwtClaims{
 		user{id, firstName, lastName, email, role},
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Hour * 12).Unix()},
+		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Hour * 24 * 7).Unix()},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
