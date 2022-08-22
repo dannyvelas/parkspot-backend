@@ -61,7 +61,7 @@ func (suite authRouterSuite) TearDownSuite() {
 
 func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	requestBody := []byte(`{
-    "id":"email@example.com",
+    "id":"test",
     "password":"notapassword"
   }`)
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
@@ -93,7 +93,7 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	expectedUser := newUser("b1394468-0018-47f5-afe5-1cc77118d161",
+	expectedUser := newUser("test",
 		"Daniel",
 		"Velasquez",
 		"email@example.com",

@@ -8,7 +8,7 @@ INSERT INTO admin(
   password,
   is_privileged
 ) VALUES(
-  'b1394468-0018-47f5-afe5-1cc77118d161',
+  'test',
   'Daniel',
   'Velasquez',
   'email@example.com',
