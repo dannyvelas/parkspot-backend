@@ -138,6 +138,9 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 
 func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		emailSentResponse := message{"If this account is in our database, instructions to" +
+			" reset a password have been sent to the email associated with this account."}
+
 		var payload struct{ Id string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("id object"))
@@ -149,7 +152,7 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAut
 
 		userFound, _, err := getUserAndHashById(payload.Id, adminRepo, residentRepo)
 		if errors.Is(err, errUnauthorized) {
-			respondError(w, errUnauthorized)
+			respondJSON(w, http.StatusOK, emailSentResponse)
 			return
 		} else if err != nil {
 			log.Error().Msg("auth_router.sendResetPasswordEmail: " + err.Error())
@@ -178,9 +181,7 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAut
 			return
 		}
 
-		message := message{fmt.Sprintf("Password has been successfully sent to %s."+
-			" Please check your inbox for instructions on resetting your password.", userFound.Email)}
-		respondJSON(w, http.StatusOK, message)
+		respondJSON(w, http.StatusOK, emailSentResponse)
 	}
 }
 
