@@ -16,10 +16,11 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
 		reversed := toBool(r.URL.Query().Get("reversed"))
+		search := r.URL.Query().Get("search")
 
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allPermits, err := permitRepo.Get(permitFilter, boundedLimit, offset, reversed)
+		allPermits, err := permitRepo.Get(permitFilter, boundedLimit, offset, reversed, search)
 		if err != nil {
 			log.Error().Msgf("permit_router.getPermits: Error getting permits: %v", err)
 			respondInternalError(w)
@@ -322,34 +323,6 @@ func deletePermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		}
 
 		respondJSON(w, http.StatusOK, message{"Successfully deleted permit"})
-	}
-}
-
-func searchPermits(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		searchStr := r.URL.Query().Get("search")
-		if searchStr == "" {
-			respondJSON(w, http.StatusOK, []models.Permit{})
-			return
-		}
-
-		listType := r.URL.Query().Get("listType")
-		permitFilter, err := models.NewPermitFilter(listType)
-		if err != nil {
-			respondError(w, newErrBadRequest("invalid listType value"))
-			return
-		}
-
-		permits, err := permitRepo.Search(searchStr, permitFilter)
-		if err != nil {
-			log.Error().Msgf("permit_router.searchPermits: Error getting permits: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(permits, len(permits))
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 

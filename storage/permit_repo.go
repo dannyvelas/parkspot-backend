@@ -59,7 +59,13 @@ func NewPermitRepo(database Database) PermitRepo {
 	}
 }
 
-func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, reversed bool) ([]models.Permit, error) {
+func (permitRepo PermitRepo) Get(
+	filter models.PermitFilter,
+	limit,
+	offset int,
+	reversed bool,
+	search string,
+) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
@@ -67,6 +73,18 @@ func (permitRepo PermitRepo) Get(filter models.PermitFilter, limit, offset int, 
 	permitSelect := permitRepo.permitSelect
 	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
 		permitSelect = permitSelect.Where(whereSQL)
+	}
+
+	if search != "" {
+		permitSelect = permitRepo.permitSelect.
+			Where(squirrel.Or{
+				squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(search)),
+				squirrel.Expr("LOWER(permit.resident_id) = $1"),
+				squirrel.Expr("LOWER(car.license_plate) = $1"),
+				squirrel.Expr("LOWER(car.color) = $1"),
+				squirrel.Expr("LOWER(car.make) = $1"),
+				squirrel.Expr("LOWER(car.model) = $1"),
+			})
 	}
 
 	if !reversed {
@@ -287,36 +305,4 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	}
 
 	return nil
-}
-
-func (permitRepo PermitRepo) Search(searchStr string, filter models.PermitFilter) ([]models.Permit, error) {
-	if searchStr == "" {
-		return nil, fmt.Errorf("permit_repo.Search: %w: Empty search argument", ErrInvalidArg)
-	}
-
-	permitSelect := permitRepo.permitSelect.
-		Where(squirrel.Or{
-			squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(searchStr)),
-			squirrel.Expr("LOWER(permit.resident_id) = $1"),
-			squirrel.Expr("LOWER(car.license_plate) = $1"),
-			squirrel.Expr("LOWER(car.color) = $1"),
-			squirrel.Expr("LOWER(car.make) = $1"),
-			squirrel.Expr("LOWER(car.model) = $1"),
-		})
-	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
-		permitSelect = permitSelect.Where(whereSQL)
-	}
-
-	query, args, err := permitSelect.OrderBy(permitRepo.permitASC).ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Search: %w: %v", ErrBuildingQuery, err)
-	}
-
-	permits := permitSlice{}
-	err = permitRepo.database.driver.Select(&permits, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Search: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return permits.toModels(), nil
 }
