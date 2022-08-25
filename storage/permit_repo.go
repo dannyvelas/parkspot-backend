@@ -76,7 +76,7 @@ func (permitRepo PermitRepo) Get(
 	}
 
 	if search != "" {
-		permitSelect = permitRepo.permitSelect.
+		permitSelect = permitSelect.
 			Where(squirrel.Or{
 				squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(search)),
 				squirrel.Expr("LOWER(permit.resident_id) = $1"),
