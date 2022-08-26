@@ -37,13 +37,12 @@ func newTestServer(c config.Config, repos storage.Repos) *httptest.Server {
 	return httptest.NewServer(router)
 }
 
-func authenticatedReq(method string, url string, requestBytes []byte, jwtToken string) (io.ReadCloser, int, error) {
+func authenticatedReq(method string, url string, requestBytes []byte, accessToken string) (io.ReadCloser, int, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(requestBytes))
 	if err != nil {
 		return nil, 0, err
 	}
-	cookie := http.Cookie{Name: "jwt", Value: jwtToken, HttpOnly: true, Path: "/"}
-	request.AddCookie(&cookie)
+	request.Header.Add("Authorization", "Bearer "+accessToken)
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -56,31 +55,26 @@ func authenticatedReq(method string, url string, requestBytes []byte, jwtToken s
 func getAdminJWT(tokenConfig config.TokenConfig) (string, error) {
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
 
-	jwtToken, err := jwtMiddleware.newJWT("some-uuid", "Daniel", "Velasquez", "example@email.com", AdminRole)
+	accessToken, err := jwtMiddleware.newAccess("some-uuid", AdminRole)
 	if err != nil {
 		return "", fmt.Errorf("Failed to create JWT: %v", err)
 	}
 
-	return jwtToken, nil
+	return accessToken, nil
 }
 
 func getResidentJWT(tokenConfig config.TokenConfig) (string, error) {
 	jwtMiddleware := NewJWTMiddleware(tokenConfig)
 
-	jwtToken, err := jwtMiddleware.newJWT(
-		testResident.Id,
-		testResident.FirstName,
-		testResident.LastName,
-		testResident.Email,
-		ResidentRole)
+	accessToken, err := jwtMiddleware.newAccess(testResident.Id, ResidentRole)
 	if err != nil {
 		return "", fmt.Errorf("Failed to create JWT: %v", err)
 	}
 
-	return jwtToken, nil
+	return accessToken, nil
 }
 
-func createTestResidents(testServerURL, jwtToken string) error {
+func createTestResidents(testServerURL, accessToken string) error {
 	createFn := func(testResident models.Resident) error {
 		requestBody := []byte(fmt.Sprintf(`{
       "residentId": "%s",
@@ -99,7 +93,7 @@ func createTestResidents(testServerURL, jwtToken string) error {
 			testResident.Password,
 			testResident.UnlimDays))
 
-		responseBody, statusCode, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, jwtToken)
+		responseBody, statusCode, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, accessToken)
 		if err != nil {
 			return fmt.Errorf("test_server.createTestResident: error sending request: %v", err)
 		}
@@ -126,10 +120,10 @@ func createTestResidents(testServerURL, jwtToken string) error {
 	return nil
 }
 
-func deleteTestResidents(testServerURL, jwtToken string) error {
+func deleteTestResidents(testServerURL, accessToken string) error {
 	deleteFn := func(testResident models.Resident) error {
 		endpoint := fmt.Sprintf("%s/api/resident/%s", testServerURL, testResident.Id)
-		responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwtToken)
+		responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, accessToken)
 		if err != nil {
 			return fmt.Errorf("test_server.deleteTestResident: error sending request: %v", err)
 		}

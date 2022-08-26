@@ -87,8 +87,8 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	var userResponse user
-	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
+	var loginResponse loginResponse
+	if err := json.NewDecoder(response.Body).Decode(&loginResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
@@ -98,7 +98,7 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		"Velasquez",
 		"email@example.com",
 		AdminRole)
-	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
+	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
 }
 
 func (suite authRouterSuite) TestLogin_Resident_Positive() {
@@ -129,8 +129,8 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	var userResponse user
-	if err := json.NewDecoder(response.Body).Decode(&userResponse); err != nil {
+	var loginResponse loginResponse
+	if err := json.NewDecoder(response.Body).Decode(&loginResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
@@ -140,7 +140,7 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		testResident.LastName,
 		testResident.Email,
 		ResidentRole)
-	suite.Empty(cmp.Diff(expectedUser, userResponse), "response body was not the same")
+	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
 }
 
 func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {

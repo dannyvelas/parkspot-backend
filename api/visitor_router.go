@@ -62,14 +62,14 @@ func getVisitorsOfResident(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user, err := ctxGetUser(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		visitors, err := visitorRepo.GetOfResident(user.Id)
+		visitors, err := visitorRepo.GetOfResident(accessPayload.Id)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getVisitorsOfResident: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
@@ -86,9 +86,9 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user, err := ctxGetUser(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("visitor_router.createVisitor: %v", err)
+			log.Error().Msgf("visitor_router.createVisitor: error getting access payload: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -110,7 +110,8 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			endTS = models.EndOfTime.Unix()
 		}
 
-		visitorId, err := visitorRepo.Create(user.Id,
+		visitorId, err := visitorRepo.Create(
+			accessPayload.Id,
 			payload.FirstName,
 			payload.LastName,
 			payload.Relationship,

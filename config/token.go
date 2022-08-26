@@ -1,19 +1,21 @@
 package config
 
 type TokenConfig struct {
-	secret string
+	accessSecret  string
+	refreshSecret string
 }
-
-const (
-	defaultTokenSecret = "tokensecret"
-)
 
 func newTokenConfig() TokenConfig {
 	return TokenConfig{
-		secret: readEnvString("TOKEN_SECRET", defaultTokenSecret),
+		accessSecret:  readEnvString("TOKEN_ACCESSSECRET", "accessSecret"),
+		refreshSecret: readEnvString("TOKEN_REFRESHSECRET", "refreshSecret"),
 	}
 }
 
-func (tokenConfig TokenConfig) Secret() string {
-	return tokenConfig.secret
+func (tokenConfig TokenConfig) AccessSecret() string {
+	return tokenConfig.accessSecret
+}
+
+func (tokenConfig TokenConfig) RefreshSecret() string {
+	return tokenConfig.refreshSecret
 }

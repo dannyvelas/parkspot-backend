@@ -20,6 +20,11 @@ import (
 	"time"
 )
 
+type loginResponse struct {
+	User        user   `json:"user"`
+	AccessToken string `json:"accessToken"`
+}
+
 func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var credentials struct {
@@ -32,7 +37,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		user, hash, err := getUserAndHashById(credentials.Id, adminRepo, residentRepo)
+		userFound, hash, err := getUserAndHashById(credentials.Id, adminRepo, residentRepo)
 		if errors.Is(err, errUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
@@ -50,30 +55,37 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		token, err := jwtMiddleware.newJWT(user.Id, user.FirstName, user.LastName, user.Email, user.Role)
+		accessToken, err := jwtMiddleware.newAccess(userFound.Id, userFound.Role)
 		if err != nil {
-			log.Error().Msgf("auth_router.login: Error generating JWT: %v", err)
+			log.Error().Msgf("auth_router.login: Error generating access JWT: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		refreshToken, err := jwtMiddleware.newRefresh(userFound.Id, userFound.TokenVersion)
+		if err != nil {
+			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
 			respondInternalError(w)
 			return
 		}
 
 		cookie := http.Cookie{
-			Name:     "jwt",
-			Value:    token,
+			Name:     "refresh",
+			Value:    refreshToken,
 			HttpOnly: true,
 			Path:     "/",
-			SameSite: http.SameSiteNoneMode,
-			Secure:   true,
-		}
+			SameSite: http.SameSiteLaxMode}
 		http.SetCookie(w, &cookie)
 
-		respondJSON(w, http.StatusOK, user)
+		response := loginResponse{userFound, accessToken}
+
+		respondJSON(w, http.StatusOK, response)
 	}
 }
 
 func logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := http.Cookie{Name: "jwt", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
+		cookie := http.Cookie{Name: "refresh", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
@@ -203,8 +215,7 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 		}
 
 		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
-
-		user, err := jwtMiddleware.parseJWT(accessToken)
+		user, err := jwtMiddleware.parseAccess(accessToken)
 		if err != nil {
 			respondError(w, errUnauthorized)
 			return
@@ -298,7 +309,7 @@ func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmai
 func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (*gmail.Message, error) {
 	body := &bytes.Buffer{}
 
-	token, err := jwtMiddleware.newJWT(toUser.Id, toUser.FirstName, toUser.LastName, toUser.Email, toUser.Role)
+	token, err := jwtMiddleware.newAccess(toUser.Id, toUser.Role)
 	if err != nil {
 		return nil, fmt.Errorf("Error generating JWT: %v", err)
 	}

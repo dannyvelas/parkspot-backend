@@ -118,14 +118,14 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		}
 
 		ctx := r.Context()
-		user, err := ctxGetUser(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("permit_router.createPermit: error getting user: %v", err)
+			log.Error().Msgf("permit_router.createPermit: error getting access payload: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		if user.Role == ResidentRole && newPermitReq.ExceptionReason != "" {
+		if accessPayload.Role == ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
 			respondError(w, newErrBadRequest(message))
 			return

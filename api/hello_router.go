@@ -9,13 +9,13 @@ func sayHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		user, err := ctxGetUser(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("hello_router.sayHello: %v", err)
+			log.Error().Msgf("hello_router.sayHello: error getting access payload: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		respondJSON(w, http.StatusOK, "hello, "+user.Id)
+		respondJSON(w, http.StatusOK, "hello, "+accessPayload.Id)
 	}
 }
