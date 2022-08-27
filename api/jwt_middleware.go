@@ -61,7 +61,7 @@ type refreshPayload struct {
 func (jwtMiddleware jwtMiddleware) newRefresh(id string, version int) (string, error) {
 	claims := refreshClaims{
 		refreshPayload{id, version},
-		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(1, 0, 0).Unix()}, // 1y from now
+		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
