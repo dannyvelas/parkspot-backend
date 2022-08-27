@@ -22,6 +22,7 @@ func NewResidentRepo(database Database) ResidentRepo {
 		"password",
 		"unlim_days",
 		"amt_parking_days_used",
+		"token_version",
 	).From("resident")
 
 	return ResidentRepo{database: database, residentSelect: residentSelect}

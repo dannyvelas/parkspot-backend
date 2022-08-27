@@ -6,16 +6,17 @@ type user struct {
 	LastName     string `json:"lastName"`
 	Email        string `json:"email"`
 	Role         role   `json:"role"`
-	TokenVersion int    `json:"tokenVersion"`
+	TokenVersion int    `json:"-"`
 }
 
-func newUser(id string, firstName string, lastName string, email string, role role) user {
+func newUser(id string, firstName string, lastName string, email string, role role, tokenVersion int) user {
 	return user{
-		Id:        id,
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
-		Role:      role,
+		Id:           id,
+		FirstName:    firstName,
+		LastName:     lastName,
+		Email:        email,
+		Role:         role,
+		TokenVersion: tokenVersion,
 	}
 }
 
@@ -29,6 +30,8 @@ func (self user) Equal(other user) bool {
 	} else if self.Email != other.Email {
 		return false
 	} else if self.Role != other.Role {
+		return false
+	} else if self.TokenVersion != other.TokenVersion {
 		return false
 	}
 	return true

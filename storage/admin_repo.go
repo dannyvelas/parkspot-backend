@@ -19,7 +19,12 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	}
 
-	const query = `SELECT id, first_name, last_name, email, password, is_privileged FROM admin WHERE LOWER(id) = LOWER($1)`
+	const query = `
+    SELECT
+      id, first_name, last_name, email, password, is_privileged, token_version
+    FROM admin
+    WHERE LOWER(id) = LOWER($1)
+  `
 
 	var admin admin
 	err := adminRepo.database.driver.Get(&admin, query, id)

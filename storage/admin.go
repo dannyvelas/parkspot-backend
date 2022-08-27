@@ -11,6 +11,7 @@ type admin struct {
 	Email        string `db:"email"`
 	Password     string `db:"password"`
 	IsPrivileged bool   `db:"is_privileged"`
+	TokenVersion int    `db:"token_version"`
 }
 
 func (admin admin) toModels() models.Admin {
@@ -21,5 +22,6 @@ func (admin admin) toModels() models.Admin {
 		admin.Email,
 		admin.Password,
 		admin.IsPrivileged,
+		admin.TokenVersion,
 	)
 }

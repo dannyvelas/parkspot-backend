@@ -13,19 +13,21 @@ type resident struct {
 	Password           string `db:"password"`
 	UnlimDays          bool   `db:"unlim_days"`
 	AmtParkingDaysUsed int    `db:"amt_parking_days_used"`
+	TokenVersion       int    `db:"token_version"`
 }
 
 func (resident resident) toModels() models.Resident {
-	return models.Resident{
-		Id:                 resident.Id,
-		FirstName:          resident.FirstName,
-		LastName:           resident.LastName,
-		Phone:              resident.Phone,
-		Email:              resident.Email,
-		Password:           resident.Password,
-		UnlimDays:          resident.UnlimDays,
-		AmtParkingDaysUsed: resident.AmtParkingDaysUsed,
-	}
+	return models.NewResident(
+		resident.Id,
+		resident.FirstName,
+		resident.LastName,
+		resident.Phone,
+		resident.Email,
+		resident.Password,
+		resident.UnlimDays,
+		resident.AmtParkingDaysUsed,
+		resident.TokenVersion,
+	)
 }
 
 type residentSlice []resident

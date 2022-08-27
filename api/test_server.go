@@ -20,6 +20,7 @@ var (
 		"email@example.com",
 		"notapassword",
 		false,
+		0,
 		0)
 	testResidentUnlimDays = models.NewResident(
 		"B7654321",
@@ -29,6 +30,7 @@ var (
 		"email2@example.com",
 		"notapassword",
 		true,
+		0,
 		0)
 )
 

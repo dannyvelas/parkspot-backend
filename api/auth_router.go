@@ -260,7 +260,7 @@ func getUserAndHashById(id string, adminRepo storage.AdminRepo, residentRepo sto
 			return user{}, "", fmt.Errorf("Error querying adminRepo: %v", err)
 		}
 
-		userFound = newUser(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole)
+		userFound = newUser(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole, admin.TokenVersion)
 		hash = admin.Password
 	} else {
 		resident, err := residentRepo.GetOne(id)
@@ -270,7 +270,7 @@ func getUserAndHashById(id string, adminRepo storage.AdminRepo, residentRepo sto
 			return user{}, "", fmt.Errorf("Error querying residentRepo: %v", err)
 		}
 
-		userFound = newUser(resident.Id, resident.FirstName, resident.LastName, resident.Email, ResidentRole)
+		userFound = newUser(resident.Id, resident.FirstName, resident.LastName, resident.Email, ResidentRole, resident.TokenVersion)
 		hash = resident.Password
 	}
 
