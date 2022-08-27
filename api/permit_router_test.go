@@ -46,9 +46,10 @@ func (suite *permitRouterSuite) SetupSuite() {
 
 	suite.testServer = newTestServer(c, repos)
 
-	suite.adminJWT, err = getAdminJWT(c.Token())
+	jwtMiddleware := NewJWTMiddleware(c.Token())
+	suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
 	if err != nil {
-		log.Fatal().Msg(err.Error())
+		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
 	err = createTestResidents(suite.testServer.URL, suite.adminJWT)

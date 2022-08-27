@@ -54,28 +54,6 @@ func authenticatedReq(method string, url string, requestBytes []byte, accessToke
 	return response.Body, response.StatusCode, nil
 }
 
-func getAdminJWT(tokenConfig config.TokenConfig) (string, error) {
-	jwtMiddleware := NewJWTMiddleware(tokenConfig)
-
-	accessToken, err := jwtMiddleware.newAccess("some-uuid", AdminRole)
-	if err != nil {
-		return "", fmt.Errorf("Failed to create JWT: %v", err)
-	}
-
-	return accessToken, nil
-}
-
-func getResidentJWT(tokenConfig config.TokenConfig) (string, error) {
-	jwtMiddleware := NewJWTMiddleware(tokenConfig)
-
-	accessToken, err := jwtMiddleware.newAccess(testResident.Id, ResidentRole)
-	if err != nil {
-		return "", fmt.Errorf("Failed to create JWT: %v", err)
-	}
-
-	return accessToken, nil
-}
-
 func createTestResidents(testServerURL, accessToken string) error {
 	createFn := func(testResident models.Resident) error {
 		requestBody := []byte(fmt.Sprintf(`{

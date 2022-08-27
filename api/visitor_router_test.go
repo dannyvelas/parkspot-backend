@@ -43,14 +43,18 @@ func (suite *visitorRouterSuite) SetupSuite() {
 
 	suite.testServer = newTestServer(c, repos)
 
-	suite.residentJWT, err = getResidentJWT(c.Token())
-	if err != nil {
-		log.Fatal().Msg(err.Error())
-	}
+	{ // set jwts
+		jwtMiddleware := NewJWTMiddleware(c.Token())
 
-	suite.adminJWT, err = getAdminJWT(c.Token())
-	if err != nil {
-		log.Fatal().Msg(err.Error())
+		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.Id, ResidentRole)
+		if err != nil {
+			log.Fatal().Msgf("Failed to create JWT: %v", err)
+		}
+
+		suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
+		if err != nil {
+			log.Fatal().Msgf("Failed to create JWT: %v", err)
+		}
 	}
 
 	createTestResidents(suite.testServer.URL, suite.adminJWT)

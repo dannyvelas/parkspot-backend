@@ -38,9 +38,10 @@ func (suite *authRouterSuite) SetupSuite() {
 
 	suite.testServer = newTestServer(c, storage.NewRepos(database))
 
-	suite.adminJWT, err = getAdminJWT(c.Token())
+	jwtMiddleware := NewJWTMiddleware(c.Token())
+	suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
 	if err != nil {
-		log.Fatal().Msg(err.Error())
+		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
 	err = createTestResidents(suite.testServer.URL, suite.adminJWT)
@@ -97,7 +98,8 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		"Daniel",
 		"Velasquez",
 		"email@example.com",
-		AdminRole)
+		AdminRole,
+		0)
 	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
 }
 
@@ -135,12 +137,20 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
+	// check user
 	expectedUser := newUser(testResident.Id,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
-		ResidentRole)
+		ResidentRole,
+		0)
 	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
+
+	// check accessToken
+	if loginResponse.AccessToken == "" {
+		suite.NotEmpty(loginResponse.AccessToken, "accessToken was empty")
+		return
+	}
 }
 
 func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
