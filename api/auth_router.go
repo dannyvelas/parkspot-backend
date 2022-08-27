@@ -55,13 +55,6 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		accessToken, err := jwtMiddleware.newAccess(userFound.Id, userFound.Role)
-		if err != nil {
-			log.Error().Msgf("auth_router.login: Error generating access JWT: %v", err)
-			respondInternalError(w)
-			return
-		}
-
 		refreshToken, err := jwtMiddleware.newRefresh(userFound.Id, userFound.TokenVersion)
 		if err != nil {
 			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
@@ -69,13 +62,14 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		cookie := http.Cookie{
-			Name:     "refresh",
-			Value:    refreshToken,
-			HttpOnly: true,
-			Path:     "/",
-			SameSite: http.SameSiteLaxMode}
-		http.SetCookie(w, &cookie)
+		sendRefreshToken(w, refreshToken)
+
+		accessToken, err := jwtMiddleware.newAccess(userFound.Id, userFound.Role)
+		if err != nil {
+			log.Error().Msgf("auth_router.login: Error generating access JWT: %v", err)
+			respondInternalError(w)
+			return
+		}
 
 		response := loginResponse{userFound, accessToken}
 
@@ -89,6 +83,61 @@ func logout() http.HandlerFunc {
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
+	}
+}
+
+func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("jwt")
+		if err != nil {
+			respondError(w, errUnauthorized)
+			return
+		}
+
+		refreshPayload, err := jwtMiddleware.parseRefresh(cookie.Value)
+		if err != nil {
+			respondError(w, errUnauthorized)
+			return
+		}
+
+		user, _, err := getUserAndHashById(refreshPayload.Id, adminRepo, residentRepo)
+		if errors.Is(err, errUnauthorized) {
+			respondError(w, errUnauthorized)
+			return
+		} else if err != nil {
+			log.Error().Msg("auth_router.getNewTokens: " + err.Error())
+			respondInternalError(w)
+			return
+		}
+
+		if user.TokenVersion != refreshPayload.Version {
+			respondError(w, errUnauthorized)
+			return
+		}
+
+		// refresh the refresh token
+		refreshToken, err := jwtMiddleware.newRefresh(user.Id, user.TokenVersion)
+		if err != nil {
+			log.Error().Msgf("auth_router.getNewTokens: Error generating refresh JWT: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		sendRefreshToken(w, refreshToken)
+
+		// refresh access token
+		accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
+		if err != nil {
+			log.Error().Msgf("auth_router.getNewTokens: Error generating access JWT: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		response := struct {
+			AccessToken string `json:"accessToken"`
+		}{accessToken}
+
+		respondJSON(w, http.StatusOK, response)
 	}
 }
 
@@ -275,6 +324,16 @@ func getUserAndHashById(id string, adminRepo storage.AdminRepo, residentRepo sto
 	}
 
 	return userFound, hash, nil
+}
+
+func sendRefreshToken(w http.ResponseWriter, refreshToken string) {
+	cookie := http.Cookie{
+		Name:     "refresh",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode}
+	http.SetCookie(w, &cookie)
 }
 
 func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmail.Service, error) {
