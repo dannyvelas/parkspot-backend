@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS admin(
   last_name TEXT NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
-  is_privileged BOOLEAN NOT NULL
+  is_privileged BOOLEAN NOT NULL,
+  token_version INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS resident(
@@ -19,7 +20,8 @@ CREATE TABLE IF NOT EXISTS resident(
   email VARCHAR(255) NOT NULL,
   password VARCHAR(255) NOT NULL,
   unlim_days BOOLEAN NOT NULL DEFAULT FALSE,
-  amt_parking_days_used SMALLINT NOT NULL DEFAULT 0
+  amt_parking_days_used SMALLINT NOT NULL DEFAULT 0,
+  token_version INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS car(
