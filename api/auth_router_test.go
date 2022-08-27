@@ -17,9 +17,11 @@ import (
 
 type authRouterSuite struct {
 	suite.Suite
-	testServer    *httptest.Server
-	jwtMiddleware jwtMiddleware
-	adminJWT      string
+	testServer        *httptest.Server
+	jwtMiddleware     jwtMiddleware
+	adminUser         user
+	adminUserPassword string
+	adminAccessToken  string
 }
 
 func TestAuthRouter(t *testing.T) {
@@ -41,12 +43,20 @@ func (suite *authRouterSuite) SetupSuite() {
 
 	suite.jwtMiddleware = NewJWTMiddleware(c.Token())
 
-	suite.adminJWT, err = suite.jwtMiddleware.newAccess("some-uuid", AdminRole)
+	suite.adminUser = newUser("test",
+		"Daniel",
+		"Velasquez",
+		"email@example.com",
+		AdminRole,
+		0)
+	suite.adminUserPassword = "notapassword"
+
+	suite.adminAccessToken, err = suite.jwtMiddleware.newAccess(suite.adminUser.Id, AdminRole)
 	if err != nil {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
-	err = createTestResidents(suite.testServer.URL, suite.adminJWT)
+	err = createTestResidents(suite.testServer.URL, suite.adminAccessToken)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -55,7 +65,7 @@ func (suite *authRouterSuite) SetupSuite() {
 func (suite authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.testServer.URL, suite.adminJWT)
+	err := deleteTestResidents(suite.testServer.URL, suite.adminAccessToken)
 	if err != nil {
 		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
 		return
@@ -63,10 +73,12 @@ func (suite authRouterSuite) TearDownSuite() {
 }
 
 func (suite authRouterSuite) TestLogin_Admin_Positive() {
-	requestBody := []byte(`{
-    "id":"test",
-    "password":"notapassword"
-  }`)
+	requestBody := []byte(fmt.Sprintf(`{
+    "id":"%s",
+    "password":"%s"
+  }`,
+		suite.adminUser.Id,
+		suite.adminUserPassword))
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -97,18 +109,12 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	}
 
 	// check user
-	expectedUser := newUser("test",
-		"Daniel",
-		"Velasquez",
-		"email@example.com",
-		AdminRole,
-		0)
-	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
+	suite.Empty(cmp.Diff(suite.adminUser, loginResponse.User), "response body was not the same")
 
-	err = checkAccessToken(suite.jwtMiddleware, loginResponse.AccessToken, expectedUser.Id, expectedUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, loginResponse.AccessToken, suite.adminUser.Id, suite.adminUser.Role)
 	suite.NoError(err)
 
-	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.Id, expectedUser.TokenVersion)
+	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), suite.adminUser.Id, suite.adminUser.TokenVersion)
 	suite.NoError(err)
 }
 
@@ -162,6 +168,39 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 	suite.NoError(err)
 }
 
+func (suite authRouterSuite) TestRefreshTokens_Positive() {
+	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/refresh_tokens", bytes.NewBuffer([]byte{}))
+	if err != nil {
+		suite.NoError(fmt.Errorf("error creating http.Request: %s", err))
+		return
+	}
+
+	refreshToken, err := suite.jwtMiddleware.newRefresh(suite.adminUser.Id, suite.adminUser.TokenVersion)
+	if err != nil {
+		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
+		return
+	}
+	cookie := http.Cookie{Name: refreshCookieKey, Value: refreshToken, HttpOnly: true, Path: "/"}
+	request.AddCookie(&cookie)
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		suite.NoError(fmt.Errorf("error sending http.Request: %s", err))
+		return
+	}
+
+	if response.StatusCode != http.StatusOK {
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			suite.NoError(err)
+			return
+		}
+		suite.Empty(string(bodyBytes))
+		return
+	}
+
+}
+
 func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 	requestBody := []byte(fmt.Sprintf(`{
     "residentId": "B0000000",
@@ -174,7 +213,7 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
   }`,
 		testResident.Email))
 
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminJWT)
+	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminAccessToken)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error sending request: %v", err))
 		return
@@ -198,8 +237,6 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 }
 
 // helpers
-// accessToken, id, role
-// cookies, jwtMiddleware,
 func checkAccessToken(jwtMiddleware jwtMiddleware, token string, expectedID string, expectedRole role) error {
 	if token == "" {
 		return fmt.Errorf("accessToken was empty")
