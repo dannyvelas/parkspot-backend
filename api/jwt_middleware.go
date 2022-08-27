@@ -40,7 +40,7 @@ type accessPayload struct {
 func (jwtMiddleware jwtMiddleware) newAccess(id string, role role) (string, error) {
 	claims := accessClaims{
 		accessPayload{id, role},
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Second * 24).Unix()},
+		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -61,7 +61,7 @@ type refreshPayload struct {
 func (jwtMiddleware jwtMiddleware) newRefresh(id string, version int) (string, error) {
 	claims := refreshClaims{
 		refreshPayload{id, version},
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Second * 24).Unix()},
+		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(1, 0, 0).Unix()}, // 1y from now
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
