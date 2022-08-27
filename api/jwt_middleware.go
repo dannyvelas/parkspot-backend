@@ -66,7 +66,7 @@ func (jwtMiddleware jwtMiddleware) newRefresh(id string, version int) (string, e
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtMiddleware.accessSecret)
+	return token.SignedString(jwtMiddleware.refreshSecret)
 }
 
 func (jwtMiddleware jwtMiddleware) parseAccess(tokenString string) (accessPayload, error) {
