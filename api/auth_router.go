@@ -79,7 +79,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 
 func logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := http.Cookie{Name: "refresh", Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
+		cookie := http.Cookie{Name: refreshCookieKey, Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
@@ -328,7 +328,7 @@ func getUserAndHashById(id string, adminRepo storage.AdminRepo, residentRepo sto
 
 func sendRefreshToken(w http.ResponseWriter, refreshToken string) {
 	cookie := http.Cookie{
-		Name:     "refresh",
+		Name:     refreshCookieKey,
 		Value:    refreshToken,
 		HttpOnly: true,
 		Path:     "/",
