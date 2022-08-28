@@ -102,16 +102,15 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	var loginResponse loginResponse
-	if err := json.NewDecoder(response.Body).Decode(&loginResponse); err != nil {
+	var authResponse authResponse
+	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	// check user
-	suite.Empty(cmp.Diff(suite.adminUser, loginResponse.User), "response body was not the same")
+	suite.Empty(cmp.Diff(suite.adminUser, authResponse.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, loginResponse.AccessToken, suite.adminUser.Id, suite.adminUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, suite.adminUser.Id, suite.adminUser.Role)
 	suite.NoError(err)
 
 	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), suite.adminUser.Id, suite.adminUser.TokenVersion)
@@ -146,22 +145,21 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	var loginResponse loginResponse
-	if err := json.NewDecoder(response.Body).Decode(&loginResponse); err != nil {
+	var authResponse authResponse
+	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	// check user
 	expectedUser := newUser(testResident.Id,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
 		ResidentRole,
 		0)
-	suite.Empty(cmp.Diff(expectedUser, loginResponse.User), "response body was not the same")
+	suite.Empty(cmp.Diff(expectedUser, authResponse.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, loginResponse.AccessToken, expectedUser.Id, expectedUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, expectedUser.Id, expectedUser.Role)
 	suite.NoError(err)
 
 	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.Id, expectedUser.TokenVersion)
@@ -175,7 +173,7 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	refreshToken, err := suite.jwtMiddleware.newRefresh(suite.adminUser.Id, suite.adminUser.TokenVersion)
+	refreshToken, err := suite.jwtMiddleware.newRefresh(testResident.Id, testResident.TokenVersion)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
 		return
@@ -195,10 +193,29 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 			suite.NoError(err)
 			return
 		}
-		suite.Empty(string(bodyBytes))
+		suite.Empty("Unexpected bad response: " + string(bodyBytes))
 		return
 	}
 
+	var authResponse authResponse
+	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
+		suite.NoError(err)
+		return
+	}
+
+	expectedUser := newUser(testResident.Id,
+		testResident.FirstName,
+		testResident.LastName,
+		testResident.Email,
+		ResidentRole,
+		0)
+	suite.Empty(cmp.Diff(expectedUser, authResponse.User), "user in response did not equal expected user")
+
+	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, expectedUser.Id, expectedUser.Role)
+	suite.NoError(err)
+
+	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.Id, expectedUser.TokenVersion)
+	suite.NoError(err)
 }
 
 func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
