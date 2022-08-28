@@ -38,6 +38,7 @@ func NewRouter(
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", login(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/logout", logout())
+			anyoneRouter.Post("/refresh_tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, oauthConfig, repos.Admin, repos.Resident))
 			anyoneRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 		})
@@ -62,7 +63,6 @@ func NewRouter(
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
-			userRouter.Post("/refresh_tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
 			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(repos.Permit))
 			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(repos.Permit))
