@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-type loginResponse struct {
+type authResponse struct {
 	User        user   `json:"user"`
 	AccessToken string `json:"accessToken"`
 }
@@ -71,7 +71,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		response := loginResponse{userFound, accessToken}
+		response := authResponse{userFound, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
 	}
@@ -88,7 +88,7 @@ func logout() http.HandlerFunc {
 
 func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("jwt")
+		cookie, err := r.Cookie(refreshCookieKey)
 		if err != nil {
 			respondError(w, errUnauthorized)
 			return
@@ -133,9 +133,7 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		response := struct {
-			AccessToken string `json:"accessToken"`
-		}{accessToken}
+		response := authResponse{user, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
 	}
