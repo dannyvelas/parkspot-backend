@@ -39,8 +39,13 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	httpConfig, err := newHttpConfig()
+	if err != nil {
+		return Config{}, err
+	}
+
 	return Config{
-		http:     newHttpConfig(),
+		http:     httpConfig,
 		postgres: newPostgresConfig(),
 		token:    newTokenConfig(),
 		oauth:    oauthConfig,

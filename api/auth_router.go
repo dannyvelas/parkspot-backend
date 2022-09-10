@@ -195,7 +195,7 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfig, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		emailSentResponse := message{"If this account is in our database, instructions to" +
 			" reset a password have been sent to the email associated with this account."}
@@ -226,7 +226,7 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, oauthConfig config.OAut
 			return
 		}
 
-		gmailMessage, err := createGmailMessage(jwtMiddleware, userFound)
+		gmailMessage, err := createGmailMessage(jwtMiddleware, httpConfig, userFound)
 		if err != nil {
 			log.Error().Msgf("auth_router.sendResetPasswordEmail: " + err.Error())
 			respondInternalError(w)
@@ -363,7 +363,7 @@ func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmai
 	return service, nil
 }
 
-func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (*gmail.Message, error) {
+func createGmailMessage(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfig, toUser user) (*gmail.Message, error) {
 	body := &bytes.Buffer{}
 
 	token, err := jwtMiddleware.newAccess(toUser.Id, toUser.Role)
@@ -378,12 +378,12 @@ func createGmailMessage(jwtMiddleware jwtMiddleware, toUser user) (*gmail.Messag
 	fmt.Fprintf(body, "Content-Type: text/html\r\n")
 	fmt.Fprintf(body, `
     <body style='text-align: center;'>
-        <h1>Password Reset for Account %s</h1>
+        <h1>Password Reset</h1>
         <p>Hi, a password reset was requested.</p>
         <p>If you sent the request, please click the button below to reset your password.
            Otherwise, you can ignore this email.</p>
-        <a href='parkspotapp.com/reset-password?token=%s'>Reset Your Password</a>
-    </body>`, toUser.Id, token)
+        <a href='http://%s/reset-password?token=%s'>Reset Your Password</a>
+    </body>`, httpConfig.Domain(), token)
 
 	gmailMessage := &gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
 

@@ -39,7 +39,7 @@ func NewRouter(
 			anyoneRouter.Post("/login", login(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/logout", logout())
 			anyoneRouter.Post("/refresh_tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
-			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, oauthConfig, repos.Admin, repos.Resident))
+			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, httpConfig, oauthConfig, repos.Admin, repos.Resident))
 			anyoneRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 		})
 

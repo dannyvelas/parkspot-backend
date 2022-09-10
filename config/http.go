@@ -1,10 +1,13 @@
 package config
 
 import (
+	"fmt"
+	"os"
 	"time"
 )
 
 type HttpConfig struct {
+	domain             string
 	port               string
 	readTimeout        time.Duration
 	writeTimeout       time.Duration
@@ -12,25 +15,24 @@ type HttpConfig struct {
 	corsAllowedOrigins []string
 }
 
-const (
-	defaultHttpPort         = "5000"
-	defaultHttpReadTimeout  = 5
-	defaultHttpWriteTimeout = 10
-	defaultHttpIdleTimeout  = 120
-)
-
-var (
-	defaultCORSAllowedOrigins = []string{"http://*"}
-)
-
-func newHttpConfig() HttpConfig {
-	return HttpConfig{
-		port:               readEnvString("PORT", defaultHttpPort),
-		readTimeout:        readEnvDuration("READTIMEOUT", defaultHttpReadTimeout),
-		writeTimeout:       readEnvDuration("WRITETIMEOUT", defaultHttpWriteTimeout),
-		idleTimeout:        readEnvDuration("IDLETIMEOUT", defaultHttpIdleTimeout),
-		corsAllowedOrigins: readEnvStringList("CORSALLOWEDORIGINS", defaultCORSAllowedOrigins),
+func newHttpConfig() (HttpConfig, error) {
+	var domain string
+	if domain = os.Getenv("DOMAIN"); domain == "" {
+		return HttpConfig{}, fmt.Errorf("DOMAIN is required.")
 	}
+
+	return HttpConfig{
+		domain:             domain,
+		port:               readEnvString("PORT", "5000"),
+		readTimeout:        readEnvDuration("READTIMEOUT", 5),
+		writeTimeout:       readEnvDuration("WRITETIMEOUT", 10),
+		idleTimeout:        readEnvDuration("IDLETIMEOUT", 120),
+		corsAllowedOrigins: readEnvStringList("CORSALLOWEDORIGINS", []string{"http://*"}),
+	}, nil
+}
+
+func (httpConfig HttpConfig) Domain() string {
+	return httpConfig.domain
 }
 
 func (httpConfig HttpConfig) Port() string {
