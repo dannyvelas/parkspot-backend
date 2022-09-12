@@ -15,6 +15,7 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		search := r.URL.Query().Get("search")
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		ctx := r.Context()
@@ -30,7 +31,7 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			residentID = accessPayload.Id
 		}
 
-		allVisitors, err := visitorRepo.Get(true, residentID, boundedLimit, offset)
+		allVisitors, err := visitorRepo.Get(true, residentID, search, boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getActiveVisitors: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
@@ -45,27 +46,6 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		}
 
 		visitorsWithMetadata := newListWithMetadata(allVisitors, totalAmount)
-
-		respondJSON(w, http.StatusOK, visitorsWithMetadata)
-	}
-}
-
-func searchVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		searchStr := r.URL.Query().Get("search")
-		if searchStr == "" {
-			respondJSON(w, http.StatusOK, newListWithMetadata([]models.Visitor{}, 0))
-			return
-		}
-
-		visitors, err := visitorRepo.Search(searchStr, true)
-		if err != nil {
-			log.Error().Msgf("visitor_router.searchVisitors: Error getting visitors: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		visitorsWithMetadata := newListWithMetadata(visitors, len(visitors))
 
 		respondJSON(w, http.StatusOK, visitorsWithMetadata)
 	}
