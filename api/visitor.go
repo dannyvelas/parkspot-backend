@@ -50,6 +50,9 @@ func (newVisitorReq newVisitorReq) invalidFields() error {
 	if newVisitorReq.Relationship != "fam/fri" && newVisitorReq.Relationship != "contractor" {
 		errors = append(errors, "relationship must be either \"fam/fri\" or \"contractor\"")
 	}
+	if newVisitorReq.Relationship == "contractor" && newVisitorReq.IsForever {
+		errors = append(errors, "contractors cannot have an access date of `forever`")
+	}
 	if !newVisitorReq.IsForever {
 		if newVisitorReq.AccessStart.After(newVisitorReq.AccessEnd) {
 			errors = append(errors, "accessStart cannot be after accessEnd")
