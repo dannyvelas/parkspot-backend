@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
 	"time"
@@ -49,18 +50,13 @@ func (jwtMiddleware jwtMiddleware) newAccess(id string, role role) (string, erro
 }
 
 type refreshClaims struct {
-	Payload refreshPayload `json:"payload"`
+	User user `json:"user"`
 	jwt.StandardClaims
 }
 
-type refreshPayload struct {
-	Id      string `json:"id"`
-	Version int    `json:"version"`
-}
-
-func (jwtMiddleware jwtMiddleware) newRefresh(id string, version int) (string, error) {
+func (jwtMiddleware jwtMiddleware) newRefresh(user user) (string, error) {
 	claims := refreshClaims{
-		refreshPayload{id, version},
+		user,
 		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
 	}
 
@@ -90,7 +86,7 @@ func (jwtMiddleware jwtMiddleware) parseAccess(tokenString string) (accessPayloa
 	}
 }
 
-func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (refreshPayload, error) {
+func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (user, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &refreshClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -99,15 +95,15 @@ func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (refreshPayl
 		return jwtMiddleware.refreshSecret, nil
 	})
 	if err != nil {
-		return refreshPayload{}, err
+		return user{}, err
 	}
 
 	if claims, ok := token.Claims.(*refreshClaims); !ok {
-		return refreshPayload{}, errCastingJWTClaims
+		return user{}, errCastingJWTClaims
 	} else if !token.Valid {
-		return refreshPayload{}, errInvalidToken
+		return user{}, errInvalidToken
 	} else {
-		return claims.Payload, nil
+		return claims.User, nil
 	}
 }
 
@@ -116,6 +112,7 @@ func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) f
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
+				log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
 				respondError(w, errUnauthorized)
 				return
 			}
@@ -123,6 +120,7 @@ func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) f
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 			accessPayload, err := jwtMiddleware.parseAccess(accessToken)
 			if err != nil {
+				log.Debug().Msgf("Error parsing: %v", err)
 				respondError(w, errUnauthorized)
 				return
 			}
@@ -137,6 +135,7 @@ func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) f
 				return false
 			}()
 			if !userHasPermittedRole {
+				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
 				respondError(w, errUnauthorized)
 				return
 			}
