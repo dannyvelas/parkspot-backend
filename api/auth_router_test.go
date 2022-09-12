@@ -102,15 +102,15 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	var authResponse authResponse
-	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
+	var session session
+	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	suite.Empty(cmp.Diff(suite.adminUser, authResponse.User), "user in response did not equal expected user")
+	suite.Empty(cmp.Diff(suite.adminUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, suite.adminUser.Id, suite.adminUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, suite.adminUser.Id, suite.adminUser.Role)
 	suite.NoError(err)
 
 	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), suite.adminUser.Id, suite.adminUser.TokenVersion)
@@ -145,8 +145,8 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	var authResponse authResponse
-	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
+	var session session
+	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
 	}
@@ -157,9 +157,9 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		testResident.Email,
 		ResidentRole,
 		0)
-	suite.Empty(cmp.Diff(expectedUser, authResponse.User), "user in response did not equal expected user")
+	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, expectedUser.Id, expectedUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, expectedUser.Id, expectedUser.Role)
 	suite.NoError(err)
 
 	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.Id, expectedUser.TokenVersion)
@@ -173,7 +173,13 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	refreshToken, err := suite.jwtMiddleware.newRefresh(testResident.Id, testResident.TokenVersion)
+	user := newUser(testResident.Id,
+		testResident.FirstName,
+		testResident.LastName,
+		testResident.Email,
+		ResidentRole,
+		testResident.TokenVersion)
+	refreshToken, err := suite.jwtMiddleware.newRefresh(user)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
 		return
@@ -197,8 +203,8 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	var authResponse authResponse
-	if err := json.NewDecoder(response.Body).Decode(&authResponse); err != nil {
+	var session session
+	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
 	}
@@ -209,9 +215,9 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		testResident.Email,
 		ResidentRole,
 		0)
-	suite.Empty(cmp.Diff(expectedUser, authResponse.User), "user in response did not equal expected user")
+	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, authResponse.AccessToken, expectedUser.Id, expectedUser.Role)
+	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, expectedUser.Id, expectedUser.Role)
 	suite.NoError(err)
 
 	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.Id, expectedUser.TokenVersion)
@@ -285,8 +291,8 @@ func checkRefreshToken(jwtMiddleware jwtMiddleware, cookies []*http.Cookie, expe
 		return fmt.Errorf("Error parsing refresh token (%s): %v", refreshCookie.Value, err)
 	} else if expectedID != payload.Id {
 		return fmt.Errorf("user id (%s) was not the same to refresh payload id (%s)", expectedID, payload.Id)
-	} else if expectedVersion != payload.Version {
-		return fmt.Errorf("user version (%v) was not the same to refresh payload version (%v)", expectedVersion, payload.Version)
+	} else if expectedVersion != payload.TokenVersion {
+		return fmt.Errorf("user version (%v) was not the same to refresh payload version (%v)", expectedVersion, payload.TokenVersion)
 	}
 
 	return nil

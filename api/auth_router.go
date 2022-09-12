@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-type authResponse struct {
+type session struct {
 	User        user   `json:"user"`
 	AccessToken string `json:"accessToken"`
 }
@@ -55,7 +55,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		refreshToken, err := jwtMiddleware.newRefresh(userFound.Id, userFound.TokenVersion)
+		refreshToken, err := jwtMiddleware.newRefresh(userFound)
 		if err != nil {
 			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
 			respondInternalError(w)
@@ -71,7 +71,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		response := authResponse{userFound, accessToken}
+		response := session{userFound, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
 	}
@@ -110,13 +110,13 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		if user.TokenVersion != refreshPayload.Version {
+		if user.TokenVersion != refreshPayload.TokenVersion {
 			respondError(w, errUnauthorized)
 			return
 		}
 
 		// refresh the refresh token
-		refreshToken, err := jwtMiddleware.newRefresh(user.Id, user.TokenVersion)
+		refreshToken, err := jwtMiddleware.newRefresh(user)
 		if err != nil {
 			log.Error().Msgf("auth_router.getNewTokens: Error generating refresh JWT: %v", err)
 			respondInternalError(w)
@@ -133,7 +133,7 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		response := authResponse{user, accessToken}
+		response := session{user, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
 	}
@@ -257,6 +257,7 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
+			log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
 			respondError(w, errUnauthorized)
 			return
 		}
@@ -264,6 +265,7 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 		user, err := jwtMiddleware.parseAccess(accessToken)
 		if err != nil {
+			log.Debug().Msgf("Error parsing: %v", err)
 			respondError(w, errUnauthorized)
 			return
 		}
