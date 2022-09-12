@@ -47,7 +47,6 @@ func NewRouter(
 			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
 			officeRouter.Get("/residents", getAllResidents(repos.Resident))
 			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
-			officeRouter.Get("/visitors/search", searchVisitors(repos.Visitor))
 			officeRouter.Post("/account", createResident(repos.Resident))
 			officeRouter.Delete("/resident/{id}", deleteResident(repos.Resident))
 			officeRouter.Get("/car/{id}", getOneCar(repos.Car))
