@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"strings"
 )
 
 type ResidentRepo struct {
@@ -70,12 +71,22 @@ func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, e
 	return resident.toModels(), nil
 }
 
-func (residentRepo ResidentRepo) GetAll(limit, offset int) ([]models.Resident, error) {
+func (residentRepo ResidentRepo) GetAll(limit, offset int, search string) ([]models.Resident, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("resident_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
 
-	query, _, err := residentRepo.residentSelect.
+	residentSelect := residentRepo.residentSelect
+	if search != "" {
+		residentSelect = residentSelect.
+			Where(squirrel.Or{
+				squirrel.Expr("LOWER(resident.id) = $1", strings.ToLower(search)),
+				squirrel.Expr("LOWER(resident.first_name) = $1"),
+				squirrel.Expr("LOWER(resident.last_name) = $1"),
+			})
+	}
+
+	query, args, err := residentSelect.
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		OrderBy("resident.id ASC").
@@ -85,7 +96,7 @@ func (residentRepo ResidentRepo) GetAll(limit, offset int) ([]models.Resident, e
 	}
 
 	residents := residentSlice{}
-	err = residentRepo.database.driver.Select(&residents, query)
+	err = residentRepo.database.driver.Select(&residents, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
 	}

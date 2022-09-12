@@ -12,9 +12,10 @@ func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := toPosInt(r.URL.Query().Get("limit"))
 		page := toPosInt(r.URL.Query().Get("page"))
+		search := r.URL.Query().Get("search")
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allResidents, err := residentRepo.GetAll(boundedLimit, offset)
+		allResidents, err := residentRepo.GetAll(boundedLimit, offset, search)
 		if err != nil {
 			log.Error().Msgf("resident_router.getAll: Error querying residentRepo: %v", err)
 			respondInternalError(w)
