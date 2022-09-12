@@ -38,7 +38,7 @@ func NewRouter(
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", login(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Post("/refresh_tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
+			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, httpConfig, oauthConfig, repos.Admin, repos.Resident))
 		})
 

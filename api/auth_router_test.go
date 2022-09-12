@@ -167,7 +167,7 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 }
 
 func (suite authRouterSuite) TestRefreshTokens_Positive() {
-	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/refresh_tokens", bytes.NewBuffer([]byte{}))
+	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/refresh-tokens", bytes.NewBuffer([]byte{}))
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating http.Request: %s", err))
 		return
