@@ -20,6 +20,7 @@ type permitRouterSuite struct {
 	suite.Suite
 	carRepo     storage.CarRepo
 	testServer  *httptest.Server
+	residentJWT string
 	adminJWT    string
 	testPermits map[string]newPermitReq
 	testPermit  newPermitReq // noUnlimDays,noException
@@ -46,10 +47,18 @@ func (suite *permitRouterSuite) SetupSuite() {
 
 	suite.testServer = newTestServer(c, repos)
 
-	jwtMiddleware := NewJWTMiddleware(c.Token())
-	suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
-	if err != nil {
-		log.Fatal().Msgf("Failed to create JWT: %v", err)
+	{ // set jwts
+		jwtMiddleware := NewJWTMiddleware(c.Token())
+
+		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.Id, ResidentRole)
+		if err != nil {
+			log.Fatal().Msgf("Failed to create JWT: %v", err)
+		}
+
+		suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
+		if err != nil {
+			log.Fatal().Msgf("Failed to create JWT: %v", err)
+		}
 	}
 
 	err = createTestResidents(suite.testServer.URL, suite.adminJWT)
@@ -349,8 +358,8 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 		}
 	}()
 
-	endpoint := fmt.Sprintf("%s/api/resident/%s/permits/active", suite.testServer.URL, testResident.Id)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
+	endpoint := fmt.Sprintf("%s/api/permits/active", suite.testServer.URL)
+	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.residentJWT)
 	if err != nil {
 		suite.NoError(err)
 		return

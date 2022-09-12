@@ -98,7 +98,7 @@ func (suite visitorRouterSuite) TearDownSuite() {
 }
 
 func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
-	responseBody, statusCode, err := authenticatedReq("GET", suite.testServer.URL+"/api/me/visitors", nil, suite.residentJWT)
+	responseBody, statusCode, err := authenticatedReq("GET", suite.testServer.URL+"/api/visitors", nil, suite.residentJWT)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error making request: %v", err))
 		return
