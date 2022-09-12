@@ -17,17 +17,29 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 		page := toPosInt(r.URL.Query().Get("page"))
 		reversed := toBool(r.URL.Query().Get("reversed"))
 		search := r.URL.Query().Get("search")
-
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allPermits, err := permitRepo.Get(permitFilter, boundedLimit, offset, reversed, search)
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		residentID := ""
+		if accessPayload.Role == ResidentRole {
+			residentID = accessPayload.Id
+		}
+
+		allPermits, err := permitRepo.Get(permitFilter, residentID, boundedLimit, offset, reversed, search)
 		if err != nil {
 			log.Error().Msgf("permit_router.getPermits: Error getting permits: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		totalAmount, err := permitRepo.GetCount(permitFilter)
+		totalAmount, err := permitRepo.GetCount(permitFilter, residentID)
 		if err != nil {
 			log.Error().Msgf("permit_router.getPermits: Error getting total amount: %v", err)
 			respondInternalError(w)
@@ -59,48 +71,6 @@ func getOnePermit(permitRepo storage.PermitRepo) http.HandlerFunc {
 		}
 
 		respondJSON(w, http.StatusOK, permit)
-	}
-}
-
-func getAllPermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			respondError(w, newErrBadRequest("id parameter cannot be empty"))
-			return
-		}
-
-		permits, err := permitRepo.GetAllOfResident(id)
-		if err != nil {
-			log.Error().Msgf("permit_router.getActivePermitsOfResident: Error getting permits: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(permits, len(permits))
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
-	}
-}
-
-func getActivePermitsOfResident(permitRepo storage.PermitRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			respondError(w, newErrBadRequest("id parameter cannot be empty"))
-			return
-		}
-
-		permits, err := permitRepo.GetActiveOfResident(id)
-		if err != nil {
-			log.Error().Msgf("permit_router.getActivePermitsOfResident: Error getting permits: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		permitsWithMetadata := newListWithMetadata(permits, len(permits))
-
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
 	}
 }
 
