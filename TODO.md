@@ -61,6 +61,7 @@
 - [x] when an permit request has a license plate of an existing car, if the car object in the payload has non null make and model fields, and the existing car has null make and model fields in the database, have the make/model fields in the car object in the payload overwrite the null make/model fields in the database
 - [x] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [ ] add resident edit/delete functionality
+- [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
@@ -92,6 +93,7 @@
 - [x] make CORS / acceptCredentials=true options only for dev and not prod environment if they're not necessary in prod. (cors and acceptCredentials=true is necessary in prod. CORS allows a front-end URL to send a request to the API URL, when they're different domains. acceptCredentials is necessary for the server to be able to read the cookie that comes with the request. [Ref here](https://web.dev/cross-origin-resource-sharing/). But, you can make the CORSALLOWEDORIGINS env variable a specific URL in prod, which makes it safe and appropriate)
 - [x] change `username` instances to `id` for consistency
 - [x] think of a way to define the resident regex once
+- [ ] 500 errors come up when an account exists and the email is malformed. it would probably be better if the response was just: "if this account exists, password reset instructions have been sent to the email sent associated with this account". otherwise, a hacker could technically determine whether accounts exist 
 - [ ] do proper status checking in permit_router_test (not just suite.Equal(http.StatusOK, statusCode)) but an actual if check that returns the error response error message
 - [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] start injecting a `sq` variable of type `StatementBuilderType` to every repo. this will be the variable used to create squirrel statements. this will be done instead of importing squirrel into every repo and using the default statement builder. the `sq` variable will be initialized like this:
@@ -121,6 +123,7 @@
 - [x] whether i should put all routing funcs in one file. or maybe put the admin/ routing funcs in api/admin
 - [✗] remove `json` tags from models, since that is an api concern? (won't do, json tags are needed when returning Permits)
 - [✗] make exceptionReason, make, and model, nullable pointer strings (won't do, there's no necessary distinction between an empty value and a null value for these fields)
+- [ ] move all the business logic that routing funcs currently do into a new services package
 - [ ] remove \_repo\* tests. we can test the same functionality from the routers
 - [ ] use validator
 - [ ] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
