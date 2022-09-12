@@ -17,14 +17,27 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		page := toPosInt(r.URL.Query().Get("page"))
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allVisitors, err := visitorRepo.Get(true, boundedLimit, offset)
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		residentID := ""
+		if accessPayload.Role == ResidentRole {
+			residentID = accessPayload.Id
+		}
+
+		allVisitors, err := visitorRepo.Get(true, residentID, boundedLimit, offset)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getActiveVisitors: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		totalAmount, err := visitorRepo.GetCount(true)
+		totalAmount, err := visitorRepo.GetCount(true, residentID)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getActiveVisitors: Error getting total amount: %v", err)
 			respondInternalError(w)
@@ -48,30 +61,6 @@ func searchVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		visitors, err := visitorRepo.Search(searchStr, true)
 		if err != nil {
 			log.Error().Msgf("visitor_router.searchVisitors: Error getting visitors: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		visitorsWithMetadata := newListWithMetadata(visitors, len(visitors))
-
-		respondJSON(w, http.StatusOK, visitorsWithMetadata)
-	}
-}
-
-func getVisitorsOfResident(visitorRepo storage.VisitorRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		accessPayload, err := ctxGetAccessPayload(ctx)
-		if err != nil {
-			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		visitors, err := visitorRepo.GetOfResident(accessPayload.Id)
-		if err != nil {
-			log.Error().Msgf("visitor_router.getVisitorsOfResident: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
