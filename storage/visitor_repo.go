@@ -36,7 +36,7 @@ func NewVisitorRepo(database Database) VisitorRepo {
 	}
 }
 
-func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models.Visitor, error) {
+func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID string, limit, offset int) ([]models.Visitor, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
@@ -46,7 +46,11 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models
 		visitorSelect = visitorSelect.Where(visitorRepo.whereActive)
 	}
 
-	query, _, err := visitorSelect.
+	if residentID != "" {
+		visitorSelect = visitorSelect.Where("visitor.resident_id = $1", residentID)
+	}
+
+	query, args, err := visitorSelect.
 		Limit(uint64(getBoundedLimit(limit))).
 		Offset(uint64(offset)).
 		OrderBy("visitor.id ASC").
@@ -56,7 +60,7 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models
 	}
 
 	visitors := visitorSlice{}
-	err = visitorRepo.database.driver.Select(&visitors, query)
+	err = visitorRepo.database.driver.Select(&visitors, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", ErrDatabaseQuery, err)
 	}
@@ -64,19 +68,23 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, limit, offset int) ([]models
 	return visitors.toModels(), nil
 }
 
-func (visitorRepo VisitorRepo) GetCount(onlyActive bool) (int, error) {
+func (visitorRepo VisitorRepo) GetCount(onlyActive bool, residentID string) (int, error) {
 	countSelect := squirrel.Select("count(*)").From("visitor")
 	if onlyActive {
 		countSelect = countSelect.Where(visitorRepo.whereActive)
 	}
 
-	query, _, err := countSelect.ToSql()
+	if residentID != "" {
+		countSelect = countSelect.Where("visitor.resident_id = $1", residentID)
+	}
+
+	query, args, err := countSelect.ToSql()
 	if err != nil {
 		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrBuildingQuery, err)
 	}
 
 	var totalAmount int
-	err = visitorRepo.database.driver.Get(&totalAmount, query)
+	err = visitorRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrDatabaseQuery, err)
 	}
@@ -108,24 +116,6 @@ func (visitorRepo VisitorRepo) Search(searchStr string, onlyActive bool) ([]mode
 	err = visitorRepo.database.driver.Select(&visitors, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return visitors.toModels(), nil
-}
-
-func (visitorRepo VisitorRepo) GetOfResident(residentId string) ([]models.Visitor, error) {
-	query, args, err := visitorRepo.visitorSelect.
-		Where("visitor.resident_id = $1", residentId).
-		OrderBy("visitor.id ASC").
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.GetOfResident: %w: %v", ErrBuildingQuery, err)
-	}
-
-	visitors := visitorSlice{}
-	err = visitorRepo.database.driver.Select(&visitors, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.GetOfResident: %w: %v", ErrDatabaseQuery, err)
 	}
 
 	return visitors.toModels(), nil
