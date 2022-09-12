@@ -47,7 +47,6 @@ func NewRouter(
 			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
 			officeRouter.Get("/residents", getAllResidents(repos.Resident))
 			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
-			officeRouter.Get("/visitors", getActiveVisitors(repos.Visitor))
 			officeRouter.Get("/visitors/search", searchVisitors(repos.Visitor))
 			officeRouter.Post("/account", createResident(repos.Resident))
 			officeRouter.Delete("/resident/{id}", deleteResident(repos.Resident))
@@ -64,6 +63,7 @@ func NewRouter(
 			userRouter.Get("/permits/expired", getPermits(repos.Permit, models.ExpiredPermits))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(repos.Permit))
 			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
+			userRouter.Get("/visitors", getActiveVisitors(repos.Visitor))
 			userRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 		})
 
