@@ -36,7 +36,7 @@ func NewVisitorRepo(database Database) VisitorRepo {
 	}
 }
 
-func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID string, limit, offset int) ([]models.Visitor, error) {
+func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID, search string, limit, offset int) ([]models.Visitor, error) {
 	if limit < 0 || offset < 0 {
 		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
 	}
@@ -48,6 +48,14 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID string, limit, of
 
 	if residentID != "" {
 		visitorSelect = visitorSelect.Where("visitor.resident_id = $1", residentID)
+	}
+
+	if search != "" {
+		visitorSelect = visitorSelect.Where(squirrel.Or{
+			squirrel.Expr("visitor.resident_id ILIKE $1", "%"+search+"%"),
+			squirrel.Expr("visitor.first_name ILIKE $1"),
+			squirrel.Expr("visitor.last_name ILIKE $1"),
+		})
 	}
 
 	query, args, err := visitorSelect.
@@ -90,35 +98,6 @@ func (visitorRepo VisitorRepo) GetCount(onlyActive bool, residentID string) (int
 	}
 
 	return totalAmount, nil
-}
-
-func (visitorRepo VisitorRepo) Search(searchStr string, onlyActive bool) ([]models.Visitor, error) {
-	if searchStr == "" {
-		return nil, fmt.Errorf("visitor_repo.Search: %w: Empty search argument", ErrInvalidArg)
-	}
-
-	visitorSelect := visitorRepo.visitorSelect.
-		Where(squirrel.Or{
-			squirrel.Expr("visitor.resident_id ILIKE $1", "%"+searchStr+"%"),
-			squirrel.Expr("visitor.first_name ILIKE $1"),
-			squirrel.Expr("visitor.last_name ILIKE $1"),
-		})
-	if onlyActive {
-		visitorSelect = visitorSelect.Where(visitorRepo.whereActive)
-	}
-
-	query, args, err := visitorSelect.ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrBuildingQuery, err)
-	}
-
-	visitors := visitorSlice{}
-	err = visitorRepo.database.driver.Select(&visitors, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Search: %w: %v", ErrDatabaseQuery, err)
-	}
-
-	return visitors.toModels(), nil
 }
 
 func (visitorRepo VisitorRepo) Create(residentId,
