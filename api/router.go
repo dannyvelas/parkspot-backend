@@ -44,10 +44,6 @@ func NewRouter(
 
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(jwtMiddleware.authenticate(AdminRole)) //, SecurityRole
-			officeRouter.Get("/permits/all", getPermits(repos.Permit, models.AllPermits))
-			officeRouter.Get("/permits/active", getPermits(repos.Permit, models.ActivePermits))
-			officeRouter.Get("/permits/exceptions", getPermits(repos.Permit, models.ExceptionPermits))
-			officeRouter.Get("/permits/expired", getPermits(repos.Permit, models.ExpiredPermits))
 			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
 			officeRouter.Get("/residents", getAllResidents(repos.Resident))
 			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
@@ -61,17 +57,18 @@ func NewRouter(
 
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
-			userRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 			userRouter.Get("/hello", sayHello())
-			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
+			userRouter.Get("/permits/all", getPermits(repos.Permit, models.AllPermits))
+			userRouter.Get("/permits/active", getPermits(repos.Permit, models.ActivePermits))
+			userRouter.Get("/permits/exceptions", getPermits(repos.Permit, models.ExceptionPermits))
+			userRouter.Get("/permits/expired", getPermits(repos.Permit, models.ExpiredPermits))
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(repos.Permit))
-			userRouter.Get("/resident/{id}/permits", getAllPermitsOfResident(repos.Permit))
-			userRouter.Get("/resident/{id}/permits/active", getActivePermitsOfResident(repos.Permit))
+			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
+			userRouter.Put("/account/password", resetPassword(jwtMiddleware, repos.Admin, repos.Resident))
 		})
 
 		r.Group(func(residentRouter chi.Router) {
 			residentRouter.Use(jwtMiddleware.authenticate(ResidentRole))
-			residentRouter.Get("/me/visitors", getVisitorsOfResident(repos.Visitor))
 			residentRouter.Post("/visitor", createVisitor(repos.Visitor))
 			residentRouter.Delete("/visitor/{id}", deleteVisitor(repos.Visitor))
 		})
