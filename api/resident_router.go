@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
@@ -50,6 +52,51 @@ func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			return
 		} else if errors.Is(err, storage.ErrNoRows) {
 			respondError(w, newErrNotFound("resident"))
+			return
+		}
+
+		respondJSON(w, http.StatusOK, resident)
+	}
+}
+
+func editResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if err := models.IsResidentId(id); err != nil {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		}
+
+		var editResidentReq editResidentReq
+		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
+			respondError(w, newErrMalformed("EditResidentReq"))
+			return
+		}
+
+		if err := editResidentReq.validate(); err != nil {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		}
+
+		err := residentRepo.Update(
+			id,
+			editResidentReq.FirstName,
+			editResidentReq.LastName,
+			editResidentReq.Phone,
+			editResidentReq.Email,
+			editResidentReq.UnlimDays,
+			editResidentReq.AmtParkingDaysUsed,
+		)
+		if err != nil {
+			log.Error().Msgf("resident_router.editResident: Error updating resident: %v", err)
+			respondInternalError(w)
+			return
+		}
+
+		resident, err := residentRepo.GetOne(id)
+		if err != nil {
+			log.Error().Msgf("resident_router.editResident: Error getting resident: %v", err)
+			respondInternalError(w)
 			return
 		}
 

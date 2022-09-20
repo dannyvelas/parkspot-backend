@@ -194,3 +194,56 @@ func (residentRepo ResidentRepo) Delete(residentId string) error {
 
 	return nil
 }
+
+func (residentRepo ResidentRepo) Update(
+	residentID,
+	firstName,
+	lastName,
+	phone,
+	email string,
+	unlimDays *bool,
+	amtParkingDaysUsed *int,
+) error {
+	if residentID == "" {
+		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", ErrInvalidArg)
+	}
+
+	if firstName == "" && lastName == "" && phone == "" && email == "" && unlimDays == nil &&
+		amtParkingDaysUsed == nil {
+		return fmt.Errorf("resident_repo.Update: %w, %v", ErrInvalidArg, "All edit fields cannot be empty")
+	}
+
+	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	residentUpdate := squirrel.Update("resident")
+
+	if firstName != "" {
+		residentUpdate = residentUpdate.Set("first_name", firstName)
+	}
+	if lastName != "" {
+		residentUpdate = residentUpdate.Set("last_name", lastName)
+	}
+	if phone != "" {
+		residentUpdate = residentUpdate.Set("phone", phone)
+	}
+	if email != "" {
+		residentUpdate = residentUpdate.Set("email", email)
+	}
+	if unlimDays != nil {
+		residentUpdate = residentUpdate.Set("unlim_days", *unlimDays)
+	}
+	if amtParkingDaysUsed != nil {
+		residentUpdate = residentUpdate.Set("amt_parking_days_used", *amtParkingDaysUsed)
+	}
+
+	query, args, err := residentUpdate.Where("resident.id = ?", residentID).ToSql()
+	if err != nil {
+		return fmt.Errorf("resident_repo.Update: %w: %v", ErrBuildingQuery, err)
+	}
+
+	_, err = residentRepo.database.driver.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("resident_repo.Update: %w: %v", ErrDatabaseExec, err)
+	}
+
+	return nil
+}

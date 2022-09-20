@@ -49,6 +49,7 @@ func NewRouter(
 			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
 			officeRouter.Post("/account", createResident(repos.Resident))
 			officeRouter.Delete("/resident/{id}", deleteResident(repos.Resident))
+			officeRouter.Put("/resident/{id}", editResident(repos.Resident))
 			officeRouter.Get("/car/{id}", getOneCar(repos.Car))
 			officeRouter.Put("/car/{id}", editCar(repos.Car))
 		})
