@@ -55,14 +55,13 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
+		// generate tokens
 		refreshToken, err := jwtMiddleware.newRefresh(userFound)
 		if err != nil {
 			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
 			respondInternalError(w)
 			return
 		}
-
-		sendRefreshToken(w, refreshToken)
 
 		accessToken, err := jwtMiddleware.newAccess(userFound.Id, userFound.Role)
 		if err != nil {
@@ -71,6 +70,8 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
+		// send tokens
+		sendRefreshToken(w, refreshToken)
 		response := session{userFound, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
@@ -115,7 +116,7 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		// refresh the refresh token
+		// generate tokens
 		refreshToken, err := jwtMiddleware.newRefresh(user)
 		if err != nil {
 			log.Error().Msgf("auth_router.getNewTokens: Error generating refresh JWT: %v", err)
@@ -123,9 +124,6 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		sendRefreshToken(w, refreshToken)
-
-		// refresh access token
 		accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
 		if err != nil {
 			log.Error().Msgf("auth_router.getNewTokens: Error generating access JWT: %v", err)
@@ -133,6 +131,8 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
+		// send tokens
+		sendRefreshToken(w, refreshToken)
 		response := session{user, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
@@ -331,8 +331,7 @@ func sendRefreshToken(w http.ResponseWriter, refreshToken string) {
 		Name:     refreshCookieKey,
 		Value:    refreshToken,
 		HttpOnly: true,
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode}
+		Path:     "/"}
 	http.SetCookie(w, &cookie)
 }
 
