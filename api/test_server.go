@@ -64,9 +64,23 @@ func authenticatedReq(method string, url string, requestBytes []byte, accessToke
 	return response.Body, nil
 }
 
+// Create Resident Funcs
 func createTestResidents(testServerURL, accessToken string) error {
-	createFn := func(testResident models.Resident) error {
-		requestBody := []byte(fmt.Sprintf(`{
+	err := hitCreateResidentEndpoint(testServerURL, accessToken, testResident)
+	if err != nil {
+		return err
+	}
+
+	err = hitCreateResidentEndpoint(testServerURL, accessToken, testResidentUnlimDays)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hitCreateResidentEndpoint(testServerURL, accessToken string, resident models.Resident) error {
+	requestBody := []byte(fmt.Sprintf(`{
       "residentId": "%s",
       "firstName": "%s",
       "lastName": "%s",
@@ -75,51 +89,45 @@ func createTestResidents(testServerURL, accessToken string) error {
       "password":"%s",
       "unlimDays": %t
     }`,
-			testResident.Id,
-			testResident.FirstName,
-			testResident.LastName,
-			testResident.Phone,
-			testResident.Email,
-			testResident.Password,
-			testResident.UnlimDays))
+		resident.Id,
+		resident.FirstName,
+		resident.LastName,
+		resident.Phone,
+		resident.Email,
+		resident.Password,
+		resident.UnlimDays))
 
-		responseBody, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, accessToken)
-		if err != nil {
-			return fmt.Errorf("test_server.createTestResident: request error: %v", err)
-		}
-		defer responseBody.Close()
+	responseBody, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, accessToken)
+	if err != nil {
+		return fmt.Errorf("test_server.hitCreateResidentEndpoint: request error: %v", err)
+	}
+	defer responseBody.Close()
 
-		return nil
+	return nil
+}
+
+// Delete Resident Funcs
+func deleteTestResidents(testServerURL, accessToken string) error {
+	err := hitDeleteResidentEndpoint(testServerURL, accessToken, testResident.Id)
+	if err != nil {
+		return err
 	}
 
-	for _, testResident := range []models.Resident{testResident, testResidentUnlimDays} {
-		err := createFn(testResident)
-		if err != nil {
-			return err
-		}
+	err = hitDeleteResidentEndpoint(testServerURL, accessToken, testResidentUnlimDays.Id)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func deleteTestResidents(testServerURL, accessToken string) error {
-	deleteFn := func(testResident models.Resident) error {
-		endpoint := fmt.Sprintf("%s/api/resident/%s", testServerURL, testResident.Id)
-		responseBody, err := authenticatedReq("DELETE", endpoint, nil, accessToken)
-		if err != nil {
-			return fmt.Errorf("test_server.deleteTestResident: request error: %v", err)
-		}
-		defer responseBody.Close()
-
-		return nil
+func hitDeleteResidentEndpoint(testServerURL, accessToken string, residentID string) error {
+	endpoint := fmt.Sprintf("%s/api/resident/%s", testServerURL, residentID)
+	responseBody, err := authenticatedReq("DELETE", endpoint, nil, accessToken)
+	if err != nil {
+		return fmt.Errorf("test_server.deleteTestResident: req/res error: %v", err)
 	}
-
-	for _, testResident := range []models.Resident{testResident, testResidentUnlimDays} {
-		err := deleteFn(testResident)
-		if err != nil {
-			return err
-		}
-	}
+	defer responseBody.Close()
 
 	return nil
 }
