@@ -62,24 +62,85 @@ func (suite residentRouterSuite) TearDownSuite() {
 }
 
 func (suite residentRouterSuite) TestEdit_Resident_Positive() {
-	requestBody := []byte(`{"firstName":"NEWFIRSTNAME"}`)
-	endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.Id)
-	responseBody, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
-	if err != nil {
-		suite.NoError(fmt.Errorf("Error making request: %v", err))
-		return
-	}
-	defer responseBody.Close()
-
-	var actualResident models.Resident
-	if err := json.NewDecoder(responseBody).Decode(&actualResident); err != nil {
-		suite.NoError(err)
-		return
+	type test struct {
+		request  string
+		expected models.Resident
 	}
 
-	expectedResident := testResident
-	expectedResident.FirstName = "NEWFIRSTNAME"
-	expectedResident.Password = "" // passwords are not included in JSON responses
+	tests := map[string]test{
+		"firstName": {
+			`{"firstName":"NEWFIRST"}`,
+			testResidentWith(editResidentReq{FirstName: "NEWFIRST"}),
+		},
+		"firstName, lastName": {
+			`{"firstName":"NEWFIRST","lastName":"NEWLAST"}`,
+			testResidentWith(editResidentReq{FirstName: "NEWFIRST", LastName: "NEWLAST"}),
+		},
+		"firstName, lastName, phone": {
+			`{"firstName":"NEWFIRST","lastName":"NEWLAST","phone":"123456789"}`,
+			testResidentWith(editResidentReq{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "123456789"}),
+		},
+		"unlimDays": {
+			`{"unlimDays":true}`,
+			testResidentWith(editResidentReq{UnlimDays: &[]bool{true}[0]}), // hack for literal bool pointer fix later
+		},
+		"amtParkingDaysUsed": {
+			`{"amtParkingDaysUsed":42}`,
+			testResidentWith(editResidentReq{AmtParkingDaysUsed: &[]int{42}[0]}), // hack for literal int pointer fix later
+		},
+	}
 
-	suite.Empty(cmp.Diff(expectedResident, actualResident), "user in response did not equal expected user")
+	executeTest := func(test test) error {
+		requestBody := []byte(test.request)
+		endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.Id)
+		responseBody, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
+		if err != nil {
+			return fmt.Errorf("Error making request: %v", err)
+		}
+		defer responseBody.Close()
+
+		var actualResident models.Resident
+		if err := json.NewDecoder(responseBody).Decode(&actualResident); err != nil {
+			return err
+		}
+
+		if difference := cmp.Diff(test.expected, actualResident); difference != "" {
+			return fmt.Errorf("user in response did not equal expected user: " + difference)
+		}
+		return nil
+	}
+
+	for testName, test := range tests {
+		err := executeTest(test)
+		if err != nil {
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+		}
+	}
+}
+
+func testResidentWith(override editResidentReq) models.Resident {
+	returnResident := testResident
+
+	if override.FirstName != "" {
+		returnResident.FirstName = override.FirstName
+	}
+	if override.LastName != "" {
+		returnResident.LastName = override.LastName
+	}
+	if override.Phone != "" {
+		returnResident.Phone = override.Phone
+	}
+	if override.Email != "" {
+		returnResident.Email = override.Email
+	}
+	if override.UnlimDays != nil {
+		returnResident.UnlimDays = *override.UnlimDays
+	}
+	if override.AmtParkingDaysUsed != nil {
+		returnResident.AmtParkingDaysUsed = *override.AmtParkingDaysUsed
+	}
+
+	returnResident.Password = "" // passwords are always "" in JSON responses
+
+	return returnResident
 }
