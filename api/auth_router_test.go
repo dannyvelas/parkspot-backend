@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
@@ -236,27 +237,21 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
   }`,
 		testResident.Email))
 
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminAccessToken)
-	if err != nil {
-		suite.NoError(fmt.Errorf("error sending request: %v", err))
-		return
-	}
-	defer responseBody.Close()
-
-	if statusCode == http.StatusOK {
+	responseBody, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminAccessToken)
+	if err == nil {
+		defer responseBody.Close()
 		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, statusCode, "Expected bad request got: %d", statusCode)
-
-	bodyBytes, err := io.ReadAll(responseBody)
-	if err != nil {
-		suite.NoError(fmt.Errorf("error getting error response: %v", err))
+	var resErr responseError
+	if !errors.As(err, &resErr) {
+		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
-	suite.Contains(string(bodyBytes), "email") // assert bad request happened bc of email
+	suite.Equal(http.StatusBadRequest, resErr.statusCode, "Expected bad request got: %d", resErr.statusCode)
+	suite.Contains(resErr.message, "email") // assert bad request happened bc of email
 }
 
 // helpers

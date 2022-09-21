@@ -8,8 +8,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -98,22 +96,12 @@ func (suite visitorRouterSuite) TearDownSuite() {
 }
 
 func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
-	responseBody, statusCode, err := authenticatedReq("GET", suite.testServer.URL+"/api/visitors", nil, suite.residentJWT)
+	responseBody, err := authenticatedReq("GET", suite.testServer.URL+"/api/visitors", nil, suite.residentJWT)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error making request: %v", err))
 		return
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error getting error response: %v", err))
-			return
-		}
-		suite.Empty(string(bodyBytes))
-		return
-	}
 
 	var response listWithMetadata[models.Visitor]
 	if err := json.NewDecoder(responseBody).Decode(&response); err != nil {
@@ -138,19 +126,11 @@ func createTestVisitor(url string, jwt string, testVisitor newVisitorReq) (strin
 		return "", fmt.Errorf("Error marshalling testVisitor")
 	}
 
-	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/visitor", requestBody, jwt)
+	responseBody, err := authenticatedReq("POST", url+"/api/visitor", requestBody, jwt)
 	if err != nil {
 		return "", fmt.Errorf("Error making request: %v", err)
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			return "", fmt.Errorf("Error getting error response: %v", err)
-		}
-		return "", fmt.Errorf("Bad response: %s", string(bodyBytes))
-	}
 
 	var response models.Visitor
 	if err := json.NewDecoder(responseBody).Decode(&response); err != nil {
@@ -162,19 +142,11 @@ func createTestVisitor(url string, jwt string, testVisitor newVisitorReq) (strin
 
 func deleteTestVisitor(url string, jwt string, id string) error {
 	endpoint := fmt.Sprintf("%s/api/visitor/%s", url, id)
-	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, jwt)
+	responseBody, err := authenticatedReq("DELETE", endpoint, nil, jwt)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			return fmt.Errorf("Error getting error response: %v", err)
-		}
-		return fmt.Errorf("Bad response: %s", string(bodyBytes))
-	}
 
 	return nil
 }

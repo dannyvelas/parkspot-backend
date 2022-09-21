@@ -9,8 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -66,22 +64,12 @@ func (suite residentRouterSuite) TearDownSuite() {
 func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	requestBody := []byte(`{"firstName":"NEWFIRSTNAME"}`)
 	endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.Id)
-	responseBody, statusCode, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
+	responseBody, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error making request: %v", err))
 		return
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error getting error response: %v", err))
-			return
-		}
-		suite.NoError(fmt.Errorf("Bad response: %s", string(bodyBytes)))
-		return
-	}
 
 	var actualResident models.Resident
 	if err := json.NewDecoder(responseBody).Decode(&actualResident); err != nil {

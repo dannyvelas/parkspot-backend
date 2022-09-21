@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -9,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -204,23 +204,23 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
       "model":""
     }
   }`)
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-	defer responseBody.Close()
-
-	bodyBytes, err := io.ReadAll(responseBody)
-	if err != nil {
-		suite.NoError(err)
+	responseBody, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
+	if err == nil {
+		defer responseBody.Close()
+		suite.NoError(fmt.Errorf("Successfully created permit when it shouldn't have"))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, statusCode)
+	var resErr responseError
+	if !errors.As(err, &resErr) {
+		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
+		return
+	}
+
+	suite.Equal(http.StatusBadRequest, resErr.statusCode)
 
 	responseMsg := fmt.Sprintf("\"%v: startDate, endDate\"\n", errEmptyFields)
-	suite.Equal(responseMsg, string(bodyBytes))
+	suite.Equal(responseMsg, resErr.message)
 }
 
 func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
@@ -235,23 +235,23 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
     "startDate": "",
     "endDate": ""
   }`)
-	responseBody, statusCode, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
-	if err != nil {
-		suite.NoError(err)
-		return
-	}
-	defer responseBody.Close()
-
-	bodyBytes, err := io.ReadAll(responseBody)
-	if err != nil {
-		suite.NoError(err)
+	responseBody, err := authenticatedReq("POST", suite.testServer.URL+"/api/permit", requestBody, suite.adminJWT)
+	if err == nil {
+		defer responseBody.Close()
+		suite.NoError(fmt.Errorf("Successfully created permit when it shouldn't have"))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, statusCode)
+	var resErr responseError
+	if !errors.As(err, &resErr) {
+		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
+		return
+	}
+
+	suite.Equal(http.StatusBadRequest, resErr.statusCode)
 
 	responseMsg := fmt.Sprintf("\"%v\"\n", newErrMalformed("NewPermitReq"))
-	suite.Equal(responseMsg, string(bodyBytes))
+	suite.Equal(responseMsg, resErr.message)
 }
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
@@ -359,22 +359,12 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	}()
 
 	endpoint := fmt.Sprintf("%s/api/permits/active", suite.testServer.URL)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.residentJWT)
+	responseBody, err := authenticatedReq("GET", endpoint, nil, suite.residentJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error getting error response: %v", err))
-			return
-		}
-		suite.NoError(fmt.Errorf("Bad response: %s", string(bodyBytes)))
-		return
-	}
 
 	var permitsResponse listWithMetadata[models.Permit]
 	if err := json.NewDecoder(responseBody).Decode(&permitsResponse); err != nil {
@@ -394,22 +384,12 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 
 func (suite permitRouterSuite) TestGetMaxExceptions_Positive() {
 	endpoint := fmt.Sprintf("%s/api/permits/exceptions?limit=%d", suite.testServer.URL, config.MaxLimit)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
+	responseBody, err := authenticatedReq("GET", endpoint, nil, suite.adminJWT)
 	if err != nil {
 		suite.NoError(err)
 		return
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error getting error response: %v", err))
-			return
-		}
-		suite.NoError(fmt.Errorf("Bad response: %s", string(bodyBytes)))
-		return
-	}
 
 	var permitsResponse listWithMetadata[models.Permit]
 	if err := json.NewDecoder(responseBody).Decode(&permitsResponse); err != nil {
@@ -442,19 +422,11 @@ func createTestPermit(url string, adminJWT string, testPermit newPermitReq) (mod
 		return models.Permit{}, fmt.Errorf("Error marshalling: %v", err)
 	}
 
-	responseBody, statusCode, err := authenticatedReq("POST", url+"/api/permit", requestBody, adminJWT)
+	responseBody, err := authenticatedReq("POST", url+"/api/permit", requestBody, adminJWT)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("Error making request: %v", err)
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			return models.Permit{}, fmt.Errorf("Error getting error response: %v", err)
-		}
-		return models.Permit{}, fmt.Errorf("Bad response: %s", string(bodyBytes))
-	}
 
 	var newPermitResponse models.Permit
 	if err := json.NewDecoder(responseBody).Decode(&newPermitResponse); err != nil {
@@ -466,19 +438,11 @@ func createTestPermit(url string, adminJWT string, testPermit newPermitReq) (mod
 
 func deleteTestPermitAndCar(url, adminJWT string, permitId int, carId string, carRepo storage.CarRepo) error {
 	endpoint := fmt.Sprintf("%s/api/permit/%d", url, permitId)
-	responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, adminJWT)
+	responseBody, err := authenticatedReq("DELETE", endpoint, nil, adminJWT)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			return fmt.Errorf("Error getting error response: %v", err)
-		}
-		return fmt.Errorf("Bad response: %s", string(bodyBytes))
-	}
 
 	err = carRepo.Delete(carId)
 	if err != nil {
@@ -490,20 +454,11 @@ func deleteTestPermitAndCar(url, adminJWT string, permitId int, carId string, ca
 
 func getTestResident(url string, residentId string, adminJWT string) (models.Resident, error) {
 	endpoint := fmt.Sprintf("%s/api/resident/%s", url, residentId)
-	responseBody, statusCode, err := authenticatedReq("GET", endpoint, nil, adminJWT)
+	responseBody, err := authenticatedReq("GET", endpoint, nil, adminJWT)
 	if err != nil {
 		return models.Resident{}, err
 	}
 	defer responseBody.Close()
-
-	if statusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(responseBody)
-		if err != nil {
-			return models.Resident{}, fmt.Errorf("Error reading response after bad status code: %v", err)
-		}
-
-		return models.Resident{}, fmt.Errorf("Bad response getting resident: %s", string(bodyBytes))
-	}
 
 	var resident models.Resident
 	if err := json.NewDecoder(responseBody).Decode(&resident); err != nil {

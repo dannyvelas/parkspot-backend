@@ -39,19 +39,29 @@ func newTestServer(c config.Config, repos storage.Repos) *httptest.Server {
 	return httptest.NewServer(router)
 }
 
-func authenticatedReq(method string, url string, requestBytes []byte, accessToken string) (io.ReadCloser, int, error) {
+func authenticatedReq(method string, url string, requestBytes []byte, accessToken string) (io.ReadCloser, error) {
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(requestBytes))
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	request.Header.Add("Authorization", "Bearer "+accessToken)
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return response.Body, response.StatusCode, nil
+	if response.StatusCode != http.StatusOK {
+		defer response.Body.Close()
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			return nil, fmt.Errorf("Error reading response after non-200 status code, %d: %v", response.StatusCode, err)
+		}
+
+		return nil, responseError{response.StatusCode, string(bodyBytes)}
+	}
+
+	return response.Body, nil
 }
 
 func createTestResidents(testServerURL, accessToken string) error {
@@ -73,19 +83,11 @@ func createTestResidents(testServerURL, accessToken string) error {
 			testResident.Password,
 			testResident.UnlimDays))
 
-		responseBody, statusCode, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, accessToken)
+		responseBody, err := authenticatedReq("POST", testServerURL+"/api/account", requestBody, accessToken)
 		if err != nil {
-			return fmt.Errorf("test_server.createTestResident: error sending request: %v", err)
+			return fmt.Errorf("test_server.createTestResident: request error: %v", err)
 		}
 		defer responseBody.Close()
-
-		if statusCode != http.StatusOK {
-			bodyBytes, err := io.ReadAll(responseBody)
-			if err != nil {
-				return fmt.Errorf("test_server.createTestResident: error getting error response: %v", err)
-			}
-			return fmt.Errorf("test_server.createTestResident: Bad response: %s", string(bodyBytes))
-		}
 
 		return nil
 	}
@@ -103,19 +105,11 @@ func createTestResidents(testServerURL, accessToken string) error {
 func deleteTestResidents(testServerURL, accessToken string) error {
 	deleteFn := func(testResident models.Resident) error {
 		endpoint := fmt.Sprintf("%s/api/resident/%s", testServerURL, testResident.Id)
-		responseBody, statusCode, err := authenticatedReq("DELETE", endpoint, nil, accessToken)
+		responseBody, err := authenticatedReq("DELETE", endpoint, nil, accessToken)
 		if err != nil {
-			return fmt.Errorf("test_server.deleteTestResident: error sending request: %v", err)
+			return fmt.Errorf("test_server.deleteTestResident: request error: %v", err)
 		}
 		defer responseBody.Close()
-
-		if statusCode != http.StatusOK {
-			bodyBytes, err := io.ReadAll(responseBody)
-			if err != nil {
-				return fmt.Errorf("test_server.deleteTestResident: error getting error response: %v", err)
-			}
-			return fmt.Errorf("test_server.deleteTestResident: Bad response: %s", string(bodyBytes))
-		}
 
 		return nil
 	}
