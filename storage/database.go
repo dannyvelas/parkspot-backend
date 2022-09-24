@@ -12,16 +12,7 @@ type Database struct {
 }
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		postgresConfig.Host(),
-		postgresConfig.Port(),
-		postgresConfig.User(),
-		postgresConfig.Password(),
-		postgresConfig.DbName(),
-	)
-
-	driver, err := sqlx.Connect("postgres", psqlInfo)
+	driver, err := sqlx.Connect("postgres", postgresConfig.URL())
 	if err != nil {
 		return Database{}, fmt.Errorf("database: %w", ErrConnecting)
 	}

@@ -1,47 +1,15 @@
 package config
 
 type PostgresConfig struct {
-	host     string
-	port     string
-	user     string
-	password string
-	dbName   string
+	url string
 }
-
-const (
-	defaultPostgresHost     = "127.0.0.1"
-	defaultPostgresPort     = "5432"
-	defaultPostgresUser     = "postgres"
-	defaultPostgresPassword = "postgres"
-	defaultPostgresDbName   = "postgres"
-)
 
 func newPostgresConfig() PostgresConfig {
 	return PostgresConfig{
-		host:     readEnvString("PG_HOST", defaultPostgresHost),
-		port:     readEnvString("PG_PORT", defaultPostgresPort),
-		user:     readEnvString("PG_USER", defaultPostgresUser),
-		password: readEnvString("PG_PASSWORD", defaultPostgresPassword),
-		dbName:   readEnvString("PG_DBNAME", defaultPostgresDbName),
+		url: readEnvString("DATABASE_URL", "postgres://postgres:postgres@127.0.0.1:5432/postgres"),
 	}
 }
 
-func (postgresConfig PostgresConfig) Host() string {
-	return postgresConfig.host
-}
-
-func (postgresConfig PostgresConfig) Port() string {
-	return postgresConfig.port
-}
-
-func (postgresConfig PostgresConfig) User() string {
-	return postgresConfig.user
-}
-
-func (postgresConfig PostgresConfig) Password() string {
-	return postgresConfig.password
-}
-
-func (postgresConfig PostgresConfig) DbName() string {
-	return postgresConfig.dbName
+func (postgresConfig PostgresConfig) URL() string {
+	return postgresConfig.url
 }
