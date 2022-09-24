@@ -383,7 +383,7 @@ func createGmailMessage(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfi
         <p>Hi, a password reset was requested.</p>
         <p>If you sent the request, please click the button below to reset your password.
            Otherwise, you can ignore this email.</p>
-        <a href='http://%s/reset-password?token=%s'>Reset Your Password</a>
+        <a href='%s/reset-password?token=%s'>Reset Your Password</a>
     </body>`, httpConfig.Domain(), token)
 
 	gmailMessage := &gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
