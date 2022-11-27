@@ -1,114 +1,14 @@
 package api
 
 import (
-	"errors"
-	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/dannyvelas/lasvistas_api/services"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
-	"time"
 )
 
-var (
-	errNotSigningMethodHMAC = errors.New("jwt: Not using SigningMethodHMAC")
-	errCastingJWTClaims     = errors.New("jwt: Failed to cast JWT to JWTClaims struct")
-	errInvalidToken         = errors.New("jwt: Invalid Token")
-)
-
-type jwtMiddleware struct {
-	accessSecret  []byte
-	refreshSecret []byte
-}
-
-func NewJWTMiddleware(tokenConfig config.TokenConfig) jwtMiddleware {
-	return jwtMiddleware{
-		accessSecret:  []byte(tokenConfig.AccessSecret()),
-		refreshSecret: []byte(tokenConfig.RefreshSecret()),
-	}
-}
-
-type accessClaims struct {
-	Payload accessPayload `json:"payload"`
-	jwt.StandardClaims
-}
-
-type accessPayload struct {
-	Id   string      `json:"id"`
-	Role models.Role `json:"role"`
-}
-
-func (jwtMiddleware jwtMiddleware) newAccess(id string, role models.Role) (string, error) {
-	claims := accessClaims{
-		accessPayload{id, role},
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString(jwtMiddleware.accessSecret)
-}
-
-type refreshClaims struct {
-	User models.User `json:"user"`
-	jwt.StandardClaims
-}
-
-func (jwtMiddleware jwtMiddleware) newRefresh(user models.User) (string, error) {
-	claims := refreshClaims{
-		user,
-		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString(jwtMiddleware.refreshSecret)
-}
-
-func (jwtMiddleware jwtMiddleware) parseAccess(tokenString string) (accessPayload, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &accessClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errNotSigningMethodHMAC
-		}
-
-		return jwtMiddleware.accessSecret, nil
-	})
-	if err != nil {
-		return accessPayload{}, err
-	}
-
-	if claims, ok := token.Claims.(*accessClaims); !ok {
-		return accessPayload{}, errCastingJWTClaims
-	} else if !token.Valid {
-		return accessPayload{}, errInvalidToken
-	} else {
-		return claims.Payload, nil
-	}
-}
-
-func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (models.User, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &refreshClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errNotSigningMethodHMAC
-		}
-
-		return jwtMiddleware.refreshSecret, nil
-	})
-	if err != nil {
-		return models.User{}, err
-	}
-
-	if claims, ok := token.Claims.(*refreshClaims); !ok {
-		return models.User{}, errCastingJWTClaims
-	} else if !token.Valid {
-		return models.User{}, errInvalidToken
-	} else {
-		return claims.User, nil
-	}
-}
-
-func (jwtMiddleware jwtMiddleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
+func authenticate(jwtService services.JWTService, firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -119,7 +19,7 @@ func (jwtMiddleware jwtMiddleware) authenticate(firstRole models.Role, roles ...
 			}
 
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
-			accessPayload, err := jwtMiddleware.parseAccess(accessToken)
+			accessPayload, err := jwtService.ParseAccess(accessToken)
 			if err != nil {
 				log.Debug().Msgf("Error parsing: %v", err)
 				respondError(w, errUnauthorized)
