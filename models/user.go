@@ -1,16 +1,16 @@
-package api
+package models
 
-type user struct {
+type User struct {
 	Id           string `json:"id"`
 	FirstName    string `json:"firstName"`
 	LastName     string `json:"lastName"`
 	Email        string `json:"email"`
-	Role         role   `json:"role"`
+	Role         Role   `json:"role"`
 	TokenVersion int    `json:"-"`
 }
 
-func newUser(id string, firstName string, lastName string, email string, role role, tokenVersion int) user {
-	return user{
+func newUser(id string, firstName string, lastName string, email string, role Role, tokenVersion int) User {
+	return User{
 		Id:           id,
 		FirstName:    firstName,
 		LastName:     lastName,
@@ -20,7 +20,7 @@ func newUser(id string, firstName string, lastName string, email string, role ro
 	}
 }
 
-func (self user) Equal(other user) bool {
+func (self User) Equal(other User) bool {
 	if self.Id != other.Id {
 		return false
 	} else if self.FirstName != other.FirstName {

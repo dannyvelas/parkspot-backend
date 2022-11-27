@@ -134,7 +134,7 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 	return nil
 }
 
-func (residentRepo ResidentRepo) SetPasswordFor(id string, password string) error {
+func (residentRepo ResidentRepo) SetPassword(id string, password string) error {
 	if id == "" {
 		return fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	} else if password == "" {
@@ -150,18 +150,18 @@ func (residentRepo ResidentRepo) SetPasswordFor(id string, password string) erro
 	return nil
 }
 
-func (residentRepo ResidentRepo) Create(residentId, firstName, lastName, phone, email, hash string, unlimDays bool) error {
+func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("resident").
 		SetMap(squirrel.Eq{
-			"id":         residentId,
-			"first_name": firstName,
-			"last_name":  lastName,
-			"phone":      phone,
-			"email":      email,
-			"password":   hash,
-			"unlim_days": unlimDays,
+			"id":         resident.Id,
+			"first_name": resident.FirstName,
+			"last_name":  resident.LastName,
+			"phone":      resident.Phone,
+			"email":      resident.Email,
+			"password":   resident.Password,
+			"unlim_days": resident.UnlimDays,
 		}).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Create: %w: %v", ErrBuildingQuery, err)
@@ -195,47 +195,40 @@ func (residentRepo ResidentRepo) Delete(residentId string) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Update(
-	residentID,
-	firstName,
-	lastName,
-	phone,
-	email string,
-	unlimDays *bool,
-	amtParkingDaysUsed *int,
-) error {
-	if residentID == "" {
+func (residentRepo ResidentRepo) Update(id string, model models.EditResident) error {
+	if id == "" {
 		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", ErrInvalidArg)
-	}
-
-	if firstName == "" && lastName == "" && phone == "" && email == "" && unlimDays == nil &&
-		amtParkingDaysUsed == nil {
-		return fmt.Errorf("resident_repo.Update: %w, %v", ErrInvalidArg, "All edit fields cannot be empty")
 	}
 
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	residentUpdate := squirrel.Update("resident")
 
-	if firstName != "" {
-		residentUpdate = residentUpdate.Set("first_name", firstName)
+	if model.FirstName != "" {
+		residentUpdate = residentUpdate.Set("first_name", model.FirstName)
 	}
-	if lastName != "" {
-		residentUpdate = residentUpdate.Set("last_name", lastName)
+	if model.LastName != "" {
+		residentUpdate = residentUpdate.Set("last_name", model.LastName)
 	}
-	if phone != "" {
-		residentUpdate = residentUpdate.Set("phone", phone)
+	if model.Phone != "" {
+		residentUpdate = residentUpdate.Set("phone", model.Phone)
 	}
-	if email != "" {
-		residentUpdate = residentUpdate.Set("email", email)
+	if model.Email != "" {
+		residentUpdate = residentUpdate.Set("email", model.Email)
 	}
-	if unlimDays != nil {
-		residentUpdate = residentUpdate.Set("unlim_days", *unlimDays)
+	if model.Password != "" {
+		residentUpdate = residentUpdate.Set("password", model.Password)
 	}
-	if amtParkingDaysUsed != nil {
-		residentUpdate = residentUpdate.Set("amt_parking_days_used", *amtParkingDaysUsed)
+	if model.UnlimDays != nil {
+		residentUpdate = residentUpdate.Set("unlim_days", *model.UnlimDays)
+	}
+	if model.AmtParkingDaysUsed != nil {
+		residentUpdate = residentUpdate.Set("amt_parking_days_used", *model.AmtParkingDaysUsed)
+	}
+	if model.TokenVersion != 0 {
+		residentUpdate = residentUpdate.Set("token_version", model.TokenVersion)
 	}
 
-	query, args, err := residentUpdate.Where("resident.id = ?", residentID).ToSql()
+	query, args, err := residentUpdate.Where("resident.id = ?", id).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Update: %w: %v", ErrBuildingQuery, err)
 	}

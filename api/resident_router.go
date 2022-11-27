@@ -78,15 +78,17 @@ func editResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			return
 		}
 
-		err := residentRepo.Update(
-			id,
-			editResidentReq.FirstName,
-			editResidentReq.LastName,
-			editResidentReq.Phone,
-			editResidentReq.Email,
-			editResidentReq.UnlimDays,
-			editResidentReq.AmtParkingDaysUsed,
-		)
+		desiredResident := models.EditResident{
+			FirstName:          editResidentReq.FirstName,
+			LastName:           editResidentReq.LastName,
+			Phone:              editResidentReq.Phone,
+			Email:              editResidentReq.Email,
+			Password:           editResidentReq.Password,
+			UnlimDays:          editResidentReq.UnlimDays,
+			AmtParkingDaysUsed: editResidentReq.AmtParkingDaysUsed,
+		}
+
+		err := residentRepo.Update(id, desiredResident)
 		if err != nil {
 			log.Error().Msgf("resident_router.editResident: Error updating resident: %v", err)
 			respondInternalError(w)

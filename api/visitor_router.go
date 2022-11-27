@@ -27,7 +27,7 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		}
 
 		residentID := ""
-		if accessPayload.Role == ResidentRole {
+		if accessPayload.Role == models.ResidentRole {
 			residentID = accessPayload.Id
 		}
 

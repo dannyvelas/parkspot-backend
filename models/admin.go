@@ -21,3 +21,11 @@ func NewAdmin(id string, firstName string, lastName string, email string, passwo
 		TokenVersion: tokenVersion,
 	}
 }
+
+func (a Admin) GetPassword() string {
+	return a.Password
+}
+
+func (a Admin) AsUser() User {
+	return newUser(a.Id, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
+}

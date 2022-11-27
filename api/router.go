@@ -36,14 +36,15 @@ func NewRouter(
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login", login(jwtMiddleware, repos.Admin, repos.Resident))
+			anyoneRouter.Post("/login-resident", login[models.Resident](jwtMiddleware, repos.Resident))
+			anyoneRouter.Post("/login-admin", login[models.Admin](jwtMiddleware, repos.Admin))
 			anyoneRouter.Post("/logout", logout())
 			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtMiddleware, repos.Admin, repos.Resident))
 			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtMiddleware, httpConfig, oauthConfig, repos.Admin, repos.Resident))
 		})
 
 		r.Group(func(officeRouter chi.Router) {
-			officeRouter.Use(jwtMiddleware.authenticate(AdminRole)) //, SecurityRole
+			officeRouter.Use(jwtMiddleware.authenticate(models.AdminRole)) //, SecurityRole
 			officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
 			officeRouter.Get("/residents", getAllResidents(repos.Resident))
 			officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
@@ -55,7 +56,7 @@ func NewRouter(
 		})
 
 		r.Group(func(userRouter chi.Router) {
-			userRouter.Use(jwtMiddleware.authenticate(AdminRole, ResidentRole)) //, SecurityRole
+			userRouter.Use(jwtMiddleware.authenticate(models.AdminRole, models.ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
 			userRouter.Get("/permits/all", getPermits(repos.Permit, models.AllPermits))
 			userRouter.Get("/permits/active", getPermits(repos.Permit, models.ActivePermits))
@@ -68,7 +69,7 @@ func NewRouter(
 		})
 
 		r.Group(func(residentRouter chi.Router) {
-			residentRouter.Use(jwtMiddleware.authenticate(ResidentRole))
+			residentRouter.Use(jwtMiddleware.authenticate(models.ResidentRole))
 			residentRouter.Post("/visitor", createVisitor(repos.Visitor))
 			residentRouter.Delete("/visitor/{id}", deleteVisitor(repos.Visitor))
 		})

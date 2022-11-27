@@ -37,7 +37,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	return admin.toModels(), nil
 }
 
-func (adminRepo AdminRepo) SetPasswordFor(id string, password string) error {
+func (adminRepo AdminRepo) SetPassword(id string, password string) error {
 	if id == "" {
 		return fmt.Errorf("admin_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	} else if password == "" {

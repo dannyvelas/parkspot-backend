@@ -41,6 +41,14 @@ func NewResident(
 	}
 }
 
+func (r Resident) GetPassword() string {
+	return r.Password
+}
+
+func (r Resident) AsUser() User {
+	return newUser(r.Id, r.FirstName, r.LastName, r.Email, ResidentRole, r.TokenVersion)
+}
+
 func IsResidentId(s string) error {
 	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(s) {
 		return errors.New("residentId must start be a 'B' or a 'T', followed by 7 numbers")

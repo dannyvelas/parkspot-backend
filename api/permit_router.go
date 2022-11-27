@@ -28,7 +28,7 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 		}
 
 		residentID := ""
-		if accessPayload.Role == ResidentRole {
+		if accessPayload.Role == models.ResidentRole {
 			residentID = accessPayload.Id
 		}
 
@@ -95,7 +95,7 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 			return
 		}
 
-		if accessPayload.Role == ResidentRole && newPermitReq.ExceptionReason != "" {
+		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
 			respondError(w, newErrBadRequest(message))
 			return

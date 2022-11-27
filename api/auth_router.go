@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -15,17 +16,16 @@ import (
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 )
 
 type session struct {
-	User        user   `json:"user"`
-	AccessToken string `json:"accessToken"`
+	User        models.User `json:"user"`
+	AccessToken string      `json:"accessToken"`
 }
 
-func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func login[Model models.Loginable](jwtMiddleware jwtMiddleware, repo storage.UserRepo[Model]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var credentials struct {
 			Id       string
@@ -37,33 +37,35 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 			return
 		}
 
-		userFound, hash, err := getUserAndHashById(credentials.Id, adminRepo, residentRepo)
-		if errors.Is(err, errUnauthorized) {
+		loginable, err := repo.GetOne(credentials.Id)
+		if errors.Is(err, storage.ErrNoRows) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msg("auth_router.login: " + err.Error())
+			log.Error().Msg("auth_router.login: error querying repo: %v" + err.Error())
 			respondInternalError(w)
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword(
-			[]byte(hash),
+			[]byte(loginable.GetPassword()),
 			[]byte(credentials.Password),
 		); err != nil {
 			respondError(w, errUnauthorized)
 			return
 		}
 
+		user := loginable.AsUser()
+
 		// generate tokens
-		refreshToken, err := jwtMiddleware.newRefresh(userFound)
+		refreshToken, err := jwtMiddleware.newRefresh(user)
 		if err != nil {
 			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		accessToken, err := jwtMiddleware.newAccess(userFound.Id, userFound.Role)
+		accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
 		if err != nil {
 			log.Error().Msgf("auth_router.login: Error generating access JWT: %v", err)
 			respondInternalError(w)
@@ -72,7 +74,7 @@ func login(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRep
 
 		// send tokens
 		sendRefreshToken(w, refreshToken)
-		response := session{userFound, accessToken}
+		response := session{user, accessToken}
 
 		respondJSON(w, http.StatusOK, response)
 	}
@@ -101,32 +103,21 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		user, _, err := getUserAndHashById(refreshPayload.Id, adminRepo, residentRepo)
+		var (
+			user         models.User
+			refreshToken string
+			accessToken  string
+		)
+		if resCheckErr := models.IsResidentId(refreshPayload.Id); resCheckErr == nil {
+			user, refreshToken, accessToken, err = refreshService[models.Resident](jwtMiddleware, residentRepo, refreshPayload)
+		} else {
+			user, refreshToken, accessToken, err = refreshService[models.Admin](jwtMiddleware, adminRepo, refreshPayload)
+		}
 		if errors.Is(err, errUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msg("auth_router.getNewTokens: " + err.Error())
-			respondInternalError(w)
-			return
-		}
-
-		if user.TokenVersion != refreshPayload.TokenVersion {
-			respondError(w, errUnauthorized)
-			return
-		}
-
-		// generate tokens
-		refreshToken, err := jwtMiddleware.newRefresh(user)
-		if err != nil {
-			log.Error().Msgf("auth_router.getNewTokens: Error generating refresh JWT: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
-		if err != nil {
-			log.Error().Msgf("auth_router.getNewTokens: Error generating access JWT: %v", err)
+			log.Error().Msg("auth_router.refreshTokens: " + err.Error())
 			respondInternalError(w)
 			return
 		}
@@ -137,6 +128,38 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 
 		respondJSON(w, http.StatusOK, response)
 	}
+}
+
+func refreshService[Model models.Loginable](
+	jwtMiddleware jwtMiddleware,
+	repo storage.UserRepo[Model],
+	refreshPayload models.User,
+) (models.User, string, string, error) {
+	loginable, err := repo.GetOne(refreshPayload.Id)
+	if errors.Is(err, storage.ErrNoRows) {
+		return models.User{}, "", "", errUnauthorized
+	} else if err != nil {
+		return models.User{}, "", "", fmt.Errorf("Error querying repo: %v", err)
+	}
+
+	user := loginable.AsUser()
+
+	if user.TokenVersion != refreshPayload.TokenVersion {
+		return models.User{}, "", "", errUnauthorized
+	}
+
+	// generate tokens
+	refreshToken, err := jwtMiddleware.newRefresh(user)
+	if err != nil {
+		return models.User{}, "", "", fmt.Errorf("auth_router.refreshService: Error generating refresh JWT: %v", err)
+	}
+
+	accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
+	if err != nil {
+		return models.User{}, "", "", fmt.Errorf("auth_router.refreshService: Error generating access JWT: %v", err)
+	}
+
+	return user, refreshToken, accessToken, nil
 }
 
 func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
@@ -178,13 +201,16 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 		}
 		hashString := string(hashBytes)
 
-		err = residentRepo.Create(payload.ResidentId,
+		resident := models.NewResident(payload.ResidentId,
 			payload.FirstName,
 			payload.LastName,
 			payload.Phone,
 			payload.Email,
 			hashString,
-			payload.UnlimDays)
+			payload.UnlimDays,
+			0, 0)
+
+		err = residentRepo.Create(resident)
 		if err != nil {
 			log.Error().Msgf("auth_router.createResident: Error querying residentRepo: %v", err)
 			respondInternalError(w)
@@ -195,7 +221,13 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfig, oauthConfig config.OAuthConfig, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func sendResetPasswordEmail(
+	jwtMiddleware jwtMiddleware,
+	httpConfig config.HttpConfig,
+	oauthConfig config.OAuthConfig,
+	adminRepo storage.AdminRepo,
+	residentRepo storage.ResidentRepo,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		emailSentResponse := message{"If this account is in our database, instructions to" +
 			" reset a password have been sent to the email associated with this account."}
@@ -209,9 +241,14 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, httpConfig config.HttpC
 			return
 		}
 
-		userFound, _, err := getUserAndHashById(payload.Id, adminRepo, residentRepo)
+		var err error
+		if resCheckErr := models.IsResidentId(payload.Id); resCheckErr == nil {
+			err = sendResetPasswordEmailService[models.Resident](r.Context(), jwtMiddleware, httpConfig, oauthConfig, residentRepo, payload.Id)
+		} else {
+			err = sendResetPasswordEmailService[models.Admin](r.Context(), jwtMiddleware, httpConfig, oauthConfig, adminRepo, payload.Id)
+		}
 		if errors.Is(err, errUnauthorized) {
-			respondJSON(w, http.StatusOK, emailSentResponse)
+			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
 			log.Error().Msg("auth_router.sendResetPasswordEmail: " + err.Error())
@@ -219,29 +256,41 @@ func sendResetPasswordEmail(jwtMiddleware jwtMiddleware, httpConfig config.HttpC
 			return
 		}
 
-		service, err := getGmailService(r.Context(), oauthConfig)
-		if err != nil {
-			log.Error().Msgf("auth_router.sendResetPasswordEmail: " + err.Error())
-			respondInternalError(w)
-			return
-		}
-
-		gmailMessage, err := createGmailMessage(jwtMiddleware, httpConfig, userFound)
-		if err != nil {
-			log.Error().Msgf("auth_router.sendResetPasswordEmail: " + err.Error())
-			respondInternalError(w)
-			return
-		}
-
-		_, err = service.Users.Messages.Send("me", gmailMessage).Do()
-		if err != nil {
-			log.Error().Msg("auth_router.sendResetPasswordEmail: error sending mail:" + err.Error())
-			respondInternalError(w)
-			return
-		}
-
 		respondJSON(w, http.StatusOK, emailSentResponse)
 	}
+}
+
+func sendResetPasswordEmailService[Model models.Loginable](
+	ctx context.Context,
+	jwtMiddleware jwtMiddleware,
+	httpConfig config.HttpConfig,
+	oauthConfig config.OAuthConfig,
+	repo storage.UserRepo[Model],
+	id string,
+) error {
+	service, err := getGmailService(ctx, oauthConfig)
+	if err != nil {
+		return fmt.Errorf("auth_router.sendResetPasswordEmailService: %v", err)
+	}
+
+	loginable, err := repo.GetOne(id)
+	if errors.Is(err, storage.ErrNoRows) {
+		return errUnauthorized
+	} else if err != nil {
+		return fmt.Errorf("auth_router.sendResetPasswordEmailService: error querying repo: %v", err)
+	}
+
+	gmailMessage, err := createGmailMessage(jwtMiddleware, httpConfig, loginable.AsUser())
+	if err != nil {
+		return fmt.Errorf("auth_router.sendResetPasswordEmailService: %v", err)
+	}
+
+	_, err = service.Users.Messages.Send("me", gmailMessage).Do()
+	if err != nil {
+		return fmt.Errorf("auth_router.sendResetPasswordEmailService: error sending mail: %v", err)
+	}
+
+	return nil
 }
 
 func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
@@ -270,24 +319,13 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		hashBytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Error().Msg("auth_router.resetPassword: error generating hash:" + err.Error())
-			respondInternalError(w)
-			return
+		if resCheckErr := models.IsResidentId(user.Id); resCheckErr == nil {
+			err = resetPasswordService[models.Resident](jwtMiddleware, residentRepo, user.Id, payload.Password)
+		} else {
+			err = resetPasswordService[models.Admin](jwtMiddleware, adminRepo, user.Id, payload.Password)
 		}
-		hashString := string(hashBytes)
-
-		err = func() error {
-			if user.Role == ResidentRole {
-				return residentRepo.SetPasswordFor(user.Id, hashString)
-			} else if user.Role == AdminRole {
-				return adminRepo.SetPasswordFor(user.Id, hashString)
-			}
-			return nil
-		}()
 		if err != nil {
-			log.Error().Msg("auth_router.resetPassword: " + err.Error())
+			log.Error().Msgf("auth_router.resetPassword: error calling service: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -296,34 +334,23 @@ func resetPassword(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 	}
 }
 
-// helpers
-func getUserAndHashById(id string, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) (user, string, error) {
-	var userFound user
-	var hash string
-
-	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(id) {
-		admin, err := adminRepo.GetOne(id)
-		if errors.Is(err, storage.ErrNoRows) {
-			return user{}, "", errUnauthorized
-		} else if err != nil {
-			return user{}, "", fmt.Errorf("Error querying adminRepo: %v", err)
-		}
-
-		userFound = newUser(admin.Id, admin.FirstName, admin.LastName, admin.Email, AdminRole, admin.TokenVersion)
-		hash = admin.Password
-	} else {
-		resident, err := residentRepo.GetOne(id)
-		if errors.Is(err, storage.ErrNoRows) {
-			return user{}, "", errUnauthorized
-		} else if err != nil {
-			return user{}, "", fmt.Errorf("Error querying residentRepo: %v", err)
-		}
-
-		userFound = newUser(resident.Id, resident.FirstName, resident.LastName, resident.Email, ResidentRole, resident.TokenVersion)
-		hash = resident.Password
+func resetPasswordService[Model models.Loginable](
+	jwtMiddleware jwtMiddleware,
+	repo storage.UserRepo[Model],
+	id string,
+	newPass string,
+) error {
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("auth_router.resetPassword: error generating hash: %v", err)
 	}
 
-	return userFound, hash, nil
+	err = repo.SetPassword(id, string(hashBytes))
+	if err != nil {
+		return fmt.Errorf("auth_router.resetPassword: error updating password: %v", err)
+	}
+
+	return nil
 }
 
 func sendRefreshToken(w http.ResponseWriter, refreshToken string) {
@@ -364,7 +391,7 @@ func getGmailService(ctx context.Context, oauthConfig config.OAuthConfig) (*gmai
 	return service, nil
 }
 
-func createGmailMessage(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfig, toUser user) (*gmail.Message, error) {
+func createGmailMessage(jwtMiddleware jwtMiddleware, httpConfig config.HttpConfig, toUser models.User) (*gmail.Message, error) {
 	body := &bytes.Buffer{}
 
 	token, err := jwtMiddleware.newAccess(toUser.Id, toUser.Role)

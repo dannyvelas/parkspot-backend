@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -34,11 +35,11 @@ type accessClaims struct {
 }
 
 type accessPayload struct {
-	Id   string `json:"id"`
-	Role role   `json:"role"`
+	Id   string      `json:"id"`
+	Role models.Role `json:"role"`
 }
 
-func (jwtMiddleware jwtMiddleware) newAccess(id string, role role) (string, error) {
+func (jwtMiddleware jwtMiddleware) newAccess(id string, role models.Role) (string, error) {
 	claims := accessClaims{
 		accessPayload{id, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
@@ -50,11 +51,11 @@ func (jwtMiddleware jwtMiddleware) newAccess(id string, role role) (string, erro
 }
 
 type refreshClaims struct {
-	User user `json:"user"`
+	User models.User `json:"user"`
 	jwt.StandardClaims
 }
 
-func (jwtMiddleware jwtMiddleware) newRefresh(user user) (string, error) {
+func (jwtMiddleware jwtMiddleware) newRefresh(user models.User) (string, error) {
 	claims := refreshClaims{
 		user,
 		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
@@ -86,7 +87,7 @@ func (jwtMiddleware jwtMiddleware) parseAccess(tokenString string) (accessPayloa
 	}
 }
 
-func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (user, error) {
+func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (models.User, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &refreshClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errNotSigningMethodHMAC
@@ -95,19 +96,19 @@ func (jwtMiddleware jwtMiddleware) parseRefresh(tokenString string) (user, error
 		return jwtMiddleware.refreshSecret, nil
 	})
 	if err != nil {
-		return user{}, err
+		return models.User{}, err
 	}
 
 	if claims, ok := token.Claims.(*refreshClaims); !ok {
-		return user{}, errCastingJWTClaims
+		return models.User{}, errCastingJWTClaims
 	} else if !token.Valid {
-		return user{}, errInvalidToken
+		return models.User{}, errInvalidToken
 	} else {
 		return claims.User, nil
 	}
 }
 
-func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) func(http.Handler) http.Handler {
+func (jwtMiddleware jwtMiddleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -125,7 +126,7 @@ func (jwtMiddleware jwtMiddleware) authenticate(firstRole role, roles ...role) f
 				return
 			}
 
-			permittedRoles := append([]role{firstRole}, roles...)
+			permittedRoles := append([]models.Role{firstRole}, roles...)
 			userHasPermittedRole := func() bool {
 				for _, role := range permittedRoles {
 					if accessPayload.Role == role {

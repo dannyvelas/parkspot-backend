@@ -92,6 +92,7 @@
 - [✓] 500 errors come up when an account exists and the email is malformed. it would probably be better if the response was just: "if this account exists, password reset instructions have been sent to the email sent associated with this account". otherwise, a hacker could technically determine whether accounts exist 
 - [✓] do proper status checking in permit_router_test (not just suite.Equal(http.StatusOK, statusCode)) but an actual if check that returns the error response error message
 - [x] make a `/visitors` endpoint return all resident visitors if an admin made the query and only a resident's visitors, if that resident made the query. same goes for `permits/*`
+- [ ] make sure only residents can change their password (now that the reset password endpoint will be merged with the editResident endpoint)
 - [ ] increment token version on password reset
 - [ ] change the way that the code connects to postgres from being a bunch of variables to just being a DATABASE\_URL. (start using .env variable and add it to .env.example)
 - [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
