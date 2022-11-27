@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/services"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -20,12 +21,7 @@ import (
 	"time"
 )
 
-type session struct {
-	User        models.User `json:"user"`
-	AccessToken string      `json:"accessToken"`
-}
-
-func login[Model models.Loginable](jwtMiddleware jwtMiddleware, repo storage.UserRepo[Model]) http.HandlerFunc {
+func login[T models.Loginable](authService services.AuthService[T]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var credentials struct {
 			Id       string
@@ -37,46 +33,20 @@ func login[Model models.Loginable](jwtMiddleware jwtMiddleware, repo storage.Use
 			return
 		}
 
-		loginable, err := repo.GetOne(credentials.Id)
-		if errors.Is(err, storage.ErrNoRows) {
+		session, refreshToken, err := authService.Login(credentials.Id, credentials.Password)
+		if errors.Is(err, services.ErrUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
-			log.Error().Msg("auth_router.login: error querying repo: %v" + err.Error())
-			respondInternalError(w)
-			return
-		}
-
-		if err := bcrypt.CompareHashAndPassword(
-			[]byte(loginable.GetPassword()),
-			[]byte(credentials.Password),
-		); err != nil {
-			respondError(w, errUnauthorized)
-			return
-		}
-
-		user := loginable.AsUser()
-
-		// generate tokens
-		refreshToken, err := jwtMiddleware.newRefresh(user)
-		if err != nil {
-			log.Error().Msgf("auth_router.login: Error generating refresh JWT: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
-		if err != nil {
-			log.Error().Msgf("auth_router.login: Error generating access JWT: %v", err)
+			log.Error().Msgf("auth_router.login: %v", err)
 			respondInternalError(w)
 			return
 		}
 
 		// send tokens
 		sendRefreshToken(w, refreshToken)
-		response := session{user, accessToken}
 
-		respondJSON(w, http.StatusOK, response)
+		respondJSON(w, http.StatusOK, session)
 	}
 }
 
@@ -89,7 +59,7 @@ func logout() http.HandlerFunc {
 	}
 }
 
-func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, residentRepo storage.ResidentRepo) http.HandlerFunc {
+func refreshTokens(jwtService services.JWTService, adminAuthService services.AuthService[models.Admin], resAuthService services.AuthService[models.Resident]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(refreshCookieKey)
 		if err != nil {
@@ -97,23 +67,21 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 			return
 		}
 
-		refreshPayload, err := jwtMiddleware.parseRefresh(cookie.Value)
+		refreshPayload, err := jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
 			respondError(w, errUnauthorized)
 			return
 		}
 
-		var (
-			user         models.User
-			refreshToken string
-			accessToken  string
-		)
+		var authService services.AuthServiceIface
 		if resCheckErr := models.IsResidentId(refreshPayload.Id); resCheckErr == nil {
-			user, refreshToken, accessToken, err = refreshService[models.Resident](jwtMiddleware, residentRepo, refreshPayload)
+			authService = resAuthService
 		} else {
-			user, refreshToken, accessToken, err = refreshService[models.Admin](jwtMiddleware, adminRepo, refreshPayload)
+			authService = adminAuthService
 		}
-		if errors.Is(err, errUnauthorized) {
+
+		session, refreshToken, err := authService.RefreshTokens(refreshPayload)
+		if errors.Is(err, services.ErrUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {
@@ -124,42 +92,9 @@ func refreshTokens(jwtMiddleware jwtMiddleware, adminRepo storage.AdminRepo, res
 
 		// send tokens
 		sendRefreshToken(w, refreshToken)
-		response := session{user, accessToken}
 
-		respondJSON(w, http.StatusOK, response)
+		respondJSON(w, http.StatusOK, session)
 	}
-}
-
-func refreshService[Model models.Loginable](
-	jwtMiddleware jwtMiddleware,
-	repo storage.UserRepo[Model],
-	refreshPayload models.User,
-) (models.User, string, string, error) {
-	loginable, err := repo.GetOne(refreshPayload.Id)
-	if errors.Is(err, storage.ErrNoRows) {
-		return models.User{}, "", "", errUnauthorized
-	} else if err != nil {
-		return models.User{}, "", "", fmt.Errorf("Error querying repo: %v", err)
-	}
-
-	user := loginable.AsUser()
-
-	if user.TokenVersion != refreshPayload.TokenVersion {
-		return models.User{}, "", "", errUnauthorized
-	}
-
-	// generate tokens
-	refreshToken, err := jwtMiddleware.newRefresh(user)
-	if err != nil {
-		return models.User{}, "", "", fmt.Errorf("auth_router.refreshService: Error generating refresh JWT: %v", err)
-	}
-
-	accessToken, err := jwtMiddleware.newAccess(user.Id, user.Role)
-	if err != nil {
-		return models.User{}, "", "", fmt.Errorf("auth_router.refreshService: Error generating access JWT: %v", err)
-	}
-
-	return user, refreshToken, accessToken, nil
 }
 
 func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
@@ -221,13 +156,7 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func sendResetPasswordEmail(
-	jwtMiddleware jwtMiddleware,
-	httpConfig config.HttpConfig,
-	oauthConfig config.OAuthConfig,
-	adminRepo storage.AdminRepo,
-	residentRepo storage.ResidentRepo,
-) http.HandlerFunc {
+func sendResetPasswordEmail(jwtService services.JWTService, adminAuthService services.AuthService[models.Admin], resAuthService services.AuthService[models.Resident]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		emailSentResponse := message{"If this account is in our database, instructions to" +
 			" reset a password have been sent to the email associated with this account."}
@@ -241,13 +170,15 @@ func sendResetPasswordEmail(
 			return
 		}
 
-		var err error
+		var authService services.AuthServiceIface
 		if resCheckErr := models.IsResidentId(payload.Id); resCheckErr == nil {
-			err = sendResetPasswordEmailService[models.Resident](r.Context(), jwtMiddleware, httpConfig, oauthConfig, residentRepo, payload.Id)
+			authService = resAuthService
 		} else {
-			err = sendResetPasswordEmailService[models.Admin](r.Context(), jwtMiddleware, httpConfig, oauthConfig, adminRepo, payload.Id)
+			authService = adminAuthService
 		}
-		if errors.Is(err, errUnauthorized) {
+
+		err := authService.SendResetPasswordEmail(r.Context(), payload.Id)
+		if errors.Is(err, services.ErrUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
 		} else if err != nil {

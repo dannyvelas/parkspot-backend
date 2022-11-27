@@ -28,6 +28,8 @@ func NewRouter(
 	}))
 
 	jwtService := services.NewJWTService(tokenConfig)
+	adminAuthService := services.NewAuthService[models.Admin](jwtService, repos.Admin)
+	residentAuthService := services.NewAuthService[models.Resident](jwtService, repos.Resident)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +39,10 @@ func NewRouter(
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login-resident", login[models.Resident](jwtService, repos.Resident))
-			anyoneRouter.Post("/login-admin", login[models.Admin](jwtService, repos.Admin))
+			anyoneRouter.Post("/login-resident", login[models.Resident](residentAuthService))
+			anyoneRouter.Post("/login-admin", login[models.Admin](adminAuthService))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtService, repos.Admin, repos.Resident))
+			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtService, adminAuthService, residentAuthService))
 			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtService, httpConfig, oauthConfig, repos.Admin, repos.Resident))
 		})
 
