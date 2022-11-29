@@ -3,11 +3,8 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/services"
-	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strings"
 	"time"
@@ -77,65 +74,6 @@ func refreshTokens(jwtService services.JWTService, authService services.AuthServ
 		sendRefreshToken(w, refreshToken)
 
 		respondJSON(w, http.StatusOK, session)
-	}
-}
-
-func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var payload newResidentReq
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, newErrMalformed("NewResidentReq"))
-			return
-		}
-
-		if err := payload.validate(); err != nil {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		}
-
-		if _, err := residentRepo.GetOne(payload.ResidentId); err == nil {
-			respondError(w, newErrBadRequest("Resident with this id already exists. Please delete the old account if necessary."))
-			return
-		} else if !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msgf("auth_router.createResident: error getting resident by id: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		if _, err := residentRepo.GetOneByEmail(payload.Email); err == nil {
-			respondError(w, newErrBadRequest("Resident with this email already exists. Please delete the old account or use a different email."))
-			return
-		} else if !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msgf("auth_router.createResident error getting resident by email: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		hashBytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Error().Msg("auth_router.createResident: error generating hash:" + err.Error())
-			respondInternalError(w)
-			return
-		}
-		hashString := string(hashBytes)
-
-		resident := models.NewResident(payload.ResidentId,
-			payload.FirstName,
-			payload.LastName,
-			payload.Phone,
-			payload.Email,
-			hashString,
-			payload.UnlimDays,
-			0, 0)
-
-		err = residentRepo.Create(resident)
-		if err != nil {
-			log.Error().Msgf("auth_router.createResident: Error querying residentRepo: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		respondJSON(w, http.StatusOK, message{"Resident successfully created."})
 	}
 }
 
