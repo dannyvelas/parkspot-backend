@@ -28,8 +28,7 @@ func NewRouter(
 	}))
 
 	jwtService := services.NewJWTService(tokenConfig)
-	adminAuthService := services.NewAuthService[models.Admin](jwtService, repos.Admin)
-	residentAuthService := services.NewAuthService[models.Resident](jwtService, repos.Resident)
+	authService := services.NewAuthService(jwtService, repos.Admin, repos.Resident, httpConfig, oauthConfig)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,11 +38,11 @@ func NewRouter(
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login-resident", login[models.Resident](residentAuthService))
-			anyoneRouter.Post("/login-admin", login[models.Admin](adminAuthService))
+			anyoneRouter.Post("/login-resident", login(authService))
+			anyoneRouter.Post("/login-admin", login(authService))
 			anyoneRouter.Post("/logout", logout())
-			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtService, adminAuthService, residentAuthService))
-			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtService, httpConfig, oauthConfig, repos.Admin, repos.Resident))
+			anyoneRouter.Post("/refresh-tokens", refreshTokens(jwtService, authService))
+			anyoneRouter.Post("/password-reset-email", sendResetPasswordEmail(jwtService, authService))
 		})
 
 		r.Group(func(officeRouter chi.Router) {
@@ -68,7 +67,7 @@ func NewRouter(
 			userRouter.Get("/permit/{id:[0-9]+}", getOnePermit(repos.Permit))
 			userRouter.Post("/permit", createPermit(repos.Permit, repos.Resident, repos.Car, dateFormat))
 			userRouter.Get("/visitors", getActiveVisitors(repos.Visitor))
-			userRouter.Put("/account/password", resetPassword(jwtService, repos.Admin, repos.Resident))
+			userRouter.Put("/account/password", resetPassword(jwtService, authService))
 		})
 
 		r.Group(func(residentRouter chi.Router) {
