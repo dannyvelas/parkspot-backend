@@ -20,7 +20,7 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		ctx := r.Context()
-		accessPayload, err := ctxGetAccessPayload(ctx)
+		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
 			respondInternalError(w)
@@ -28,8 +28,8 @@ func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter)
 		}
 
 		residentID := ""
-		if accessPayload.Role == models.ResidentRole {
-			residentID = accessPayload.Id
+		if AccessPayload.Role == models.ResidentRole {
+			residentID = AccessPayload.Id
 		}
 
 		allPermits, err := permitRepo.Get(permitFilter, residentID, boundedLimit, offset, reversed, search)
@@ -88,14 +88,14 @@ func createPermit(permitRepo storage.PermitRepo, residentRepo storage.ResidentRe
 		}
 
 		ctx := r.Context()
-		accessPayload, err := ctxGetAccessPayload(ctx)
+		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("permit_router.createPermit: error getting access payload: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
+		if AccessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
 			respondError(w, newErrBadRequest(message))
 			return

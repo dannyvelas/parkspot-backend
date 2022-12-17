@@ -19,7 +19,7 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		ctx := r.Context()
-		accessPayload, err := ctxGetAccessPayload(ctx)
+		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
 			respondInternalError(w)
@@ -27,8 +27,8 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		}
 
 		residentID := ""
-		if accessPayload.Role == models.ResidentRole {
-			residentID = accessPayload.Id
+		if AccessPayload.Role == models.ResidentRole {
+			residentID = AccessPayload.Id
 		}
 
 		allVisitors, err := visitorRepo.Get(true, residentID, search, boundedLimit, offset)
@@ -55,7 +55,7 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		accessPayload, err := ctxGetAccessPayload(ctx)
+		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("visitor_router.createVisitor: error getting access payload: %v", err)
 			respondInternalError(w)
@@ -80,7 +80,7 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 		}
 
 		visitorId, err := visitorRepo.Create(
-			accessPayload.Id,
+			AccessPayload.Id,
 			payload.FirstName,
 			payload.LastName,
 			payload.Relationship,

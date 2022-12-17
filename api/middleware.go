@@ -1,14 +1,24 @@
 package api
 
 import (
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/services"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
 )
 
-func authenticate(jwtService services.JWTService, firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
+type Middleware struct {
+	jwtService app.JWTService
+}
+
+func NewMiddleware(jwtService app.JWTService) Middleware {
+	return Middleware{
+		jwtService: jwtService,
+	}
+}
+
+func (m Middleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -19,7 +29,7 @@ func authenticate(jwtService services.JWTService, firstRole models.Role, roles .
 			}
 
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
-			accessPayload, err := jwtService.ParseAccess(accessToken)
+			AccessPayload, err := m.jwtService.ParseAccess(accessToken)
 			if err != nil {
 				log.Debug().Msgf("Error parsing: %v", err)
 				respondError(w, errUnauthorized)
@@ -29,20 +39,20 @@ func authenticate(jwtService services.JWTService, firstRole models.Role, roles .
 			permittedRoles := append([]models.Role{firstRole}, roles...)
 			userHasPermittedRole := func() bool {
 				for _, role := range permittedRoles {
-					if accessPayload.Role == role {
+					if AccessPayload.Role == role {
 						return true
 					}
 				}
 				return false
 			}()
 			if !userHasPermittedRole {
-				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
+				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", AccessPayload.Role, permittedRoles)
 				respondError(w, errUnauthorized)
 				return
 			}
 
 			ctx := r.Context()
-			updatedCtx := ctxWithAccessPayload(ctx, accessPayload)
+			updatedCtx := ctxWithAccessPayload(ctx, AccessPayload)
 			updatedReq := r.WithContext(updatedCtx)
 
 			next.ServeHTTP(w, updatedReq)

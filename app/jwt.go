@@ -1,4 +1,4 @@
-package services
+package app
 
 import (
 	"errors"
@@ -27,11 +27,11 @@ func NewJWTService(tokenConfig config.TokenConfig) JWTService {
 }
 
 type accessClaims struct {
-	Payload accessPayload `json:"payload"`
+	Payload AccessPayload `json:"payload"`
 	jwt.StandardClaims
 }
 
-type accessPayload struct {
+type AccessPayload struct {
 	Id   string      `json:"id"`
 	Role models.Role `json:"role"`
 }
@@ -43,7 +43,7 @@ type refreshClaims struct {
 
 func (jwtService JWTService) newAccess(id string, role models.Role) (string, error) {
 	claims := accessClaims{
-		accessPayload{id, role},
+		AccessPayload{id, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
 	}
 
@@ -63,7 +63,7 @@ func (jwtService JWTService) newRefresh(user models.User) (string, error) {
 	return token.SignedString(jwtService.refreshSecret)
 }
 
-func (jwtService JWTService) ParseAccess(tokenString string) (accessPayload, error) {
+func (jwtService JWTService) ParseAccess(tokenString string) (AccessPayload, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &accessClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrNotSigningMethodHMAC
@@ -72,13 +72,13 @@ func (jwtService JWTService) ParseAccess(tokenString string) (accessPayload, err
 		return jwtService.accessSecret, nil
 	})
 	if err != nil {
-		return accessPayload{}, err
+		return AccessPayload{}, err
 	}
 
 	if claims, ok := token.Claims.(*accessClaims); !ok {
-		return accessPayload{}, ErrCastingJWTClaims
+		return AccessPayload{}, ErrCastingJWTClaims
 	} else if !token.Valid {
-		return accessPayload{}, ErrInvalidToken
+		return AccessPayload{}, ErrInvalidToken
 	} else {
 		return claims.Payload, nil
 	}

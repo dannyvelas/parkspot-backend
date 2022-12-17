@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/api"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,70 +21,34 @@ func main() {
 	// load config
 	c, err := config.NewConfig()
 	if err != nil {
-		log.Fatal().Msgf("Error loading config: %v", err.Error())
+		log.Fatal().Msgf("Error loading config: %v", err)
 	}
 
-	// connect to database
-	// no defer close() because connection closes automatically on program exit
-	database, err := storage.NewDatabase(c.Postgres())
+	// create app
+	app, err := app.NewApp(c)
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %v", err)
-	}
-	log.Info().Msg("Connected to Database.")
-
-	// init repos
-	repos := storage.NewRepos(database)
-
-	// http setup
-	httpConfig := c.Http()
-
-	router := api.NewRouter(httpConfig, c.Token(), c.OAuth(), config.DateFormat, repos)
-
-	httpServer := http.Server{
-		Addr:         ":" + httpConfig.Port(),
-		Handler:      router,
-		ReadTimeout:  httpConfig.ReadTimeout(),
-		WriteTimeout: httpConfig.WriteTimeout(),
-		IdleTimeout:  httpConfig.IdleTimeout(),
+		log.Fatal().Msgf("Error initializing app: %v", err)
 	}
 
 	// initialize error channel
 	errChannel := make(chan error)
 	defer close(errChannel)
 
-	// receive errors from startup or signal interrupt
-	go func() {
-		errChannel <- startServer(httpServer)
-	}()
-	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		errChannel <- fmt.Errorf("%s", <-c)
-	}()
+	// initialize and start server
+	server := api.NewServer(c, app)
+	go server.Start(errChannel)
+
+	// listen to signal interrupt
+	go listenToInterrupt(errChannel)
 
 	fatalErr := <-errChannel
 	log.Info().Msgf("Closing server: %v", fatalErr)
 
-	shutdownGracefully(30*time.Second, httpServer)
+	server.ShutdownGracefully(30 * time.Second)
 }
 
-func startServer(httpServer http.Server) error {
-	log.Info().Msgf("Server started on: %s", httpServer.Addr)
-	if err := httpServer.ListenAndServe(); err != nil {
-		return fmt.Errorf("Failed to start server: %v", err)
-	}
-	return nil
-}
-
-func shutdownGracefully(timeout time.Duration, httpServer http.Server) {
-	log.Info().Msg("Gracefully shutting down...")
-
-	gracefullCtx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	if err := httpServer.Shutdown(gracefullCtx); err != nil {
-		log.Error().Msgf("Error shutting down the server: %v", err)
-	} else {
-		log.Info().Msg("HttpServer gracefully shut down")
-	}
+func listenToInterrupt(errChannel chan<- error) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	errChannel <- fmt.Errorf("%s", <-c)
 }
