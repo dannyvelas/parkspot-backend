@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 func getOneCar(carRepo storage.CarRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		if !isUUIDV4(id) {
+		if !util.IsUUIDV4(id) {
 			respondError(w, newErrBadRequest("id parameter is not a UUID"))
 			return
 		}
@@ -30,7 +31,7 @@ func getOneCar(carRepo storage.CarRepo) http.HandlerFunc {
 func editCar(carRepo storage.CarRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		if !isUUIDV4(id) {
+		if !util.IsUUIDV4(id) {
 			respondError(w, newErrBadRequest("id parameter is not a UUID"))
 			return
 		}

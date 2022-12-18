@@ -8,8 +8,9 @@ import (
 )
 
 type App struct {
-	JWTService  JWTService
-	AuthService AuthService
+	JWTService      JWTService
+	AuthService     AuthService
+	ResidentService ResidentService
 }
 
 func NewApp(c config.Config) (App, error) {
@@ -28,11 +29,14 @@ func NewApp(c config.Config) (App, error) {
 	residentRepo := storage.NewResidentRepo(database)
 	//visitorRepo := storage.NewVisitorRepo(database)
 
+	// services
 	jwtService := NewJWTService(c.Token())
 	authService := NewAuthService(jwtService, adminRepo, residentRepo, c.Http(), c.OAuth())
+	residentService := NewResidentService(residentRepo)
 
 	return App{
-		JWTService:  jwtService,
-		AuthService: authService,
+		JWTService:      jwtService,
+		AuthService:     authService,
+		ResidentService: residentService,
 	}, nil
 }

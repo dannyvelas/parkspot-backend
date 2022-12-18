@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -13,9 +14,9 @@ import (
 
 func getPermits(permitRepo storage.PermitRepo, permitFilter models.PermitFilter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
-		reversed := toBool(r.URL.Query().Get("reversed"))
+		limit := util.ToPosInt(r.URL.Query().Get("limit"))
+		page := util.ToPosInt(r.URL.Query().Get("page"))
+		reversed := util.ToBool(r.URL.Query().Get("reversed"))
 		search := r.URL.Query().Get("search")
 		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 

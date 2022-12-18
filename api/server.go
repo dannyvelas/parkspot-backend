@@ -47,6 +47,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	// handlers
 	middleware := NewMiddleware(app.JWTService)
 	authHandler := NewAuthHandler(app.JWTService, app.AuthService)
+	residentHandler := NewResidentHandler(app.ResidentService)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,11 +67,11 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(middleware.authenticate(models.AdminRole)) //, SecurityRole
 			//officeRouter.Delete("/permit/{id:[0-9]+}", deletePermit(repos.Permit, repos.Resident, repos.Car))
-			//officeRouter.Get("/residents", getAllResidents(repos.Resident))
-			//officeRouter.Get("/resident/{id}", getOneResident(repos.Resident))
-			//officeRouter.Post("/account", createResident(repos.Resident))
-			//officeRouter.Delete("/resident/{id}", deleteResident(repos.Resident))
-			//officeRouter.Put("/resident/{id}", editResident(repos.Resident))
+			officeRouter.Get("/residents", residentHandler.GetAll())
+			officeRouter.Get("/resident/{id}", residentHandler.GetOne())
+			officeRouter.Post("/account", residentHandler.Create())
+			officeRouter.Delete("/resident/{id}", residentHandler.Delete())
+			officeRouter.Put("/resident/{id}", residentHandler.Edit())
 			//officeRouter.Get("/car/{id}", getOneCar(repos.Car))
 			//officeRouter.Put("/car/{id}", editCar(repos.Car))
 		})

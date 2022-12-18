@@ -3,42 +3,42 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
 
-func getAllResidents(residentRepo storage.ResidentRepo) http.HandlerFunc {
+type ResidentHandler struct {
+	residentService app.ResidentService
+}
+
+func NewResidentHandler(residentService app.ResidentService) ResidentHandler {
+	return ResidentHandler{
+		residentService: residentService,
+	}
+}
+
+func (h ResidentHandler) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
+		limit := util.ToPosInt(r.URL.Query().Get("limit"))
+		page := util.ToPosInt(r.URL.Query().Get("page"))
 		search := r.URL.Query().Get("search")
-		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-		allResidents, err := residentRepo.GetAll(boundedLimit, offset, search)
+		residentsWithMetadata, err := h.residentService.GetAll(limit, page, search)
 		if err != nil {
-			log.Error().Msgf("resident_router.getAll: Error querying residentRepo: %v", err)
+			log.Error().Msgf("error getting residents with metadata: %v", err)
 			respondInternalError(w)
 			return
 		}
-
-		totalAmount, err := residentRepo.GetAllTotalAmount()
-		if err != nil {
-			log.Error().Msgf("resident_router.getAll: Error getting total amount: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		residentsWithMetadata := newListWithMetadata(allResidents, totalAmount)
 
 		respondJSON(w, http.StatusOK, residentsWithMetadata)
 	}
 }
 
-func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+func (h ResidentHandler) GetOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -46,12 +46,12 @@ func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			return
 		}
 
-		resident, err := residentRepo.GetOne(id)
-		if err != nil && !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msgf("resident_router.getOne: Error getting resident: %v", err)
+		resident, err := h.residentService.GetOne(id)
+		if err != nil && !errors.Is(err, app.ErrNotFound) {
+			log.Error().Msgf("Error getting resident: %v", err)
 			respondInternalError(w)
 			return
-		} else if errors.Is(err, storage.ErrNoRows) {
+		} else if errors.Is(err, app.ErrNotFound) {
 			respondError(w, newErrNotFound("resident"))
 			return
 		}
@@ -60,7 +60,7 @@ func getOneResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func editResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+func (h ResidentHandler) Edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if err := models.IsResidentId(id); err != nil {
@@ -89,16 +89,9 @@ func editResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			AmtParkingDaysUsed: editResidentReq.AmtParkingDaysUsed,
 		}
 
-		err := residentRepo.Update(id, desiredResident)
+		resident, err := h.residentService.Update(id, desiredResident)
 		if err != nil {
-			log.Error().Msgf("resident_router.editResident: Error updating resident: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		resident, err := residentRepo.GetOne(id)
-		if err != nil {
-			log.Error().Msgf("resident_router.editResident: Error getting resident: %v", err)
+			log.Error().Msgf("Error updating resident: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -107,26 +100,16 @@ func editResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func deleteResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+func (h ResidentHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
-		resident, err := residentRepo.GetOne(id)
-		if errors.Is(err, storage.ErrNoRows) {
+		err := h.residentService.Delete(id)
+		if errors.Is(err, app.ErrNotFound) {
 			respondError(w, newErrNotFound("resident"))
 			return
 		} else if err != nil {
-			log.Error().Msgf("resident_router.deleteResident: Error getting resident: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		err = residentRepo.Delete(resident.Id)
-		if errors.Is(err, storage.ErrNoRows) {
-			respondError(w, newErrNotFound("resident"))
-			return
-		} else if err != nil {
-			log.Error().Msgf("resident_router.deleteResident: %v", err)
+			log.Error().Msgf("error deleting resident with resident service: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -135,7 +118,7 @@ func deleteResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 	}
 }
 
-func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
+func (h ResidentHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload newResidentReq
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -148,44 +131,13 @@ func createResident(residentRepo storage.ResidentRepo) http.HandlerFunc {
 			return
 		}
 
-		if _, err := residentRepo.GetOne(payload.ResidentId); err == nil {
-			respondError(w, newErrBadRequest("Resident with this id already exists. Please delete the old account if necessary."))
+		desiredRes := models.CreateResident(payload)
+		err := h.residentService.Create(desiredRes)
+		if errors.Is(err, app.ErrAlreadyExists) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
-		} else if !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msgf("auth_router.createResident: error getting resident by id: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		if _, err := residentRepo.GetOneByEmail(payload.Email); err == nil {
-			respondError(w, newErrBadRequest("Resident with this email already exists. Please delete the old account or use a different email."))
-			return
-		} else if !errors.Is(err, storage.ErrNoRows) {
-			log.Error().Msgf("auth_router.createResident error getting resident by email: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		hashBytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
-		if err != nil {
-			log.Error().Msg("auth_router.createResident: error generating hash:" + err.Error())
-			respondInternalError(w)
-			return
-		}
-		hashString := string(hashBytes)
-
-		resident := models.NewResident(payload.ResidentId,
-			payload.FirstName,
-			payload.LastName,
-			payload.Phone,
-			payload.Email,
-			hashString,
-			payload.UnlimDays,
-			0, 0)
-
-		err = residentRepo.Create(resident)
-		if err != nil {
-			log.Error().Msgf("auth_router.createResident: Error querying residentRepo: %v", err)
+		} else if err != nil {
+			log.Error().Msgf("error getting resident by id: %v", err)
 			respondInternalError(w)
 			return
 		}
