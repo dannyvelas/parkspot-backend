@@ -3,20 +3,30 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
 )
 
-func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+type VisitorHandler struct {
+	visitorService app.VisitorService
+}
+
+func NewVisitorHandler(visitorService app.VisitorService) VisitorHandler {
+	return VisitorHandler{
+		visitorService: visitorService,
+	}
+}
+
+func (h VisitorHandler) GetActive() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limit := toPosInt(r.URL.Query().Get("limit"))
-		page := toPosInt(r.URL.Query().Get("page"))
+		limit := util.ToPosInt(r.URL.Query().Get("limit"))
+		page := util.ToPosInt(r.URL.Query().Get("page"))
 		search := r.URL.Query().Get("search")
-		boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 		ctx := r.Context()
 		AccessPayload, err := ctxGetAccessPayload(ctx)
@@ -31,33 +41,24 @@ func getActiveVisitors(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			residentID = AccessPayload.Id
 		}
 
-		allVisitors, err := visitorRepo.Get(true, residentID, search, boundedLimit, offset)
+		visitorsWithMetadata, err := h.visitorService.GetActive(limit, page, search, residentID)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getActiveVisitors: Error querying visitorRepo: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		totalAmount, err := visitorRepo.GetCount(true, residentID)
-		if err != nil {
-			log.Error().Msgf("visitor_router.getActiveVisitors: Error getting total amount: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		visitorsWithMetadata := newListWithMetadata(allVisitors, totalAmount)
-
 		respondJSON(w, http.StatusOK, visitorsWithMetadata)
 	}
 }
 
-func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+func (h VisitorHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("visitor_router.createVisitor: error getting access payload: %v", err)
+			log.Error().Msgf("error getting access payload in visitor handler: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -79,22 +80,18 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 			endTS = models.EndOfTime.Unix()
 		}
 
-		visitorId, err := visitorRepo.Create(
-			AccessPayload.Id,
-			payload.FirstName,
-			payload.LastName,
-			payload.Relationship,
-			startTS,
-			endTS)
-		if err != nil {
-			log.Error().Msgf("visitor_router.createVisitor: Error creating visitor: %v", err)
-			respondInternalError(w)
-			return
+		desiredVisitor := models.CreateVisitor{
+			ResidentID:   AccessPayload.Id,
+			FirstName:    payload.FirstName,
+			LastName:     payload.LastName,
+			Relationship: payload.Relationship,
+			StartTS:      startTS,
+			EndTS:        endTS,
 		}
 
-		visitor, err := visitorRepo.GetOne(visitorId)
+		visitor, err := h.visitorService.Create(desiredVisitor)
 		if err != nil {
-			log.Error().Msgf("visitor_router.createVisitor: Error getting visitor: %v", err)
+			log.Error().Msgf("error creating visitor in visitor service: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -103,20 +100,20 @@ func createVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
 	}
 }
 
-func deleteVisitor(visitorRepo storage.VisitorRepo) http.HandlerFunc {
+func (h VisitorHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		if !isUUIDV4(id) {
+		if !util.IsUUIDV4(id) {
 			respondError(w, newErrBadRequest("id parameter is not a UUID"))
 			return
 		}
 
-		err := visitorRepo.Delete(id)
-		if errors.Is(err, storage.ErrNoRows) {
+		err := h.visitorService.Delete(id)
+		if errors.Is(err, app.ErrNotFound) {
 			respondError(w, newErrNotFound("visitor"))
 			return
 		} else if err != nil {
-			log.Error().Msgf("visitor_router.deleteVisitor: %v", err)
+			log.Error().Msgf("error deleting visitor in visitor service: %v", err)
 			respondInternalError(w)
 			return
 		}

@@ -9,22 +9,28 @@ import (
 )
 
 type PermitService struct {
-	permitFilter models.PermitFilter
-	carService   CarService
 	permitRepo   storage.PermitRepo
 	residentRepo storage.ResidentRepo
 	carRepo      storage.CarRepo
 }
 
-func (s PermitService) GetAll(limit, page int, reversed bool, search string, residentID string) (models.ListWithMetadata[models.Permit], error) {
+func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) PermitService {
+	return PermitService{
+		permitRepo:   permitRepo,
+		residentRepo: residentRepo,
+		carRepo:      carRepo,
+	}
+}
+
+func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search string, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-	allPermits, err := s.permitRepo.Get(s.permitFilter, residentID, boundedLimit, offset, reversed, search)
+	allPermits, err := s.permitRepo.Get(permitFilter, residentID, boundedLimit, offset, reversed, search)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting permits from permit repo: %v", err)
 	}
 
-	totalAmount, err := s.permitRepo.GetCount(s.permitFilter, residentID)
+	totalAmount, err := s.permitRepo.GetCount(permitFilter, residentID)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting total amount from permit repo: %v", err)
 	}
@@ -70,7 +76,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 	if existingCar != nil && existingCar.Make != "" && existingCar.Model != "" {
 		carToUse = *existingCar
 	} else { // otherwise, create it or update it
-		carToUse, err = s.carService.upsertCar(existingCar, desiredCar)
+		carToUse, err = s.upsertCar(existingCar, desiredCar)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error upserting car when creating permit: %v", err)
 		}
@@ -190,6 +196,27 @@ func (s PermitService) Delete(id int) error {
 
 // helpers
 func (s PermitService) getAmtDays(startDate, endDate int64) int {
-	var amtSecondsInADay int64 = 86400
+	const amtSecondsInADay = 86400
 	return int((endDate - startDate) / amtSecondsInADay)
+}
+
+func (s PermitService) upsertCar(existingCar *models.Car, desiredCar models.CreateCar) (models.Car, error) {
+	// car exits but missing fields
+	if existingCar != nil {
+		err := s.carRepo.Update(existingCar.Id, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+		if err != nil {
+			return models.Car{}, fmt.Errorf("error updating car which is missing fields: %v", err)
+		}
+		newCar := models.NewCar(existingCar.Id, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, existingCar.AmtParkingDaysUsed)
+		return newCar, nil
+	}
+
+	// car DNE
+	carId, err := s.carRepo.Create(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+	if err != nil {
+		return models.Car{}, fmt.Errorf("error creating car with carRepo: %v", err)
+	}
+
+	newCar := models.NewCar(carId, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
+	return newCar, nil
 }

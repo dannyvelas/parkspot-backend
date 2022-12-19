@@ -21,7 +21,7 @@ func NewPermitHandler(permitService app.PermitService) PermitHandler {
 	}
 }
 
-func (h PermitHandler) GetAll() http.HandlerFunc {
+func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -41,7 +41,7 @@ func (h PermitHandler) GetAll() http.HandlerFunc {
 			residentID = AccessPayload.Id
 		}
 
-		permitsWithMetadata, err := h.permitService.GetAll(limit, page, reversed, search, residentID)
+		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
 		if err != nil {
 			log.Error().Msgf("error getting permits with metadata: %v", err)
 			respondInternalError(w)

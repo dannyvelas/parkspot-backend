@@ -100,23 +100,17 @@ func (visitorRepo VisitorRepo) GetCount(onlyActive bool, residentID string) (int
 	return totalAmount, nil
 }
 
-func (visitorRepo VisitorRepo) Create(residentId,
-	firstName,
-	lastName,
-	relationship string,
-	startTS,
-	endTS int64,
-) (string, error) {
+func (visitorRepo VisitorRepo) Create(desiredVisitor models.CreateVisitor) (string, error) {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("visitor").
 		SetMap(squirrel.Eq{
-			"resident_id":  residentId,
-			"first_name":   firstName,
-			"last_name":    lastName,
-			"relationship": relationship,
-			"access_start": startTS,
-			"access_end":   endTS,
+			"resident_id":  desiredVisitor.ResidentID,
+			"first_name":   desiredVisitor.FirstName,
+			"last_name":    desiredVisitor.LastName,
+			"relationship": desiredVisitor.Relationship,
+			"access_start": desiredVisitor.StartTS,
+			"access_end":   desiredVisitor.EndTS,
 		}).
 		Suffix("RETURNING visitor.id").
 		ToSql()

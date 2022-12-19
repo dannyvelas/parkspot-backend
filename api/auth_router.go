@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
@@ -52,7 +53,7 @@ func (h AuthHandler) login() http.HandlerFunc {
 
 func (h AuthHandler) logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie := http.Cookie{Name: refreshCookieKey, Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
+		cookie := http.Cookie{Name: config.RefreshCookieKey, Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
 
 		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
@@ -61,7 +62,7 @@ func (h AuthHandler) logout() http.HandlerFunc {
 
 func (h AuthHandler) refreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(refreshCookieKey)
+		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
 			respondError(w, errUnauthorized)
 			return
@@ -156,7 +157,7 @@ func (h AuthHandler) resetPassword() http.HandlerFunc {
 
 func (h AuthHandler) sendRefreshToken(w http.ResponseWriter, refreshToken string) {
 	cookie := http.Cookie{
-		Name:     refreshCookieKey,
+		Name:     config.RefreshCookieKey,
 		Value:    refreshToken,
 		HttpOnly: true,
 		Path:     "/"}
