@@ -46,25 +46,27 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
-func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (models.Car, error) {
+func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, error) {
 	if licensePlate == "" {
-		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", ErrInvalidArg)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", ErrInvalidArg)
 	}
 
 	query, args, err := carRepo.carSelect.Where("car.license_plate = $1", licensePlate).ToSql()
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrBuildingQuery, err)
 	}
 
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w", ErrNoRows)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", ErrNoRows)
 	} else if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrDatabaseQuery, err)
 	}
 
-	return car.toModels(), nil
+	asModels := car.toModels()
+
+	return &asModels, nil
 }
 
 func (carRepo CarRepo) Create(licensePlate, color, make, model string) (string, error) {

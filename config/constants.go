@@ -5,4 +5,7 @@ const (
 	DefaultLimit         = 100
 	MaxLimit             = 1000
 	DefaultExpiredWindow = 15 // in days
+	MaxParkingDays       = 20
+	MaxPermitLength      = 15 // in days
+	RefreshCookieKey     = "refresh"
 )
