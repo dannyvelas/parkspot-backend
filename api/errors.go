@@ -11,6 +11,8 @@ type responseError struct {
 
 var (
 	errUnauthorized        = responseError{http.StatusUnauthorized, "Unauthorized"}
+	errEmptyFields         = responseError{http.StatusBadRequest, "One or more missing fields"}
+	errInvalidFields       = responseError{http.StatusBadRequest, "One or more invalid fields"}
 	errInternalServerError = responseError{http.StatusInternalServerError, "Internal Server Error"}
 )
 

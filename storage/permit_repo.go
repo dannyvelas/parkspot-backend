@@ -202,11 +202,11 @@ func (permitRepo PermitRepo) Create(
 	return permitId, nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate time.Time) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate int64) ([]models.Permit, error) {
 	query, args, err := permitRepo.permitSelect.
 		Where("car_id = $1", carId).
-		Where("permit.start_ts <= $2", endDate.Unix()).
-		Where("permit.end_ts >= $3", startDate.Unix()).
+		Where("permit.start_ts <= $2", endDate).
+		Where("permit.end_ts >= $3", startDate).
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {
@@ -222,15 +222,15 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDa
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startDate, endDate time.Time) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startDate, endDate int64) ([]models.Permit, error) {
 	if residentId == "" {
 		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", ErrInvalidArg)
 	}
 
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.resident_id = $1", residentId).
-		Where("permit.start_ts <= $2", endDate.Unix()).
-		Where("permit.end_ts >= $3", startDate.Unix()).
+		Where("permit.start_ts <= $2", endDate).
+		Where("permit.end_ts >= $3", startDate).
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {

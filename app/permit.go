@@ -54,7 +54,7 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 	return permit, nil
 }
 
-func (s PermitService) Create(desiredPermit models.CreatePermit) (models.Permit, error) {
+func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar models.CreateCar) (models.Permit, error) {
 	// error out if resident DNE
 	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentId)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
@@ -64,14 +64,14 @@ func (s PermitService) Create(desiredPermit models.CreatePermit) (models.Permit,
 	}
 
 	// check if car exists
-	existingCar, err := s.carRepo.GetByLicensePlate(desiredPermit.Car.LicensePlate)
+	existingCar, err := s.carRepo.GetByLicensePlate(desiredCar.LicensePlate)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 		return models.Permit{}, fmt.Errorf("error getting by licensePlate in carRepo: %v", err)
 	} else if errors.Is(err, storage.ErrNoRows) {
 		// no-op: if car DNE, this is valid and acceptable
 	}
 
-	err = s.validateCreation(desiredPermit, existingResident, existingCar)
+	err = s.validateCreation(desiredPermit, existingResident, *&existingCar)
 	if err != nil {
 		return models.Permit{}, err
 	}
@@ -81,7 +81,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit) (models.Permit,
 	if existingCar != nil && existingCar.Make != "" && existingCar.Model != "" {
 		carToUse = *existingCar
 	} else { // otherwise, create it or update it
-		carToUse, err = s.carService.upsertCar(existingCar, desiredPermit.Car)
+		carToUse, err = s.carService.upsertCar(existingCar, desiredCar)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error upserting car when creating permit: %v", err)
 		}
@@ -104,8 +104,8 @@ func (s PermitService) Create(desiredPermit models.CreatePermit) (models.Permit,
 	permitId, err := s.permitRepo.Create(
 		desiredPermit.ResidentId,
 		carToUse.Id,
-		desiredPermit.StartDate.Unix(),
-		desiredPermit.EndDate.Unix(),
+		desiredPermit.StartDate,
+		desiredPermit.EndDate,
 		affectsDays,
 		desiredPermit.ExceptionReason,
 	)
@@ -201,5 +201,6 @@ func (s PermitService) Delete(id int) error {
 
 // helpers
 func (s PermitService) getPermitLen(desiredPermit models.CreatePermit) int {
-	return int(desiredPermit.EndDate.Sub(desiredPermit.StartDate).Hours() / 24)
+	var amtSecondsInADay int64 = 86400
+	return int((desiredPermit.EndDate - desiredPermit.StartDate) / amtSecondsInADay)
 }
