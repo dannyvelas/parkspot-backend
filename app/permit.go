@@ -8,17 +8,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
 
-var (
-	ErrActivePermit                 = fmt.Errorf("ErrActivePermit")
-	ErrNoResident                   = fmt.Errorf("ErrNoResident")
-	ErrPermitTooLong                = fmt.Errorf("ErrPermitTooLong")
-	ErrPermitDateIntersect          = fmt.Errorf("ErrPermitDateIntersect")
-	ErrResidentDaysTooLong          = fmt.Errorf("ErrResidentDaysTooLong")
-	ErrPermitAndResidentDaysTooLong = fmt.Errorf("ErrPermitAndResidentDaysTooLong")
-	ErrCarDaysTooLong               = fmt.Errorf("ErrCarDaysTooLong")
-	ErrPermitAndCarDaysTooLong      = fmt.Errorf("ErrPermitAndResidentDaysTooLong")
-)
-
 type PermitService struct {
 	permitFilter models.PermitFilter
 	carService   CarService
@@ -71,7 +60,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 		// no-op: if car DNE, this is valid and acceptable
 	}
 
-	err = s.validateCreation(desiredPermit, existingResident, *&existingCar)
+	err = s.validateCreation(desiredPermit, existingResident, existingCar)
 	if err != nil {
 		return models.Permit{}, err
 	}
@@ -87,7 +76,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 		}
 	}
 
-	permitLength := s.getPermitLen(desiredPermit)
+	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	affectsDays := desiredPermit.ExceptionReason == "" && !existingResident.UnlimDays
 	if affectsDays {
 		err = s.residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
@@ -129,7 +118,7 @@ func (s PermitService) validateCreation(desiredPermit models.CreatePermit, exist
 		if err != nil {
 			return fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
 		} else if len(activePermitsDuring) != 0 {
-			return ErrActivePermit
+			return ErrCarActivePermit
 		}
 	}
 
@@ -138,7 +127,7 @@ func (s PermitService) validateCreation(desiredPermit models.CreatePermit, exist
 		return nil
 	}
 
-	permitLength := s.getPermitLen(desiredPermit)
+	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if permitLength > config.MaxPermitLength {
 		return ErrPermitTooLong
 	}
@@ -148,20 +137,20 @@ func (s PermitService) validateCreation(desiredPermit models.CreatePermit, exist
 	if err != nil {
 		return fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
 	} else if len(activePermitsDuring) >= 2 {
-		return ErrPermitDateIntersect
+		return ErrResidentTwoActivePermits
 	}
 
 	if !existingResident.UnlimDays {
 		if existingResident.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return ErrResidentDaysTooLong
+			return errEntityDaysTooLong("resident", existingResident.AmtParkingDaysUsed)
 		} else if existingResident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return ErrPermitAndResidentDaysTooLong
+			return errPermitPlusEntityDaysTooLong("resident", existingResident.AmtParkingDaysUsed)
 		}
 
 		if existingCar != nil && existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return ErrCarDaysTooLong
+			return errEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
 		} else if existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return ErrPermitAndCarDaysTooLong
+			return errPermitPlusEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
 		}
 	}
 
@@ -200,7 +189,7 @@ func (s PermitService) Delete(id int) error {
 }
 
 // helpers
-func (s PermitService) getPermitLen(desiredPermit models.CreatePermit) int {
+func (s PermitService) getAmtDays(startDate, endDate int64) int {
 	var amtSecondsInADay int64 = 86400
-	return int((desiredPermit.EndDate - desiredPermit.StartDate) / amtSecondsInADay)
+	return int((endDate - startDate) / amtSecondsInADay)
 }
