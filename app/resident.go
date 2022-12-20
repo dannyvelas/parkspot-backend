@@ -77,9 +77,9 @@ func (s ResidentService) Delete(id string) error {
 	return nil
 }
 
-func (s ResidentService) Create(desiredRes models.CreateResident) error {
-	if _, err := s.residentRepo.GetOne(desiredRes.ResidentID); err == nil {
-		return newErrAlreadyExists("resident with ID " + desiredRes.ResidentID)
+func (s ResidentService) Create(desiredRes models.Resident) error {
+	if _, err := s.residentRepo.GetOne(desiredRes.ID); err == nil {
+		return newErrAlreadyExists("resident with ID " + desiredRes.ID)
 	} else if !errors.Is(err, storage.ErrNoRows) {
 		return fmt.Errorf("resident_service.createResident: error getting resident by id: %v", err)
 	}
@@ -96,16 +96,8 @@ func (s ResidentService) Create(desiredRes models.CreateResident) error {
 	}
 	hashString := string(hashBytes)
 
-	resident := models.NewResident(desiredRes.ResidentID,
-		desiredRes.FirstName,
-		desiredRes.LastName,
-		desiredRes.Phone,
-		desiredRes.Email,
-		hashString,
-		desiredRes.UnlimDays,
-		0, 0)
-
-	err = s.residentRepo.Create(resident)
+	desiredRes.Password = hashString
+	err = s.residentRepo.Create(desiredRes)
 	if err != nil {
 		return fmt.Errorf("resident_service.createResident: Error querying residentRepo: %v", err)
 	}

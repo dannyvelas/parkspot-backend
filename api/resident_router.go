@@ -131,7 +131,16 @@ func (h ResidentHandler) Create() http.HandlerFunc {
 			return
 		}
 
-		desiredRes := models.CreateResident(payload)
+		desiredRes := models.NewResident(
+			payload.ResidentID,
+			payload.FirstName,
+			payload.LastName,
+			payload.Phone,
+			payload.Email,
+			payload.Password,
+			payload.UnlimDays,
+			0, 0,
+		)
 		err := h.residentService.Create(desiredRes)
 		if errors.Is(err, app.ErrAlreadyExists) {
 			respondError(w, newErrBadRequest(err.Error()))
