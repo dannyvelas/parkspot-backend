@@ -90,7 +90,6 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 			accessStart,
 			accessEnd,
 		)
-
 		visitor, err := h.visitorService.Create(desiredVisitor)
 		if err != nil {
 			log.Error().Msgf("error creating visitor in visitor service: %v", err)
