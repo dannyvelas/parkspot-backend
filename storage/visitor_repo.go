@@ -105,7 +105,6 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 	query, args, err := sq.
 		Insert("visitor").
 		SetMap(squirrel.Eq{
-			"id":           desiredVisitor.ID,
 			"resident_id":  desiredVisitor.ResidentID,
 			"first_name":   desiredVisitor.FirstName,
 			"last_name":    desiredVisitor.LastName,

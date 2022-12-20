@@ -7,7 +7,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
@@ -81,15 +80,14 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 			accessEnd = models.EndOfTime
 		}
 
-		desiredVisitor := models.NewVisitor(
-			uuid.NewString(),
-			accessPayload.ID,
-			payload.FirstName,
-			payload.LastName,
-			payload.Relationship,
-			accessStart,
-			accessEnd,
-		)
+		desiredVisitor := models.Visitor{
+			ResidentID:   accessPayload.ID,
+			FirstName:    payload.FirstName,
+			LastName:     payload.LastName,
+			Relationship: payload.Relationship,
+			AccessStart:  accessStart,
+			AccessEnd:    accessEnd,
+		}
 		visitor, err := h.visitorService.Create(desiredVisitor)
 		if err != nil {
 			log.Error().Msgf("error creating visitor in visitor service: %v", err)
