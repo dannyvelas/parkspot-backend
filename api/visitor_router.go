@@ -30,7 +30,7 @@ func (h VisitorHandler) GetActive() http.HandlerFunc {
 		search := r.URL.Query().Get("search")
 
 		ctx := r.Context()
-		AccessPayload, err := ctxGetAccessPayload(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("visitor_router.getVisitorsOfResident: %v", err)
 			respondInternalError(w)
@@ -38,8 +38,8 @@ func (h VisitorHandler) GetActive() http.HandlerFunc {
 		}
 
 		residentID := ""
-		if AccessPayload.Role == models.ResidentRole {
-			residentID = AccessPayload.ID
+		if accessPayload.Role == models.ResidentRole {
+			residentID = accessPayload.ID
 		}
 
 		visitorsWithMetadata, err := h.visitorService.GetActive(limit, page, search, residentID)
@@ -57,7 +57,7 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		AccessPayload, err := ctxGetAccessPayload(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("error getting access payload in visitor handler: %v", err)
 			respondInternalError(w)
@@ -83,7 +83,7 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 
 		desiredVisitor := models.NewVisitor(
 			uuid.NewString(),
-			AccessPayload.ID,
+			accessPayload.ID,
 			payload.FirstName,
 			payload.LastName,
 			payload.Relationship,

@@ -29,7 +29,7 @@ func (m Middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			}
 
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
-			AccessPayload, err := m.jwtService.ParseAccess(accessToken)
+			accessPayload, err := m.jwtService.ParseAccess(accessToken)
 			if err != nil {
 				log.Debug().Msgf("Error parsing: %v", err)
 				respondError(w, errUnauthorized)
@@ -39,20 +39,20 @@ func (m Middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			permittedRoles := append([]models.Role{firstRole}, roles...)
 			userHasPermittedRole := func() bool {
 				for _, role := range permittedRoles {
-					if AccessPayload.Role == role {
+					if accessPayload.Role == role {
 						return true
 					}
 				}
 				return false
 			}()
 			if !userHasPermittedRole {
-				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", AccessPayload.Role, permittedRoles)
+				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
 				respondError(w, errUnauthorized)
 				return
 			}
 
 			ctx := r.Context()
-			updatedCtx := ctxWithAccessPayload(ctx, AccessPayload)
+			updatedCtx := ctxWithAccessPayload(ctx, accessPayload)
 			updatedReq := r.WithContext(updatedCtx)
 
 			next.ServeHTTP(w, updatedReq)

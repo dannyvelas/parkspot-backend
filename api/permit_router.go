@@ -33,7 +33,7 @@ func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 		search := r.URL.Query().Get("search")
 
 		ctx := r.Context()
-		AccessPayload, err := ctxGetAccessPayload(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("error getting access payload: %v", err)
 			respondInternalError(w)
@@ -41,8 +41,8 @@ func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 		}
 
 		residentID := ""
-		if AccessPayload.Role == models.ResidentRole {
-			residentID = AccessPayload.ID
+		if accessPayload.Role == models.ResidentRole {
+			residentID = accessPayload.ID
 		}
 
 		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
@@ -92,14 +92,14 @@ func (h PermitHandler) Create() http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		AccessPayload, err := ctxGetAccessPayload(ctx)
+		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
 			log.Error().Msgf("permit_router.createPermit: error getting access payload: %v", err)
 			respondInternalError(w)
 			return
 		}
 
-		if AccessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
+		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
 			respondError(w, newErrBadRequest(message))
 			return
