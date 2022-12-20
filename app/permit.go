@@ -49,48 +49,16 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 	return permit, nil
 }
 
-func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar models.CreateCar) (models.Permit, error) {
-	// error out if resident DNE
-	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
-	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-		return models.Permit{}, fmt.Errorf("error getting one from residentRepo: %v", err)
-	} else if errors.Is(err, storage.ErrNoRows) { // resident does not exist
-		return models.Permit{}, ErrNoResident
-	}
-
-	// check if car exists
-	existingCar, err := s.carRepo.GetByLicensePlate(desiredCar.LicensePlate)
-	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-		return models.Permit{}, fmt.Errorf("error getting by licensePlate in carRepo: %v", err)
-	} else if errors.Is(err, storage.ErrNoRows) {
-		// no-op: if car DNE, this is valid and acceptable
-	}
-
-	err = s.validateCreation(desiredPermit, existingResident, existingCar)
-	if err != nil {
-		return models.Permit{}, err
-	}
-
-	var carToUse models.Car
-	// if car exists and has all fields, use it for this permit
-	if existingCar != nil && existingCar.Make != "" && existingCar.Model != "" {
-		carToUse = *existingCar
-	} else { // otherwise, create it or update it
-		carToUse, err = s.upsertCar(existingCar, desiredCar)
-		if err != nil {
-			return models.Permit{}, fmt.Errorf("error upserting car when creating permit: %v", err)
-		}
-	}
-
+func (s PermitService) Create(desiredPermit models.CreatePermit, existingResident models.Resident, existingCar models.Car) (models.Permit, error) {
 	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	affectsDays := desiredPermit.ExceptionReason == "" && !existingResident.UnlimDays
 	if affectsDays {
-		err = s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
+		err := s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(carToUse.ID, permitLength)
+		err = s.carRepo.AddToAmtParkingDaysUsed(existingCar.ID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
 		}
@@ -98,7 +66,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 
 	permitID, err := s.permitRepo.Create(
 		desiredPermit.ResidentID,
-		carToUse.ID,
+		existingCar.ID,
 		desiredPermit.StartDate,
 		desiredPermit.EndDate,
 		affectsDays,
@@ -116,7 +84,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 	return newPermit, nil
 }
 
-func (s PermitService) validateCreation(desiredPermit models.CreatePermit, existingResident models.Resident, existingCar *models.Car) error {
+func (s PermitService) ValidateCreation(desiredPermit models.CreatePermit, existingResident models.Resident, existingCar *models.Car) error {
 	// error out if car exists and has active permits during dates requested
 	if existingCar != nil { // car exists
 		activePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
@@ -198,25 +166,4 @@ func (s PermitService) Delete(id int) error {
 func (s PermitService) getAmtDays(startDate, endDate int64) int {
 	const amtSecondsInADay = 86400
 	return int((endDate - startDate) / amtSecondsInADay)
-}
-
-func (s PermitService) upsertCar(existingCar *models.Car, desiredCar models.CreateCar) (models.Car, error) {
-	// car exits but missing fields
-	if existingCar != nil {
-		err := s.carRepo.Update(existingCar.ID, desiredCar.Color, desiredCar.Make, desiredCar.Model)
-		if err != nil {
-			return models.Car{}, fmt.Errorf("error updating car which is missing fields: %v", err)
-		}
-		newCar := models.NewCar(existingCar.ID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, existingCar.AmtParkingDaysUsed)
-		return newCar, nil
-	}
-
-	// car DNE
-	carID, err := s.carRepo.Create(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model)
-	if err != nil {
-		return models.Car{}, fmt.Errorf("error creating car with carRepo: %v", err)
-	}
-
-	newCar := models.NewCar(carID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
-	return newCar, nil
 }

@@ -11,8 +11,9 @@ type App struct {
 	JWTService      JWTService
 	AuthService     AuthService
 	ResidentService ResidentService
-	PermitService   PermitService
 	VisitorService  VisitorService
+	CarService      CarService
+	PermitService   PermitService
 }
 
 func NewApp(c config.Config) (App, error) {
@@ -26,23 +27,25 @@ func NewApp(c config.Config) (App, error) {
 
 	// repos
 	adminRepo := storage.NewAdminRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
-	carRepo := storage.NewCarRepo(database)
 	residentRepo := storage.NewResidentRepo(database)
 	visitorRepo := storage.NewVisitorRepo(database)
+	carRepo := storage.NewCarRepo(database)
+	permitRepo := storage.NewPermitRepo(database)
 
 	// services
 	jwtService := NewJWTService(c.Token())
 	authService := NewAuthService(jwtService, adminRepo, residentRepo, c.Http(), c.OAuth())
 	residentService := NewResidentService(residentRepo)
-	permitService := NewPermitService(permitRepo, residentRepo, carRepo)
 	visitorService := NewVisitorService(visitorRepo)
+	carService := NewCarService(carRepo)
+	permitService := NewPermitService(permitRepo, residentRepo, carRepo)
 
 	return App{
 		JWTService:      jwtService,
 		AuthService:     authService,
 		ResidentService: residentService,
-		PermitService:   permitService,
 		VisitorService:  visitorService,
+		CarService:      carService,
+		PermitService:   permitService,
 	}, nil
 }

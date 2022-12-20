@@ -48,7 +48,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	middleware := NewMiddleware(app.JWTService)
 	authHandler := NewAuthHandler(app.JWTService, app.AuthService)
 	residentHandler := NewResidentHandler(app.ResidentService)
-	permitHandler := NewPermitHandler(app.PermitService)
+	permitHandler := NewPermitHandler(app.PermitService, app.ResidentService, app.CarService)
 	visitorHandler := NewVisitorHandler(app.VisitorService)
 
 	// index

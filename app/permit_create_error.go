@@ -19,8 +19,6 @@ func (e CreatePermitError) Error() string {
 var (
 	ErrCarActivePermit = CreatePermitError{"Cannot create a permit during these dates" +
 		" because this car has at least one active permit during that time."}
-	ErrNoResident = CreatePermitError{"Users must have a registered account to request a" +
-		" guest parking permit. Please create their account before requesting their permit."}
 	ErrPermitTooLong = CreatePermitError{
 		err: fmt.Sprintf("Error: Requests cannot be longer than %d days,"+
 			" unless there is an exception."+
