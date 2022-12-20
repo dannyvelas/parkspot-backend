@@ -131,7 +131,7 @@ func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingRes
 
 		if existingCar != nil && existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
 			return errEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
-		} else if existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+		} else if existingCar != nil && existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
 			return errPermitPlusEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
 		}
 	}
