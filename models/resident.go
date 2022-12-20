@@ -48,7 +48,7 @@ func (m Resident) GetPassword() string {
 }
 
 func (m Resident) AsUser() User {
-	return newUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, m.TokenVersion)
+	return NewUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, m.TokenVersion)
 }
 
 func (m Resident) ValidateEdit() error {

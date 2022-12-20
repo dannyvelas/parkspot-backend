@@ -44,12 +44,12 @@ func (suite *visitorRouterSuite) SetupSuite() {
 	{ // set jwts
 		jwtMiddleware := NewJWTMiddleware(c.Token())
 
-		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.ID, ResidentRole)
+		suite.residentJWT, err = jwtMiddleware.NewAccess(testResident.ID, ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
 
-		suite.adminJWT, err = jwtMiddleware.newAccess("some-uuid", AdminRole)
+		suite.adminJWT, err = jwtMiddleware.NewAccess("some-uuid", AdminRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}

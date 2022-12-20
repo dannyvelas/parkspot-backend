@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -19,8 +20,8 @@ import (
 type authRouterSuite struct {
 	suite.Suite
 	testServer        *httptest.Server
-	jwtMiddleware     jwtMiddleware
-	adminUser         user
+	app               app.App
+	adminUser         models.User
 	adminUserPassword string
 	adminAccessToken  string
 }
@@ -35,24 +36,23 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	database, err := storage.NewDatabase(c.Postgres())
+	app, err := app.NewApp(c)
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %v", err)
+		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
 
-	suite.testServer = newTestServer(c, storage.NewRepos(database))
+	router := newRouter(c, app)
+	suite.testServer = httptest.NewServer(router)
 
-	suite.jwtMiddleware = NewJWTMiddleware(c.Token())
-
-	suite.adminUser = newUser("test",
+	suite.adminUser = models.NewUser("test",
 		"Daniel",
 		"Velasquez",
 		"email@example.com",
-		AdminRole,
+		models.AdminRole,
 		0)
 	suite.adminUserPassword = "notapassword"
 
-	suite.adminAccessToken, err = suite.jwtMiddleware.newAccess(suite.adminUser.ID, AdminRole)
+	suite.adminAccessToken, err = suite.app.JWTService.NewAccess(suite.adminUser.ID, models.AdminRole)
 	if err != nil {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
@@ -152,7 +152,7 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	expectedUser := newUser(testResident.ID,
+	expectedUser := NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
@@ -174,7 +174,7 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	user := newUser(testResident.ID,
+	user := NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
@@ -210,7 +210,7 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	expectedUser := newUser(testResident.ID,
+	expectedUser := NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,

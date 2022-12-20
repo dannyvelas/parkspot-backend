@@ -9,7 +9,7 @@ type User struct {
 	TokenVersion int    `json:"-"`
 }
 
-func newUser(id string, firstName string, lastName string, email string, role Role, tokenVersion int) User {
+func NewUser(id string, firstName string, lastName string, email string, role Role, tokenVersion int) User {
 	return User{
 		ID:           id,
 		FirstName:    firstName,

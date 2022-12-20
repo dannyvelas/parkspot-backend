@@ -67,7 +67,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 		return Session{}, "", fmt.Errorf("auth_service.login: Error generating refresh JWT: %v", err)
 	}
 
-	accessToken, err := a.jwtService.newAccess(user.ID, user.Role)
+	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: Error generating access JWT: %v", err)
 	}
@@ -95,7 +95,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating refresh JWT: %v", err)
 	}
 
-	accessToken, err := a.jwtService.newAccess(user.ID, user.Role)
+	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating access JWT: %v", err)
 	}
@@ -184,7 +184,7 @@ func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error
 func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, error) {
 	body := &bytes.Buffer{}
 
-	token, err := a.jwtService.newAccess(toUser.ID, toUser.Role)
+	token, err := a.jwtService.NewAccess(toUser.ID, toUser.Role)
 	if err != nil {
 		return nil, fmt.Errorf("Error generating JWT: %v", err)
 	}

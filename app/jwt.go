@@ -41,7 +41,7 @@ type refreshClaims struct {
 	jwt.StandardClaims
 }
 
-func (jwtService JWTService) newAccess(id string, role models.Role) (string, error) {
+func (jwtService JWTService) NewAccess(id string, role models.Role) (string, error) {
 	claims := accessClaims{
 		AccessPayload{id, role},
 		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},

@@ -27,5 +27,5 @@ func (a Admin) GetPassword() string {
 }
 
 func (a Admin) AsUser() User {
-	return newUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
+	return NewUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
 }
