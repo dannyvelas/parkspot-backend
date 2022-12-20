@@ -85,7 +85,14 @@ func (s PermitService) Create(desiredPermit models.Permit, existingResident mode
 	return newPermit, nil
 }
 
-func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar *models.Car) error {
+func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident, carLicensePlate string) error {
+	existingCar, err := s.carRepo.GetByLicensePlate(carLicensePlate)
+	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
+		return fmt.Errorf("error getting one from carService: %v", err)
+	} else if errors.Is(err, storage.ErrNoRows) {
+		// no-op: if car DNE, this is valid and acceptable
+	}
+
 	// error out if car exists and has active permits during dates requested
 	if existingCar != nil { // car exists
 		activePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(

@@ -118,23 +118,13 @@ func (h PermitHandler) Create() http.HandlerFunc {
 			return
 		}
 
-		// check if car exists
-		existingCar, err := h.carService.GetByLicensePlate(newPermitReq.Car.LicensePlate)
-		if err != nil && !errors.Is(err, app.ErrNotFound) { // unexpected error
-			log.Error().Msgf("error getting one from carService: %v", err)
-			respondInternalError(w)
-			return
-		} else if errors.Is(err, app.ErrNotFound) {
-			// no-op: if car DNE, this is valid and acceptable
-		}
-
 		desiredPermit := models.Permit{
 			ResidentID:      newPermitReq.ResidentID,
 			StartDate:       newPermitReq.StartDate,
 			EndDate:         newPermitReq.EndDate,
 			ExceptionReason: newPermitReq.ExceptionReason,
 		}
-		err = h.permitService.ValidateCreation(desiredPermit, existingResident, existingCar)
+		err = h.permitService.ValidateCreation(desiredPermit, existingResident, newPermitReq.Car.LicensePlate)
 		var createPermitErr app.CreatePermitError
 		if errors.As(err, &createPermitErr) {
 			respondError(w, newErrBadRequest(err.Error()))
