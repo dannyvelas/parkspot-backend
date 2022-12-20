@@ -63,8 +63,8 @@
 - [x] when an permit request has a license plate of an existing car, if the car object in the payload has non null make and model fields, and the existing car has null make and model fields in the database, have the make/model fields in the car object in the payload overwrite the null make/model fields in the database
 - [x] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [x] add resident edit/delete functionality
+- [x] make listWithMetadata not be generic. unnecessary. just use any. SOL: can't. i would have to convert each slice of structs to a slice of any to initialize listWithMetadata
 - [ ] remove `<file_name>_<func>` error message convention. not sustainable
-- [ ] make listWithMetadata not be generic. unnecessary. just use any
 - [ ] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] make sure that residents can't make an API request to create a permit for another person
