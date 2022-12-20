@@ -17,6 +17,17 @@ func NewCarService(carRepo storage.CarRepo) CarService {
 	}
 }
 
+func (s CarService) GetOne(id string) (models.Car, error) {
+	car, err := s.carRepo.GetOne(id)
+	if errors.Is(err, storage.ErrNoRows) {
+		return models.Car{}, ErrNotFound
+	} else if err != nil {
+		return models.Car{}, fmt.Errorf("error getting car from car repo: %v", err)
+	}
+
+	return car, nil
+}
+
 func (s CarService) GetByLicensePlate(licensePlate string) (*models.Car, error) {
 	car, err := s.carRepo.GetByLicensePlate(licensePlate)
 	if errors.Is(err, storage.ErrNoRows) {
@@ -39,6 +50,20 @@ func (s CarService) Delete(id string) error {
 	return nil
 }
 
+func (s CarService) Update(id string, editCar models.Car) (models.Car, error) {
+	err := s.carRepo.Update(id, editCar)
+	if err != nil {
+		return models.Car{}, fmt.Errorf("error updating car from carRepo: %v", err)
+	}
+
+	car, err := s.carRepo.GetOne(id)
+	if err != nil {
+		return models.Car{}, fmt.Errorf("error getting car from carRepo: %v", err)
+	}
+
+	return car, nil
+}
+
 func (s CarService) Upsert(desiredCar models.Car) (models.Car, error) {
 	existingCar, err := s.carRepo.GetByLicensePlate(desiredCar.LicensePlate)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
@@ -54,7 +79,7 @@ func (s CarService) Upsert(desiredCar models.Car) (models.Car, error) {
 
 	// car exists but missing fields
 	if existingCar != nil {
-		err := s.carRepo.Update(existingCar.ID, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+		err := s.carRepo.Update(existingCar.ID, desiredCar)
 		if err != nil {
 			return models.Car{}, fmt.Errorf("error updating car which is missing fields: %v", err)
 		}

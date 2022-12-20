@@ -68,28 +68,18 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		var editResidentReq editResidentReq
+		var editResidentReq models.EditResident
 		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
 			respondError(w, newErrMalformed("EditResidentReq"))
 			return
 		}
 
-		if err := editResidentReq.validate(); err != nil {
+		if err := editResidentReq.Validate(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}
 
-		desiredResident := models.EditResident{
-			FirstName:          editResidentReq.FirstName,
-			LastName:           editResidentReq.LastName,
-			Phone:              editResidentReq.Phone,
-			Email:              editResidentReq.Email,
-			Password:           editResidentReq.Password,
-			UnlimDays:          editResidentReq.UnlimDays,
-			AmtParkingDaysUsed: editResidentReq.AmtParkingDaysUsed,
-		}
-
-		resident, err := h.residentService.Update(id, desiredResident)
+		resident, err := h.residentService.Update(id, editResidentReq)
 		if err != nil {
 			log.Error().Msgf("Error updating resident: %v", err)
 			respondInternalError(w)

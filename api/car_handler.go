@@ -2,14 +2,26 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"errors"
+	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
-func getOneCar(carRepo storage.CarRepo) http.HandlerFunc {
+type carHandler struct {
+	carService app.CarService
+}
+
+func newCarHandler(carService app.CarService) carHandler {
+	return carHandler{
+		carService: carService,
+	}
+}
+
+func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
@@ -17,10 +29,13 @@ func getOneCar(carRepo storage.CarRepo) http.HandlerFunc {
 			return
 		}
 
-		car, err := carRepo.GetOne(id)
-		if err != nil {
-			log.Error().Msgf("car_router.getOne: Error getting car: %v", err)
+		car, err := h.carService.GetOne(id)
+		if err != nil && !errors.Is(err, app.ErrNotFound) {
+			log.Error().Msgf("Error getting one car from carService: %v", err)
 			respondInternalError(w)
+			return
+		} else if errors.Is(err, app.ErrNotFound) {
+			respondError(w, newErrNotFound("carr"))
 			return
 		}
 
@@ -28,7 +43,7 @@ func getOneCar(carRepo storage.CarRepo) http.HandlerFunc {
 	}
 }
 
-func editCar(carRepo storage.CarRepo) http.HandlerFunc {
+func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
@@ -36,27 +51,20 @@ func editCar(carRepo storage.CarRepo) http.HandlerFunc {
 			return
 		}
 
-		var editCarReq editCarReq
+		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
 			respondError(w, newErrMalformed("EditCarReq"))
 			return
 		}
 
-		if err := editCarReq.validate(); err != nil {
+		if err := editCarReq.ValidateEdit(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}
 
-		err := carRepo.Update(id, editCarReq.Color, editCarReq.Make, editCarReq.Model)
+		car, err := h.carService.Update(id, editCarReq)
 		if err != nil {
-			log.Error().Msgf("car_router.editCar: Error updating car: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		car, err := carRepo.GetOne(id)
-		if err != nil {
-			log.Error().Msgf("car_router.editCar: Error getting car: %v", err)
+			log.Error().Msgf("error updating car from carService: %v", err)
 			respondInternalError(w)
 			return
 		}

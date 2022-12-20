@@ -8,11 +8,11 @@ import (
 )
 
 type newPermitReq struct {
-	ResidentID      string    `json:"residentID"`
-	Car             newCarReq `json:"car"`
-	StartDate       time.Time `json:"startDate"`
-	EndDate         time.Time `json:"endDate"`
-	ExceptionReason string    `json:"exceptionReason"`
+	ResidentID      string     `json:"residentID"`
+	Car             models.Car `json:"car"`
+	StartDate       time.Time  `json:"startDate"`
+	EndDate         time.Time  `json:"endDate"`
+	ExceptionReason string     `json:"exceptionReason"`
 }
 
 func (newPermitReq newPermitReq) emptyFields() error {
@@ -47,7 +47,7 @@ func (newPermitReq newPermitReq) invalidFields() error {
 		errors = append(errors, err.Error())
 	}
 
-	if err := newPermitReq.Car.validate(); err != nil {
+	if err := newPermitReq.Car.ValidateCreation(); err != nil {
 		errors = append(errors, err.Error())
 	}
 

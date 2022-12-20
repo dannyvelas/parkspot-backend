@@ -99,29 +99,22 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	return nil
 }
 
-func (carRepo CarRepo) Update(carID, color, make, model string) error {
-	if carID == "" {
-		return fmt.Errorf("car_repo.Update: %w: Empty ID argument", ErrInvalidArg)
-	}
-
-	if color == "" && make == "" && model == "" {
-		return fmt.Errorf("car_repo.Update: %w, %v", ErrInvalidArg, "All edit fields cannot be empty")
-	}
-
+func (carRepo CarRepo) Update(id string, editCar models.Car) error {
+	// assume id and editCar have already been checked for emptyness
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	carUpdate := squirrel.Update("car")
 
-	if color != "" {
-		carUpdate = carUpdate.Set("color", color)
+	if editCar.Color != "" {
+		carUpdate = carUpdate.Set("color", editCar.Color)
 	}
-	if make != "" {
-		carUpdate = carUpdate.Set("make", make)
+	if editCar.Make != "" {
+		carUpdate = carUpdate.Set("make", editCar.Make)
 	}
-	if model != "" {
-		carUpdate = carUpdate.Set("model", model)
+	if editCar.Model != "" {
+		carUpdate = carUpdate.Set("model", editCar.Model)
 	}
 
-	query, args, err := carUpdate.Where("car.id = ?", carID).ToSql()
+	query, args, err := carUpdate.Where("car.id = ?", id).ToSql()
 	if err != nil {
 		return fmt.Errorf("car_repo.Update: %w: %v", ErrBuildingQuery, err)
 	}

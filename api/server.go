@@ -48,8 +48,9 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	middleware := newMiddleware(app.JWTService)
 	authHandler := newAuthHandler(app.JWTService, app.AuthService)
 	residentHandler := newResidentHandler(app.ResidentService)
-	permitHandler := newPermitHandler(app.PermitService, app.ResidentService, app.CarService)
 	visitorHandler := newVisitorHandler(app.VisitorService)
+	carHandler := newCarHandler(app.CarService)
+	permitHandler := newPermitHandler(app.PermitService, app.ResidentService, app.CarService)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -71,11 +72,11 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			officeRouter.Delete("/permit/{id:[0-9]+}", permitHandler.deleteOne())
 			officeRouter.Get("/residents", residentHandler.getAll())
 			officeRouter.Get("/resident/{id}", residentHandler.getOne())
-			officeRouter.Post("/account", residentHandler.create())
+			officeRouter.Post("/resident", residentHandler.create())
 			officeRouter.Delete("/resident/{id}", residentHandler.deleteOne())
 			officeRouter.Put("/resident/{id}", residentHandler.edit())
-			//officeRouter.Get("/car/{id}", getOneCar(repos.Car))
-			//officeRouter.Put("/car/{id}", editCar(repos.Car))
+			officeRouter.Get("/car/{id}", carHandler.getOne())
+			officeRouter.Put("/car/{id}", carHandler.edit())
 		})
 
 		r.Group(func(userRouter chi.Router) {
