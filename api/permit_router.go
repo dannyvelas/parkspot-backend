@@ -11,21 +11,21 @@ import (
 	"net/http"
 )
 
-type PermitHandler struct {
+type permitHandler struct {
 	permitService   app.PermitService
 	residentService app.ResidentService
 	carService      app.CarService
 }
 
-func NewPermitHandler(permitService app.PermitService, residentService app.ResidentService, carService app.CarService) PermitHandler {
-	return PermitHandler{
+func newPermitHandler(permitService app.PermitService, residentService app.ResidentService, carService app.CarService) permitHandler {
+	return permitHandler{
 		permitService:   permitService,
 		residentService: residentService,
 		carService:      carService,
 	}
 }
 
-func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
+func (h permitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -56,7 +56,7 @@ func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 	}
 }
 
-func (h PermitHandler) GetOne() http.HandlerFunc {
+func (h permitHandler) GetOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
@@ -78,7 +78,7 @@ func (h PermitHandler) GetOne() http.HandlerFunc {
 	}
 }
 
-func (h PermitHandler) Create() http.HandlerFunc {
+func (h permitHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
@@ -159,7 +159,7 @@ func (h PermitHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (h PermitHandler) Delete() http.HandlerFunc {
+func (h permitHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {

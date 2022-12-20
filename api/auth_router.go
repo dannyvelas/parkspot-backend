@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-type AuthHandler struct {
+type authHandler struct {
 	jwtService  app.JWTService
 	authService app.AuthService
 }
 
-func NewAuthHandler(jwtService app.JWTService, authService app.AuthService) AuthHandler {
-	return AuthHandler{
+func newAuthHandler(jwtService app.JWTService, authService app.AuthService) authHandler {
+	return authHandler{
 		jwtService:  jwtService,
 		authService: authService,
 	}
 }
 
-func (h AuthHandler) login() http.HandlerFunc {
+func (h authHandler) login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var credentials struct {
 			ID       string
@@ -51,7 +51,7 @@ func (h AuthHandler) login() http.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) logout() http.HandlerFunc {
+func (h authHandler) logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie := http.Cookie{Name: config.RefreshCookieKey, Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
@@ -60,7 +60,7 @@ func (h AuthHandler) logout() http.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) refreshTokens() http.HandlerFunc {
+func (h authHandler) refreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
@@ -90,7 +90,7 @@ func (h AuthHandler) refreshTokens() http.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) sendResetPasswordEmail() http.HandlerFunc {
+func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		emailSentResponse := message{"If this account is in our database, instructions to" +
 			" reset a password have been sent to the email associated with this account."}
@@ -118,7 +118,7 @@ func (h AuthHandler) sendResetPasswordEmail() http.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) resetPassword() http.HandlerFunc {
+func (h authHandler) resetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -155,7 +155,7 @@ func (h AuthHandler) resetPassword() http.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) sendRefreshToken(w http.ResponseWriter, refreshToken string) {
+func (h authHandler) sendRefreshToken(w http.ResponseWriter, refreshToken string) {
 	cookie := http.Cookie{
 		Name:     config.RefreshCookieKey,
 		Value:    refreshToken,

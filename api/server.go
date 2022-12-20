@@ -45,11 +45,11 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	}))
 
 	// handlers
-	middleware := NewMiddleware(app.JWTService)
-	authHandler := NewAuthHandler(app.JWTService, app.AuthService)
-	residentHandler := NewResidentHandler(app.ResidentService)
-	permitHandler := NewPermitHandler(app.PermitService, app.ResidentService, app.CarService)
-	visitorHandler := NewVisitorHandler(app.VisitorService)
+	middleware := newMiddleware(app.JWTService)
+	authHandler := newAuthHandler(app.JWTService, app.AuthService)
+	residentHandler := newResidentHandler(app.ResidentService)
+	permitHandler := newPermitHandler(app.PermitService, app.ResidentService, app.CarService)
+	visitorHandler := newVisitorHandler(app.VisitorService)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

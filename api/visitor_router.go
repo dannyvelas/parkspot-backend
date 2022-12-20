@@ -12,17 +12,17 @@ import (
 	"time"
 )
 
-type VisitorHandler struct {
+type visitorHandler struct {
 	visitorService app.VisitorService
 }
 
-func NewVisitorHandler(visitorService app.VisitorService) VisitorHandler {
-	return VisitorHandler{
+func newVisitorHandler(visitorService app.VisitorService) visitorHandler {
+	return visitorHandler{
 		visitorService: visitorService,
 	}
 }
 
-func (h VisitorHandler) GetActive() http.HandlerFunc {
+func (h visitorHandler) GetActive() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -52,7 +52,7 @@ func (h VisitorHandler) GetActive() http.HandlerFunc {
 	}
 }
 
-func (h VisitorHandler) Create() http.HandlerFunc {
+func (h visitorHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -99,7 +99,7 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (h VisitorHandler) Delete() http.HandlerFunc {
+func (h visitorHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {

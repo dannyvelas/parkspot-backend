@@ -8,17 +8,17 @@ import (
 	"strings"
 )
 
-type Middleware struct {
+type middleware struct {
 	jwtService app.JWTService
 }
 
-func NewMiddleware(jwtService app.JWTService) Middleware {
-	return Middleware{
+func newMiddleware(jwtService app.JWTService) middleware {
+	return middleware{
 		jwtService: jwtService,
 	}
 }
 
-func (m Middleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
+func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
