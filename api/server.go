@@ -60,8 +60,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	// api
 	router.Route("/api", func(r chi.Router) {
 		r.Group(func(anyoneRouter chi.Router) {
-			anyoneRouter.Post("/login-resident", authHandler.login())
-			anyoneRouter.Post("/login-admin", authHandler.login())
+			anyoneRouter.Post("/login", authHandler.login())
 			anyoneRouter.Post("/logout", authHandler.logout())
 			anyoneRouter.Post("/refresh-tokens", authHandler.refreshTokens())
 			anyoneRouter.Post("/password-reset-email", authHandler.sendResetPasswordEmail())
