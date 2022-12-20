@@ -47,7 +47,7 @@ func (httpConfig HttpConfig) WriteTimeout() time.Duration {
 	return httpConfig.writeTimeout
 }
 
-func (httpConfig HttpConfig) IDleTimeout() time.Duration {
+func (httpConfig HttpConfig) IdleTimeout() time.Duration {
 	return httpConfig.idleTimeout
 }
 
