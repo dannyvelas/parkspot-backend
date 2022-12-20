@@ -25,7 +25,7 @@ func newPermitHandler(permitService app.PermitService, residentService app.Resid
 	}
 }
 
-func (h permitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
+func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -56,7 +56,7 @@ func (h permitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 	}
 }
 
-func (h permitHandler) GetOne() http.HandlerFunc {
+func (h permitHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
@@ -78,7 +78,7 @@ func (h permitHandler) GetOne() http.HandlerFunc {
 	}
 }
 
-func (h permitHandler) Create() http.HandlerFunc {
+func (h permitHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq newPermitReq
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
@@ -159,7 +159,7 @@ func (h permitHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (h permitHandler) Delete() http.HandlerFunc {
+func (h permitHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {

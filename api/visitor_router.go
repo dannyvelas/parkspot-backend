@@ -22,7 +22,7 @@ func newVisitorHandler(visitorService app.VisitorService) visitorHandler {
 	}
 }
 
-func (h visitorHandler) GetActive() http.HandlerFunc {
+func (h visitorHandler) getActive() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -52,7 +52,7 @@ func (h visitorHandler) GetActive() http.HandlerFunc {
 	}
 }
 
-func (h visitorHandler) Create() http.HandlerFunc {
+func (h visitorHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -99,7 +99,7 @@ func (h visitorHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (h visitorHandler) Delete() http.HandlerFunc {
+func (h visitorHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {

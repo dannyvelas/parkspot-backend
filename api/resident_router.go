@@ -21,7 +21,7 @@ func newResidentHandler(residentService app.ResidentService) residentHandler {
 	}
 }
 
-func (h residentHandler) GetAll() http.HandlerFunc {
+func (h residentHandler) getAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -38,7 +38,7 @@ func (h residentHandler) GetAll() http.HandlerFunc {
 	}
 }
 
-func (h residentHandler) GetOne() http.HandlerFunc {
+func (h residentHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if id == "" {
@@ -60,7 +60,7 @@ func (h residentHandler) GetOne() http.HandlerFunc {
 	}
 }
 
-func (h residentHandler) Edit() http.HandlerFunc {
+func (h residentHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if err := models.IsResidentID(id); err != nil {
@@ -100,7 +100,7 @@ func (h residentHandler) Edit() http.HandlerFunc {
 	}
 }
 
-func (h residentHandler) Delete() http.HandlerFunc {
+func (h residentHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
@@ -118,7 +118,7 @@ func (h residentHandler) Delete() http.HandlerFunc {
 	}
 }
 
-func (h residentHandler) Create() http.HandlerFunc {
+func (h residentHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload newResidentReq
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {

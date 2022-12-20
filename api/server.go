@@ -68,12 +68,12 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 		r.Group(func(officeRouter chi.Router) {
 			officeRouter.Use(middleware.authenticate(models.AdminRole)) //, SecurityRole
-			officeRouter.Delete("/permit/{id:[0-9]+}", permitHandler.Delete())
-			officeRouter.Get("/residents", residentHandler.GetAll())
-			officeRouter.Get("/resident/{id}", residentHandler.GetOne())
-			officeRouter.Post("/account", residentHandler.Create())
-			officeRouter.Delete("/resident/{id}", residentHandler.Delete())
-			officeRouter.Put("/resident/{id}", residentHandler.Edit())
+			officeRouter.Delete("/permit/{id:[0-9]+}", permitHandler.deleteOne())
+			officeRouter.Get("/residents", residentHandler.getAll())
+			officeRouter.Get("/resident/{id}", residentHandler.getOne())
+			officeRouter.Post("/account", residentHandler.create())
+			officeRouter.Delete("/resident/{id}", residentHandler.deleteOne())
+			officeRouter.Put("/resident/{id}", residentHandler.edit())
 			//officeRouter.Get("/car/{id}", getOneCar(repos.Car))
 			//officeRouter.Put("/car/{id}", editCar(repos.Car))
 		})
@@ -81,20 +81,20 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(middleware.authenticate(models.AdminRole, models.ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
-			userRouter.Get("/permits/all", permitHandler.Get(models.AllPermits))
-			userRouter.Get("/permits/active", permitHandler.Get(models.ActivePermits))
-			userRouter.Get("/permits/exceptions", permitHandler.Get(models.ExceptionPermits))
-			userRouter.Get("/permits/expired", permitHandler.Get(models.ExpiredPermits))
-			userRouter.Get("/permit/{id:[0-9]+}", permitHandler.GetOne())
-			userRouter.Post("/permit", permitHandler.Create())
-			userRouter.Get("/visitors", visitorHandler.GetActive())
+			userRouter.Get("/permits/all", permitHandler.get(models.AllPermits))
+			userRouter.Get("/permits/active", permitHandler.get(models.ActivePermits))
+			userRouter.Get("/permits/exceptions", permitHandler.get(models.ExceptionPermits))
+			userRouter.Get("/permits/expired", permitHandler.get(models.ExpiredPermits))
+			userRouter.Get("/permit/{id:[0-9]+}", permitHandler.getOne())
+			userRouter.Post("/permit", permitHandler.create())
+			userRouter.Get("/visitors", visitorHandler.getActive())
 			//userRouter.Put("/account/password", resetPassword(app.JWTService, app.AuthService))
 		})
 
 		r.Group(func(residentRouter chi.Router) {
 			residentRouter.Use(middleware.authenticate(models.ResidentRole))
-			residentRouter.Post("/visitor", visitorHandler.Create())
-			residentRouter.Delete("/visitor/{id}", visitorHandler.Delete())
+			residentRouter.Post("/visitor", visitorHandler.create())
+			residentRouter.Delete("/visitor/{id}", visitorHandler.deleteOne())
 		})
 	})
 
