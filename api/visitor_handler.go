@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"time"
 )
 
 type visitorHandler struct {
@@ -63,32 +62,18 @@ func (h visitorHandler) create() http.HandlerFunc {
 			return
 		}
 
-		var payload newVisitorReq
+		var payload models.Visitor
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("NewVisitorReq"))
 			return
 		}
 
-		if err := payload.validate(); err != nil {
+		if err := payload.ValidateCreation(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}
 
-		accessStart, accessEnd := payload.AccessStart, payload.AccessEnd
-		if payload.IsForever {
-			accessStart = time.Now()
-			accessEnd = models.EndOfTime
-		}
-
-		desiredVisitor := models.Visitor{
-			ResidentID:   accessPayload.ID,
-			FirstName:    payload.FirstName,
-			LastName:     payload.LastName,
-			Relationship: payload.Relationship,
-			AccessStart:  accessStart,
-			AccessEnd:    accessEnd,
-		}
-		visitor, err := h.visitorService.Create(desiredVisitor)
+		visitor, err := h.visitorService.Create(accessPayload.ID, payload)
 		if err != nil {
 			log.Error().Msgf("error creating visitor in visitor service: %v", err)
 			respondInternalError(w)

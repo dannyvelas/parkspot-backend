@@ -2,7 +2,9 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
+	"strings"
 )
 
 type Resident struct {
@@ -12,8 +14,8 @@ type Resident struct {
 	Phone              string `json:"phone"`
 	Email              string `json:"email"`
 	Password           string `json:"-"`
-	UnlimDays          bool   `json:"unlimDays"`
-	AmtParkingDaysUsed int    `json:"amtParkingDaysUsed"`
+	UnlimDays          *bool  `json:"unlimDays"`
+	AmtParkingDaysUsed *int   `json:"amtParkingDaysUsed"`
 	TokenVersion       int    `json:"-"`
 }
 
@@ -24,8 +26,8 @@ func NewResident(
 	phone string,
 	email string,
 	password string,
-	unlimDays bool,
-	amtParkingDaysUsed int,
+	unlimDays *bool,
+	amtParkingDaysUsed *int,
 	tokenVersion int,
 ) Resident {
 	return Resident{
@@ -41,12 +43,106 @@ func NewResident(
 	}
 }
 
-func (r Resident) GetPassword() string {
-	return r.Password
+func (m Resident) GetPassword() string {
+	return m.Password
 }
 
-func (r Resident) AsUser() User {
-	return newUser(r.ID, r.FirstName, r.LastName, r.Email, ResidentRole, r.TokenVersion)
+func (m Resident) AsUser() User {
+	return newUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, m.TokenVersion)
+}
+
+func (m Resident) ValidateEdit() error {
+	if m.FirstName == "" &&
+		m.LastName == "" &&
+		m.Phone == "" &&
+		m.Email == "" &&
+		m.UnlimDays == nil &&
+		m.AmtParkingDaysUsed == nil {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, "all edit fields cannot be empty")
+	}
+
+	errors := []string{}
+	if m.Phone != "" &&
+		!regexp.MustCompile("^\\d{1,20}$").MatchString(m.Phone) {
+		errors = append(errors, "phone number must be only digits, no longer than 20")
+	}
+	if m.Email != "" && !strings.Contains(m.Email, "@") {
+		errors = append(errors, "email must have an '@'")
+	}
+	if m.AmtParkingDaysUsed != nil && *m.AmtParkingDaysUsed < 0 {
+		errors = append(errors, "amountParkingDaysUsed field must be 0 or positive.")
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+	}
+
+	return nil
+}
+
+func (m Resident) ValidateCreation() error {
+	if err := m.emptyFields(); err != nil {
+		return err
+	}
+
+	if err := m.invalidFields(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m Resident) emptyFields() error {
+	emptyFields := []string{}
+
+	if m.ID == "" {
+		emptyFields = append(emptyFields, "residentID")
+	}
+	if m.FirstName == "" {
+		emptyFields = append(emptyFields, "firstName")
+	}
+	if m.LastName == "" {
+		emptyFields = append(emptyFields, "lastName")
+	}
+	if m.Phone == "" {
+		emptyFields = append(emptyFields, "phone")
+	}
+	if m.Email == "" {
+		emptyFields = append(emptyFields, "email")
+	}
+	if m.Password == "" {
+		emptyFields = append(emptyFields, "password")
+	}
+	if m.UnlimDays == nil {
+		// this is okay as this is an optional field
+		*m.UnlimDays = false
+	}
+
+	if len(emptyFields) > 0 {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+	}
+
+	return nil
+}
+
+func (m Resident) invalidFields() error {
+	errors := []string{}
+
+	if err := IsResidentID(m.ID); err != nil {
+		errors = append(errors, err.Error())
+	}
+	if !regexp.MustCompile("^\\d{1,20}$").MatchString(m.Phone) {
+		errors = append(errors, "phone number must be only digits, no longer than 20")
+	}
+	if !strings.Contains(m.Email, "@") {
+		errors = append(errors, "email must have an '@'")
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+	}
+
+	return nil
 }
 
 func IsResidentID(s string) error {

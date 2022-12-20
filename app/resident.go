@@ -45,7 +45,7 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 	return resident, nil
 }
 
-func (s ResidentService) Update(id string, desiredResident models.EditResident) (models.Resident, error) {
+func (s ResidentService) Update(id string, desiredResident models.Resident) (models.Resident, error) {
 	err := s.residentRepo.Update(id, desiredResident)
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %v", err)

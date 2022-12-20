@@ -68,13 +68,13 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		var editResidentReq models.EditResident
+		var editResidentReq models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
 			respondError(w, newErrMalformed("EditResidentReq"))
 			return
 		}
 
-		if err := editResidentReq.Validate(); err != nil {
+		if err := editResidentReq.ValidateEdit(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}
@@ -110,28 +110,18 @@ func (h residentHandler) deleteOne() http.HandlerFunc {
 
 func (h residentHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var payload newResidentReq
+		var payload models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("NewResidentReq"))
 			return
 		}
 
-		if err := payload.validate(); err != nil {
+		if err := payload.ValidateCreation(); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}
 
-		desiredRes := models.NewResident(
-			payload.ResidentID,
-			payload.FirstName,
-			payload.LastName,
-			payload.Phone,
-			payload.Email,
-			payload.Password,
-			payload.UnlimDays,
-			0, 0,
-		)
-		err := h.residentService.Create(desiredRes)
+		err := h.residentService.Create(payload)
 		if errors.Is(err, app.ErrAlreadyExists) {
 			respondError(w, newErrBadRequest(err.Error()))
 			return

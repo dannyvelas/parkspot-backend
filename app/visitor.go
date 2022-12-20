@@ -33,7 +33,7 @@ func (s VisitorService) GetActive(limit, page int, search string, residentID str
 	return models.NewListWithMetadata(allVisitors, totalAmount), nil
 }
 
-func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, error) {
+func (s VisitorService) Create(residentID string, desiredVisitor models.Visitor) (models.Visitor, error) {
 	visitorID, err := s.visitorRepo.Create(desiredVisitor)
 	if err != nil {
 		return models.Visitor{}, fmt.Errorf("error creating visitor in visitor repo: %v", err)

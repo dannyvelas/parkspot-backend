@@ -52,7 +52,7 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 
 func (s PermitService) Create(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) (models.Permit, error) {
 	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
-	affectsDays := desiredPermit.ExceptionReason == "" && !existingResident.UnlimDays
+	affectsDays := desiredPermit.ExceptionReason == "" && !*existingResident.UnlimDays
 	if affectsDays {
 		err := s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
 		if err != nil {
@@ -122,11 +122,11 @@ func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingRes
 		return ErrResidentTwoActivePermits
 	}
 
-	if !existingResident.UnlimDays {
-		if existingResident.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return errEntityDaysTooLong("resident", existingResident.AmtParkingDaysUsed)
-		} else if existingResident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return errPermitPlusEntityDaysTooLong("resident", existingResident.AmtParkingDaysUsed)
+	if !*existingResident.UnlimDays {
+		if *existingResident.AmtParkingDaysUsed >= config.MaxParkingDays {
+			return errEntityDaysTooLong("resident", *existingResident.AmtParkingDaysUsed)
+		} else if *existingResident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+			return errPermitPlusEntityDaysTooLong("resident", *existingResident.AmtParkingDaysUsed)
 		}
 
 		if existingCar != nil && existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {

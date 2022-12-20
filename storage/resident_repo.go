@@ -195,7 +195,7 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Update(id string, model models.EditResident) error {
+func (residentRepo ResidentRepo) Update(id string, model models.Resident) error {
 	if id == "" {
 		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", ErrInvalidArg)
 	}
