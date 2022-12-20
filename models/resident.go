@@ -13,7 +13,7 @@ type Resident struct {
 	LastName           string `json:"lastName"`
 	Phone              string `json:"phone"`
 	Email              string `json:"email"`
-	Password           string `json:"-"`
+	Password           string `json:"password"`
 	UnlimDays          *bool  `json:"unlimDays"`
 	AmtParkingDaysUsed *int   `json:"amtParkingDaysUsed"`
 	TokenVersion       int    `json:"-"`
@@ -112,10 +112,6 @@ func (m Resident) emptyFields() error {
 	}
 	if m.Password == "" {
 		emptyFields = append(emptyFields, "password")
-	}
-	if m.UnlimDays == nil {
-		// this is okay as this is an optional field
-		*m.UnlimDays = false
 	}
 
 	if len(emptyFields) > 0 {

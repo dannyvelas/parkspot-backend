@@ -85,7 +85,7 @@ func (s ResidentService) Create(desiredRes models.Resident) error {
 	}
 
 	if _, err := s.residentRepo.GetOneByEmail(desiredRes.Email); err == nil {
-		return newErrAlreadyExists("resident with this email")
+		return newErrAlreadyExists("a resident with this email")
 	} else if !errors.Is(err, storage.ErrNoRows) {
 		return fmt.Errorf("resident_service.createResident error getting resident by email: %v", err)
 	}

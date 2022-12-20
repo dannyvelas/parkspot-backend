@@ -151,6 +151,12 @@ func (residentRepo ResidentRepo) SetPassword(id string, password string) error {
 }
 
 func (residentRepo ResidentRepo) Create(resident models.Resident) error {
+	// cast *resident.UnlimDays to bool
+	unlimDays := false
+	if resident.UnlimDays != nil {
+		unlimDays = *resident.UnlimDays
+	}
+
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("resident").
@@ -161,7 +167,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 			"phone":      resident.Phone,
 			"email":      resident.Email,
 			"password":   resident.Password,
-			"unlim_days": resident.UnlimDays,
+			"unlim_days": unlimDays,
 		}).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Create: %w: %v", ErrBuildingQuery, err)

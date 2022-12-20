@@ -23,7 +23,7 @@ func (resident resident) toModels() models.Resident {
 		resident.LastName,
 		resident.Phone,
 		resident.Email,
-		resident.Password,
+		"",
 		&resident.UnlimDays,
 		&resident.AmtParkingDaysUsed,
 		resident.TokenVersion,
