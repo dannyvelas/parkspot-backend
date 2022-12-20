@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS car(
 -- thus, we want the car information in each permit to be a "snapshot", at the time the permit was created
 CREATE TABLE IF NOT EXISTS permit(
   id SERIAL PRIMARY KEY UNIQUE NOT NULL,
-  car_license_plate VARCHAR(10) UNIQUE NOT NULL,
+  car_license_plate VARCHAR(10) NOT NULL,
   car_color TEXT NOT NULL,
   car_make TEXT,
   car_model TEXT,
