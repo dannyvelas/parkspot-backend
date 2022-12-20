@@ -58,5 +58,6 @@ func errPermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) CreatePermit
 			" their requested permites are exceptions",
 			entityLower, config.MaxParkingDays,
 			entityLower, amtDaysUsed,
-			entityLower, config.MaxParkingDays-amtDaysUsed)}
+			entityLower, config.MaxParkingDays-amtDaysUsed,
+			entityLower)}
 }
