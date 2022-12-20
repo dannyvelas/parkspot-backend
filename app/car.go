@@ -39,7 +39,7 @@ func (s CarService) Delete(id string) error {
 	return nil
 }
 
-func (s CarService) Upsert(desiredCar models.CreateCar) (models.Car, error) {
+func (s CarService) Upsert(desiredCar models.Car) (models.Car, error) {
 	existingCar, err := s.carRepo.GetByLicensePlate(desiredCar.LicensePlate)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 		return models.Car{}, fmt.Errorf("error getting by licensePlate in carRepo: %v", err)

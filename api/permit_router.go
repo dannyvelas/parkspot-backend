@@ -134,7 +134,6 @@ func (h PermitHandler) Create() http.HandlerFunc {
 			EndDate:         newPermitReq.EndDate.Unix(),
 			ExceptionReason: newPermitReq.ExceptionReason,
 		}
-		desiredCar := models.CreateCar(newPermitReq.Car)
 
 		err = h.permitService.ValidateCreation(desiredPermit, existingResident, existingCar)
 		var createPermitErr app.CreatePermitError
@@ -147,6 +146,12 @@ func (h PermitHandler) Create() http.HandlerFunc {
 			return
 		}
 
+		desiredCar := models.Car{
+			LicensePlate: newPermitReq.Car.LicensePlate,
+			Color:        newPermitReq.Car.Color,
+			Make:         newPermitReq.Car.Make,
+			Model:        newPermitReq.Car.Model,
+		}
 		createdCar, err := h.carService.Upsert(desiredCar)
 		if err != nil {
 			log.Error().Msgf("error upserting car in carService: %v", err)
