@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"time"
 )
 
 type PermitService struct {
@@ -49,8 +50,8 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 	return permit, nil
 }
 
-func (s PermitService) Create(desiredPermit models.CreatePermit, existingResident models.Resident, existingCar models.Car) (models.Permit, error) {
-	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+func (s PermitService) Create(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) (models.Permit, error) {
+	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	affectsDays := desiredPermit.ExceptionReason == "" && !existingResident.UnlimDays
 	if affectsDays {
 		err := s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
@@ -84,7 +85,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, existingResiden
 	return newPermit, nil
 }
 
-func (s PermitService) ValidateCreation(desiredPermit models.CreatePermit, existingResident models.Resident, existingCar *models.Car) error {
+func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar *models.Car) error {
 	// error out if car exists and has active permits during dates requested
 	if existingCar != nil { // car exists
 		activePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
@@ -101,7 +102,7 @@ func (s PermitService) ValidateCreation(desiredPermit models.CreatePermit, exist
 		return nil
 	}
 
-	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if permitLength > config.MaxPermitLength {
 		return ErrPermitTooLong
 	}
@@ -163,7 +164,6 @@ func (s PermitService) Delete(id int) error {
 }
 
 // helpers
-func (s PermitService) getAmtDays(startDate, endDate int64) int {
-	const amtSecondsInADay = 86400
-	return int((endDate - startDate) / amtSecondsInADay)
+func getAmtDays(startDate, endDate time.Time) int {
+	return int(endDate.Sub(startDate).Hours() / 24)
 }

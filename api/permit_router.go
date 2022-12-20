@@ -128,13 +128,12 @@ func (h PermitHandler) Create() http.HandlerFunc {
 			// no-op: if car DNE, this is valid and acceptable
 		}
 
-		desiredPermit := models.CreatePermit{
+		desiredPermit := models.Permit{
 			ResidentID:      newPermitReq.ResidentID,
-			StartDate:       newPermitReq.StartDate.Unix(),
-			EndDate:         newPermitReq.EndDate.Unix(),
+			StartDate:       newPermitReq.StartDate,
+			EndDate:         newPermitReq.EndDate,
 			ExceptionReason: newPermitReq.ExceptionReason,
 		}
-
 		err = h.permitService.ValidateCreation(desiredPermit, existingResident, existingCar)
 		var createPermitErr app.CreatePermitError
 		if errors.As(err, &createPermitErr) {

@@ -163,8 +163,8 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 func (permitRepo PermitRepo) Create(
 	residentID,
 	carID string,
-	startTS,
-	endTS int64,
+	startDate,
+	endDate time.Time,
 	affectsDays bool,
 	exceptionReason string,
 ) (int, error) {
@@ -181,8 +181,8 @@ func (permitRepo PermitRepo) Create(
 		SetMap(squirrel.Eq{
 			"resident_id":      residentID,
 			"car_id":           carID,
-			"start_ts":         startTS,
-			"end_ts":           endTS,
+			"start_ts":         startDate.Unix(),
+			"end_ts":           endDate.Unix(),
 			"request_ts":       time.Now().Unix(),
 			"affects_days":     affectsDays,
 			"exception_reason": nullableReason,
@@ -202,11 +202,11 @@ func (permitRepo PermitRepo) Create(
 	return permitID, nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDate int64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDate time.Time) ([]models.Permit, error) {
 	query, args, err := permitRepo.permitSelect.
 		Where("car_id = $1", carID).
-		Where("permit.start_ts <= $2", endDate).
-		Where("permit.end_ts >= $3", startDate).
+		Where("permit.start_ts <= $2", endDate.Unix()).
+		Where("permit.end_ts >= $3", startDate.Unix()).
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {
@@ -222,15 +222,15 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDa
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startDate, endDate int64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startDate, endDate time.Time) ([]models.Permit, error) {
 	if residentID == "" {
 		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", ErrInvalidArg)
 	}
 
 	query, args, err := permitRepo.permitSelect.
 		Where("permit.resident_id = $1", residentID).
-		Where("permit.start_ts <= $2", endDate).
-		Where("permit.end_ts >= $3", startDate).
+		Where("permit.start_ts <= $2", endDate.Unix()).
+		Where("permit.end_ts >= $3", startDate.Unix()).
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {
