@@ -6,8 +6,8 @@ import (
 )
 
 type Permit struct {
-	Id              int       `json:"id"`
-	ResidentId      string    `json:"residentId"`
+	ID              int       `json:"id"`
+	ResidentID      string    `json:"residentID"`
 	Car             Car       `json:"car"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
@@ -16,10 +16,10 @@ type Permit struct {
 	ExceptionReason string    `json:"exceptionReason"`
 }
 
-func NewPermit(id int, residentId string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
+func NewPermit(id int, residentID string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
 	return Permit{
-		Id:              id,
-		ResidentId:      residentId,
+		ID:              id,
+		ResidentID:      residentID,
 		Car:             car,
 		StartDate:       startDate,
 		EndDate:         endDate,
@@ -30,9 +30,9 @@ func NewPermit(id int, residentId string, car Car, startDate time.Time, endDate 
 }
 
 func (self Permit) Equal(other Permit) bool {
-	if self.Id != other.Id {
+	if self.ID != other.ID {
 		return false
-	} else if self.ResidentId != other.ResidentId {
+	} else if self.ResidentID != other.ResidentID {
 		return false
 	} else if !cmp.Equal(self.Car, other.Car) {
 		return false

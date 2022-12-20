@@ -88,7 +88,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 
 	executeTest := func(test test) error {
 		requestBody := []byte(test.request)
-		endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.Id)
+		endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.ID)
 		responseBody, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
 		if err != nil {
 			return fmt.Errorf("Error making request: %v", err)
@@ -119,7 +119,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		err = hitDeleteResidentEndpoint(suite.testServer.URL, suite.adminJWT, testResident.Id)
+		err = hitDeleteResidentEndpoint(suite.testServer.URL, suite.adminJWT, testResident.ID)
 		if err != nil {
 			suite.NoError(fmt.Errorf("Error deleting test resident after running test: %v", err))
 			break

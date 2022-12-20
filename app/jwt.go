@@ -32,7 +32,7 @@ type accessClaims struct {
 }
 
 type AccessPayload struct {
-	Id   string      `json:"id"`
+	ID   string      `json:"id"`
 	Role models.Role `json:"role"`
 }
 

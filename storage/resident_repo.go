@@ -29,12 +29,12 @@ func NewResidentRepo(database Database) ResidentRepo {
 	return ResidentRepo{database: database, residentSelect: residentSelect}
 }
 
-func (residentRepo ResidentRepo) GetOne(residentId string) (models.Resident, error) {
-	if residentId == "" {
+func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, error) {
+	if residentID == "" {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
 	}
 
-	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentId).ToSql()
+	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentID).ToSql()
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", ErrBuildingQuery, err)
 	}
@@ -155,7 +155,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 	query, args, err := sq.
 		Insert("resident").
 		SetMap(squirrel.Eq{
-			"id":         resident.Id,
+			"id":         resident.ID,
 			"first_name": resident.FirstName,
 			"last_name":  resident.LastName,
 			"phone":      resident.Phone,
@@ -175,13 +175,13 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Delete(residentId string) error {
-	if residentId == "" {
+func (residentRepo ResidentRepo) Delete(residentID string) error {
+	if residentID == "" {
 		return fmt.Errorf("resident_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
 	}
 	const query = `DELETE FROM resident WHERE id = $1`
 
-	res, err := residentRepo.database.driver.Exec(query, residentId)
+	res, err := residentRepo.database.driver.Exec(query, residentID)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", ErrDatabaseExec, err)
 	}

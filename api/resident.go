@@ -8,7 +8,7 @@ import (
 )
 
 type newResidentReq struct {
-	ResidentId string `json:"residentId"`
+	ResidentID string `json:"residentID"`
 	FirstName  string `json:"firstName"`
 	LastName   string `json:"lastName"`
 	Phone      string `json:"phone"`
@@ -20,8 +20,8 @@ type newResidentReq struct {
 func (newResidentReq newResidentReq) emptyFields() error {
 	emptyFields := []string{}
 
-	if newResidentReq.ResidentId == "" {
-		emptyFields = append(emptyFields, "residentId")
+	if newResidentReq.ResidentID == "" {
+		emptyFields = append(emptyFields, "residentID")
 	}
 	if newResidentReq.FirstName == "" {
 		emptyFields = append(emptyFields, "firstName")
@@ -52,7 +52,7 @@ func (newResidentReq newResidentReq) emptyFields() error {
 func (newResidentReq newResidentReq) invalidFields() error {
 	errors := []string{}
 
-	if err := models.IsResidentId(newResidentReq.ResidentId); err != nil {
+	if err := models.IsResidentID(newResidentReq.ResidentID); err != nil {
 		errors = append(errors, err.Error())
 	}
 	if !regexp.MustCompile("^\\d{1,20}$").MatchString(newResidentReq.Phone) {

@@ -16,6 +16,6 @@ func sayHello() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, "hello, "+AccessPayload.Id)
+		respondJSON(w, http.StatusOK, "hello, "+AccessPayload.ID)
 	}
 }

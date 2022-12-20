@@ -67,7 +67,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 		return Session{}, "", fmt.Errorf("auth_service.login: Error generating refresh JWT: %v", err)
 	}
 
-	accessToken, err := a.jwtService.newAccess(user.Id, user.Role)
+	accessToken, err := a.jwtService.newAccess(user.ID, user.Role)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: Error generating access JWT: %v", err)
 	}
@@ -76,7 +76,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 }
 
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
-	loginable, err := a.getUser(user.Id)
+	loginable, err := a.getUser(user.ID)
 	if errors.Is(err, storage.ErrNoRows) {
 		return Session{}, "", ErrUnauthorized
 	} else if err != nil {
@@ -95,7 +95,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating refresh JWT: %v", err)
 	}
 
-	accessToken, err := a.jwtService.newAccess(user.Id, user.Role)
+	accessToken, err := a.jwtService.newAccess(user.ID, user.Role)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating access JWT: %v", err)
 	}
@@ -138,7 +138,7 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 	var userRepo interface {
 		SetPassword(id, password string) error
 	}
-	if resCheckErr := models.IsResidentId(id); resCheckErr != nil {
+	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
 		userRepo = a.adminRepo
 	} else {
 		userRepo = a.residentRepo
@@ -184,7 +184,7 @@ func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error
 func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, error) {
 	body := &bytes.Buffer{}
 
-	token, err := a.jwtService.newAccess(toUser.Id, toUser.Role)
+	token, err := a.jwtService.newAccess(toUser.ID, toUser.Role)
 	if err != nil {
 		return nil, fmt.Errorf("Error generating JWT: %v", err)
 	}
@@ -210,7 +210,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 
 func (a AuthService) getUser(id string) (loginable models.Loginable, err error) {
 	// Unfortunately, dynamic dispatch via a common iface is impossible as both `GetOne` fns have diff return types
-	if resCheckErr := models.IsResidentId(id); resCheckErr != nil {
+	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
 		loginable, err = a.adminRepo.GetOne(id)
 	} else {
 		loginable, err = a.residentRepo.GetOne(id)

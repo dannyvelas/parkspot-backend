@@ -1,7 +1,7 @@
 package models
 
 type CreatePermit struct {
-	ResidentId      string
+	ResidentID      string
 	StartDate       int64
 	EndDate         int64
 	ExceptionReason string

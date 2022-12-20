@@ -1,7 +1,7 @@
 package models
 
 type Car struct {
-	Id                 string `json:"id"`
+	ID                 string `json:"id"`
 	LicensePlate       string `json:"licensePlate"`
 	Color              string `json:"color"`
 	Make               string `json:"make"`
@@ -11,7 +11,7 @@ type Car struct {
 
 func NewCar(id string, licensePlate string, color string, make string, model string, amtParkingDaysUsed int) Car {
 	return Car{
-		Id:                 id,
+		ID:                 id,
 		LicensePlate:       licensePlate,
 		Color:              color,
 		Make:               make,
@@ -21,7 +21,7 @@ func NewCar(id string, licensePlate string, color string, make string, model str
 }
 
 func (self Car) Equal(other Car) bool {
-	if self.Id != other.Id {
+	if self.ID != other.ID {
 		return false
 	} else if self.LicensePlate != other.LicensePlate {
 		return false

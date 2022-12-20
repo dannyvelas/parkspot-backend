@@ -6,8 +6,8 @@ import (
 )
 
 type visitor struct {
-	Id           string `db:"id"`
-	ResidentId   string `db:"resident_id"`
+	ID           string `db:"id"`
+	ResidentID   string `db:"resident_id"`
 	FirstName    string `db:"first_name"`
 	LastName     string `db:"last_name"`
 	Relationship string `db:"relationship"`
@@ -17,8 +17,8 @@ type visitor struct {
 
 func (visitor visitor) toModels() models.Visitor {
 	return models.Visitor{
-		Id:           visitor.Id,
-		ResidentId:   visitor.ResidentId,
+		ID:           visitor.ID,
+		ResidentID:   visitor.ResidentID,
 		FirstName:    visitor.FirstName,
 		LastName:     visitor.LastName,
 		Relationship: visitor.Relationship,

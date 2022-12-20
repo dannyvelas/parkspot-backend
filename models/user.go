@@ -1,7 +1,7 @@
 package models
 
 type User struct {
-	Id           string `json:"id"`
+	ID           string `json:"id"`
 	FirstName    string `json:"firstName"`
 	LastName     string `json:"lastName"`
 	Email        string `json:"email"`
@@ -11,7 +11,7 @@ type User struct {
 
 func newUser(id string, firstName string, lastName string, email string, role Role, tokenVersion int) User {
 	return User{
-		Id:           id,
+		ID:           id,
 		FirstName:    firstName,
 		LastName:     lastName,
 		Email:        email,
@@ -21,7 +21,7 @@ func newUser(id string, firstName string, lastName string, email string, role Ro
 }
 
 func (self User) Equal(other User) bool {
-	if self.Id != other.Id {
+	if self.ID != other.ID {
 		return false
 	} else if self.FirstName != other.FirstName {
 		return false

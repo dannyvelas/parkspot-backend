@@ -8,7 +8,7 @@ import (
 )
 
 type newPermitReq struct {
-	ResidentId      string    `json:"residentId"`
+	ResidentID      string    `json:"residentID"`
 	Car             newCarReq `json:"car"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
@@ -18,8 +18,8 @@ type newPermitReq struct {
 func (newPermitReq newPermitReq) emptyFields() error {
 	emptyFields := []string{}
 
-	if newPermitReq.ResidentId == "" {
-		emptyFields = append(emptyFields, "residentId")
+	if newPermitReq.ResidentID == "" {
+		emptyFields = append(emptyFields, "residentID")
 	}
 	if newPermitReq.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "startDate")
@@ -41,9 +41,9 @@ func (newPermitReq newPermitReq) emptyFields() error {
 func (newPermitReq newPermitReq) invalidFields() error {
 	errors := []string{}
 
-	if newPermitReq.ResidentId[0] == 'P' {
-		errors = append(errors, "Accounts with a ResidentId starting with 'P' are not allowed to request permits")
-	} else if err := models.IsResidentId(newPermitReq.ResidentId); err != nil {
+	if newPermitReq.ResidentID[0] == 'P' {
+		errors = append(errors, "Accounts with a ResidentID starting with 'P' are not allowed to request permits")
+	} else if err := models.IsResidentID(newPermitReq.ResidentID); err != nil {
 		errors = append(errors, err.Error())
 	}
 

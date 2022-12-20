@@ -5,7 +5,7 @@ import (
 )
 
 type admin struct {
-	Id           string `db:"id"`
+	ID           string `db:"id"`
 	FirstName    string `db:"first_name"`
 	LastName     string `db:"last_name"`
 	Email        string `db:"email"`
@@ -16,7 +16,7 @@ type admin struct {
 
 func (admin admin) toModels() models.Admin {
 	return models.NewAdmin(
-		admin.Id,
+		admin.ID,
 		admin.FirstName,
 		admin.LastName,
 		admin.Email,

@@ -137,7 +137,7 @@
 - [✗] make models.Permit `make` and `model` fields nullable
     * it's probably fine: their existence as an empty string communicates their non-existence. there is no way that an empty string will ever be communicated as a valid existing value.
     * we could add the "omitEmpty" flag to the json tag if we ever wanted to distinguish. but that's not necessary now. this would only be nice for consistency reasons if we had future fields that could are nullable and did have valid empty values like `amtCars` (does 0 mean that there are no cars or that this field was never set?). but, that's not the case now.
-- [✗] change all `id` fields in database to be actually `<model-name>_id`. not necessary. the way it is now is consistent (all database models have `id`, storage models have `<modelName>Id` and regular models have `Id`.) 
+- [✗] change all `id` fields in database to be actually `<model-name>_id`. not necessary. the way it is now is consistent (all database models have `id`, storage models have `<modelName>ID` and regular models have `ID`.) 
 - [✗] Validate repo func decorator that could be defined in `models`
 - [✗] make models.<model-name> struct fields private so that `models.<model-name>{}` initializations outside of `models` package can be prevented
 - [✗] change car to not be embedded in storage.permit for consistency with models schema
@@ -151,7 +151,6 @@
 - [✗] make routing handlers receivers off of an injected struct (like in storage) to avoid func name conflicts
 - [✗] delete Car.GetOne if it's not going to be used. it is used
 ## Conventions
-- [ ] add CONVENTIONS doc and mention in it that the storage models use <model-name>Id for id fields
+- [ ] add CONVENTIONS doc and mention in it that the storage models use <model-name>ID for id fields
 - [ ] mention in conventions that the error msg is `file_name.func_name: error: wrapped-error`. func name and wrapped-error are optional wrapped-error will be %v if it's a 3rd party error and %w if its an error defined within this code
 - [ ] move comment about // check that they're equal not using suite.Equal because... to CONVENTIONS.md
-- [ ] mention that we use Id and not ID

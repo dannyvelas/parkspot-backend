@@ -19,7 +19,7 @@ type visitorRouterSuite struct {
 	residentJWT   string
 	adminJWT      string
 	testVisitor   newVisitorReq
-	testVisitorId string
+	testVisitorID string
 }
 
 func TestVisitorRouter(t *testing.T) {
@@ -44,7 +44,7 @@ func (suite *visitorRouterSuite) SetupSuite() {
 	{ // set jwts
 		jwtMiddleware := NewJWTMiddleware(c.Token())
 
-		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.Id, ResidentRole)
+		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.ID, ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
@@ -69,7 +69,7 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		AccessEnd:    time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local),
 	}
 
-	suite.testVisitorId, err = createTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitor)
+	suite.testVisitorID, err = createTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitor)
 	if err != nil {
 		log.Fatal().Msg("visitor_router_test.SetupSuite: Failed to create test visitor: " +
 			err.Error())
@@ -82,7 +82,7 @@ func (suite visitorRouterSuite) TearDownSuite() {
 	// visitors that were created in `SetupSuite` would automatically be deleted
 	// on CASCADE by the `deleteTestResidents` call below. So, technically this line isn't
 	// necessary. But we include it anyway to ensure that visitor deletion works
-	err := deleteTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitorId)
+	err := deleteTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitorID)
 	if err != nil {
 		log.Error().Msg("visitor_router_test.TearDownSuite: Failed to delete test visitor: " + err.Error())
 		return
@@ -115,7 +115,7 @@ func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
 	}
 
 	firstVisitor := response.Records[0]
-	suite.Equal(suite.testVisitorId, firstVisitor.Id)
+	suite.Equal(suite.testVisitorID, firstVisitor.ID)
 	suite.Equal(suite.testVisitor.FirstName, firstVisitor.FirstName)
 	suite.Equal(suite.testVisitor.LastName, firstVisitor.LastName)
 }
@@ -137,7 +137,7 @@ func createTestVisitor(url string, jwt string, testVisitor newVisitorReq) (strin
 		return "", fmt.Errorf("Error decoding response: %v", err)
 	}
 
-	return response.Id, nil
+	return response.ID, nil
 }
 
 func deleteTestVisitor(url string, jwt string, id string) error {

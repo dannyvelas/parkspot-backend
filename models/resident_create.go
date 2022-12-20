@@ -1,7 +1,7 @@
 package models
 
 type CreateResident struct {
-	ResidentId string `json:"residentId"`
+	ResidentID string `json:"residentID"`
 	FirstName  string `json:"firstName"`
 	LastName   string `json:"lastName"`
 	Phone      string `json:"phone"`

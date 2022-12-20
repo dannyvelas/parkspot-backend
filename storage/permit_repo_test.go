@@ -45,7 +45,7 @@ func (suite *permitRepoSuite) SetupSuite() {
 	suite.dateFormat = config.Constants().DateFormat()
 
 	suite.existingCar = models.NewCar("fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "OGYR3X", "blue", "", "", 6)
-	suite.newPermit = models.NewNewPermitArgs("T1043321", suite.existingCar.Id,
+	suite.newPermit = models.NewNewPermitArgs("T1043321", suite.existingCar.ID,
 		time.Now().Truncate(time.Second),
 		time.Now().Add(time.Duration(24)*time.Hour).Truncate(time.Second),
 		false,
@@ -90,8 +90,8 @@ func (suite permitRepoSuite) TestGetAllPermits_NonEmpty_Positive() {
 }
 
 func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
 	permits, err := suite.permitRepo.Get(models.AllPermits, defaultLimit, defaultOffset, true)
 	if err != nil {
@@ -103,8 +103,8 @@ func (suite permitRepoSuite) TestGetAllPermits_Reversed_Positive() {
 	}
 
 	first := permits[0]
-	suite.Equal(suite.newPermit.ResidentId, first.ResidentId)
-	suite.Equal(suite.newPermit.CarId, first.Car.Id)
+	suite.Equal(suite.newPermit.ResidentID, first.ResidentID)
+	suite.Equal(suite.newPermit.CarID, first.Car.ID)
 	suite.Empty(cmp.Diff(first.StartDate, suite.newPermit.StartDate))
 	suite.Empty(cmp.Diff(first.EndDate, suite.newPermit.EndDate))
 }
@@ -177,23 +177,23 @@ func (suite permitRepoSuite) TestWritePermitExceptions_Positive() {
 }
 
 func (suite permitRepoSuite) TestGetOnePermit_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permit, err := suite.permitRepo.GetOne(permitId)
+	permit, err := suite.permitRepo.GetOne(permitID)
 	suite.NoError(err)
 
-	suite.Equal(permit.ResidentId, suite.newPermit.ResidentId)
-	suite.Equal(permit.Car.Id, suite.newPermit.CarId)
+	suite.Equal(permit.ResidentID, suite.newPermit.ResidentID)
+	suite.Equal(permit.Car.ID, suite.newPermit.CarID)
 	suite.Empty(cmp.Diff(permit.StartDate, suite.newPermit.StartDate))
 	suite.Empty(cmp.Diff(permit.EndDate, suite.newPermit.EndDate))
 }
 
 func (suite permitRepoSuite) TestGetAllPermitsOfResident_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permits, err := suite.permitRepo.GetAllOfResident(suite.newPermit.ResidentId)
+	permits, err := suite.permitRepo.GetAllOfResident(suite.newPermit.ResidentID)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -203,17 +203,17 @@ func (suite permitRepoSuite) TestGetAllPermitsOfResident_Positive() {
 	}
 
 	last := permits[len(permits)-1]
-	suite.Equal(suite.newPermit.ResidentId, last.ResidentId)
-	suite.Equal(suite.newPermit.CarId, last.Car.Id)
+	suite.Equal(suite.newPermit.ResidentID, last.ResidentID)
+	suite.Equal(suite.newPermit.CarID, last.Car.ID)
 	suite.Empty(cmp.Diff(suite.newPermit.StartDate, last.StartDate))
 	suite.Empty(cmp.Diff(suite.newPermit.EndDate, last.EndDate))
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfResident_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permits, err := suite.permitRepo.GetActiveOfResident(suite.newPermit.ResidentId)
+	permits, err := suite.permitRepo.GetActiveOfResident(suite.newPermit.ResidentID)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -223,20 +223,20 @@ func (suite permitRepoSuite) TestGetActivePermitsOfResident_Positive() {
 	}
 
 	last := permits[len(permits)-1]
-	suite.Equal(suite.newPermit.ResidentId, last.ResidentId)
-	suite.Equal(suite.newPermit.CarId, last.Car.Id)
+	suite.Equal(suite.newPermit.ResidentID, last.ResidentID)
+	suite.Equal(suite.newPermit.CarID, last.Car.ID)
 	suite.Empty(cmp.Diff(suite.newPermit.StartDate, last.StartDate))
 	suite.Empty(cmp.Diff(suite.newPermit.EndDate, last.EndDate))
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefore_Empty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
 	permits, err := func() ([]models.Permit, error) {
 		startDate := suite.newPermit.StartDate.Add(time.Duration(-96) * time.Hour)
 		endDate := suite.newPermit.StartDate.Add(time.Duration(-24) * time.Hour)
-		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.ID, startDate, endDate)
 	}()
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
@@ -244,13 +244,13 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndBefo
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBeg_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
 	permits, err := func() ([]models.Permit, error) {
 		startDate := suite.newPermit.StartDate.Add(time.Duration(-96) * time.Hour)
 		endDate := suite.newPermit.StartDate
-		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.ID, startDate, endDate)
 	}()
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
@@ -258,13 +258,13 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartBefore_EndAtBe
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
 	permits, err := func() ([]models.Permit, error) {
 		startDate := suite.newPermit.EndDate
 		endDate := suite.newPermit.EndDate.Add(time.Duration(96) * time.Hour)
-		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, startDate, endDate)
+		return suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.ID, startDate, endDate)
 	}()
 
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
@@ -272,34 +272,34 @@ func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtEnd_EndAfter
 }
 
 func (suite permitRepoSuite) TestGetActivePermitsOfCarDuring_StartAtBeg_EndAtEnd_NonEmpty() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permits, err := suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.Id, suite.newPermit.StartDate, suite.newPermit.EndDate)
+	permits, err := suite.permitRepo.GetActiveOfCarDuring(suite.existingCar.ID, suite.newPermit.StartDate, suite.newPermit.EndDate)
 	suite.NoError(err, "Error when getting active permits of car during two timestamps")
 
 	suite.Equal(1, len(permits), "length of permits should be 1")
 }
 
 func (suite permitRepoSuite) TestCreate_PermitDNE_Positive() {
-	permitId, err := suite.permitRepo.Create(suite.newPermit)
+	permitID, err := suite.permitRepo.Create(suite.newPermit)
 	suite.NoError(err, "err from creating non-existing permit should be nil")
 
-	suite.permitRepo.Delete(permitId)
+	suite.permitRepo.Delete(permitID)
 }
 
 func (suite permitRepoSuite) TestDelete_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
 
-	err := suite.permitRepo.Delete(permitId)
+	err := suite.permitRepo.Delete(permitID)
 	suite.NoError(err, "err from deleting permit should be nil")
 }
 
-func (suite permitRepoSuite) TestSearch_PermitId_FullString_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+func (suite permitRepoSuite) TestSearch_PermitID_FullString_Positive() {
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId), models.AllPermits)
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitID), models.AllPermits)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -308,16 +308,16 @@ func (suite permitRepoSuite) TestSearch_PermitId_FullString_Positive() {
 		return
 	}
 
-	foundPermit := containsId(permits, permitId)
+	foundPermit := containsID(permits, permitID)
 
 	suite.True(foundPermit, "newly created permit was not among search matches")
 }
 
-func (suite permitRepoSuite) TestSearch_PermitId_SubString_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+func (suite permitRepoSuite) TestSearch_PermitID_SubString_Positive() {
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
-	permits, err := suite.permitRepo.Search(fmt.Sprint(permitId)[1:], models.AllPermits)
+	permits, err := suite.permitRepo.Search(fmt.Sprint(permitID)[1:], models.AllPermits)
 	if err != nil {
 		suite.NoError(err)
 		return
@@ -326,14 +326,14 @@ func (suite permitRepoSuite) TestSearch_PermitId_SubString_Positive() {
 		return
 	}
 
-	foundPermit := containsId(permits, permitId)
+	foundPermit := containsID(permits, permitID)
 
 	suite.True(foundPermit, "newly created permit was not among search matches")
 }
 
 func (suite permitRepoSuite) TestSearch_LicensePlate_SubString_Positive() {
-	permitId, _ := suite.permitRepo.Create(suite.newPermit)
-	defer suite.permitRepo.Delete(permitId)
+	permitID, _ := suite.permitRepo.Create(suite.newPermit)
+	defer suite.permitRepo.Delete(permitID)
 
 	permits, err := suite.permitRepo.Search(fmt.Sprint(suite.existingCar.LicensePlate)[1:], models.AllPermits)
 	if err != nil {
@@ -344,16 +344,16 @@ func (suite permitRepoSuite) TestSearch_LicensePlate_SubString_Positive() {
 		return
 	}
 
-	foundPermit := containsId(permits, permitId)
+	foundPermit := containsID(permits, permitID)
 
 	suite.True(foundPermit, "newly created permit was not among search matches")
 }
 
 func permitToString(permit models.Permit, dateFormat string) string {
 	return fmt.Sprintf("%d,%s,%s,%s,%s,%d,%t,%s\n",
-		permit.Id,
-		permit.ResidentId,
-		permit.Car.Id,
+		permit.ID,
+		permit.ResidentID,
+		permit.Car.ID,
 		permit.StartDate.Format(dateFormat),
 		permit.EndDate.Format(dateFormat),
 		permit.RequestTS,
@@ -362,9 +362,9 @@ func permitToString(permit models.Permit, dateFormat string) string {
 	)
 }
 
-func containsId(permits []models.Permit, id int) bool {
+func containsID(permits []models.Permit, id int) bool {
 	for _, permit := range permits {
-		if permit.Id == id {
+		if permit.ID == id {
 			return true
 		}
 	}

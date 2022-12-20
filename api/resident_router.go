@@ -63,7 +63,7 @@ func (h ResidentHandler) GetOne() http.HandlerFunc {
 func (h ResidentHandler) Edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		if err := models.IsResidentId(id); err != nil {
+		if err := models.IsResidentID(id); err != nil {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		}

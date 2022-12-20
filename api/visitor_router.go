@@ -38,7 +38,7 @@ func (h VisitorHandler) GetActive() http.HandlerFunc {
 
 		residentID := ""
 		if AccessPayload.Role == models.ResidentRole {
-			residentID = AccessPayload.Id
+			residentID = AccessPayload.ID
 		}
 
 		visitorsWithMetadata, err := h.visitorService.GetActive(limit, page, search, residentID)
@@ -81,7 +81,7 @@ func (h VisitorHandler) Create() http.HandlerFunc {
 		}
 
 		desiredVisitor := models.CreateVisitor{
-			ResidentID:   AccessPayload.Id,
+			ResidentID:   AccessPayload.ID,
 			FirstName:    payload.FirstName,
 			LastName:     payload.LastName,
 			Relationship: payload.Relationship,

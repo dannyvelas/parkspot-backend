@@ -26,7 +26,7 @@ func NewAuthHandler(jwtService app.JWTService, authService app.AuthService) Auth
 func (h AuthHandler) login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var credentials struct {
-			Id       string
+			ID       string
 			Password string
 		}
 		err := json.NewDecoder(r.Body).Decode(&credentials)
@@ -35,7 +35,7 @@ func (h AuthHandler) login() http.HandlerFunc {
 			return
 		}
 
-		session, refreshToken, err := h.authService.Login(credentials.Id, credentials.Password)
+		session, refreshToken, err := h.authService.Login(credentials.ID, credentials.Password)
 		if errors.Is(err, app.ErrUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
@@ -95,16 +95,16 @@ func (h AuthHandler) sendResetPasswordEmail() http.HandlerFunc {
 		emailSentResponse := message{"If this account is in our database, instructions to" +
 			" reset a password have been sent to the email associated with this account."}
 
-		var payload struct{ Id string }
+		var payload struct{ ID string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, newErrMalformed("id object"))
 			return
-		} else if payload.Id == "" {
+		} else if payload.ID == "" {
 			respondError(w, errEmptyFields)
 			return
 		}
 
-		err := h.authService.SendResetPasswordEmail(r.Context(), payload.Id)
+		err := h.authService.SendResetPasswordEmail(r.Context(), payload.ID)
 		if errors.Is(err, app.ErrUnauthorized) {
 			respondError(w, errUnauthorized)
 			return
@@ -144,7 +144,7 @@ func (h AuthHandler) resetPassword() http.HandlerFunc {
 			return
 		}
 
-		err = h.authService.ResetPassword(user.Id, payload.Password)
+		err = h.authService.ResetPassword(user.ID, payload.Password)
 		if err != nil {
 			log.Error().Msgf("auth_router.resetPassword: error calling service: %v", err)
 			respondInternalError(w)

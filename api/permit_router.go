@@ -38,7 +38,7 @@ func (h PermitHandler) Get(permitFilter models.PermitFilter) http.HandlerFunc {
 
 		residentID := ""
 		if AccessPayload.Role == models.ResidentRole {
-			residentID = AccessPayload.Id
+			residentID = AccessPayload.ID
 		}
 
 		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
@@ -102,7 +102,7 @@ func (h PermitHandler) Create() http.HandlerFunc {
 		}
 
 		desiredPermit := models.CreatePermit{
-			ResidentId:      newPermitReq.ResidentId,
+			ResidentID:      newPermitReq.ResidentID,
 			StartDate:       newPermitReq.StartDate.Unix(),
 			EndDate:         newPermitReq.EndDate.Unix(),
 			ExceptionReason: newPermitReq.ExceptionReason,

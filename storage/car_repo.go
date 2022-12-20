@@ -99,8 +99,8 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	return nil
 }
 
-func (carRepo CarRepo) Update(carId, color, make, model string) error {
-	if carId == "" {
+func (carRepo CarRepo) Update(carID, color, make, model string) error {
+	if carID == "" {
 		return fmt.Errorf("car_repo.Update: %w: Empty ID argument", ErrInvalidArg)
 	}
 
@@ -121,7 +121,7 @@ func (carRepo CarRepo) Update(carId, color, make, model string) error {
 		carUpdate = carUpdate.Set("model", model)
 	}
 
-	query, args, err := carUpdate.Where("car.id = ?", carId).ToSql()
+	query, args, err := carUpdate.Where("car.id = ?", carID).ToSql()
 	if err != nil {
 		return fmt.Errorf("car_repo.Update: %w: %v", ErrBuildingQuery, err)
 	}

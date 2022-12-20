@@ -24,7 +24,7 @@ func NewServer(c config.Config, app app.App) Server {
 		Handler:      router,
 		ReadTimeout:  c.Http().ReadTimeout(),
 		WriteTimeout: c.Http().WriteTimeout(),
-		IdleTimeout:  c.Http().IdleTimeout(),
+		IDleTimeout:  c.Http().IDleTimeout(),
 	}
 
 	return Server{

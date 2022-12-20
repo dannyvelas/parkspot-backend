@@ -7,8 +7,8 @@ import (
 )
 
 type permit struct {
-	PermitId   int    `db:"permit_id"`
-	ResidentId string `db:"resident_id"`
+	PermitID   int    `db:"permit_id"`
+	ResidentID string `db:"resident_id"`
 	car
 	StartTS         int64          `db:"start_ts"`
 	EndTS           int64          `db:"end_ts"`
@@ -19,8 +19,8 @@ type permit struct {
 
 func (permit permit) toModels() models.Permit {
 	return models.NewPermit(
-		permit.PermitId,
-		permit.ResidentId,
+		permit.PermitID,
+		permit.ResidentID,
 		permit.car.toModels(),
 		time.Unix(permit.StartTS, 0), // time.Unix() returns time in local tz
 		time.Unix(permit.EndTS, 0),

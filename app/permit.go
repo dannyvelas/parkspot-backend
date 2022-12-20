@@ -51,7 +51,7 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 
 func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar models.CreateCar) (models.Permit, error) {
 	// error out if resident DNE
-	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentId)
+	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
 		return models.Permit{}, fmt.Errorf("error getting one from residentRepo: %v", err)
 	} else if errors.Is(err, storage.ErrNoRows) { // resident does not exist
@@ -85,20 +85,20 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 	permitLength := s.getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	affectsDays := desiredPermit.ExceptionReason == "" && !existingResident.UnlimDays
 	if affectsDays {
-		err = s.residentRepo.AddToAmtParkingDaysUsed(existingResident.Id, permitLength)
+		err = s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(carToUse.Id, permitLength)
+		err = s.carRepo.AddToAmtParkingDaysUsed(carToUse.ID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
 		}
 	}
 
-	permitId, err := s.permitRepo.Create(
-		desiredPermit.ResidentId,
-		carToUse.Id,
+	permitID, err := s.permitRepo.Create(
+		desiredPermit.ResidentID,
+		carToUse.ID,
 		desiredPermit.StartDate,
 		desiredPermit.EndDate,
 		affectsDays,
@@ -108,7 +108,7 @@ func (s PermitService) Create(desiredPermit models.CreatePermit, desiredCar mode
 		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
 	}
 
-	newPermit, err := s.permitRepo.GetOne(permitId)
+	newPermit, err := s.permitRepo.GetOne(permitID)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
 	}
@@ -120,7 +120,7 @@ func (s PermitService) validateCreation(desiredPermit models.CreatePermit, exist
 	// error out if car exists and has active permits during dates requested
 	if existingCar != nil { // car exists
 		activePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
-			existingCar.Id, desiredPermit.StartDate, desiredPermit.EndDate)
+			existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)
 		if err != nil {
 			return fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
 		} else if len(activePermitsDuring) != 0 {
@@ -139,7 +139,7 @@ func (s PermitService) validateCreation(desiredPermit models.CreatePermit, exist
 	}
 
 	activePermitsDuring, err := s.permitRepo.GetActiveOfResidentDuring(
-		existingResident.Id, desiredPermit.StartDate, desiredPermit.EndDate)
+		existingResident.ID, desiredPermit.StartDate, desiredPermit.EndDate)
 	if err != nil {
 		return fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
 	} else if len(activePermitsDuring) >= 2 {
@@ -180,12 +180,12 @@ func (s PermitService) Delete(id int) error {
 
 	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
 	if permit.AffectsDays {
-		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentId, -permitLength)
+		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
 		if err != nil {
 			return fmt.Errorf("error adding to amtParkingDaysUsed in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(permit.Car.Id, -permitLength)
+		err = s.carRepo.AddToAmtParkingDaysUsed(permit.Car.ID, -permitLength)
 		if err != nil {
 			return fmt.Errorf("error adding to amtParkingDaysUsed in carRepo: %v", err)
 		}
@@ -203,20 +203,20 @@ func (s PermitService) getAmtDays(startDate, endDate int64) int {
 func (s PermitService) upsertCar(existingCar *models.Car, desiredCar models.CreateCar) (models.Car, error) {
 	// car exits but missing fields
 	if existingCar != nil {
-		err := s.carRepo.Update(existingCar.Id, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+		err := s.carRepo.Update(existingCar.ID, desiredCar.Color, desiredCar.Make, desiredCar.Model)
 		if err != nil {
 			return models.Car{}, fmt.Errorf("error updating car which is missing fields: %v", err)
 		}
-		newCar := models.NewCar(existingCar.Id, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, existingCar.AmtParkingDaysUsed)
+		newCar := models.NewCar(existingCar.ID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, existingCar.AmtParkingDaysUsed)
 		return newCar, nil
 	}
 
 	// car DNE
-	carId, err := s.carRepo.Create(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+	carID, err := s.carRepo.Create(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model)
 	if err != nil {
 		return models.Car{}, fmt.Errorf("error creating car with carRepo: %v", err)
 	}
 
-	newCar := models.NewCar(carId, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
+	newCar := models.NewCar(carID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
 	return newCar, nil
 }

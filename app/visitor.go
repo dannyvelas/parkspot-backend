@@ -34,12 +34,12 @@ func (s VisitorService) GetActive(limit, page int, search string, residentID str
 }
 
 func (s VisitorService) Create(desiredVisitor models.CreateVisitor) (models.Visitor, error) {
-	visitorId, err := s.visitorRepo.Create(desiredVisitor)
+	visitorID, err := s.visitorRepo.Create(desiredVisitor)
 	if err != nil {
 		return models.Visitor{}, fmt.Errorf("error creating visitor in visitor repo: %v", err)
 	}
 
-	visitor, err := s.visitorRepo.GetOne(visitorId)
+	visitor, err := s.visitorRepo.GetOne(visitorID)
 	if err != nil {
 		return models.Visitor{}, fmt.Errorf("error getting visitor after creating in visitor repo: %v", err)
 	}

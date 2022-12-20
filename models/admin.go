@@ -1,7 +1,7 @@
 package models
 
 type Admin struct {
-	Id           string `json:"id"`
+	ID           string `json:"id"`
 	FirstName    string `json:"firstName"`
 	LastName     string `json:"lastName"`
 	Email        string `json:"email"`
@@ -12,7 +12,7 @@ type Admin struct {
 
 func NewAdmin(id string, firstName string, lastName string, email string, password string, isPrivileged bool, tokenVersion int) Admin {
 	return Admin{
-		Id:           id,
+		ID:           id,
 		FirstName:    firstName,
 		LastName:     lastName,
 		Email:        email,
@@ -27,5 +27,5 @@ func (a Admin) GetPassword() string {
 }
 
 func (a Admin) AsUser() User {
-	return newUser(a.Id, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
+	return newUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
 }

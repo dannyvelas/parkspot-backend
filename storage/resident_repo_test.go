@@ -47,7 +47,7 @@ func (suite residentRepoSuite) TestGetOne_Negative() {
 func (suite residentRepoSuite) TestGetOne_Positive() {
 	existingResident := suite.existingResident
 
-	foundResident, err := suite.residentRepo.GetOne(existingResident.Id)
+	foundResident, err := suite.residentRepo.GetOne(existingResident.ID)
 	suite.NoError(err, "Error when getting one existing resident")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func

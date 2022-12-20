@@ -6,7 +6,7 @@ import (
 )
 
 type Resident struct {
-	Id                 string `json:"id"`
+	ID                 string `json:"id"`
 	FirstName          string `json:"firstName"`
 	LastName           string `json:"lastName"`
 	Phone              string `json:"phone"`
@@ -29,7 +29,7 @@ func NewResident(
 	tokenVersion int,
 ) Resident {
 	return Resident{
-		Id:                 id,
+		ID:                 id,
 		FirstName:          firstName,
 		LastName:           lastName,
 		Phone:              phone,
@@ -46,12 +46,12 @@ func (r Resident) GetPassword() string {
 }
 
 func (r Resident) AsUser() User {
-	return newUser(r.Id, r.FirstName, r.LastName, r.Email, ResidentRole, r.TokenVersion)
+	return newUser(r.ID, r.FirstName, r.LastName, r.Email, ResidentRole, r.TokenVersion)
 }
 
-func IsResidentId(s string) error {
+func IsResidentID(s string) error {
 	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(s) {
-		return errors.New("residentId must start be a 'B' or a 'T', followed by 7 numbers")
+		return errors.New("residentID must start be a 'B' or a 'T', followed by 7 numbers")
 	}
 
 	return nil

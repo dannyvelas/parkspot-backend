@@ -5,8 +5,8 @@ import (
 )
 
 type Visitor struct {
-	Id           string    `json:"id"`
-	ResidentId   string    `json:"residentId"`
+	ID           string    `json:"id"`
+	ResidentID   string    `json:"residentID"`
 	FirstName    string    `json:"firstName"`
 	LastName     string    `json:"lastName"`
 	Relationship string    `json:"relationship"`
@@ -16,7 +16,7 @@ type Visitor struct {
 
 func NewVisitor(
 	id string,
-	residentId string,
+	residentID string,
 	firstName string,
 	lastName string,
 	relationship string,
@@ -24,8 +24,8 @@ func NewVisitor(
 	accessEnd time.Time,
 ) Visitor {
 	return Visitor{
-		Id:           id,
-		ResidentId:   residentId,
+		ID:           id,
+		ResidentID:   residentID,
 		FirstName:    firstName,
 		LastName:     lastName,
 		Relationship: relationship,

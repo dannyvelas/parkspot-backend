@@ -6,7 +6,7 @@ import (
 )
 
 type car struct {
-	CarId              string         `db:"car_id"`
+	CarID              string         `db:"car_id"`
 	LicensePlate       string         `db:"license_plate"`
 	Color              string         `db:"color"`
 	Make               sql.NullString `db:"make"`
@@ -16,7 +16,7 @@ type car struct {
 
 func (car car) toModels() models.Car {
 	return models.NewCar(
-		car.CarId,
+		car.CarID,
 		car.LicensePlate,
 		car.Color,
 		car.Make.String,

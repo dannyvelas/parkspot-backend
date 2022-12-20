@@ -49,7 +49,7 @@ func (suite carRepoSuite) TestGetOne_Negative() {
 func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
 	existingCarEmptyFields := suite.existingCarEmptyFields
 
-	foundCar, err := suite.carRepo.GetOne(existingCarEmptyFields.Id)
+	foundCar, err := suite.carRepo.GetOne(existingCarEmptyFields.ID)
 	suite.NoError(err, "Error when getting one car with empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
@@ -57,11 +57,11 @@ func (suite carRepoSuite) TestGetOne_NULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
-	carId, _ := suite.carRepo.Create(suite.newCar)
-	defer suite.carRepo.Delete(carId)
-	existingCar := suite.newCar.ToCar(carId)
+	carID, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carID)
+	existingCar := suite.newCar.ToCar(carID)
 
-	foundCar, err := suite.carRepo.GetOne(carId)
+	foundCar, err := suite.carRepo.GetOne(carID)
 	suite.NoError(err, "Error when getting one car without any empty fields")
 
 	// check that they're equal. not using `suite.Equal` because it doesn't let you define your own Equal() func
@@ -69,9 +69,9 @@ func (suite carRepoSuite) TestGetOne_NoNULLFields_Positive() {
 }
 
 func (suite carRepoSuite) TestGetByLicensePlate_Positive() {
-	carId, _ := suite.carRepo.Create(suite.newCar)
-	defer suite.carRepo.Delete(carId)
-	existingCar := suite.newCar.ToCar(carId)
+	carID, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carID)
+	existingCar := suite.newCar.ToCar(carID)
 
 	foundCar, err := suite.carRepo.GetByLicensePlate(existingCar.LicensePlate)
 	suite.NoError(err, "Error when getting one car by its license plate")
@@ -86,23 +86,23 @@ func (suite carRepoSuite) TestGetByLicensePlate_Negative() {
 }
 
 func (suite carRepoSuite) TestCreate_CarExists_Negative() {
-	carId, _ := suite.carRepo.Create(suite.newCar)
-	defer suite.carRepo.Delete(carId)
+	carID, _ := suite.carRepo.Create(suite.newCar)
+	defer suite.carRepo.Delete(carID)
 
 	_, err := suite.carRepo.Create(suite.newCar)
 	suite.Error(err, "err from creating existing car should not be nil")
 }
 
 func (suite carRepoSuite) TestCreate_CarDNE_Positive() {
-	carId, err := suite.carRepo.Create(suite.newCar)
+	carID, err := suite.carRepo.Create(suite.newCar)
 	suite.NoError(err, "err from creating non-existing car should not be nil")
 
-	suite.carRepo.Delete(carId)
+	suite.carRepo.Delete(carID)
 }
 
 func (suite carRepoSuite) TestDelete_Positive() {
-	carId, _ := suite.carRepo.Create(suite.newCar)
+	carID, _ := suite.carRepo.Create(suite.newCar)
 
-	err := suite.carRepo.Delete(carId)
+	err := suite.carRepo.Delete(carID)
 	suite.NoError(err, "err from deleting car should be nil")
 }

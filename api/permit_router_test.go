@@ -50,7 +50,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 	{ // set jwts
 		jwtMiddleware := NewJWTMiddleware(c.Token())
 
-		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.Id, ResidentRole)
+		suite.residentJWT, err = jwtMiddleware.newAccess(testResident.ID, ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
@@ -68,12 +68,12 @@ func (suite *permitRouterSuite) SetupSuite() {
 
 	carOneReq := newCarReq{"one", "one", "one", "one"}
 	suite.testPermits = map[string]newPermitReq{
-		"NoUnlimDays,NoException": newTestPermit(testResident.Id, carOneReq, ""),
-		"UnlimDays,NoException":   newTestPermit(testResidentUnlimDays.Id, carOneReq, ""),
-		"NoUnlimDays,Exception":   newTestPermit(testResident.Id, carOneReq, "some exception reason"),
-		"UnlimDays,Exception":     newTestPermit(testResidentUnlimDays.Id, carOneReq, "some exception reason"),
+		"NoUnlimDays,NoException": newTestPermit(testResident.ID, carOneReq, ""),
+		"UnlimDays,NoException":   newTestPermit(testResidentUnlimDays.ID, carOneReq, ""),
+		"NoUnlimDays,Exception":   newTestPermit(testResident.ID, carOneReq, "some exception reason"),
+		"UnlimDays,Exception":     newTestPermit(testResidentUnlimDays.ID, carOneReq, "some exception reason"),
 	}
-	suite.testPermit = newTestPermit(testResident.Id, carOneReq, "")
+	suite.testPermit = newTestPermit(testResident.ID, carOneReq, "")
 }
 
 func (suite permitRouterSuite) TearDownSuite() {
@@ -90,11 +90,11 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	permitOne := suite.testPermit
 
 	// resident permits, each w a different car to eachother and to permitOne
-	resPermitTwo := newTestPermit(testResident.Id, newCarReq{"two", "two", "two", "two"}, "")
-	resPermitThree := newTestPermit(testResident.Id, newCarReq{"three", "three", "three", "three"}, "")
+	resPermitTwo := newTestPermit(testResident.ID, newCarReq{"two", "two", "two", "two"}, "")
+	resPermitThree := newTestPermit(testResident.ID, newCarReq{"three", "three", "three", "three"}, "")
 
 	// car permit, with the same car as permitOne
-	carPermitTwo := newTestPermit(testResident.Id, permitOne.Car, "")
+	carPermitTwo := newTestPermit(testResident.ID, permitOne.Car, "")
 
 	type createPermitTest struct {
 		name       string
@@ -135,7 +135,7 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 		}
 
 		for _, permit := range createdPermits {
-			err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, permit.Id, permit.Car.Id, suite.carRepo)
+			err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, permit.ID, permit.Car.ID, suite.carRepo)
 			if err != nil {
 				suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
 			}
@@ -143,7 +143,7 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	}
 
 	// delete permitOne and car associated with it
-	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermitOne.Id, createdPermitOne.Car.Id, suite.carRepo)
+	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermitOne.ID, createdPermitOne.Car.ID, suite.carRepo)
 	if err != nil {
 		err := fmt.Errorf("Error deleting test permit: %v", err)
 		suite.NoError(err)
@@ -160,9 +160,9 @@ func (suite permitRouterSuite) TestCreate_FillInCarFields() {
 	// permit that will be created after that car is seeded
 	// lp is the same, so `carToCreate` will be used as the permit's car
 	newCarReq := newCarReq{LicensePlate: "two", Color: "two", Make: "two", Model: "two"}
-	permitToCreate := newTestPermit(testResident.Id, newCarReq, "")
+	permitToCreate := newTestPermit(testResident.ID, newCarReq, "")
 
-	carId, err := suite.carRepo.Create(seedCar_licensePlate, seedCar_color, seedCar_make, seedCar_model)
+	carID, err := suite.carRepo.Create(seedCar_licensePlate, seedCar_color, seedCar_make, seedCar_model)
 	if err != nil {
 		err := fmt.Errorf("Error creating car directly in carRepo: %v", err)
 		suite.NoError(err)
@@ -176,14 +176,14 @@ func (suite permitRouterSuite) TestCreate_FillInCarFields() {
 		return
 	}
 
-	carAfter, err := suite.carRepo.GetOne(carId)
+	carAfter, err := suite.carRepo.GetOne(carID)
 	if err != nil {
 		err := fmt.Errorf("Error getting car directly from carRepo: %v", err)
 		suite.NoError(err)
 		return
 	}
 
-	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+	err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.ID, createdPermit.Car.ID, suite.carRepo)
 	if err != nil {
 		err := fmt.Errorf("Error deleting test permit: %v", err)
 		suite.NoError(err)
@@ -196,7 +196,7 @@ func (suite permitRouterSuite) TestCreate_FillInCarFields() {
 
 func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	requestBody := []byte(`{
-    "residentId":"T1043321",
+    "residentID":"T1043321",
     "car": {
       "licensePlate":"OGYR3X",
       "color":"blue",
@@ -225,7 +225,7 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 
 func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 	requestBody := []byte(`{
-    "residentId":"T1043321",
+    "residentID":"T1043321",
     "car": {
       "licensePlate":"OGYR3X",
       "color":"blue",
@@ -256,7 +256,7 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
 	for testName, testPermit := range suite.testPermits {
-		residentBefore, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
+		residentBefore, err := getTestResident(suite.testServer.URL, testPermit.ResidentID, suite.adminJWT)
 		if err != nil {
 			err := fmt.Errorf("%s failed: %v", testName, err)
 			suite.NoError(err)
@@ -270,16 +270,16 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 			return
 		}
 
-		residentNow, err := getTestResident(suite.testServer.URL, testPermit.ResidentId, suite.adminJWT)
+		residentNow, err := getTestResident(suite.testServer.URL, testPermit.ResidentID, suite.adminJWT)
 		if err != nil {
 			err := fmt.Errorf("%s failed: %v", testName, err)
 			suite.NoError(err)
 			return
 		}
 
-		// shouldAddDays is true when permit residentId does not have unlim days
+		// shouldAddDays is true when permit residentID does not have unlim days
 		// and exception reason is blank
-		shouldAddDays := testPermit.ResidentId == testResident.Id && testPermit.ExceptionReason == ""
+		shouldAddDays := testPermit.ResidentID == testResident.ID && testPermit.ExceptionReason == ""
 
 		lengthOfPermit := testPermit.EndDate.Sub(testPermit.StartDate)
 
@@ -295,7 +295,7 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 			return
 		}
 
-		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.ID, createdPermit.Car.ID, suite.carRepo)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: deleting test permit failed: %v", testName, err))
 			return
@@ -305,7 +305,7 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 
 func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 	for testName, newPermitReq := range suite.testPermits {
-		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
+		residentBefore, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentID, suite.adminJWT)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
@@ -317,13 +317,13 @@ func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 			return
 		}
 
-		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.ID, createdPermit.Car.ID, suite.carRepo)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
 		}
 
-		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentId, suite.adminJWT)
+		residentNow, err := getTestResident(suite.testServer.URL, newPermitReq.ResidentID, suite.adminJWT)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
@@ -352,7 +352,7 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 		return
 	}
 	defer func() {
-		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.Id, createdPermit.Car.Id, suite.carRepo)
+		err = deleteTestPermitAndCar(suite.testServer.URL, suite.adminJWT, createdPermit.ID, createdPermit.Car.ID, suite.carRepo)
 		if err != nil {
 			suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
 		}
@@ -376,7 +376,7 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	}
 
 	last := permitsResponse.Records[len(permitsResponse.Records)-1]
-	suite.Equal(suite.testPermit.ResidentId, last.ResidentId)
+	suite.Equal(suite.testPermit.ResidentID, last.ResidentID)
 	suite.Equal(suite.testPermit.Car.LicensePlate, last.Car.LicensePlate)
 	suite.Empty(cmp.Diff(last.StartDate, suite.testPermit.StartDate))
 	suite.Empty(cmp.Diff(last.EndDate, suite.testPermit.EndDate))
@@ -406,9 +406,9 @@ func (suite permitRouterSuite) TestGetMaxExceptions_Positive() {
 }
 
 // helpers
-func newTestPermit(residentId string, car newCarReq, exceptionReason string) newPermitReq {
+func newTestPermit(residentID string, car newCarReq, exceptionReason string) newPermitReq {
 	return newPermitReq{
-		ResidentId:      residentId,
+		ResidentID:      residentID,
 		Car:             car,
 		StartDate:       time.Now().Truncate(time.Second),
 		EndDate:         time.Now().Add(time.Duration(24) * time.Hour).Truncate(time.Second),
@@ -436,15 +436,15 @@ func createTestPermit(url string, adminJWT string, testPermit newPermitReq) (mod
 	return newPermitResponse, nil
 }
 
-func deleteTestPermitAndCar(url, adminJWT string, permitId int, carId string, carRepo storage.CarRepo) error {
-	endpoint := fmt.Sprintf("%s/api/permit/%d", url, permitId)
+func deleteTestPermitAndCar(url, adminJWT string, permitID int, carID string, carRepo storage.CarRepo) error {
+	endpoint := fmt.Sprintf("%s/api/permit/%d", url, permitID)
 	responseBody, err := authenticatedReq("DELETE", endpoint, nil, adminJWT)
 	if err != nil {
 		return fmt.Errorf("Error making request: %v", err)
 	}
 	defer responseBody.Close()
 
-	err = carRepo.Delete(carId)
+	err = carRepo.Delete(carID)
 	if err != nil {
 		return fmt.Errorf("Error deleting car directly in carRepo: %v", err)
 	}
@@ -452,8 +452,8 @@ func deleteTestPermitAndCar(url, adminJWT string, permitId int, carId string, ca
 	return nil
 }
 
-func getTestResident(url string, residentId string, adminJWT string) (models.Resident, error) {
-	endpoint := fmt.Sprintf("%s/api/resident/%s", url, residentId)
+func getTestResident(url string, residentID string, adminJWT string) (models.Resident, error) {
+	endpoint := fmt.Sprintf("%s/api/resident/%s", url, residentID)
 	responseBody, err := authenticatedReq("GET", endpoint, nil, adminJWT)
 	if err != nil {
 		return models.Resident{}, err

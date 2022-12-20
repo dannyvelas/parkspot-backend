@@ -5,7 +5,7 @@ import (
 )
 
 type resident struct {
-	Id                 string `db:"id"`
+	ID                 string `db:"id"`
 	FirstName          string `db:"first_name"`
 	LastName           string `db:"last_name"`
 	Phone              string `db:"phone"`
@@ -18,7 +18,7 @@ type resident struct {
 
 func (resident resident) toModels() models.Resident {
 	return models.NewResident(
-		resident.Id,
+		resident.ID,
 		resident.FirstName,
 		resident.LastName,
 		resident.Phone,

@@ -161,8 +161,8 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 }
 
 func (permitRepo PermitRepo) Create(
-	residentId,
-	carId string,
+	residentID,
+	carID string,
 	startTS,
 	endTS int64,
 	affectsDays bool,
@@ -179,8 +179,8 @@ func (permitRepo PermitRepo) Create(
 	query, args, err := sq.
 		Insert("permit").
 		SetMap(squirrel.Eq{
-			"resident_id":      residentId,
-			"car_id":           carId,
+			"resident_id":      residentID,
+			"car_id":           carID,
 			"start_ts":         startTS,
 			"end_ts":           endTS,
 			"request_ts":       time.Now().Unix(),
@@ -193,18 +193,18 @@ func (permitRepo PermitRepo) Create(
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrBuildingQuery, err)
 	}
 
-	var permitId int
-	err = permitRepo.database.driver.Get(&permitId, query, args...)
+	var permitID int
+	err = permitRepo.database.driver.Get(&permitID, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}
 
-	return permitId, nil
+	return permitID, nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDate int64) ([]models.Permit, error) {
+func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDate int64) ([]models.Permit, error) {
 	query, args, err := permitRepo.permitSelect.
-		Where("car_id = $1", carId).
+		Where("car_id = $1", carID).
 		Where("permit.start_ts <= $2", endDate).
 		Where("permit.end_ts >= $3", startDate).
 		OrderBy(permitRepo.permitASC).
@@ -222,13 +222,13 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carId string, startDate, endDa
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentId string, startDate, endDate int64) ([]models.Permit, error) {
-	if residentId == "" {
+func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startDate, endDate int64) ([]models.Permit, error) {
+	if residentID == "" {
 		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", ErrInvalidArg)
 	}
 
 	query, args, err := permitRepo.permitSelect.
-		Where("permit.resident_id = $1", residentId).
+		Where("permit.resident_id = $1", residentID).
 		Where("permit.start_ts <= $2", endDate).
 		Where("permit.end_ts >= $3", startDate).
 		OrderBy(permitRepo.permitASC).
