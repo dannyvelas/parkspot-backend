@@ -10,7 +10,8 @@ random.seed(42)
 
 T = TypeVar('T', str, int)
 
-def nullable_to_sql(value: Union[T,None]) -> str:
+
+def nullable_to_sql(value: Union[T, None]) -> str:
     if value is None:
         return 'NULL'
     elif isinstance(value, str):
@@ -25,6 +26,7 @@ def nullable_to_csv(value: Union[T, None]) -> str:
     else:
         return f'{value}'
 
+
 def get_rand_tss() -> Tuple[int, int]:
     year = 2022
     month = 8
@@ -38,6 +40,7 @@ def get_rand_tss() -> Tuple[int, int]:
 
     return (int(start_date.timestamp()), int(end_date.timestamp()))
 
+
 def get_rand_line(file_name: str) -> str:
     with open(file_name, 'r') as in_file:
         random_line = next(in_file)
@@ -48,21 +51,28 @@ def get_rand_line(file_name: str) -> str:
 
 
 ########################################
-## PERMIT
+# PERMIT
 ########################################
 class Permit:
     id: int
     resident_id: str
-    car_id: str
+    car_license_plate: str
+    car_color: str
+    car_make: Union[str, None]
+    car_model: Union[str, None]
     start_ts: int
     end_ts: int
     request_ts: Union[int, None]
     affects_days: bool
     exception_reason: Union[str, None]
-    def __init__(self, id: int, resident_id: str, car_id: str, start_ts: int, end_ts: int, request_ts: Union[int,None], affects_days: bool, exception_reason: Union[str,None]):
+
+    def __init__(self, id: int, resident_id: str, car_license_plate: str, car_color: str, car_make: Union[str, None], car_model: Union[str, None], start_ts: int, end_ts: int, request_ts: Union[int, None], affects_days: bool, exception_reason: Union[str, None]):
         self.id = id
         self.resident_id = resident_id
-        self.car_id = car_id
+        self.car_license_plate = car_license_plate
+        self.car_color = car_color
+        self.car_make = car_make
+        self.car_model = car_model
         self.start_ts = start_ts
         self.end_ts = end_ts
         self.request_ts = request_ts
@@ -70,42 +80,54 @@ class Permit:
         self.exception_reason = exception_reason
 
     def as_sql(self) -> str:
-        escaped_reason = self.exception_reason.replace("'", "''") if self.exception_reason else None
-        return (f"INSERT INTO permit(id, resident_id, car_id, start_ts, end_ts, request_ts, affects_days, exception_reason) VALUES"
-            f"( {self.id}"
-            f", '{self.resident_id}'"
-            f", '{self.car_id}'"
-            f", {self.start_ts}"
-            f", {self.end_ts}"
-            f", {nullable_to_sql(self.request_ts)}"
-            f", {self.affects_days}"
-            f", {nullable_to_sql(escaped_reason)});")
+        escaped_reason = self.exception_reason.replace(
+            "'", "''") if self.exception_reason else None
+        return (f"INSERT INTO permit(id, resident_id, car_license_plate, car_color, car_make, car_model, start_ts, end_ts, request_ts, affects_days, exception_reason) VALUES"
+                f"( {self.id}"
+                f", '{self.resident_id}'"
+                f", '{self.car_license_plate}'"
+                f", '{self.car_color}'"
+                f", {nullable_to_sql(self.car_make)}"
+                f", {nullable_to_sql(self.car_model)}"
+                f", {self.start_ts}"
+                f", {self.end_ts}"
+                f", {nullable_to_sql(self.request_ts)}"
+                f", {self.affects_days}"
+                f", {nullable_to_sql(escaped_reason)});")
 
     def as_csv(self) -> str:
         return (
             f"{self.id}"
             f"\t{self.resident_id}"
-            f"\t{self.car_id}"
+            f"\t{self.car_license_plate}"
+            f"\t{self.car_color}"
+            f"\t{nullable_to_csv(self.car_make)}"
+            f"\t{nullable_to_csv(self.car_model)}"
             f"\t{self.start_ts}"
             f"\t{self.end_ts}"
             f"\t{nullable_to_csv(self.request_ts)}"
             f"\t{self.affects_days}"
             f"\t{nullable_to_csv(self.exception_reason)}"
-            )
+        )
+
 
 def row_to_permit(row: List[str]) -> Permit:
     return Permit(
-        id           = int(row[0]),
-        resident_id  = row[1],
-        car_id       = row[2],
-        start_ts   = int(row[3]),
-        end_ts     = int(row[4]),
-        request_ts   = int(row[5]) if row[5] != '' else None,
-        affects_days = row[6] == 'True',
-        exception_reason = row[7]
+        id=int(row[0]),
+        resident_id=row[1],
+        car_license_plate=row[2],
+        car_color=row[3],
+        car_make=row[4],
+        car_model=row[5],
+        start_ts=int(row[6]),
+        end_ts=int(row[7]),
+        request_ts=int(row[8]) if row[8] != '' else None,
+        affects_days=row[9] == 'True',
+        exception_reason=row[10]
     )
 
-def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
+
+def get_rand_permit(i: int, resident_id: str, car_license_plate: str, car_color: str, car_make: Union[str, None], car_model: Union[str, None]) -> Permit:
     def get_rand_sentance() -> str:
         with open('./scripts/gen/csv_in/sentances.csv', 'r') as in_file:
             random_line = next(in_file)
@@ -119,26 +141,34 @@ def get_rand_permit(i: int, resident_id: str, car_id: str) -> Permit:
 
     return Permit(
         i,
-		resident_id,
-		car_id,
-		start_ts,
-		end_ts,
-		int(request_ts) if bool(random.getrandbits(1)) else None,
-		bool(random.getrandbits(1)),
+        resident_id,
+        car_license_plate,
+        car_color,
+        car_make,
+        car_model,
+        start_ts,
+        end_ts,
+        int(request_ts) if bool(random.getrandbits(1)) else None,
+        bool(random.getrandbits(1)),
         get_rand_sentance() if bool(random.getrandbits(1)) else None,
     )
 ########################################
-## Car
+# Car
 ########################################
+
+
 class Car:
     id: str
+    resident_id: str
     license_plate: str
     color: str
     make: Union[str, None]
     model: Union[str, None]
     amt_parking_days_used: int
-    def __init__(self, id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None], amt_parking_days_used: int):
+
+    def __init__(self, id: str, resident_id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None], amt_parking_days_used: int):
         self.id = id
+        self.resident_id = resident_id
         self.license_plate = license_plate
         self.color = color
         self.make = make
@@ -146,19 +176,21 @@ class Car:
         self.amt_parking_days_used = amt_parking_days_used
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO car(id, license_plate, color, make, model, amt_parking_days_used) VALUES"
-            f"( '{self.id}'"
-            f", '{self.license_plate}'"
-            f", '{self.color}'"
-            f", {nullable_to_sql(self.make)}"
-            f", {nullable_to_sql(self.model)}"
-            f", {self.amt_parking_days_used}"
-            f");"
-        )
+        return (f"INSERT INTO car(id, resident_id, license_plate, color, make, model, amt_parking_days_used) VALUES"
+                f"( '{self.id}'"
+                f", '{self.resident_id}'"
+                f", '{self.license_plate}'"
+                f", '{self.color}'"
+                f", {nullable_to_sql(self.make)}"
+                f", {nullable_to_sql(self.model)}"
+                f", {self.amt_parking_days_used}"
+                f");"
+                )
 
     def as_csv(self) -> str:
         return (
             f"{self.id}"
+            f"\t{self.resident_id}"
             f"\t{self.license_plate}"
             f"\t{self.color}"
             f"\t{nullable_to_csv(self.make)}"
@@ -166,9 +198,11 @@ class Car:
             f"\t{self.amt_parking_days_used}"
         )
 
-def get_rand_car() -> Car:
+
+def get_rand_car(resident_id: str) -> Car:
     def get_rand_color() -> str:
-        colors = ['gray', 'black', 'blue', 'silver', 'orange', 'pink', 'brown', 'purple', 'red', 'green']
+        colors = ['gray', 'black', 'blue', 'silver', 'orange',
+                  'pink', 'brown', 'purple', 'red', 'green']
         return random.choice(colors)
 
     def get_rand_lp() -> str:
@@ -178,27 +212,32 @@ def get_rand_car() -> Car:
     split_line = line.split('\t')
 
     return Car(
-        id            = str(uuid.UUID(int=random.getrandbits(128), version=4)),
-        license_plate = get_rand_lp(),
-        color         = get_rand_color(),
-        make          = split_line[0] if bool(random.getrandbits(1)) else None,
-        model         = split_line[1] if bool(random.getrandbits(1)) else None,
-        amt_parking_days_used= random.randrange(0, 30)
-        )
+        id=str(uuid.UUID(int=random.getrandbits(128), version=4)),
+        resident_id=resident_id,
+        license_plate=get_rand_lp(),
+        color=get_rand_color(),
+        make=split_line[0] if bool(random.getrandbits(1)) else None,
+        model=split_line[1] if bool(random.getrandbits(1)) else None,
+        amt_parking_days_used=random.randrange(0, 30)
+    )
+
 
 def row_to_car(row: List[str]) -> Car:
     return Car(
-      id            = row[0],
-      license_plate = row[1],
-      color         = row[2],
-      make          = row[3] if row[3] != '' else None,
-      model         = row[4] if row[3] != '' else None,
-      amt_parking_days_used= int(row[5])
+        id=row[0],
+        resident_id=row[1],
+        license_plate=row[2],
+        color=row[3],
+        make=row[4] if row[4] != '' else None,
+        model=row[5] if row[4] != '' else None,
+        amt_parking_days_used=int(row[6])
     )
 
 ########################################
-## Resident
+# Resident
 ########################################
+
+
 class Resident:
     def __init__(self, id: str, first_name: str, last_name: str, phone: str, email: str, password: str, unlim_days: bool, amt_parking_days_used: int):
         self.id = id.upper()
@@ -212,16 +251,16 @@ class Resident:
 
     def as_sql(self) -> str:
         return (f"INSERT INTO resident(id, first_name, last_name, phone, email, password, unlim_days, amt_parking_days_used) VALUES"
-            f"( '{self.id}'"
-            f", '{self.first_name}'"
-            f", '{self.last_name}'"
-            f", '{self.phone}'"
-            f", '{self.email}'"
-            f", '{self.password}'"
-            f", {self.unlim_days}"
-            f", {self.amt_parking_days_used}"
-            f");"
-        )
+                f"( '{self.id}'"
+                f", '{self.first_name}'"
+                f", '{self.last_name}'"
+                f", '{self.phone}'"
+                f", '{self.email}'"
+                f", '{self.password}'"
+                f", {self.unlim_days}"
+                f", {self.amt_parking_days_used}"
+                f");"
+                )
 
     def as_csv(self) -> str:
         return (
@@ -235,37 +274,41 @@ class Resident:
             f"\t{self.amt_parking_days_used}"
         )
 
+
 def csv_in_row_to_resident(row: List[str]) -> Resident:
     def get_rand_resid() -> str:
-        id_prefix = ''.join([ random.choice(string.digits) for _ in range(7) ])
+        id_prefix = ''.join([random.choice(string.digits) for _ in range(7)])
         return random.choice(['T', 'B']) + id_prefix
 
     return Resident(
-      id                    = get_rand_resid(),
-      first_name            = row[0],
-      last_name             = row[1],
-      phone                 = row[3],
-      email                 = row[2],
-      password              = row[4],
-      unlim_days            = bool(random.getrandbits(1)),
-      amt_parking_days_used = random.randrange(0, 31),
-        )
+        id=get_rand_resid(),
+        first_name=row[0],
+        last_name=row[1],
+        phone=row[3],
+        email=row[2],
+        password=row[4],
+        unlim_days=bool(random.getrandbits(1)),
+        amt_parking_days_used=random.randrange(0, 31),
+    )
+
 
 def csv_out_row_to_resident(row: List[str]) -> Resident:
     return Resident(
-      id                    = row[0],
-      first_name            = row[1],
-      last_name             = row[2],
-      phone                 = row[3],
-      email                 = row[4],
-      password              = row[5],
-      unlim_days            = row[6] == 'True',
-      amt_parking_days_used = int(row[7]),
-        )
+        id=row[0],
+        first_name=row[1],
+        last_name=row[2],
+        phone=row[3],
+        email=row[4],
+        password=row[5],
+        unlim_days=row[6] == 'True',
+        amt_parking_days_used=int(row[7]),
+    )
 
 ########################################
-## Visitor
+# Visitor
 ########################################
+
+
 class Visitor:
     def __init__(self, resident_id: str, first_name: str, last_name: str, relationship: str, access_start: int, access_end: int):
         self.resident_id = resident_id
@@ -277,14 +320,14 @@ class Visitor:
 
     def as_sql(self) -> str:
         return (f"INSERT INTO visitor(resident_id, first_name, last_name, relationship, access_start, access_end) VALUES"
-            f"( '{self.resident_id}'"
-            f", '{self.first_name}'"
-            f", '{self.last_name}'"
-            f", '{self.relationship}'"
-            f", {self.access_start}"
-            f", {self.access_end}"
-            f");"
-        )
+                f"( '{self.resident_id}'"
+                f", '{self.first_name}'"
+                f", '{self.last_name}'"
+                f", '{self.relationship}'"
+                f", {self.access_start}"
+                f", {self.access_end}"
+                f");"
+                )
 
     def as_csv(self) -> str:
         return (
@@ -303,27 +346,30 @@ def get_rand_visitor(resident_id: str) -> Visitor:
     split_line = line.split('\t')
 
     return Visitor(
-        resident_id = resident_id,
-        first_name = split_line[0],
-        last_name = split_line[1],
-        relationship = 'fam/fri' if bool(random.getrandbits(1)) else 'contractor',
-        access_start = start_ts,
-        access_end = end_ts,
-        )
+        resident_id=resident_id,
+        first_name=split_line[0],
+        last_name=split_line[1],
+        relationship='fam/fri' if bool(random.getrandbits(1)
+                                       ) else 'contractor',
+        access_start=start_ts,
+        access_end=end_ts,
+    )
+
 
 def row_to_visitor(row: List[str]) -> Visitor:
     return Visitor(
-      resident_id   = row[0],
-      first_name    = row[1],
-      last_name     = row[2],
-      relationship  = row[3],
-      access_start  = int(row[4]),
-      access_end    = int(row[5])
+        resident_id=row[0],
+        first_name=row[1],
+        last_name=row[2],
+        relationship=row[3],
+        access_start=int(row[4]),
+        access_end=int(row[5])
     )
 
 ########################################
-## MAIN
+# MAIN
 ########################################
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -335,8 +381,11 @@ if __name__ == '__main__':
         exit(1)
 
     if file_out == 'csv':
-        def csv_in_file_name(model: str) -> str: return f'./scripts/gen/csv_in/{model}.csv'
-        def csv_out_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
+        def csv_in_file_name(
+            model: str) -> str: return f'./scripts/gen/csv_in/{model}.csv'
+
+        def csv_out_file_name(
+            model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
 
         amt_permits = 0
         with open(csv_out_file_name('resident'), 'w') as r_file_out:
@@ -352,8 +401,11 @@ if __name__ == '__main__':
                                 r_file_out.write(f'{resident.as_csv()}\n')
 
                                 # write car to csv_out
-                                car = get_rand_car()
-                                c_file_out.write(f'{car.as_csv()}\n')
+                                cars: List[Car] = []
+                                for _ in range(random.randrange(5)):
+                                    car = get_rand_car(resident.id)
+                                    cars.append(car)
+                                    c_file_out.write(f'{car.as_csv()}\n')
 
                                 # write visitors to csv_out
                                 for _ in range(random.randrange(5)):
@@ -362,24 +414,30 @@ if __name__ == '__main__':
                                     v_file_out.write(f'{visitor.as_csv()}\n')
 
                                 # write permits to csv_out
-                                for _ in range(random.randrange(5)):
-                                    permit = get_rand_permit(amt_permits + 1, resident.id, car.id)
-                                    p_file_out.write(f'{permit.as_csv()}\n')
-                                    amt_permits += 1
-        
+                                for car in cars:
+                                    for _ in range(random.randrange(5)):
+                                        permit = get_rand_permit(
+                                            amt_permits + 1, resident.id, car.license_plate, car.color, car.make, car.model)
+                                        p_file_out.write(
+                                            f'{permit.as_csv()}\n')
+                                        amt_permits += 1
+
     elif file_out == 'migration':
-        def migration_in_file_name(model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
-        def migration_out_file_name(version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'
+        def migration_in_file_name(
+            model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
+
+        def migration_out_file_name(
+            version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'
 
         with open(migration_in_file_name('resident'), 'r') as file_in:
-            with open(migration_out_file_name(4, 'resident'), 'w') as file_out:
+            with open(migration_out_file_name(3, 'resident'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
                     resident = csv_out_row_to_resident(row)
                     file_out.write(f'{resident.as_sql()}\n')
-                                        
+
             with open(migration_in_file_name('car'), 'r') as file_in:
-                with open(migration_out_file_name(3, 'car'), 'w') as file_out:
+                with open(migration_out_file_name(4, 'car'), 'w') as file_out:
                     reader = csv.reader(file_in, delimiter='\t')
                     for _, row in enumerate(reader):
                         car = row_to_car(row)
@@ -396,7 +454,8 @@ if __name__ == '__main__':
 
                         amt_rows += 1
 
-                    file_out.write(f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
+                    file_out.write(
+                        f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
 
             with open(migration_in_file_name('visitor'), 'r') as file_in:
                 with open(migration_out_file_name(6, 'visitor'), 'w') as file_out:
