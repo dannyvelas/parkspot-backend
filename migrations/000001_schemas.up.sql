@@ -39,11 +39,12 @@ CREATE TABLE IF NOT EXISTS car(
 -- thus, we want the car information in each permit to be a "snapshot", at the time the permit was created
 CREATE TABLE IF NOT EXISTS permit(
   id SERIAL PRIMARY KEY UNIQUE NOT NULL,
+  resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
+  car_id UUID NOT NULL,
   license_plate VARCHAR(10) NOT NULL,
   color TEXT NOT NULL,
   make TEXT,
   model TEXT,
-  resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
   start_ts BIGINT NOT NULL,
   end_ts BIGINT NOT NULL,
   request_ts BIGINT,
