@@ -172,17 +172,17 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	query, args, err := sq.
 		Insert("permit").
 		SetMap(squirrel.Eq{
-			"resident_id":       desiredPermit.ResidentID,
-			"car_id":            desiredPermit.CarID,
-			"car_license_plate": desiredPermit.LicensePlate,
-			"car_color":         desiredPermit.Color,
-			"car_make":          desiredPermit.Make,
-			"car_model":         desiredPermit.Model,
-			"start_ts":          desiredPermit.StartDate.Unix(),
-			"end_ts":            desiredPermit.EndDate.Unix(),
-			"request_ts":        time.Now().Unix(),
-			"affects_days":      desiredPermit.AffectsDays,
-			"exception_reason":  nullableReason,
+			"resident_id":      desiredPermit.ResidentID,
+			"car_id":           desiredPermit.CarID,
+			"license_plate":    desiredPermit.LicensePlate,
+			"color":            desiredPermit.Color,
+			"make":             desiredPermit.Make,
+			"model":            desiredPermit.Model,
+			"start_ts":         desiredPermit.StartDate.Unix(),
+			"end_ts":           desiredPermit.EndDate.Unix(),
+			"request_ts":       time.Now().Unix(),
+			"affects_days":     desiredPermit.AffectsDays,
+			"exception_reason": nullableReason,
 		}).
 		Suffix("RETURNING permit.id").
 		ToSql()
