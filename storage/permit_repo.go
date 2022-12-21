@@ -160,32 +160,29 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	return permit.toModels(), nil
 }
 
-func (permitRepo PermitRepo) Create(
-	residentID,
-	carID string,
-	startDate,
-	endDate time.Time,
-	affectsDays bool,
-	exceptionReason string,
-) (int, error) {
+func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	// see whether exceptionReason is empty and convert appropriately
 	// assume everything else is already checked for emptyness
 	nullableReason := sql.NullString{}
-	if exceptionReason != "" {
-		nullableReason = sql.NullString{String: exceptionReason, Valid: true}
+	if desiredPermit.ExceptionReason != "" {
+		nullableReason = sql.NullString{String: desiredPermit.ExceptionReason, Valid: true}
 	}
 
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query, args, err := sq.
 		Insert("permit").
 		SetMap(squirrel.Eq{
-			"resident_id":      residentID,
-			"car_id":           carID,
-			"start_ts":         startDate.Unix(),
-			"end_ts":           endDate.Unix(),
-			"request_ts":       time.Now().Unix(),
-			"affects_days":     affectsDays,
-			"exception_reason": nullableReason,
+			"resident_id":       desiredPermit.ResidentID,
+			"car_id":            desiredPermit.CarID,
+			"car_license_plate": desiredPermit.LicensePlate,
+			"car_color":         desiredPermit.Color,
+			"car_make":          desiredPermit.Make,
+			"car_model":         desiredPermit.Model,
+			"start_ts":          desiredPermit.StartDate.Unix(),
+			"end_ts":            desiredPermit.EndDate.Unix(),
+			"request_ts":        time.Now().Unix(),
+			"affects_days":      desiredPermit.AffectsDays,
+			"exception_reason":  nullableReason,
 		}).
 		Suffix("RETURNING permit.id").
 		ToSql()
