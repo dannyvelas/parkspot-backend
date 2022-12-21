@@ -145,12 +145,12 @@ func (s PermitService) Delete(permitID int) error {
 	if permit.AffectsDays {
 		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
 		if err != nil {
-			return fmt.Errorf("error adding to amtParkingDaysUsed in residentRepo: %v", err)
+			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
 		}
 
 		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) {
-			return fmt.Errorf("error adding to amtParkingDaysUsed in carRepo: %v", err)
+			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
 		}
 		// purposely not returning error if error.Is(err, storage.ErrNoRows)
 		// its possible that the car with id of permit.CarID was deleted and no longer exists.
