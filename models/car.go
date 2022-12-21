@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -50,6 +51,57 @@ func (m Car) ValidateEdit() error {
 
 	if errors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
 		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+	}
+
+	return nil
+}
+
+func (m Car) ValidateCreation() error {
+	if err := m.emptyFields(); err != nil {
+		return err
+	}
+
+	if err := m.invalidFields(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m Car) emptyFields() error {
+	emptyFields := []string{}
+
+	if m.LicensePlate == "" {
+		emptyFields = append(emptyFields, "licensePlate")
+	}
+	if m.Color == "" {
+		emptyFields = append(emptyFields, "color")
+	}
+	if m.Make == "" {
+		emptyFields = append(emptyFields, "make")
+	}
+	if m.Model == "" {
+		emptyFields = append(emptyFields, "model")
+	}
+
+	if len(emptyFields) > 0 {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+	}
+
+	return nil
+}
+
+func (m Car) invalidFields() error {
+	errors := []string{}
+
+	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
+		errors = append(errors, "licensePlate can only be letters or numbers")
+	}
+	if len(m.LicensePlate) > 8 {
+		errors = append(errors, "licensePlate can be maximum 8 characters")
+	}
+	if colorMakeModelErrors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
+		errors = append(errors, colorMakeModelErrors...)
 	}
 
 	return nil

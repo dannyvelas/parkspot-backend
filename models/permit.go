@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -103,18 +102,6 @@ func (m Permit) emptyFields() error {
 	if m.CarID == "" {
 		emptyFields = append(emptyFields, "carID")
 	}
-	if m.LicensePlate == "" {
-		emptyFields = append(emptyFields, "licensePlate")
-	}
-	if m.Color == "" {
-		emptyFields = append(emptyFields, "color")
-	}
-	if m.Make == "" {
-		emptyFields = append(emptyFields, "make")
-	}
-	if m.Model == "" {
-		emptyFields = append(emptyFields, "model")
-	}
 	if m.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "startDate")
 	}
@@ -136,17 +123,6 @@ func (m Permit) invalidFields() error {
 		errors = append(errors, "Accounts with a ResidentID starting with 'P' are not allowed to request permits")
 	} else if err := IsResidentID(m.ResidentID); err != nil {
 		errors = append(errors, err.Error())
-	}
-
-	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
-		errors = append(errors, "licensePlate can only be letters or numbers")
-	}
-	if len(m.LicensePlate) > 8 {
-		errors = append(errors, "licensePlate can be maximum 8 characters")
-	}
-
-	if colorMakeModelErrors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
-		errors = append(errors, colorMakeModelErrors...)
 	}
 
 	if m.StartDate.After(m.EndDate) {
