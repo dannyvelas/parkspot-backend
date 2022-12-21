@@ -106,9 +106,6 @@ func (m Permit) emptyFields() error {
 	if m.LicensePlate == "" {
 		emptyFields = append(emptyFields, "licensePlate")
 	}
-	if m.CarID == "" {
-		emptyFields = append(emptyFields, "carID")
-	}
 	if m.Color == "" {
 		emptyFields = append(emptyFields, "color")
 	}
