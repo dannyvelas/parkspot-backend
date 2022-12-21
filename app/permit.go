@@ -50,15 +50,10 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 	return permit, nil
 }
 
-func (s PermitService) Create(desiredPermit models.Permit, existingResident models.Resident) (models.Permit, error) {
-	if existingResident.UnlimDays == nil {
-		return models.Permit{}, fmt.Errorf("data type error in permit service create. unlimDays is nil")
-	}
-
+func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error) {
 	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
-	affectsDays := desiredPermit.ExceptionReason == "" && !*existingResident.UnlimDays
-	if affectsDays {
-		err := s.residentRepo.AddToAmtParkingDaysUsed(existingResident.ID, permitLength)
+	if desiredPermit.AffectsDays {
+		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
 		}
@@ -69,14 +64,7 @@ func (s PermitService) Create(desiredPermit models.Permit, existingResident mode
 		}
 	}
 
-	permitID, err := s.permitRepo.Create(
-		desiredPermit.ResidentID,
-		desiredPermit.CarID,
-		desiredPermit.StartDate,
-		desiredPermit.EndDate,
-		affectsDays,
-		desiredPermit.ExceptionReason,
-	)
+	permitID, err := s.permitRepo.Create(desiredPermit)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
 	}
@@ -89,14 +77,7 @@ func (s PermitService) Create(desiredPermit models.Permit, existingResident mode
 	return newPermit, nil
 }
 
-func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident) error {
-	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
-	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
-		return fmt.Errorf("error getting one from carService: %v", err)
-	} else if errors.Is(err, storage.ErrNoRows) {
-		return ErrCarForPermitDNE
-	}
-
+func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
 	// error out if car has active permits during dates requested
 	carActivePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
 		existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)

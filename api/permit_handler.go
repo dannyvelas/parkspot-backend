@@ -118,7 +118,20 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		err = h.permitService.ValidateCreation(newPermitReq, existingResident)
+		// error out if car DNE
+		existingCar, err := h.carService.GetOne(newPermitReq.CarID)
+		if err != nil && !errors.Is(err, app.ErrNotFound) { // unexpected error
+			log.Error().Msgf("error getting one from carService: %v", err)
+			respondInternalError(w)
+			return
+		} else if errors.Is(err, app.ErrNotFound) {
+			message := "The car that you chose for this permit does not" +
+				" exist. Please create or choose another car."
+			respondError(w, newErrBadRequest(message))
+			return
+		}
+
+		err = h.permitService.ValidateCreation(newPermitReq, existingResident, existingCar)
 		var createPermitErr app.CreatePermitError
 		if errors.As(err, &createPermitErr) {
 			respondError(w, newErrBadRequest(err.Error()))
@@ -129,7 +142,14 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		createdPermit, err := h.permitService.Create(newPermitReq, existingResident)
+		// augment newPermitReq so that it is created properly
+		newPermitReq.LicensePlate = existingCar.LicensePlate
+		newPermitReq.Color = existingCar.Color
+		newPermitReq.Make = existingCar.Make
+		newPermitReq.Model = existingCar.Model
+		newPermitReq.AffectsDays = newPermitReq.ExceptionReason == "" && !*existingResident.UnlimDays
+
+		createdPermit, err := h.permitService.Create(newPermitReq)
 		if err != nil {
 			log.Error().Msgf("error creating permit in permitservice: %v", err)
 			respondInternalError(w)
