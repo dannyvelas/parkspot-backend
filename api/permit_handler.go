@@ -118,10 +118,6 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		// TODO: perhaps in ValidateCreation or perhaps above:
-		// check that the car for which we are creating the permit
-		// already exists. do this by checking the carID
-
 		err = h.permitService.ValidateCreation(newPermitReq, existingResident)
 		var createPermitErr app.CreatePermitError
 		if errors.As(err, &createPermitErr) {
