@@ -17,6 +17,8 @@ func (e CreatePermitError) Error() string {
 }
 
 var (
+	ErrCarForPermitDNE = CreatePermitError{"The car that you chose for this permit does not" +
+		" exist. Please create or choose another car."}
 	ErrCarActivePermit = CreatePermitError{"Cannot create a permit during these dates" +
 		" because this car has at least one active permit during that time."}
 	ErrPermitTooLong = CreatePermitError{
