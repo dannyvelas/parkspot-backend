@@ -1,14 +1,20 @@
 package models
 
 import (
-	"github.com/google/go-cmp/cmp"
+	"fmt"
+	"regexp"
+	"strings"
 	"time"
 )
 
 type Permit struct {
 	ID              int       `json:"id"`
 	ResidentID      string    `json:"residentID"`
-	Car             Car       `json:"car"`
+	CarID           string    `json:"carID"`
+	LicensePlate    string    `json:"licensePlate"`
+	Color           string    `json:"color"`
+	Make            string    `json:"make"`
+	Model           string    `json:"model"`
 	StartDate       time.Time `json:"startDate"`
 	EndDate         time.Time `json:"endDate"`
 	RequestTS       int64     `json:"requestTS"` // int64: type used by time package for unix time
@@ -16,11 +22,28 @@ type Permit struct {
 	ExceptionReason string    `json:"exceptionReason"`
 }
 
-func NewPermit(id int, residentID string, car Car, startDate time.Time, endDate time.Time, requestTS int64, affectsDays bool, exceptionReason string) Permit {
+func NewPermit(
+	id int,
+	residentID string,
+	carID string,
+	licensePlate string,
+	color string,
+	make string,
+	model string,
+	startDate time.Time,
+	endDate time.Time,
+	requestTS int64,
+	affectsDays bool,
+	exceptionReason string,
+) Permit {
 	return Permit{
 		ID:              id,
 		ResidentID:      residentID,
-		Car:             car,
+		CarID:           carID,
+		LicensePlate:    licensePlate,
+		Color:           color,
+		Make:            make,
+		Model:           model,
 		StartDate:       startDate,
 		EndDate:         endDate,
 		RequestTS:       requestTS,
@@ -34,7 +57,15 @@ func (self Permit) Equal(other Permit) bool {
 		return false
 	} else if self.ResidentID != other.ResidentID {
 		return false
-	} else if !cmp.Equal(self.Car, other.Car) {
+	} else if self.CarID != other.CarID {
+		return false
+	} else if self.LicensePlate != other.LicensePlate {
+		return false
+	} else if self.Color != other.Color {
+		return false
+	} else if self.Make != other.Make {
+		return false
+	} else if self.Model != other.Model {
 		return false
 	} else if !self.StartDate.Equal(other.StartDate) {
 		return false
@@ -49,4 +80,89 @@ func (self Permit) Equal(other Permit) bool {
 	}
 
 	return true
+}
+
+func (m Permit) ValidateCreation() error {
+	if err := m.emptyFields(); err != nil {
+		return err
+	}
+
+	if err := m.invalidFields(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m Permit) emptyFields() error {
+	emptyFields := []string{}
+
+	if m.ResidentID == "" {
+		emptyFields = append(emptyFields, "residentID")
+	}
+	if m.CarID == "" {
+		emptyFields = append(emptyFields, "carID")
+	}
+	if m.LicensePlate == "" {
+		emptyFields = append(emptyFields, "licensePlate")
+	}
+	if m.CarID == "" {
+		emptyFields = append(emptyFields, "carID")
+	}
+	if m.Color == "" {
+		emptyFields = append(emptyFields, "color")
+	}
+	if m.Make == "" {
+		emptyFields = append(emptyFields, "make")
+	}
+	if m.Model == "" {
+		emptyFields = append(emptyFields, "model")
+	}
+	if m.StartDate.IsZero() {
+		emptyFields = append(emptyFields, "startDate")
+	}
+	if m.EndDate.IsZero() {
+		emptyFields = append(emptyFields, "endDate")
+	}
+
+	if len(emptyFields) > 0 {
+		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+	}
+
+	return nil
+}
+
+func (m Permit) invalidFields() error {
+	errors := []string{}
+
+	if m.ResidentID[0] == 'P' {
+		errors = append(errors, "Accounts with a ResidentID starting with 'P' are not allowed to request permits")
+	} else if err := IsResidentID(m.ResidentID); err != nil {
+		errors = append(errors, err.Error())
+	}
+
+	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
+		errors = append(errors, "licensePlate can only be letters or numbers")
+	}
+	if len(m.LicensePlate) > 8 {
+		errors = append(errors, "licensePlate can be maximum 8 characters")
+	}
+
+	if colorMakeModelErrors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
+		errors = append(errors, colorMakeModelErrors...)
+	}
+
+	if m.StartDate.After(m.EndDate) {
+		errors = append(errors, "startDate cannot be after endDate")
+	}
+
+	if m.StartDate.Equal(m.EndDate) {
+		errors = append(errors, "startDate cannot be equal to endDate")
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+	}
+
+	return nil
 }
