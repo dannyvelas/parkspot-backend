@@ -30,3 +30,7 @@ func ToBool(value string) bool {
 
 	return parsed
 }
+
+func ToPtr[T any](v T) *T {
+	return &v
+}
