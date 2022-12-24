@@ -40,8 +40,9 @@ func (suite *authRouterSuite) SetupSuite() {
 	if err != nil {
 		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
+	suite.app = app
 
-	router := newRouter(c, app)
+	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
 	suite.adminUser = models.NewUser("test",
@@ -57,7 +58,7 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
-	err = createTestResidents(suite.testServer.URL, suite.adminAccessToken)
+	err = createTestResidents(suite.app.ResidentService)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
@@ -66,7 +67,7 @@ func (suite *authRouterSuite) SetupSuite() {
 func (suite authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.testServer.URL, suite.adminAccessToken)
+	err := deleteTestResidents(suite.app.ResidentService)
 	if err != nil {
 		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
 		return
@@ -103,7 +104,7 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	var session session
+	var session app.Session
 	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
@@ -111,10 +112,10 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 
 	suite.Empty(cmp.Diff(suite.adminUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, suite.adminUser.ID, suite.adminUser.Role)
+	err = checkAccessToken(suite.app.JWTService, session.AccessToken, suite.adminUser)
 	suite.NoError(err)
 
-	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), suite.adminUser.ID, suite.adminUser.TokenVersion)
+	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), suite.adminUser.ID, suite.adminUser.TokenVersion)
 	suite.NoError(err)
 }
 
@@ -146,24 +147,24 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	var session session
+	var session app.Session
 	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	expectedUser := NewUser(testResident.ID,
+	expectedUser := models.NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
-		ResidentRole,
+		models.ResidentRole,
 		0)
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, expectedUser.ID, expectedUser.Role)
+	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
 	suite.NoError(err)
 
-	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
+	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
 	suite.NoError(err)
 }
 
@@ -174,18 +175,18 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	user := NewUser(testResident.ID,
+	user := models.NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
-		ResidentRole,
+		models.ResidentRole,
 		testResident.TokenVersion)
-	refreshToken, err := suite.jwtMiddleware.newRefresh(user)
+	refreshToken, err := suite.app.JWTService.NewRefresh(user)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
 		return
 	}
-	cookie := http.Cookie{Name: refreshCookieKey, Value: refreshToken, HttpOnly: true, Path: "/"}
+	cookie := http.Cookie{Name: config.RefreshCookieKey, Value: refreshToken, HttpOnly: true, Path: "/"}
 	request.AddCookie(&cookie)
 
 	response, err := http.DefaultClient.Do(request)
@@ -204,24 +205,24 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	var session session
+	var session app.Session
 	if err := json.NewDecoder(response.Body).Decode(&session); err != nil {
 		suite.NoError(err)
 		return
 	}
 
-	expectedUser := NewUser(testResident.ID,
+	expectedUser := models.NewUser(testResident.ID,
 		testResident.FirstName,
 		testResident.LastName,
 		testResident.Email,
-		ResidentRole,
+		models.ResidentRole,
 		0)
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.jwtMiddleware, session.AccessToken, expectedUser.ID, expectedUser.Role)
+	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
 	suite.NoError(err)
 
-	err = checkRefreshToken(suite.jwtMiddleware, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
+	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
 	suite.NoError(err)
 }
 
@@ -255,34 +256,34 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 }
 
 // helpers
-func checkAccessToken(jwtMiddleware jwtMiddleware, token string, expectedID string, expectedRole role) error {
+func checkAccessToken(jwtService app.JWTService, token string, expectedUser models.User) error {
 	if token == "" {
 		return fmt.Errorf("accessToken was empty")
-	} else if payload, err := jwtMiddleware.parseAccess(token); err != nil {
+	} else if payload, err := jwtService.ParseAccess(token); err != nil {
 		return fmt.Errorf("Error parsing access token (%s): %v", token, err)
-	} else if expectedID != payload.ID {
-		return fmt.Errorf("user id (%s) was not the same to access payload id (%s)", expectedID, payload.ID)
-	} else if expectedRole != payload.Role {
-		return fmt.Errorf("user role (%v) was not the same to access payload role (%v)", expectedRole, payload.Role)
+	} else if expectedUser.ID != payload.ID {
+		return fmt.Errorf("user id (%s) was not the same to access payload id (%s)", expectedUser.ID, payload.ID)
+	} else if expectedUser.Role != payload.Role {
+		return fmt.Errorf("user role (%v) was not the same to access payload role (%v)", expectedUser.Role, payload.Role)
 	}
 
 	return nil
 }
 
-func checkRefreshToken(jwtMiddleware jwtMiddleware, cookies []*http.Cookie, expectedID string, expectedVersion int) error {
+func checkRefreshToken(jwtService app.JWTService, cookies []*http.Cookie, expectedID string, expectedVersion int) error {
 	refreshCookie := func() *http.Cookie {
 		for _, cookie := range cookies {
-			if cookie.Name == refreshCookieKey {
+			if cookie.Name == config.RefreshCookieKey {
 				return cookie
 			}
 		}
 		return nil
 	}()
 	if refreshCookie == nil {
-		return fmt.Errorf("cookie with key of %s not found", refreshCookieKey)
+		return fmt.Errorf("cookie with key of %s not found", config.RefreshCookieKey)
 	}
 
-	if payload, err := jwtMiddleware.parseRefresh(refreshCookie.Value); err != nil {
+	if payload, err := jwtService.ParseRefresh(refreshCookie.Value); err != nil {
 		return fmt.Errorf("Error parsing refresh token (%s): %v", refreshCookie.Value, err)
 	} else if expectedID != payload.ID {
 		return fmt.Errorf("user id (%s) was not the same to refresh payload id (%s)", expectedID, payload.ID)
