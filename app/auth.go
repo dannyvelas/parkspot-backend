@@ -62,7 +62,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 	user := loginable.AsUser()
 
 	// generate tokens
-	refreshToken, err := a.jwtService.newRefresh(user)
+	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: Error generating refresh JWT: %v", err)
 	}
@@ -90,7 +90,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	}
 
 	// generate tokens
-	refreshToken, err := a.jwtService.newRefresh(user)
+	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating refresh JWT: %v", err)
 	}

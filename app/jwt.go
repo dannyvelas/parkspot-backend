@@ -52,7 +52,7 @@ func (jwtService JWTService) NewAccess(id string, role models.Role) (string, err
 	return token.SignedString(jwtService.accessSecret)
 }
 
-func (jwtService JWTService) newRefresh(user models.User) (string, error) {
+func (jwtService JWTService) NewRefresh(user models.User) (string, error) {
 	claims := refreshClaims{
 		user,
 		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
