@@ -8,6 +8,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -227,20 +228,18 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 }
 
 func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
-	requestBody := []byte(fmt.Sprintf(`{
-    "residentID": "B0000000",
-    "firstName": "first",
-    "lastName": "last",
-    "phone": "123456789",
-    "email": "%s",
-    "password":"password",
-    "unlimDays": false
-  }`,
-		testResident.Email))
+	requestBody := models.Resident{
+		ID:        "B0000000",
+		FirstName: "first",
+		LastName:  "last",
+		Phone:     "123456789",
+		Email:     "%s",
+		Password:  "password",
+		UnlimDays: util.ToPtr(false),
+	}
 
-	responseBody, err := authenticatedReq("POST", suite.testServer.URL+"/api/account", requestBody, suite.adminAccessToken)
+	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/account", suite.adminAccessToken, requestBody)
 	if err == nil {
-		defer responseBody.Close()
 		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
 		return
 	}
