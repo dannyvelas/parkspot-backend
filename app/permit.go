@@ -50,34 +50,81 @@ func (s PermitService) GetOne(id int) (models.Permit, error) {
 	return permit, nil
 }
 
-func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error) {
-	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
-	if desiredPermit.AffectsDays {
-		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
+func (s PermitService) Delete(permitID int) error {
+	permit, err := s.permitRepo.GetOne(permitID)
+	if errors.Is(err, storage.ErrNoRows) {
+		return ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("error getting permit from permit repo: %v", err)
+	}
+
+	err = s.permitRepo.Delete(permitID)
+	if errors.Is(err, storage.ErrNoRows) {
+		return ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("error getting permit from permit repo: %v", err)
+	}
+
+	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
+	if permit.AffectsDays {
+		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
 		if err != nil {
-			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
+			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
-		if err != nil {
-			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
+		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
+		if err != nil && !errors.Is(err, storage.ErrNoRows) {
+			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
 		}
+		// purposely not returning error if error.Is(err, storage.ErrNoRows)
+		// its possible that the car with id of permit.CarID was deleted and no longer exists.
+		// unlike a resident deletion, a car deletion does not cascade delete its permits
 	}
 
-	permitID, err := s.permitRepo.Create(desiredPermit)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
-	}
-
-	newPermit, err := s.permitRepo.GetOne(permitID)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
-	}
-
-	return newPermit, nil
+	return nil
 }
 
-func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
+func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
+	// error out if resident DNE
+	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
+	if err != nil && !errors.Is(err, storage.ErrNoRows) { // unexpected error
+		return models.Permit{}, fmt.Errorf("error getting one from residnet repo: %v", err)
+	} else if errors.Is(err, storage.ErrNoRows) { // resident does not exist
+		return models.Permit{}, ErrResidentForPermitDNE
+	}
+
+	// error out if car DNE
+	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
+	if err != nil && !errors.Is(err, storage.ErrNoRows) {
+		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
+	} else if errors.Is(err, storage.ErrNoRows) {
+		return models.Permit{}, ErrCarForPermitDNE
+	}
+
+	err = s.validateCreation(desiredPermit, existingResident, existingCar)
+	var createPermitErr CreatePermitError
+	if errors.As(err, &createPermitErr) {
+		return models.Permit{}, createPermitErr
+	} else if err != nil {
+		return models.Permit{}, fmt.Errorf("error validating permit creation in permitservice: %v", err)
+	}
+
+	// augment newPermitReq so that it is created properly
+	desiredPermit.LicensePlate = existingCar.LicensePlate
+	desiredPermit.Color = existingCar.Color
+	desiredPermit.Make = existingCar.Make
+	desiredPermit.Model = existingCar.Model
+	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*existingResident.UnlimDays
+
+	createdPermit, err := s.create(desiredPermit)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %v", err)
+	}
+
+	return createdPermit, nil
+}
+
+func (s PermitService) validateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
 	// error out if car has active permits during dates requested
 	carActivePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
 		existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)
@@ -126,38 +173,31 @@ func (s PermitService) ValidateCreation(desiredPermit models.Permit, existingRes
 	return nil
 }
 
-func (s PermitService) Delete(permitID int) error {
-	permit, err := s.permitRepo.GetOne(permitID)
-	if errors.Is(err, storage.ErrNoRows) {
-		return ErrNotFound
-	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
-	}
-
-	err = s.permitRepo.Delete(permitID)
-	if errors.Is(err, storage.ErrNoRows) {
-		return ErrNotFound
-	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
-	}
-
-	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
-	if permit.AffectsDays {
-		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
+func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {
+	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+	if desiredPermit.AffectsDays {
+		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
 		if err != nil {
-			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
+			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
-		if err != nil && !errors.Is(err, storage.ErrNoRows) {
-			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
+		err = s.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
+		if err != nil {
+			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
 		}
-		// purposely not returning error if error.Is(err, storage.ErrNoRows)
-		// its possible that the car with id of permit.CarID was deleted and no longer exists.
-		// unlike a resident deletion, a car deletion does not cascade delete its permits
 	}
 
-	return nil
+	permitID, err := s.permitRepo.Create(desiredPermit)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
+	}
+
+	newPermit, err := s.permitRepo.GetOne(permitID)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
+	}
+
+	return newPermit, nil
 }
 
 // helpers

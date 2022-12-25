@@ -50,7 +50,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	residentHandler := newResidentHandler(app.ResidentService)
 	visitorHandler := newVisitorHandler(app.VisitorService)
 	carHandler := newCarHandler(app.CarService)
-	permitHandler := newPermitHandler(app.PermitService, app.ResidentService, app.CarService)
+	permitHandler := newPermitHandler(app.PermitService)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

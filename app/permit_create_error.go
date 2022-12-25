@@ -17,6 +17,8 @@ func (e CreatePermitError) Error() string {
 }
 
 var (
+	ErrResidentForPermitDNE = CreatePermitError{"Users must have a registered account to request" +
+		" a guest parking permit. Please create their account before requesting their permit."}
 	ErrCarForPermitDNE = CreatePermitError{"The car that you chose for this permit does not" +
 		" exist. Please create or choose another car."}
 	ErrCarActivePermit = CreatePermitError{"Cannot create a permit during these dates" +

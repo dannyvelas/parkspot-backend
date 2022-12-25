@@ -12,16 +12,12 @@ import (
 )
 
 type permitHandler struct {
-	permitService   app.PermitService
-	residentService app.ResidentService
-	carService      app.CarService
+	permitService app.PermitService
 }
 
-func newPermitHandler(permitService app.PermitService, residentService app.ResidentService, carService app.CarService) permitHandler {
+func newPermitHandler(permitService app.PermitService) permitHandler {
 	return permitHandler{
-		permitService:   permitService,
-		residentService: residentService,
-		carService:      carService,
+		permitService: permitService,
 	}
 }
 
@@ -105,53 +101,13 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		// error out if resident DNE
-		existingResident, err := h.residentService.GetOne(newPermitReq.ResidentID)
-		if err != nil && !errors.Is(err, app.ErrNotFound) { // unexpected error
-			log.Error().Msgf("error getting one from residentService: %v", err)
-			respondInternalError(w)
-			return
-		} else if errors.Is(err, app.ErrNotFound) { // resident does not exist
-			message := "Users must have a registered account to request a guest" +
-				" parking permit. Please create their account before requesting their permit."
-			respondError(w, newErrBadRequest(message))
-			return
-		}
-
-		// error out if car DNE
-		existingCar, err := h.carService.GetOne(newPermitReq.CarID)
-		if err != nil && !errors.Is(err, app.ErrNotFound) { // unexpected error
-			log.Error().Msgf("error getting one from carService: %v", err)
-			respondInternalError(w)
-			return
-		} else if errors.Is(err, app.ErrNotFound) {
-			message := "The car that you chose for this permit does not" +
-				" exist. Please create or choose another car."
-			respondError(w, newErrBadRequest(message))
-			return
-		}
-
-		err = h.permitService.ValidateCreation(newPermitReq, existingResident, existingCar)
+		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
 		var createPermitErr app.CreatePermitError
 		if errors.As(err, &createPermitErr) {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msgf("error validating permit creation in permitservice: %v", err)
-			respondInternalError(w)
-			return
-		}
-
-		// augment newPermitReq so that it is created properly
-		newPermitReq.LicensePlate = existingCar.LicensePlate
-		newPermitReq.Color = existingCar.Color
-		newPermitReq.Make = existingCar.Make
-		newPermitReq.Model = existingCar.Model
-		newPermitReq.AffectsDays = newPermitReq.ExceptionReason == "" && !*existingResident.UnlimDays
-
-		createdPermit, err := h.permitService.Create(newPermitReq)
-		if err != nil {
-			log.Error().Msgf("error creating permit in permitservice: %v", err)
 			respondInternalError(w)
 			return
 		}
