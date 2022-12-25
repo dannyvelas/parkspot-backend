@@ -1,11 +1,11 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -15,6 +15,7 @@ import (
 
 type residentRouterSuite struct {
 	suite.Suite
+	app        app.App
 	testServer *httptest.Server
 	adminJWT   string
 }
@@ -29,23 +30,18 @@ func (suite *residentRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	// init database
-	database, err := storage.NewDatabase(c.Postgres())
+	app, err := app.NewApp(c)
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %v", err)
+		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
+	suite.app = app
 
-	{ // init test server
-		repos := storage.NewRepos(database)
-		suite.testServer = newTestServer(c, repos)
-	}
+	router := newRouter(c, suite.app)
+	suite.testServer = httptest.NewServer(router)
 
-	{ // set jwts
-		jwtMiddleware := NewJWTMiddleware(c.Token())
-		suite.adminJWT, err = jwtMiddleware.NewAccess("some-uuid", AdminRole)
-		if err != nil {
-			log.Fatal().Msgf("Failed to create JWT: %v", err)
-		}
+	suite.adminJWT, err = suite.app.JWTService.NewAccess("some-uuid", models.AdminRole)
+	if err != nil {
+		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 }
 
@@ -55,52 +51,41 @@ func (suite residentRouterSuite) TearDownSuite() {
 
 func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	type test struct {
-		request  string
+		request  models.Resident
 		expected models.Resident
 	}
 
-	// used below
-	boolTrue := true
-	num42 := 42
-
 	tests := map[string]test{
 		"firstName": {
-			`{"firstName":"NEWFIRST"}`,
-			testResidentWith(editResidentReq{FirstName: "NEWFIRST"}),
+			models.Resident{FirstName: "NEWFIRST"},
+			merge(testResident, models.Resident{FirstName: "NEWFIRST"}),
 		},
 		"firstName, lastName": {
-			`{"firstName":"NEWFIRST","lastName":"NEWLAST"}`,
-			testResidentWith(editResidentReq{FirstName: "NEWFIRST", LastName: "NEWLAST"}),
+			models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"},
+			merge(testResident, models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"}),
 		},
 		"firstName, lastName, phone": {
-			`{"firstName":"NEWFIRST","lastName":"NEWLAST","phone":"06181999"}`,
-			testResidentWith(editResidentReq{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"}),
+			models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"},
+			merge(testResident, models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"}),
 		},
 		"unlimDays": {
-			`{"unlimDays":true}`,
-			testResidentWith(editResidentReq{UnlimDays: &boolTrue}),
+			models.Resident{UnlimDays: util.ToPtr(true)},
+			merge(testResident, models.Resident{UnlimDays: util.ToPtr(true)}),
 		},
 		"amtParkingDaysUsed": {
-			`{"amtParkingDaysUsed":42}`,
-			testResidentWith(editResidentReq{AmtParkingDaysUsed: &num42}),
+			models.Resident{AmtParkingDaysUsed: util.ToPtr(42)},
+			merge(testResident, models.Resident{AmtParkingDaysUsed: util.ToPtr(42)}),
 		},
 	}
 
 	executeTest := func(test test) error {
-		requestBody := []byte(test.request)
 		endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.ID)
-		responseBody, err := authenticatedReq("PUT", endpoint, requestBody, suite.adminJWT)
+		residentResp, err := authenticatedReq[models.Resident, models.Resident]("PUT", endpoint, suite.adminJWT, &test.request)
 		if err != nil {
 			return fmt.Errorf("Error making request: %v", err)
 		}
-		defer responseBody.Close()
 
-		var actualResident models.Resident
-		if err := json.NewDecoder(responseBody).Decode(&actualResident); err != nil {
-			return err
-		}
-
-		if difference := cmp.Diff(test.expected, actualResident); difference != "" {
+		if difference := cmp.Diff(test.expected, residentResp); difference != "" {
 			return fmt.Errorf("user in response did not equal expected user: " + difference)
 		}
 
@@ -108,7 +93,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	}
 
 	for testName, test := range tests {
-		err := hitCreateResidentEndpoint(suite.testServer.URL, suite.adminJWT, testResident)
+		err := suite.app.ResidentService.Create(testResident)
 		if err != nil {
 			suite.NoError(fmt.Errorf("Error creating test resident before running test: %v", err))
 			break
@@ -119,7 +104,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		err = hitDeleteResidentEndpoint(suite.testServer.URL, suite.adminJWT, testResident.ID)
+		err = suite.app.ResidentService.Delete(testResident.ID)
 		if err != nil {
 			suite.NoError(fmt.Errorf("Error deleting test resident after running test: %v", err))
 			break
@@ -127,29 +112,29 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	}
 }
 
-func testResidentWith(override editResidentReq) models.Resident {
-	returnResident := testResident
+func merge(res1, res2 models.Resident) models.Resident {
+	mergeResult := res1
 
-	if override.FirstName != "" {
-		returnResident.FirstName = override.FirstName
+	if res2.FirstName != "" {
+		mergeResult.FirstName = res2.FirstName
 	}
-	if override.LastName != "" {
-		returnResident.LastName = override.LastName
+	if res2.LastName != "" {
+		mergeResult.LastName = res2.LastName
 	}
-	if override.Phone != "" {
-		returnResident.Phone = override.Phone
+	if res2.Phone != "" {
+		mergeResult.Phone = res2.Phone
 	}
-	if override.Email != "" {
-		returnResident.Email = override.Email
+	if res2.Email != "" {
+		mergeResult.Email = res2.Email
 	}
-	if override.UnlimDays != nil {
-		returnResident.UnlimDays = *override.UnlimDays
+	if res2.UnlimDays != nil {
+		mergeResult.UnlimDays = res2.UnlimDays
 	}
-	if override.AmtParkingDaysUsed != nil {
-		returnResident.AmtParkingDaysUsed = *override.AmtParkingDaysUsed
+	if res2.AmtParkingDaysUsed != nil {
+		mergeResult.AmtParkingDaysUsed = res2.AmtParkingDaysUsed
 	}
 
-	returnResident.Password = "" // passwords are always "" in JSON responses
+	mergeResult.Password = "" // passwords are always "" in JSON responses
 
-	return returnResident
+	return mergeResult
 }
