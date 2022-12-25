@@ -238,7 +238,7 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		UnlimDays: util.ToPtr(false),
 	}
 
-	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/account", suite.adminAccessToken, requestBody)
+	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/account", suite.adminAccessToken, &requestBody)
 	if err == nil {
 		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
 		return
