@@ -1,11 +1,10 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"net/http/httptest"
@@ -15,11 +14,11 @@ import (
 
 type visitorRouterSuite struct {
 	suite.Suite
-	testServer    *httptest.Server
-	residentJWT   string
-	adminJWT      string
-	testVisitor   newVisitorReq
-	testVisitorID string
+	app            app.App
+	testServer     *httptest.Server
+	residentJWT    string
+	adminJWT       string
+	createdVisitor models.Visitor
 }
 
 func TestVisitorRouter(t *testing.T) {
@@ -32,36 +31,34 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	database, err := storage.NewDatabase(c.Postgres())
+	app, err := app.NewApp(c)
 	if err != nil {
-		log.Fatal().Msgf("Failed to start database: %v", err)
+		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
+	suite.app = app
 
-	repos := storage.NewRepos(database)
-
-	suite.testServer = newTestServer(c, repos)
+	router := newRouter(c, suite.app)
+	suite.testServer = httptest.NewServer(router)
 
 	{ // set jwts
-		jwtMiddleware := NewJWTMiddleware(c.Token())
-
-		suite.residentJWT, err = jwtMiddleware.NewAccess(testResident.ID, ResidentRole)
+		suite.residentJWT, err = app.JWTService.NewAccess(testResident.ID, models.ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
 
-		suite.adminJWT, err = jwtMiddleware.NewAccess("some-uuid", AdminRole)
+		suite.adminJWT, err = app.JWTService.NewAccess("some-uuid", models.AdminRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
 	}
 
-	createTestResidents(suite.testServer.URL, suite.adminJWT)
+	err = createTestResidents(suite.app.ResidentService)
 	if err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
 	now := time.Now()
-	suite.testVisitor = newVisitorReq{
+	testVisitor := models.Visitor{
 		FirstName:    "Test",
 		LastName:     "Visitor",
 		Relationship: "fam/fri",
@@ -69,7 +66,7 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		AccessEnd:    time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local),
 	}
 
-	suite.testVisitorID, err = createTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitor)
+	suite.createdVisitor, err = suite.app.VisitorService.Create(testResident.ID, testVisitor)
 	if err != nil {
 		log.Fatal().Msg("visitor_router_test.SetupSuite: Failed to create test visitor: " +
 			err.Error())
@@ -82,13 +79,13 @@ func (suite visitorRouterSuite) TearDownSuite() {
 	// visitors that were created in `SetupSuite` would automatically be deleted
 	// on CASCADE by the `deleteTestResidents` call below. So, technically this line isn't
 	// necessary. But we include it anyway to ensure that visitor deletion works
-	err := deleteTestVisitor(suite.testServer.URL, suite.residentJWT, suite.testVisitorID)
+	err := suite.app.VisitorService.Delete(suite.createdVisitor.ID)
 	if err != nil {
 		log.Error().Msg("visitor_router_test.TearDownSuite: Failed to delete test visitor: " + err.Error())
 		return
 	}
 
-	err = deleteTestResidents(suite.testServer.URL, suite.adminJWT)
+	err = deleteTestResidents(suite.app.ResidentService)
 	if err != nil {
 		log.Error().Msg("visitor_router_test.TearDownSuite: " + err.Error())
 		return
@@ -96,57 +93,19 @@ func (suite visitorRouterSuite) TearDownSuite() {
 }
 
 func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
-	responseBody, err := authenticatedReq("GET", suite.testServer.URL+"/api/visitors", nil, suite.residentJWT)
+	visitorsResp, err := authenticatedReq[any, models.ListWithMetadata[models.Visitor]]("GET", suite.testServer.URL+"/api/visitors", suite.residentJWT, nil)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error making request: %v", err))
 		return
 	}
-	defer responseBody.Close()
 
-	var response listWithMetadata[models.Visitor]
-	if err := json.NewDecoder(responseBody).Decode(&response); err != nil {
-		suite.NoError(fmt.Errorf("Error decoding response: %v", err))
+	if len(visitorsResp.Records) == 0 {
+		suite.NotEmpty(visitorsResp)
 		return
 	}
 
-	if len(response.Records) == 0 {
-		suite.NotEmpty(response)
-		return
-	}
-
-	firstVisitor := response.Records[0]
-	suite.Equal(suite.testVisitorID, firstVisitor.ID)
-	suite.Equal(suite.testVisitor.FirstName, firstVisitor.FirstName)
-	suite.Equal(suite.testVisitor.LastName, firstVisitor.LastName)
-}
-
-func createTestVisitor(url string, jwt string, testVisitor newVisitorReq) (string, error) {
-	requestBody, err := json.Marshal(testVisitor)
-	if err != nil {
-		return "", fmt.Errorf("Error marshalling testVisitor")
-	}
-
-	responseBody, err := authenticatedReq("POST", url+"/api/visitor", requestBody, jwt)
-	if err != nil {
-		return "", fmt.Errorf("Error making request: %v", err)
-	}
-	defer responseBody.Close()
-
-	var response models.Visitor
-	if err := json.NewDecoder(responseBody).Decode(&response); err != nil {
-		return "", fmt.Errorf("Error decoding response: %v", err)
-	}
-
-	return response.ID, nil
-}
-
-func deleteTestVisitor(url string, jwt string, id string) error {
-	endpoint := fmt.Sprintf("%s/api/visitor/%s", url, id)
-	responseBody, err := authenticatedReq("DELETE", endpoint, nil, jwt)
-	if err != nil {
-		return fmt.Errorf("Error making request: %v", err)
-	}
-	defer responseBody.Close()
-
-	return nil
+	firstVisitor := visitorsResp.Records[0]
+	suite.Equal(suite.createdVisitor.ID, firstVisitor.ID)
+	suite.Equal(suite.createdVisitor.FirstName, firstVisitor.FirstName)
+	suite.Equal(suite.createdVisitor.LastName, firstVisitor.LastName)
 }
