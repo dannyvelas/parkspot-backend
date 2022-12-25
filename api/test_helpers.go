@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -29,29 +30,42 @@ var (
 		UnlimDays: util.ToPtr(true)}
 )
 
-func authenticatedReq(method string, url string, requestBytes []byte, accessToken string) (io.ReadCloser, error) {
+func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T) (parsedResp U, err error) {
+	requestBytes := []byte{}
+	if requestBody != nil {
+		requestBytes, err = json.Marshal(requestBody)
+		if err != nil {
+			return parsedResp, fmt.Errorf("Error marshalling: %v", err)
+		}
+	}
+
 	request, err := http.NewRequest(method, url, bytes.NewBuffer(requestBytes))
 	if err != nil {
-		return nil, err
+		return parsedResp, err
 	}
 	request.Header.Add("Authorization", "Bearer "+accessToken)
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return nil, err
+		return parsedResp, err
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
 		defer response.Body.Close()
 		bodyBytes, err := io.ReadAll(response.Body)
 		if err != nil {
-			return nil, fmt.Errorf("Error reading response after non-200 status code, %d: %v", response.StatusCode, err)
+			return parsedResp, fmt.Errorf("Error reading response after non-200 status code, %d: %v", response.StatusCode, err)
 		}
 
-		return nil, responseError{response.StatusCode, string(bodyBytes)}
+		return parsedResp, responseError{response.StatusCode, string(bodyBytes)}
 	}
 
-	return response.Body, nil
+	if err := json.NewDecoder(response.Body).Decode(&parsedResp); err != nil {
+		return parsedResp, fmt.Errorf("Error decoding response: %v", err)
+	}
+
+	return parsedResp, nil
 }
 
 func createTestResidents(residentService app.ResidentService) error {
