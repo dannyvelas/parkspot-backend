@@ -107,7 +107,7 @@ func (h permitHandler) create() http.HandlerFunc {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
-			log.Error().Msgf("error validating permit creation in permitservice: %v", err)
+			log.Error().Msgf("error validating / creating in permitservice: %v", err)
 			respondInternalError(w)
 			return
 		}
