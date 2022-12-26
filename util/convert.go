@@ -34,3 +34,11 @@ func ToBool(value string) bool {
 func ToPtr[T any](v T) *T {
 	return &v
 }
+
+func MapSlice[T, U any](slice []T, fn func(T) U) []U {
+	resultSlice := make([]U, len(slice))
+	for i, e := range slice {
+		resultSlice[i] = fn(e)
+	}
+	return resultSlice
+}
