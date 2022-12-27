@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -24,58 +23,58 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 	}
 }
 
-func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search string, residentID string) (models.ListWithMetadata[models.Permit], error) {
+func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search string, residentID string) (models.ListWithMetadata[models.Permit], *errs.ApiErr) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 	allPermits, err := s.permitRepo.Get(permitFilter, residentID, boundedLimit, offset, reversed, search)
 	if err != nil {
-		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting permits from permit repo: %v", err)
+		return models.ListWithMetadata[models.Permit]{}, errs.Internalf("error getting permits from permit repo: %v", err)
 	}
 
 	totalAmount, err := s.permitRepo.GetCount(permitFilter, residentID)
 	if err != nil {
-		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting total amount from permit repo: %v", err)
+		return models.ListWithMetadata[models.Permit]{}, errs.Internalf("error getting total amount from permit repo: %v", err)
 	}
 
 	return models.NewListWithMetadata(allPermits, totalAmount), nil
 }
 
-func (s PermitService) GetOne(id int) (models.Permit, error) {
+func (s PermitService) GetOne(id int) (models.Permit, *errs.ApiErr) {
 	permit, err := s.permitRepo.GetOne(id)
 	if errors.Is(err, storage.ErrNoRows) {
-		return models.Permit{}, errs.NotFound
+		return models.Permit{}, errs.NotFound("permit")
 	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit from permit repo: %v", err)
+		return models.Permit{}, errs.Internalf("error getting permit from permit repo: %v", err)
 	}
 
 	return permit, nil
 }
 
-func (s PermitService) Delete(permitID int) error {
+func (s PermitService) Delete(permitID int) *errs.ApiErr {
 	permit, err := s.permitRepo.GetOne(permitID)
 	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound
+		return errs.NotFound("permit")
 	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
+		return errs.Internalf("error getting permit from permit repo: %v", err)
 	}
 
 	err = s.permitRepo.Delete(permitID)
 	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound
+		return errs.NotFound("permit")
 	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
+		return errs.Internalf("error getting permit from permit repo: %v", err)
 	}
 
 	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
 	if permit.AffectsDays {
 		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
 		if err != nil {
-			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
+			return errs.Internalf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
 		}
 
 		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
 		if err != nil && !errors.Is(err, storage.ErrNoRows) {
-			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
+			return errs.Internalf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
 		}
 		// purposely not returning error if error.Is(err, storage.ErrNoRows)
 		// its possible that the car with id of permit.CarID was deleted and no longer exists.
@@ -85,13 +84,13 @@ func (s PermitService) Delete(permitID int) error {
 	return nil
 }
 
-func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
+func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, *errs.ApiErr) {
 	// error out if resident DNE
 	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
 	if errors.Is(err, storage.ErrNoRows) {
 		return models.Permit{}, errs.ResidentForPermitDNE
 	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting one from residnet repo: %v", err)
+		return models.Permit{}, errs.Internalf("error getting one from residnet repo: %v", err)
 	}
 
 	// error out if car DNE
@@ -99,15 +98,11 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 	if errors.Is(err, storage.ErrNoRows) {
 		return models.Permit{}, errs.CarForPermitDNE
 	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
+		return models.Permit{}, errs.Internalf("error getting one from carRepo: %v", err)
 	}
 
-	err = s.validateCreation(desiredPermit, existingResident, existingCar)
-	var apiErr errs.ApiErr
-	if errors.As(err, &apiErr) {
+	if apiErr := s.validateCreation(desiredPermit, existingResident, existingCar); apiErr != nil {
 		return models.Permit{}, apiErr
-	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error validating permit creation in permitservice: %v", err)
 	}
 
 	// get a snapshot of the car being used and save it into the permit
@@ -119,22 +114,22 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 
 	createdPermit, err := s.create(desiredPermit)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %v", err)
+		return models.Permit{}, errs.Internalf("error creating permit in permitservice: %v", err)
 	}
 
 	return createdPermit, nil
 }
 
-func (s PermitService) validateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
-	if err := desiredPermit.ValidateCreation(); err != nil {
-		return err
+func (s PermitService) validateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) *errs.ApiErr {
+	if apiErr := desiredPermit.ValidateCreation(); apiErr != nil {
+		return apiErr
 	}
 
 	// error out if car has active permits during dates requested
 	carActivePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
 		existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)
 	if err != nil {
-		return fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
+		return errs.Internalf("error getting active of car during dates in permitRepo: %v", err)
 	} else if len(carActivePermitsDuring) != 0 {
 		return errs.CarActivePermit
 	}
@@ -152,13 +147,13 @@ func (s PermitService) validateCreation(desiredPermit models.Permit, existingRes
 	residentActivePermitsDuring, err := s.permitRepo.GetActiveOfResidentDuring(
 		existingResident.ID, desiredPermit.StartDate, desiredPermit.EndDate)
 	if err != nil {
-		return fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
+		return errs.Internalf("error getting active of resident during dates in permitRepo: %v", err)
 	} else if len(residentActivePermitsDuring) >= 2 {
 		return errs.ResidentTwoActivePermits
 	}
 
 	if existingResident.UnlimDays == nil || existingResident.AmtParkingDaysUsed == nil {
-		return fmt.Errorf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
+		return errs.Internalf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
 	}
 
 	if !*existingResident.UnlimDays {
@@ -178,28 +173,28 @@ func (s PermitService) validateCreation(desiredPermit models.Permit, existingRes
 	return nil
 }
 
-func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {
+func (s PermitService) create(desiredPermit models.Permit) (models.Permit, *errs.ApiErr) {
 	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if desiredPermit.AffectsDays {
 		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
 		if err != nil {
-			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
+			return models.Permit{}, errs.Internalf("error adding to amt parking days used in residentRepo: %v", err)
 		}
 
 		err = s.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
 		if err != nil {
-			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
+			return models.Permit{}, errs.Internalf("error adding to amt parking days used in carRepo: %v", err)
 		}
 	}
 
 	permitID, err := s.permitRepo.Create(desiredPermit)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
+		return models.Permit{}, errs.Internalf("error create new permit in permitRepo: %v", err)
 	}
 
 	newPermit, err := s.permitRepo.GetOne(permitID)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
+		return models.Permit{}, errs.Internalf("error getting permit after having created it in permitRepo: %v", err)
 	}
 
 	return newPermit, nil

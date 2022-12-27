@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"strings"
 	"time"
@@ -82,7 +81,7 @@ func (self Permit) Equal(other Permit) bool {
 	return true
 }
 
-func (m Permit) ValidateCreation() error {
+func (m Permit) ValidateCreation() *errs.ApiErr {
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
@@ -94,7 +93,7 @@ func (m Permit) ValidateCreation() error {
 	return nil
 }
 
-func (m Permit) emptyFields() error {
+func (m Permit) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
 	if m.ResidentID == "" {
@@ -111,13 +110,13 @@ func (m Permit) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
+		return errs.EmptyFields(strings.Join(emptyFields, ", "))
 	}
 
 	return nil
 }
 
-func (m Permit) invalidFields() error {
+func (m Permit) invalidFields() *errs.ApiErr {
 	errors := []string{}
 
 	if m.ResidentID[0] == 'P' {
@@ -135,7 +134,7 @@ func (m Permit) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil

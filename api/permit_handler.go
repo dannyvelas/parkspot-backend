@@ -2,13 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -32,8 +30,7 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("error getting access payload: %v", err)
-			respondInternalError(w)
+			respondError(w, *errs.Internalf("error getting access payload: %v", err))
 			return
 		}
 
@@ -42,10 +39,9 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 			residentID = accessPayload.ID
 		}
 
-		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
-		if err != nil {
-			log.Error().Msgf("error getting permits with metadata: %v", err)
-			respondInternalError(w)
+		permitsWithMetadata, apiErr := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -57,21 +53,13 @@ func (h permitHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
-			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			respondError(w, *errs.BadRequest("id parameter cannot be empty"))
 			return
 		}
 
-		permit, err := h.permitService.GetOne(id)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.NotFound) {
-			respondError(w, newErrNotFound("permit"))
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("error getting one permit in permit service: %v", err)
-			respondInternalError(w)
+		permit, apiErr := h.permitService.GetOne(id)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -83,32 +71,26 @@ func (h permitHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
-			respondError(w, newErrMalformed("NewPermitReq"))
+			respondError(w, *errs.Malformed("NewPermitReq"))
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("permit_router.createPermit: error getting access payload: %v", err)
-			respondInternalError(w)
+			respondError(w, *errs.Internalf("permit_router.createPermit: error getting access payload: %v", err))
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
-			respondError(w, newErrBadRequest(message))
+			respondError(w, *errs.BadRequest(message))
 			return
 		}
 
-		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
-		var apiErr errs.ApiErr
-		if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("error validating / creating in permitservice: %v", err)
-			respondInternalError(w)
+		createdPermit, apiErr := h.permitService.ValidateAndCreate(newPermitReq)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -120,21 +102,13 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
-			respondError(w, newErrBadRequest("id parameter cannot be empty"))
+			respondError(w, *errs.BadRequest("id parameter cannot be empty"))
 			return
 		}
 
-		err := h.permitService.Delete(id)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.NotFound) {
-			respondError(w, newErrNotFound("permit"))
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("error deleting permit in permit service: %v", err)
-			respondInternalError(w)
+		apiErr := h.permitService.Delete(id)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
