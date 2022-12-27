@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/rs/zerolog/log"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"net/http"
 )
 
@@ -11,8 +11,7 @@ func sayHello() http.HandlerFunc {
 
 		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			log.Error().Msgf("hello_router.sayHello: error getting access payload: %v", err)
-			respondInternalError(w)
+			respondError(w, *errs.Internalf("hello_router.sayHello: error getting access payload: %v", err))
 			return
 		}
 
