@@ -19,6 +19,7 @@ type Car struct {
 func NewCar(id, residentID, licensePlate, color, make, model string, amtParkingDaysUsed int) Car {
 	return Car{
 		ID:                 id,
+		ResidentID:         residentID,
 		LicensePlate:       licensePlate,
 		Color:              color,
 		Make:               make,
