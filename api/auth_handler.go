@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
@@ -32,21 +31,13 @@ func (h authHandler) login() http.HandlerFunc {
 		}
 		err := json.NewDecoder(r.Body).Decode(&credentials)
 		if err != nil {
-			respondError(w, newErrMalformed("Credentials"))
+			respondError(w, *errs.Malformed("Credentials"))
 			return
 		}
 
-		session, refreshToken, err := h.authService.Login(credentials.ID, credentials.Password)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.Unauthorized) {
-			respondError(w, errUnauthorized)
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("auth_router.login: %v", err)
-			respondInternalError(w)
+		session, refreshToken, apiErr := h.authService.Login(credentials.ID, credentials.Password)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -69,27 +60,19 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
-			respondError(w, errUnauthorized)
+			respondError(w, *errs.Unauthorized)
 			return
 		}
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
-			respondError(w, errUnauthorized)
+			respondError(w, *errs.Unauthorized)
 			return
 		}
 
-		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.Unauthorized) {
-			respondError(w, errUnauthorized)
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msg("auth_router.refreshTokens: " + err.Error())
-			respondInternalError(w)
+		session, refreshToken, apiErr := h.authService.RefreshTokens(refreshPayload)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -106,24 +89,15 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 
 		var payload struct{ ID string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, newErrMalformed("id object"))
+			respondError(w, *errs.Malformed("id object"))
 			return
 		} else if payload.ID == "" {
-			respondError(w, errEmptyFields)
+			respondError(w, *errs.EmptyFields)
 			return
 		}
 
-		err := h.authService.SendResetPasswordEmail(r.Context(), payload.ID)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.Unauthorized) {
-			respondError(w, errUnauthorized)
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msg("auth_router.sendResetPasswordEmail: " + err.Error())
-			respondInternalError(w)
+		if apiErr := h.authService.SendResetPasswordEmail(r.Context(), payload.ID); apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -135,32 +109,29 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, newErrMalformed("password object"))
+			respondError(w, *errs.Malformed("password object"))
 			return
 		} else if payload.Password == "" {
-			respondError(w, errEmptyFields)
+			respondError(w, *errs.EmptyFields)
 			return
 		}
 
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
-			respondError(w, errUnauthorized)
+			respondError(w, *errs.Unauthorized)
 			return
 		}
 
 		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 		user, err := h.jwtService.ParseAccess(accessToken)
 		if err != nil {
-			log.Debug().Msgf("Error parsing: %v", err)
-			respondError(w, errUnauthorized)
+			respondError(w, *errs.Unauthorized)
 			return
 		}
 
-		err = h.authService.ResetPassword(user.ID, payload.Password)
-		if err != nil {
-			log.Error().Msgf("auth_router.resetPassword: error calling service: %v", err)
-			respondInternalError(w)
+		if apiErr := h.authService.ResetPassword(user.ID, payload.Password); apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 

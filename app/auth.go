@@ -45,12 +45,12 @@ type Session struct {
 	AccessToken string      `json:"accessToken"`
 }
 
-func (a AuthService) Login(id, password string) (Session, string, error) {
+func (a AuthService) Login(id, password string) (Session, string, *errs.ApiErr) {
 	loginable, err := a.getUser(id)
 	if errors.Is(err, storage.ErrNoRows) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.login: error querying repo: %v", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
@@ -65,27 +65,26 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 	// generate tokens
 	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: Error generating refresh JWT: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.login: Error generating refresh JWT: %v", err)
 	}
 
 	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: Error generating access JWT: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.login: Error generating access JWT: %v", err)
 	}
 
 	return Session{user, accessToken}, refreshToken, nil
 }
 
-func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
+func (a AuthService) RefreshTokens(user models.User) (Session, string, *errs.ApiErr) {
 	loginable, err := a.getUser(user.ID)
 	if errors.Is(err, storage.ErrNoRows) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.refreshTokens: error querying repo: %v", err)
 	}
 
 	userFromDB := loginable.AsUser()
-
 	if userFromDB.TokenVersion != user.TokenVersion {
 		return Session{}, "", errs.Unauthorized
 	}
@@ -93,47 +92,47 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	// generate tokens
 	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating refresh JWT: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.refreshTokens: Error generating refresh JWT: %v", err)
 	}
 
 	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: Error generating access JWT: %v", err)
+		return Session{}, "", errs.Internalf("auth_service.refreshTokens: Error generating access JWT: %v", err)
 	}
 
 	return Session{user, accessToken}, refreshToken, nil
 }
 
-func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) error {
+func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) *errs.ApiErr {
 	loginable, err := a.getUser(id)
 	if errors.Is(err, storage.ErrNoRows) {
 		return errs.Unauthorized
 	} else if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
+		return errs.Internalf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
 	}
 
 	service, err := a.getGmailService(ctx)
 	if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: %v", err)
+		return errs.Internalf("auth_service.sendResetPasswordEmail: %v", err)
 	}
 
 	gmailMessage, err := a.createGmailMessage(loginable.AsUser())
 	if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: %v", err)
+		return errs.Internalf("auth_service.sendResetPasswordEmail: %v", err)
 	}
 
 	_, err = service.Users.Messages.Send("me", gmailMessage).Do()
 	if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: error sending mail: %v", err)
+		return errs.Internalf("auth_service.sendResetPasswordEmail: error sending mail: %v", err)
 	}
 
 	return nil
 }
 
-func (a AuthService) ResetPassword(id, newPass string) error {
+func (a AuthService) ResetPassword(id, newPass string) *errs.ApiErr {
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("auth_router.resetPassword: error generating hash: %v", err)
+		return errs.Internalf("authService.resetPassword: error generating hash: %v", err)
 	}
 
 	var userRepo interface {
@@ -147,13 +146,13 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 
 	err = userRepo.SetPassword(id, string(hashBytes))
 	if err != nil {
-		return fmt.Errorf("auth_router.resetPassword: error updating password: %v", err)
+		return errs.Internalf("authService.resetPassword: error updating password: %v", err)
 	}
 
 	return nil
 }
 
-func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error) {
+func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, *errs.ApiErr) {
 	config := &oauth2.Config{
 		ClientID:     a.oauthConfig.ClientID(),
 		ClientSecret: a.oauthConfig.ClientSecret(),
@@ -176,18 +175,18 @@ func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error
 
 	service, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve Gmail client: %v", err)
+		return nil, errs.Internalf("Unable to retrieve Gmail client: %v", err)
 	}
 
 	return service, nil
 }
 
-func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, error) {
+func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, *errs.ApiErr) {
 	body := &bytes.Buffer{}
 
 	token, err := a.jwtService.NewAccess(toUser.ID, toUser.Role)
 	if err != nil {
-		return nil, fmt.Errorf("Error generating JWT: %v", err)
+		return nil, errs.Internalf("Error generating JWT: %v", err)
 	}
 
 	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")
