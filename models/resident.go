@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"regexp"
 	"strings"
@@ -52,14 +51,14 @@ func (m Resident) AsUser() User {
 	return NewUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, m.TokenVersion)
 }
 
-func (m Resident) ValidateEdit() error {
+func (m Resident) ValidateEdit() *errs.ApiErr {
 	if m.FirstName == "" &&
 		m.LastName == "" &&
 		m.Phone == "" &&
 		m.Email == "" &&
 		m.UnlimDays == nil &&
 		m.AmtParkingDaysUsed == nil {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, "all edit fields cannot be empty")
+		return errs.EmptyFields("firstName, lastName, phone, email, unlimDays, amtParkingDaysUsed")
 	}
 
 	errors := []string{}
@@ -71,17 +70,17 @@ func (m Resident) ValidateEdit() error {
 		errors = append(errors, "email must have an '@'")
 	}
 	if m.AmtParkingDaysUsed != nil && *m.AmtParkingDaysUsed < 0 {
-		errors = append(errors, "amountParkingDaysUsed field must be 0 or positive.")
+		errors = append(errors, "amtParkingDaysUsed field must be 0 or positive.")
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil
 }
 
-func (m Resident) ValidateCreation() error {
+func (m Resident) ValidateCreation() *errs.ApiErr {
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
@@ -93,7 +92,7 @@ func (m Resident) ValidateCreation() error {
 	return nil
 }
 
-func (m Resident) emptyFields() error {
+func (m Resident) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
 	if m.ID == "" {
@@ -116,13 +115,13 @@ func (m Resident) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
+		return errs.EmptyFields(strings.Join(emptyFields, ", "))
 	}
 
 	return nil
 }
 
-func (m Resident) invalidFields() error {
+func (m Resident) invalidFields() *errs.ApiErr {
 	errors := []string{}
 
 	if err := IsResidentID(m.ID); err != nil {
@@ -136,7 +135,7 @@ func (m Resident) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil

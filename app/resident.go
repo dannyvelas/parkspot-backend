@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
@@ -20,93 +19,93 @@ func NewResidentService(residentRepo storage.ResidentRepo) ResidentService {
 	}
 }
 
-func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], error) {
+func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], *errs.ApiErr) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 	allResidents, err := s.residentRepo.GetAll(boundedLimit, offset, search)
 	if err != nil {
-		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error querying residentRepo: %v", err)
+		return models.ListWithMetadata[models.Resident]{}, errs.Internalf("resident_service.getAll: Error querying residentRepo: %v", err)
 	}
 	allResidents = util.MapSlice(allResidents, s.removeHash)
 
 	totalAmount, err := s.residentRepo.GetAllTotalAmount()
 	if err != nil {
-		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error getting total amount: %v", err)
+		return models.ListWithMetadata[models.Resident]{}, errs.Internalf("resident_service.getAll: Error getting total amount: %v", err)
 	}
 
 	return models.NewListWithMetadata(allResidents, totalAmount), nil
 }
 
-func (s ResidentService) GetOne(id string) (models.Resident, error) {
+func (s ResidentService) GetOne(id string) (models.Resident, *errs.ApiErr) {
 	resident, err := s.residentRepo.GetOne(id)
 	if err != nil && !errors.Is(err, storage.ErrNoRows) {
-		return models.Resident{}, fmt.Errorf("resident_service.getOne: Error getting resident: %v", err)
+		return models.Resident{}, errs.Internalf("resident_service.getOne: Error getting resident: %v", err)
 	} else if errors.Is(err, storage.ErrNoRows) {
-		return models.Resident{}, errs.NotFound
+		return models.Resident{}, errs.NotFound("resident")
 	}
 
 	return s.removeHash(resident), nil
 }
 
-func (s ResidentService) Update(id string, desiredResident models.Resident) (models.Resident, error) {
+func (s ResidentService) Update(id string, desiredResident models.Resident) (models.Resident, *errs.ApiErr) {
 	err := s.residentRepo.Update(id, desiredResident)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %v", err)
+		return models.Resident{}, errs.Internalf("resident_service.editResident: Error updating resident: %v", err)
 	}
 
 	resident, err := s.residentRepo.GetOne(id)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %v", err)
+		return models.Resident{}, errs.Internalf("resident_service.editResident: Error getting resident: %v", err)
 	}
 
 	return s.removeHash(resident), nil
 }
 
-func (s ResidentService) Delete(id string) error {
+func (s ResidentService) Delete(id string) *errs.ApiErr {
 	resident, err := s.residentRepo.GetOne(id)
 	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound
+		return errs.NotFound("resident")
 	} else if err != nil {
-		return fmt.Errorf("resident_service.deleteResident: Error getting resident: %v", err)
+		return errs.Internalf("resident_service.deleteResident: Error getting resident: %v", err)
 	}
 
 	err = s.residentRepo.Delete(resident.ID)
 	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound
+		return errs.NotFound("resident")
 	} else if err != nil {
-		return fmt.Errorf("resident_service.deleteResident: %v", err)
+		return errs.Internalf("resident_service.deleteResident: %v", err)
 	}
 
 	return nil
 }
 
-func (s ResidentService) Create(desiredRes models.Resident) error {
-	if err := desiredRes.ValidateCreation(); err != nil {
-		return err
+func (s ResidentService) Create(desiredRes models.Resident) *errs.ApiErr {
+	if apiErr := desiredRes.ValidateCreation(); apiErr != nil {
+		return apiErr
 	}
 
 	if _, err := s.residentRepo.GetOne(desiredRes.ID); err == nil {
-		return errs.NewAlreadyExists("resident with ID " + desiredRes.ID)
+		return errs.AlreadyExists("resident with ID " + desiredRes.ID)
 	} else if !errors.Is(err, storage.ErrNoRows) {
-		return fmt.Errorf("resident_service.createResident: error getting resident by id: %v", err)
+		return errs.Internalf("resident_service.createResident: error getting resident by id: %v", err)
 	}
 
 	if _, err := s.residentRepo.GetOneByEmail(desiredRes.Email); err == nil {
-		return errs.NewAlreadyExists("a resident with this email")
+		return errs.AlreadyExists("a resident with this email")
 	} else if !errors.Is(err, storage.ErrNoRows) {
-		return fmt.Errorf("resident_service.createResident error getting resident by email: %v", err)
+		return errs.Internalf("resident_service.createResident error getting resident by email: %v", err)
 	}
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredRes.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("resident_service.createResident: error generating hash:" + err.Error())
+		return errs.Internalf("resident_service.createResident: error generating hash:" + err.Error())
 	}
 	hashString := string(hashBytes)
 
 	desiredRes.Password = hashString
 	err = s.residentRepo.Create(desiredRes)
 	if err != nil {
-		return fmt.Errorf("resident_service.createResident: Error querying residentRepo: %v", err)
+		return errs.Internalf("resident_service.createResident: Error querying residentRepo: %v", err)
 	}
 
 	return nil
