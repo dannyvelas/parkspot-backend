@@ -39,7 +39,7 @@ func (s CarService) GetByLicensePlate(licensePlate string) (*models.Car, *errs.A
 	return car, nil
 }
 
-func (s CarService) Delete(id string) error {
+func (s CarService) Delete(id string) *errs.ApiErr {
 	err := s.carRepo.Delete(id)
 	if errors.Is(err, storage.ErrNoRows) {
 		return errs.NotFound("car")
