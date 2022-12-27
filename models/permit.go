@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"strings"
 	"time"
 )
@@ -110,7 +111,7 @@ func (m Permit) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
 	}
 
 	return nil
@@ -134,7 +135,7 @@ func (m Permit) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
@@ -93,8 +94,12 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 		}
 
 		err := h.visitorService.Delete(id)
-		if errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
 			respondError(w, newErrNotFound("visitor"))
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msgf("error deleting visitor in visitor service: %v", err)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
@@ -47,12 +48,16 @@ func (h residentHandler) getOne() http.HandlerFunc {
 		}
 
 		resident, err := h.residentService.GetOne(id)
-		if err != nil && !errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
+			respondError(w, newErrNotFound("resident"))
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		} else if err != nil {
 			log.Error().Msgf("Error getting resident: %v", err)
 			respondInternalError(w)
-			return
-		} else if errors.Is(err, app.ErrNotFound) {
-			respondError(w, newErrNotFound("resident"))
 			return
 		}
 
@@ -74,13 +79,12 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		if err := editResidentReq.ValidateEdit(); err != nil {
+		resident, err := h.residentService.Update(id, editResidentReq)
+		var apiErr errs.ApiErr
+		if errors.As(err, &apiErr) {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
-		}
-
-		resident, err := h.residentService.Update(id, editResidentReq)
-		if err != nil {
+		} else if err != nil {
 			log.Error().Msgf("Error updating resident: %v", err)
 			respondInternalError(w)
 			return
@@ -95,11 +99,15 @@ func (h residentHandler) deleteOne() http.HandlerFunc {
 		id := chi.URLParam(r, "id")
 
 		err := h.residentService.Delete(id)
-		if errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
 			respondError(w, newErrNotFound("resident"))
 			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
 		} else if err != nil {
-			log.Error().Msgf("error deleting resident with resident service: %v", err)
+			log.Error().Msgf("Error getting resident: %v", err)
 			respondInternalError(w)
 			return
 		}
@@ -116,13 +124,9 @@ func (h residentHandler) create() http.HandlerFunc {
 			return
 		}
 
-		if err := payload.ValidateCreation(); err != nil {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		}
-
 		err := h.residentService.Create(payload)
-		if errors.Is(err, app.ErrAlreadyExists) {
+		var apiErr errs.ApiErr
+		if errors.As(err, &apiErr) {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {

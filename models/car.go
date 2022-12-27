@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"regexp"
 	"strings"
 )
@@ -46,11 +47,11 @@ func (self Car) Equal(other Car) bool {
 
 func (m Car) ValidateEdit() error {
 	if m.Color == "" && m.Make == "" && m.Model == "" {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, "all edit fields cannot be empty")
+		return fmt.Errorf("%w: %v", errs.EmptyFields, "all edit fields cannot be empty")
 	}
 
 	if errors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
-		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
 	}
 
 	return nil
@@ -85,7 +86,7 @@ func (m Car) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
 	}
 
 	return nil
@@ -102,6 +103,10 @@ func (m Car) invalidFields() error {
 	}
 	if colorMakeModelErrors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
 		errors = append(errors, colorMakeModelErrors...)
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ", "))
 	}
 
 	return nil

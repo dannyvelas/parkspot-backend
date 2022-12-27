@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
@@ -36,8 +37,12 @@ func (h authHandler) login() http.HandlerFunc {
 		}
 
 		session, refreshToken, err := h.authService.Login(credentials.ID, credentials.Password)
-		if errors.Is(err, app.ErrUnauthorized) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.Unauthorized) {
 			respondError(w, errUnauthorized)
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msgf("auth_router.login: %v", err)
@@ -75,8 +80,12 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 		}
 
 		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
-		if errors.Is(err, app.ErrUnauthorized) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.Unauthorized) {
 			respondError(w, errUnauthorized)
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msg("auth_router.refreshTokens: " + err.Error())
@@ -105,8 +114,12 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 		}
 
 		err := h.authService.SendResetPasswordEmail(r.Context(), payload.ID)
-		if errors.Is(err, app.ErrUnauthorized) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.Unauthorized) {
 			respondError(w, errUnauthorized)
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msg("auth_router.sendResetPasswordEmail: " + err.Error())

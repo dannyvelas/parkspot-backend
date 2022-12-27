@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +48,7 @@ type Session struct {
 func (a AuthService) Login(id, password string) (Session, string, error) {
 	loginable, err := a.getUser(id)
 	if errors.Is(err, storage.ErrNoRows) {
-		return Session{}, "", ErrUnauthorized
+		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %v", err)
 	}
@@ -56,7 +57,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 		[]byte(loginable.GetPassword()),
 		[]byte(password),
 	); err != nil {
-		return Session{}, "", ErrUnauthorized
+		return Session{}, "", errs.Unauthorized
 	}
 
 	user := loginable.AsUser()
@@ -78,7 +79,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	loginable, err := a.getUser(user.ID)
 	if errors.Is(err, storage.ErrNoRows) {
-		return Session{}, "", ErrUnauthorized
+		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
 	}
@@ -86,7 +87,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	userFromDB := loginable.AsUser()
 
 	if userFromDB.TokenVersion != user.TokenVersion {
-		return Session{}, "", ErrUnauthorized
+		return Session{}, "", errs.Unauthorized
 	}
 
 	// generate tokens
@@ -106,7 +107,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) error {
 	loginable, err := a.getUser(id)
 	if errors.Is(err, storage.ErrNoRows) {
-		return ErrUnauthorized
+		return errs.Unauthorized
 	} else if err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
 	}

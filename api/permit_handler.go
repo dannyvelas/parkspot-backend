@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
@@ -61,8 +62,12 @@ func (h permitHandler) getOne() http.HandlerFunc {
 		}
 
 		permit, err := h.permitService.GetOne(id)
-		if errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
 			respondError(w, newErrNotFound("permit"))
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msgf("error getting one permit in permit service: %v", err)
@@ -82,11 +87,6 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		if err := newPermitReq.ValidateCreation(); err != nil {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		}
-
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
@@ -102,8 +102,8 @@ func (h permitHandler) create() http.HandlerFunc {
 		}
 
 		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
-		var createPermitErr app.CreatePermitError
-		if errors.As(err, &createPermitErr) {
+		var apiErr errs.ApiErr
+		if errors.As(err, &apiErr) {
 			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
@@ -125,8 +125,12 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 		}
 
 		err := h.permitService.Delete(id)
-		if errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
 			respondError(w, newErrNotFound("permit"))
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
 			return
 		} else if err != nil {
 			log.Error().Msgf("error deleting permit in permit service: %v", err)

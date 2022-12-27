@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"regexp"
 	"strings"
 )
@@ -58,7 +59,7 @@ func (m Resident) ValidateEdit() error {
 		m.Email == "" &&
 		m.UnlimDays == nil &&
 		m.AmtParkingDaysUsed == nil {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, "all edit fields cannot be empty")
+		return fmt.Errorf("%w: %v", errs.EmptyFields, "all edit fields cannot be empty")
 	}
 
 	errors := []string{}
@@ -74,7 +75,7 @@ func (m Resident) ValidateEdit() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
 	}
 
 	return nil
@@ -115,7 +116,7 @@ func (m Resident) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", ErrEmptyFields, strings.Join(emptyFields, ", "))
+		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
 	}
 
 	return nil
@@ -135,7 +136,7 @@ func (m Resident) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", ErrInvalidFields, strings.Join(errors, ". "))
+		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
 	}
 
 	return nil

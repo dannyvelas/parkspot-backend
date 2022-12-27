@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
@@ -30,12 +31,16 @@ func (h carHandler) getOne() http.HandlerFunc {
 		}
 
 		car, err := h.carService.GetOne(id)
-		if err != nil && !errors.Is(err, app.ErrNotFound) {
+		var apiErr errs.ApiErr
+		if errors.Is(err, errs.NotFound) {
+			respondError(w, newErrNotFound("car"))
+			return
+		} else if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(err.Error()))
+			return
+		} else if err != nil {
 			log.Error().Msgf("Error getting one car from carService: %v", err)
 			respondInternalError(w)
-			return
-		} else if errors.Is(err, app.ErrNotFound) {
-			respondError(w, newErrNotFound("carr"))
 			return
 		}
 
@@ -57,13 +62,12 @@ func (h carHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		if err := editCarReq.ValidateEdit(); err != nil {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		}
-
 		car, err := h.carService.Update(id, editCarReq)
-		if err != nil {
+		var apiErr errs.ApiErr
+		if errors.As(err, &apiErr) {
+			respondError(w, newErrBadRequest(apiErr.Error()))
+			return
+		} else if err != nil {
 			log.Error().Msgf("error updating car from carService: %v", err)
 			respondInternalError(w)
 			return
