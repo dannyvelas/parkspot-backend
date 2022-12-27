@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"strings"
 	"time"
@@ -37,7 +36,7 @@ func NewVisitor(
 	}
 }
 
-func (m Visitor) ValidateCreation() error {
+func (m Visitor) ValidateCreation() *errs.ApiErr {
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
@@ -49,7 +48,7 @@ func (m Visitor) ValidateCreation() error {
 	return nil
 }
 
-func (m Visitor) emptyFields() error {
+func (m Visitor) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
 	if m.FirstName == "" {
@@ -69,13 +68,13 @@ func (m Visitor) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
+		return errs.EmptyFields(strings.Join(emptyFields, ", "))
 	}
 
 	return nil
 }
 
-func (m Visitor) invalidFields() error {
+func (m Visitor) invalidFields() *errs.ApiErr {
 	errors := []string{}
 
 	if m.Relationship != "fam/fri" && m.Relationship != "contractor" {
@@ -92,7 +91,7 @@ func (m Visitor) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil
