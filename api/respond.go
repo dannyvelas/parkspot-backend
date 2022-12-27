@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
@@ -20,16 +21,18 @@ func respondJSON(w http.ResponseWriter, statusCode int, data any) {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Error().Msgf("Error encoding response: %s", err)
 
-		if _, err := io.WriteString(w, errInternalServerError.Error()); err != nil {
+		if _, err := io.WriteString(w, errs.InternalServerError.Error()); err != nil {
 			log.Error().Msgf("Error sending Internal Server Error response: %q", err)
 		}
 	}
 }
 
-func respondInternalError(w http.ResponseWriter) {
-	respondJSON(w, errInternalServerError.statusCode, errInternalServerError.message)
-}
+func respondError(w http.ResponseWriter, apiErr errs.ApiErr) {
+	if apiErr.StatusCode == http.StatusInternalServerError {
+		log.Error().Msg(apiErr.Error())
+		respondJSON(w, apiErr.StatusCode, "Internal Server Error")
+		return
+	}
 
-func respondError(w http.ResponseWriter, responseErr responseError) {
-	respondJSON(w, responseErr.statusCode, responseErr.message)
+	respondJSON(w, apiErr.StatusCode, apiErr.Error())
 }
