@@ -4,6 +4,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
@@ -36,14 +37,7 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			}
 
 			permittedRoles := append([]models.Role{firstRole}, roles...)
-			userHasPermittedRole := func() bool {
-				for _, role := range permittedRoles {
-					if accessPayload.Role == role {
-						return true
-					}
-				}
-				return false
-			}()
+			userHasPermittedRole := util.Contains(permittedRoles, accessPayload.Role)
 			if !userHasPermittedRole {
 				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
 				respondError(w, *errs.Unauthorized)
