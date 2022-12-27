@@ -8,21 +8,7 @@ import (
 	"net/http"
 )
 
-type ApiErr struct {
-	StatusCode int
-	message    string
-}
-
-// implements error interface
-func (e ApiErr) Error() string {
-	return e.message
-}
-
 var (
-	EmptyFields          = &ApiErr{http.StatusBadRequest, "One or more missing fields"}
-	InvalidFields        = &ApiErr{http.StatusBadRequest, "One or more invalid fields"}
-	Unauthorized         = &ApiErr{http.StatusUnauthorized, "unauthorized"}
-	NotFound             = &ApiErr{http.StatusNotFound, "not found"}
 	ResidentForPermitDNE = &ApiErr{
 		StatusCode: http.StatusBadRequest,
 		message: "Users must have a registered account to request a guest parking" +
@@ -49,14 +35,6 @@ var (
 		message: "Cannot create a permit during these dates" +
 			" because this resident has at least two active permits during that time."}
 )
-
-func AlreadyExists(resource string) *ApiErr {
-	return &ApiErr{http.StatusBadRequest, resource + " already exists"}
-}
-
-func Internalf(message string, args ...any) *ApiErr {
-	return &ApiErr{http.StatusInternalServerError, fmt.Sprintf(message, args...)}
-}
 
 func EntityDaysTooLong(entity string, amtDaysUsed int) *ApiErr {
 	entityLower := cases.Lower(language.English).String(entity)
@@ -89,8 +67,4 @@ func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *ApiErr {
 			entityLower, amtDaysUsed,
 			entityLower, config.MaxParkingDays-amtDaysUsed,
 			entityLower)}
-}
-
-func Malformed(payload string) *ApiErr {
-	return &ApiErr{http.StatusBadRequest, payload + " malformed"}
 }
