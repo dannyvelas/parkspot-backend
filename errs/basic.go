@@ -7,8 +7,15 @@ import (
 
 var (
 	Unauthorized = &ApiErr{http.StatusUnauthorized, "unauthorized"}
-	NotFound     = &ApiErr{http.StatusNotFound, "not found"}
 )
+
+func BadRequest(message string) *ApiErr {
+	return &ApiErr{http.StatusBadRequest, message}
+}
+
+func NotFound(resource string) *ApiErr {
+	return &ApiErr{http.StatusNotFound, resource + " not found"}
+}
 
 func EmptyFields(fields string) *ApiErr {
 	return &ApiErr{http.StatusBadRequest, "One or more missing fields: " + fields}
