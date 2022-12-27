@@ -6,11 +6,17 @@ import (
 )
 
 var (
-	EmptyFields   = &ApiErr{http.StatusBadRequest, "One or more missing fields"}
-	InvalidFields = &ApiErr{http.StatusBadRequest, "One or more invalid fields"}
-	Unauthorized  = &ApiErr{http.StatusUnauthorized, "unauthorized"}
-	NotFound      = &ApiErr{http.StatusNotFound, "not found"}
+	Unauthorized = &ApiErr{http.StatusUnauthorized, "unauthorized"}
+	NotFound     = &ApiErr{http.StatusNotFound, "not found"}
 )
+
+func EmptyFields(fields string) *ApiErr {
+	return &ApiErr{http.StatusBadRequest, "One or more missing fields: " + fields}
+}
+
+func InvalidFields(fields string) *ApiErr {
+	return &ApiErr{http.StatusBadRequest, "One or more invalid fields: " + fields}
+}
 
 func Malformed(payload string) *ApiErr {
 	return &ApiErr{http.StatusBadRequest, payload + " malformed"}
