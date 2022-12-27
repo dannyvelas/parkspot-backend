@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
@@ -61,7 +62,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.createdCar, err = app.CarService.Create(models.NewCar("id", "licensePlate", "color", "make", "model", 0))
+	suite.createdCar, err = app.CarService.Create(models.NewCar("id", "lp", "color", "make", "model", 0))
 	if err != nil {
 		log.Fatal().Msgf("error creating car: %v", err)
 	}
@@ -129,7 +130,7 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	for _, testSet := range testSets {
 		createdPermits := []models.Permit{}
 		for _, createPermitTest := range testSet {
-			permit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, createPermitTest.permit)
+			permit, err := authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &createPermitTest.permit)
 			if err != nil && createPermitTest.shouldBeOk {
 				suite.NoError(fmt.Errorf("%s failed: Error creating permit when it should've been okay: %v", createPermitTest.name, err))
 			} else if err == nil && !createPermitTest.shouldBeOk {
@@ -179,16 +180,15 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 		return
 	}
 
-	var resErr responseError
-	if !errors.As(err, &resErr) {
+	var apiErr errs.ApiErr
+	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, resErr.statusCode)
+	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
 
-	responseMsg := fmt.Sprintf("\"%v: startDate, endDate\"\n", errEmptyFields)
-	suite.Equal(responseMsg, resErr.message)
+	suite.Contains("startDate, endDate", apiErr.Error())
 }
 
 func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
@@ -202,28 +202,28 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 		return
 	}
 
-	var resErr responseError
-	if !errors.As(err, &resErr) {
+	var apiErr errs.ApiErr
+	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, resErr.statusCode)
+	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
 
-	responseMsg := fmt.Sprintf("\"%v\"\n", newErrMalformed("NewPermitReq"))
-	suite.Equal(responseMsg, resErr.message)
+	responseMsg := fmt.Sprintf("\"%v\"\n", errs.Malformed("NewPermitReq"))
+	suite.Equal(responseMsg, apiErr.Error())
 }
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
 	for testName, testPermitReq := range suite.testPermitReqs {
-		residentBefore, err := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
-		if err != nil {
-			err := fmt.Errorf("%s failed: %v", testName, err)
+		residentBefore, apiErr := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
+		if apiErr != nil {
+			err := fmt.Errorf("%s failed: %v", testName, apiErr)
 			suite.NoError(err)
 			return
 		}
 
-		createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, testPermitReq)
+		createdPermit, err := authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &testPermitReq)
 		if err != nil {
 			err := fmt.Errorf("%s failed: %v", testName, err)
 			suite.NoError(err)
@@ -265,13 +265,13 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 
 func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 	for testName, testPermitReq := range suite.testPermitReqs {
-		residentBefore, err := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
-		if err != nil {
-			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+		residentBefore, apiErr := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
+		if apiErr != nil {
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, apiErr))
 			return
 		}
 
-		createdPermit, err := createTestPermit(suite.testServer.URL, suite.adminJWT, testPermitReq)
+		createdPermit, err := authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &testPermitReq)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
@@ -369,22 +369,14 @@ func newTestPermitReq(residentID, carID, exceptionReason string) models.Permit {
 	}
 }
 
-func createTestPermit(url string, adminJWT string, desiredPermit models.Permit) (models.Permit, error) {
-	response, err := authenticatedReq[models.Permit, models.Permit]("POST", url+"/api/permit", adminJWT, &desiredPermit)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("Error making request: %v", err)
-	}
-	return response, nil
-}
-
 func deleteTestPermitAndCar(app app.App, url, adminJWT string, permit models.Permit) error {
 	err := app.PermitService.Delete(permit.ID)
 	if err != nil {
 		return err
 	}
 
-	err = app.CarService.Delete(permit.CarID)
-	if err != nil {
+	apiErr := app.CarService.Delete(permit.CarID)
+	if apiErr != nil {
 		return fmt.Errorf("Error deleting car directly in carRepo: %v", err)
 	}
 
