@@ -92,7 +92,7 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 			respondError(w, *errs.Malformed("id object"))
 			return
 		} else if payload.ID == "" {
-			respondError(w, *errs.EmptyFields)
+			respondError(w, *errs.EmptyFields("id"))
 			return
 		}
 
@@ -112,7 +112,7 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 			respondError(w, *errs.Malformed("password object"))
 			return
 		} else if payload.Password == "" {
-			respondError(w, *errs.EmptyFields)
+			respondError(w, *errs.EmptyFields("password"))
 			return
 		}
 
