@@ -57,14 +57,13 @@ func (suite *permitRouterSuite) SetupSuite() {
 		}
 	}
 
-	err = createTestResidents(suite.app.ResidentService)
-	if err != nil {
+	if err := createTestResidents(suite.app.ResidentService); err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 
 	suite.createdCar, err = app.CarService.Create(models.NewCar("id", "lp", "color", "make", "model", 0))
 	if err != nil {
-		log.Fatal().Msgf("error creating car: %v", err)
+		log.Fatal().Msgf(err.Error())
 	}
 
 	suite.testPermitReqs = map[string]models.Permit{

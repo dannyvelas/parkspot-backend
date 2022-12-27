@@ -93,19 +93,16 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	}
 
 	for testName, test := range tests {
-		err := suite.app.ResidentService.Create(testResident)
-		if err != nil {
+		if err := suite.app.ResidentService.Create(testResident); err != nil {
 			suite.NoError(fmt.Errorf("Error creating test resident before running test: %v", err))
 			break
 		}
 
-		err = executeTest(test)
-		if err != nil {
+		if err := executeTest(test); err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		err = suite.app.ResidentService.Delete(testResident.ID)
-		if err != nil {
+		if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
 			suite.NoError(fmt.Errorf("Error deleting test resident after running test: %v", err))
 			break
 		}
