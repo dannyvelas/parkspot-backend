@@ -69,6 +69,10 @@ func (s CarService) Update(id string, updatedFields models.Car) (models.Car, *er
 }
 
 func (s CarService) Create(desiredCar models.Car) (models.Car, *errs.ApiErr) {
+	if err := desiredCar.ValidateCreation(); err != nil {
+		return models.Car{}, err
+	}
+
 	carID, err := s.carRepo.Create(desiredCar)
 	if err != nil {
 		return models.Car{}, errs.Internalf("error creating car with carRepo: %v", err)
