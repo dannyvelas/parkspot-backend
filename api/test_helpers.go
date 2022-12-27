@@ -69,7 +69,7 @@ func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T)
 	return parsedResp, nil
 }
 
-func createTestResidents(residentService app.ResidentService) error {
+func createTestResidents(residentService app.ResidentService) *errs.ApiErr {
 	if err := residentService.Create(testResident); err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func createTestResidents(residentService app.ResidentService) error {
 	return nil
 }
 
-func deleteTestResidents(residentService app.ResidentService) error {
+func deleteTestResidents(residentService app.ResidentService) *errs.ApiErr {
 	if err := residentService.Delete(testResident.ID); err != nil {
 		return err
 	}
