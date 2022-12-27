@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
@@ -238,20 +239,20 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		UnlimDays: util.ToPtr(false),
 	}
 
-	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/account", suite.adminAccessToken, &requestBody)
+	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/resident", suite.adminAccessToken, &requestBody)
 	if err == nil {
 		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
 		return
 	}
 
-	var resErr responseError
-	if !errors.As(err, &resErr) {
+	var apiErr errs.ApiErr
+	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
-	suite.Equal(http.StatusBadRequest, resErr.statusCode, "Expected bad request got: %d", resErr.statusCode)
-	suite.Contains(resErr.message, "email") // assert bad request happened bc of email
+	suite.Equal(http.StatusBadRequest, apiErr.StatusCode, "Expected bad request got: %d", apiErr.StatusCode)
+	suite.Contains(apiErr.Error(), "email") // assert bad request happened bc of email
 }
 
 // helpers
@@ -270,15 +271,10 @@ func checkAccessToken(jwtService app.JWTService, token string, expectedUser mode
 }
 
 func checkRefreshToken(jwtService app.JWTService, cookies []*http.Cookie, expectedID string, expectedVersion int) error {
-	refreshCookie := func() *http.Cookie {
-		for _, cookie := range cookies {
-			if cookie.Name == config.RefreshCookieKey {
-				return cookie
-			}
-		}
-		return nil
-	}()
-	if refreshCookie == nil {
+	refreshCookie, ok := util.Find(cookies, func(cookie *http.Cookie) bool {
+		return cookie.Name == config.RefreshCookieKey
+	})
+	if !ok {
 		return fmt.Errorf("cookie with key of %s not found", config.RefreshCookieKey)
 	}
 
