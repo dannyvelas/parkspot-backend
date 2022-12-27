@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/util"
 	"io"
 	"net/http"
 )
@@ -20,15 +18,6 @@ var (
 		Phone:     "1234567890",
 		Email:     "email@example.com",
 		Password:  "notapassword"}
-
-	testResidentUnlimDays = models.Resident{
-		ID:        "B7654321",
-		FirstName: "Daniel",
-		LastName:  "Velasquez",
-		Phone:     "1234567890",
-		Email:     "email2@example.com",
-		Password:  "notapassword",
-		UnlimDays: util.ToPtr(true)}
 )
 
 func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T) (parsedResp U, err error) {
@@ -67,28 +56,4 @@ func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T)
 	}
 
 	return parsedResp, nil
-}
-
-func createTestResidents(residentService app.ResidentService) *errs.ApiErr {
-	if err := residentService.Create(testResident); err != nil {
-		return err
-	}
-
-	if err := residentService.Create(testResidentUnlimDays); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func deleteTestResidents(residentService app.ResidentService) *errs.ApiErr {
-	if err := residentService.Delete(testResident.ID); err != nil {
-		return err
-	}
-
-	if err := residentService.Delete(testResidentUnlimDays.ID); err != nil {
-		return err
-	}
-
-	return nil
 }

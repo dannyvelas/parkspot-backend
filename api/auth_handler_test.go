@@ -60,18 +60,16 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
-	if err := createTestResidents(suite.app.ResidentService); err != nil {
-		log.Fatal().Msg(err.Error())
+	if err := suite.app.ResidentService.Create(testResident); err != nil {
+		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 }
 
 func (suite authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.app.ResidentService)
-	if err != nil {
-		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
-		return
+	if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
+		log.Fatal().Msgf("error deleting test resident: %v", err.Error())
 	}
 }
 

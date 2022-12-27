@@ -52,9 +52,8 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		}
 	}
 
-	err = createTestResidents(suite.app.ResidentService)
-	if err != nil {
-		log.Fatal().Msg(err.Error())
+	if err := suite.app.ResidentService.Create(testResident); err != nil {
+		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 
 	now := time.Now()
@@ -81,14 +80,11 @@ func (suite visitorRouterSuite) TearDownSuite() {
 	// necessary. But we include it anyway to ensure that visitor deletion works
 	err := suite.app.VisitorService.Delete(suite.createdVisitor.ID)
 	if err != nil {
-		log.Error().Msg("visitor_router_test.TearDownSuite: Failed to delete test visitor: " + err.Error())
-		return
+		log.Fatal().Msgf("visitor_router_test.TearDownSuite: Failed to delete test visitor: " + err.Error())
 	}
 
-	err = deleteTestResidents(suite.app.ResidentService)
-	if err != nil {
-		log.Error().Msg("visitor_router_test.TearDownSuite: " + err.Error())
-		return
+	if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
+		log.Fatal().Msgf("error deleting test resident: %v", err.Error())
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
@@ -14,6 +15,17 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+)
+
+var (
+	testResidentUnlimDays = models.Resident{
+		ID:        "B7654321",
+		FirstName: "Daniel",
+		LastName:  "Velasquez",
+		Phone:     "1234567890",
+		Email:     "email2@example.com",
+		Password:  "notapassword",
+		UnlimDays: util.ToPtr(true)}
 )
 
 type permitRouterSuite struct {
@@ -57,13 +69,17 @@ func (suite *permitRouterSuite) SetupSuite() {
 		}
 	}
 
-	if err := createTestResidents(suite.app.ResidentService); err != nil {
-		log.Fatal().Msg(err.Error())
+	if err := suite.app.ResidentService.Create(testResident); err != nil {
+		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 
-	suite.createdCar, err = app.CarService.Create(models.NewCar("id", "lp", "color", "make", "model", 0))
+	if err := suite.app.ResidentService.Create(testResidentUnlimDays); err != nil {
+		log.Fatal().Msgf("error creating test resident with unlimited days: %v", err.Error())
+	}
+
+	suite.createdCar, err = app.CarService.Create(models.NewCar("id", testResident.ID, "lp", "color", "make", "model", 0))
 	if err != nil {
-		log.Fatal().Msgf(err.Error())
+		log.Fatal().Msgf("error creating car: %v", err.Error())
 	}
 
 	suite.testPermitReqs = map[string]models.Permit{
@@ -77,10 +93,16 @@ func (suite *permitRouterSuite) SetupSuite() {
 func (suite permitRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	err := deleteTestResidents(suite.app.ResidentService)
-	if err != nil {
-		log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
-		return
+	if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
+		log.Fatal().Msgf("error deleting test resident: %v", err.Error())
+	}
+
+	if err := suite.app.ResidentService.Delete(testResidentUnlimDays.ID); err != nil {
+		log.Fatal().Msgf("error deleting test resident with unlimited days: %v", err.Error())
+	}
+
+	if err := suite.app.CarService.Delete(suite.createdCar.ID); err != nil {
+		log.Fatal().Msgf("error deleting created car: %v", err.Error())
 	}
 }
 
@@ -98,8 +120,8 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	// initalize resident permits, each w a different car to eachother and to permitOne
 	var resPermitTwo, resPermitThree models.Permit
 	{
-		carTwo, carTwoErr := suite.app.CarService.Create(models.NewCar("two", "two", "two", "two", "two", 0))
-		carThree, carThreeErr := suite.app.CarService.Create(models.NewCar("three", "three", "three", "three", "three", 0))
+		carTwo, carTwoErr := suite.app.CarService.Create(models.NewCar("two", testResident.ID, "two", "two", "two", "two", 0))
+		carThree, carThreeErr := suite.app.CarService.Create(models.NewCar("three", testResident.ID, "three", "three", "three", "three", 0))
 		if carTwoErr != nil || carThreeErr != nil {
 			suite.NoError(fmt.Errorf("Error creating carTwo: %v. or carThree: %v", carTwoErr, carThreeErr))
 			return
@@ -163,7 +185,7 @@ func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	var carMissingFields models.Car
 	{
 		var err error
-		carMissingFields, err = suite.app.CarService.Create(models.NewCar("id", "OGYR3X", "blue", "", "", 0))
+		carMissingFields, err = suite.app.CarService.Create(models.NewCar("id", testResident.ID, "OGYR3X", "blue", "", "", 0))
 		if err != nil {
 			log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
 			return
