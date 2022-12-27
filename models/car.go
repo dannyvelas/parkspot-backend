@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"regexp"
 	"strings"
@@ -45,19 +44,19 @@ func (self Car) Equal(other Car) bool {
 	return true
 }
 
-func (m Car) ValidateEdit() error {
+func (m Car) ValidateEdit() *errs.ApiErr {
 	if m.Color == "" && m.Make == "" && m.Model == "" {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, "all edit fields cannot be empty")
+		return errs.EmptyFields("color, make, model")
 	}
 
 	if errors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ". "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil
 }
 
-func (m Car) ValidateCreation() error {
+func (m Car) ValidateCreation() *errs.ApiErr {
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
@@ -69,7 +68,7 @@ func (m Car) ValidateCreation() error {
 	return nil
 }
 
-func (m Car) emptyFields() error {
+func (m Car) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
 	if m.LicensePlate == "" {
@@ -86,13 +85,13 @@ func (m Car) emptyFields() error {
 	}
 
 	if len(emptyFields) > 0 {
-		return fmt.Errorf("%w: %v", errs.EmptyFields, strings.Join(emptyFields, ", "))
+		return errs.EmptyFields(strings.Join(emptyFields, ", "))
 	}
 
 	return nil
 }
 
-func (m Car) invalidFields() error {
+func (m Car) invalidFields() *errs.ApiErr {
 	errors := []string{}
 
 	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
@@ -106,7 +105,7 @@ func (m Car) invalidFields() error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("%w: %v", errs.InvalidFields, strings.Join(errors, ", "))
+		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
 	return nil

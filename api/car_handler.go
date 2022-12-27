@@ -2,13 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
-	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -26,21 +24,13 @@ func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, newErrBadRequest("id parameter is not a UUID"))
+			respondError(w, *errs.BadRequest("id parameter is not a UUID"))
 			return
 		}
 
-		car, err := h.carService.GetOne(id)
-		var apiErr errs.ApiErr
-		if errors.Is(err, errs.NotFound) {
-			respondError(w, newErrNotFound("car"))
-			return
-		} else if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(err.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("Error getting one car from carService: %v", err)
-			respondInternalError(w)
+		car, apiErr := h.carService.GetOne(id)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
@@ -52,24 +42,19 @@ func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, newErrBadRequest("id parameter is not a UUID"))
+			respondError(w, *errs.BadRequest("id parameter is not a UUID"))
 			return
 		}
 
 		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
-			respondError(w, newErrMalformed("EditCarReq"))
+			respondError(w, *errs.Malformed("EditCarReq"))
 			return
 		}
 
-		car, err := h.carService.Update(id, editCarReq)
-		var apiErr errs.ApiErr
-		if errors.As(err, &apiErr) {
-			respondError(w, newErrBadRequest(apiErr.Error()))
-			return
-		} else if err != nil {
-			log.Error().Msgf("error updating car from carService: %v", err)
-			respondInternalError(w)
+		car, apiErr := h.carService.Update(id, editCarReq)
+		if apiErr != nil {
+			respondError(w, *apiErr)
 			return
 		}
 
