@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -23,16 +24,14 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
-				log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
-				respondError(w, errUnauthorized)
+				respondError(w, *errs.Unauthorized)
 				return
 			}
 
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 			accessPayload, err := m.jwtService.ParseAccess(accessToken)
 			if err != nil {
-				log.Debug().Msgf("Error parsing: %v", err)
-				respondError(w, errUnauthorized)
+				respondError(w, *errs.Unauthorized)
 				return
 			}
 
@@ -47,7 +46,7 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			}()
 			if !userHasPermittedRole {
 				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
-				respondError(w, errUnauthorized)
+				respondError(w, *errs.Unauthorized)
 				return
 			}
 
