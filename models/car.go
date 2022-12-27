@@ -8,6 +8,7 @@ import (
 
 type Car struct {
 	ID                 string `json:"id"`
+	ResidentID         string `json:"residentID"`
 	LicensePlate       string `json:"licensePlate"`
 	Color              string `json:"color"`
 	Make               string `json:"make"`
@@ -15,7 +16,7 @@ type Car struct {
 	AmtParkingDaysUsed int    `json:"amtParkingDaysUsed"`
 }
 
-func NewCar(id string, licensePlate string, color string, make string, model string, amtParkingDaysUsed int) Car {
+func NewCar(id, residentID, licensePlate, color, make, model string, amtParkingDaysUsed int) Car {
 	return Car{
 		ID:                 id,
 		LicensePlate:       licensePlate,
@@ -28,6 +29,8 @@ func NewCar(id string, licensePlate string, color string, make string, model str
 
 func (self Car) Equal(other Car) bool {
 	if self.ID != other.ID {
+		return false
+	} else if self.ResidentID != other.ResidentID {
 		return false
 	} else if self.LicensePlate != other.LicensePlate {
 		return false
@@ -71,6 +74,9 @@ func (m Car) ValidateCreation() *errs.ApiErr {
 func (m Car) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
+	if m.ResidentID == "" {
+		emptyFields = append(emptyFields, "residentID")
+	}
 	if m.LicensePlate == "" {
 		emptyFields = append(emptyFields, "licensePlate")
 	}
@@ -94,6 +100,9 @@ func (m Car) emptyFields() *errs.ApiErr {
 func (m Car) invalidFields() *errs.ApiErr {
 	errors := []string{}
 
+	if err := IsResidentID(m.ResidentID); err != nil {
+		errors = append(errors, err.Error())
+	}
 	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")
 	}

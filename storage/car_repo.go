@@ -70,14 +70,24 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, erro
 }
 
 func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
-	const query = `
-    INSERT INTO car(license_plate, color, make, model)
-    VALUES($1, $2, $3, $4)
-    RETURNING id
-  `
+	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	query, args, err := sq.
+		Insert("car").
+		SetMap(squirrel.Eq{
+			"resident_id":   desiredCar.ResidentID,
+			"license_plate": desiredCar.LicensePlate,
+			"color":         desiredCar.Color,
+			"make":          desiredCar.Make,
+			"model":         desiredCar.Model,
+		}).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return "", fmt.Errorf("car_repo.Create: %w: %v", ErrBuildingQuery, err)
+	}
 
 	var id string
-	err := carRepo.database.driver.Get(&id, query, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model)
+	err = carRepo.database.driver.Get(&id, query, args...)
 	if err != nil {
 		return "", fmt.Errorf("car_repo.Create: %w: %v", ErrDatabaseExec, err)
 	}

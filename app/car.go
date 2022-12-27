@@ -74,6 +74,6 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, *errs.ApiErr) {
 		return models.Car{}, errs.Internalf("error creating car with carRepo: %v", err)
 	}
 
-	newCar := models.NewCar(carID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
+	newCar := models.NewCar(carID, desiredCar.ResidentID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
 	return newCar, nil
 }
