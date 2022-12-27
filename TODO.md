@@ -64,8 +64,8 @@
 - [x] remove inline executeTest funcs in permit_router test, they subtly ignore deletepermit errors and are unnecessary in the subtract funcs
 - [x] add resident edit/delete functionality
 - [x] make listWithMetadata not be generic. unnecessary. just use any. SOL: can't. i would have to convert each slice of structs to a slice of any to initialize listWithMetadata
+- [x] maybe use embedding for the LicensePlate, Color, Make, Model fields that Car and Permit share. WONT DO. ugly and not necessary since Permit won't need to re-use any functions that will be defined for Car (like checking for empty/invalid lp/color/make/model)
 - [ ] change UI so that permit requests require a pre-existing car
-- [ ] maybe use embedding for the LicensePlate, Color, Make, Model fields that Car and Permit share
 - [ ] add check to make sure that contracts can't visit forever to sveltekit side
 - [ ] remove `<file_name>_<func>` error message convention. not sustainable
 - [ ] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
