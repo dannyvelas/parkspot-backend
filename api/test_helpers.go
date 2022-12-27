@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"io"
@@ -58,7 +59,7 @@ func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T)
 			return parsedResp, fmt.Errorf("Error reading response after non-200 status code, %d: %v", response.StatusCode, err)
 		}
 
-		return parsedResp, responseError{response.StatusCode, string(bodyBytes)}
+		return parsedResp, errs.NewApiErr(response.StatusCode, string(bodyBytes))
 	}
 
 	if err := json.NewDecoder(response.Body).Decode(&parsedResp); err != nil {
