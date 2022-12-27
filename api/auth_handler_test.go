@@ -60,8 +60,7 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
-	err = createTestResidents(suite.app.ResidentService)
-	if err != nil {
+	if err := createTestResidents(suite.app.ResidentService); err != nil {
 		log.Fatal().Msg(err.Error())
 	}
 }
@@ -234,7 +233,7 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		FirstName: "first",
 		LastName:  "last",
 		Phone:     "123456789",
-		Email:     "%s",
+		Email:     "email@example.com",
 		Password:  "password",
 		UnlimDays: util.ToPtr(false),
 	}
@@ -245,7 +244,7 @@ func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		return
 	}
 
-	var apiErr errs.ApiErr
+	var apiErr *errs.ApiErr
 	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
