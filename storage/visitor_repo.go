@@ -109,8 +109,8 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 			"first_name":   desiredVisitor.FirstName,
 			"last_name":    desiredVisitor.LastName,
 			"relationship": desiredVisitor.Relationship,
-			"access_start": desiredVisitor.AccessStart,
-			"access_end":   desiredVisitor.AccessEnd,
+			"access_start": desiredVisitor.AccessStart.Unix(),
+			"access_end":   desiredVisitor.AccessEnd.Unix(),
 		}).
 		Suffix("RETURNING visitor.id").
 		ToSql()
