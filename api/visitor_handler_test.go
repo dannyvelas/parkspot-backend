@@ -57,15 +57,17 @@ func (suite *visitorRouterSuite) SetupSuite() {
 	}
 
 	now := time.Now()
-	testVisitor := models.Visitor{
-		FirstName:    "Test",
-		LastName:     "Visitor",
-		Relationship: "fam/fri",
-		AccessStart:  time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local),
-		AccessEnd:    time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local),
-	}
+	testVisitor := models.NewVisitor(
+		"",
+		testResident.ID,
+		"Test",
+		"Visitor",
+		"fam/fri",
+		time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local),
+		time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.Local),
+	)
 
-	suite.createdVisitor, err = suite.app.VisitorService.Create(testResident.ID, testVisitor)
+	suite.createdVisitor, err = suite.app.VisitorService.Create(testVisitor)
 	if err != nil {
 		log.Fatal().Msg("visitor_router_test.SetupSuite: Failed to create test visitor: " +
 			err.Error())
