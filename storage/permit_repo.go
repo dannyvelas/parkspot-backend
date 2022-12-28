@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"strings"
 	"time"
@@ -68,7 +69,7 @@ func (permitRepo PermitRepo) Get(
 	search string,
 ) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", errs.DBInvalidArg)
 	}
 
 	permitSelect := permitRepo.permitSelect
@@ -103,13 +104,13 @@ func (permitRepo PermitRepo) Get(
 		Offset(uint64(offset)).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Get: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
 	err = permitRepo.database.driver.Select(&permits, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Get: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBQuery, err)
 	}
 
 	return permits.toModels(), nil
@@ -127,13 +128,13 @@ func (permitRepo PermitRepo) GetCount(filter models.PermitFilter, residentID str
 
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", ErrBuildingQuery, err)
+		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = permitRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", ErrDatabaseQuery, err)
+		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", errs.DBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -141,20 +142,20 @@ func (permitRepo PermitRepo) GetCount(filter models.PermitFilter, residentID str
 
 func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	if id == 0 {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := permitRepo.permitSelect.Where("permit.id = $1", id).ToSql()
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	permit := permit{}
 	err = permitRepo.database.driver.Get(&permit, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", ErrNoRows)
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", errs.NotFound)
 	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
 
 	return permit.toModels(), nil
@@ -187,13 +188,13 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 		Suffix("RETURNING permit.id").
 		ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrBuildingQuery, err)
+		return 0, fmt.Errorf("permit_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var permitID int
 	err = permitRepo.database.driver.Get(&permitID, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("permit_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return 0, fmt.Errorf("permit_repo.Create: %w: %v", errs.DBExec, err)
 	}
 
 	return permitID, nil
@@ -207,13 +208,13 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDa
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
 	err = permitRepo.database.driver.Select(&permits, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", errs.DBQuery, err)
 	}
 
 	return permits.toModels(), nil
@@ -221,7 +222,7 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDa
 
 func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startDate, endDate time.Time) ([]models.Permit, error) {
 	if residentID == "" {
-		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", ErrInvalidArg)
+		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := permitRepo.permitSelect.
@@ -231,13 +232,13 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startD
 		OrderBy(permitRepo.permitASC).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
 	err = permitRepo.database.driver.Select(&permits, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", errs.DBQuery, err)
 	}
 
 	return permits.toModels(), nil
@@ -245,19 +246,19 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startD
 
 func (permitRepo PermitRepo) Delete(id int) error {
 	if id <= 0 {
-		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
 	}
 	const query = `DELETE FROM permit WHERE id = $1`
 
 	res, err := permitRepo.database.driver.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("permit_repo.Delete: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.DBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("permit_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("permit_repo.Delete: %w", ErrNoRows)
+		return fmt.Errorf("permit_repo.Delete: %w", errs.NotFound)
 	}
 
 	return nil
