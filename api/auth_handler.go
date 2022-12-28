@@ -31,13 +31,13 @@ func (h authHandler) login() http.HandlerFunc {
 		}
 		err := json.NewDecoder(r.Body).Decode(&credentials)
 		if err != nil {
-			respondError(w, *errs.Malformed("Credentials"))
+			respondError(w, errs.Malformed("Credentials"))
 			return
 		}
 
-		session, refreshToken, apiErr := h.authService.Login(credentials.ID, credentials.Password)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		session, refreshToken, err := h.authService.Login(credentials.ID, credentials.Password)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -60,19 +60,19 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
-			respondError(w, *errs.Unauthorized)
+			respondError(w, errs.Unauthorized)
 			return
 		}
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
-			respondError(w, *errs.Unauthorized)
+			respondError(w, errs.Unauthorized)
 			return
 		}
 
-		session, refreshToken, apiErr := h.authService.RefreshTokens(refreshPayload)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -89,15 +89,15 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 
 		var payload struct{ ID string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, *errs.Malformed("id object"))
+			respondError(w, errs.Malformed("id object"))
 			return
 		} else if payload.ID == "" {
-			respondError(w, *errs.EmptyFields("id"))
+			respondError(w, errs.EmptyFields("id"))
 			return
 		}
 
-		if apiErr := h.authService.SendResetPasswordEmail(r.Context(), payload.ID); apiErr != nil {
-			respondError(w, *apiErr)
+		if err := h.authService.SendResetPasswordEmail(r.Context(), payload.ID); err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -109,29 +109,29 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, *errs.Malformed("password object"))
+			respondError(w, errs.Malformed("password object"))
 			return
 		} else if payload.Password == "" {
-			respondError(w, *errs.EmptyFields("password"))
+			respondError(w, errs.EmptyFields("password"))
 			return
 		}
 
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
-			respondError(w, *errs.Unauthorized)
+			respondError(w, errs.Unauthorized)
 			return
 		}
 
 		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 		user, err := h.jwtService.ParseAccess(accessToken)
 		if err != nil {
-			respondError(w, *errs.Unauthorized)
+			respondError(w, errs.Unauthorized)
 			return
 		}
 
-		if apiErr := h.authService.ResetPassword(user.ID, payload.Password); apiErr != nil {
-			respondError(w, *apiErr)
+		if err := h.authService.ResetPassword(user.ID, payload.Password); err != nil {
+			respondError(w, err)
 			return
 		}
 
