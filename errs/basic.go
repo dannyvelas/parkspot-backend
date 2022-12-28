@@ -1,7 +1,6 @@
 package errs
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -31,8 +30,4 @@ func Malformed(payload string) *ApiErr {
 
 func AlreadyExists(resource string) *ApiErr {
 	return &ApiErr{http.StatusBadRequest, resource + " already exists"}
-}
-
-func Internalf(message string, args ...any) *ApiErr {
-	return &ApiErr{http.StatusInternalServerError, fmt.Sprintf(message, args...)}
 }
