@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
@@ -27,20 +28,20 @@ func NewCarRepo(database Database) CarRepo {
 
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	if id == "" {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := carRepo.carSelect.Where("car.id = $1", id).ToSql()
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", ErrNoRows)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NotFound)
 	} else if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
 
 	return car.toModels(), nil
@@ -48,20 +49,20 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 
 func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, error) {
 	if licensePlate == "" {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", ErrInvalidArg)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := carRepo.carSelect.Where("car.license_plate = $1", licensePlate).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", ErrNoRows)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NotFound)
 	} else if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBQuery, err)
 	}
 
 	asModels := car.toModels()
@@ -83,13 +84,13 @@ func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 		Suffix("RETURNING id").
 		ToSql()
 	if err != nil {
-		return "", fmt.Errorf("car_repo.Create: %w: %v", ErrBuildingQuery, err)
+		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var id string
 	err = carRepo.database.driver.Get(&id, query, args...)
 	if err != nil {
-		return "", fmt.Errorf("car_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBExec, err)
 	}
 
 	return id, nil
@@ -103,7 +104,7 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 
 	_, err := carRepo.database.driver.Exec(query, days, id)
 	if err != nil {
-		return fmt.Errorf("car_repo.AddToAmtParkingDaysUsed: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("car_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
@@ -126,12 +127,12 @@ func (carRepo CarRepo) Update(id string, editCar models.Car) error {
 
 	query, args, err := carUpdate.Where("car.id = ?", id).ToSql()
 	if err != nil {
-		return fmt.Errorf("car_repo.Update: %w: %v", ErrBuildingQuery, err)
+		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	_, err = carRepo.database.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("car_repo.Update: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
@@ -139,13 +140,13 @@ func (carRepo CarRepo) Update(id string, editCar models.Car) error {
 
 func (carRepo CarRepo) Delete(id string) error {
 	if id == "" {
-		return fmt.Errorf("car_repo.Delete: %w: empty string ID argument", ErrInvalidArg)
+		return fmt.Errorf("car_repo.Delete: %w: empty string ID argument", errs.DBInvalidArg)
 	}
 	const query = `DELETE FROM car WHERE id = $1`
 
 	_, err := carRepo.database.driver.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("car_repo.Delete: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("car_repo.Delete: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
