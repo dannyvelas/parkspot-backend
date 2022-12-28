@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
@@ -38,7 +39,7 @@ func NewVisitorRepo(database Database) VisitorRepo {
 
 func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID, search string, limit, offset int) ([]models.Visitor, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", errs.DBInvalidArg)
 	}
 
 	visitorSelect := visitorRepo.visitorSelect
@@ -64,13 +65,13 @@ func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID, search string, l
 		OrderBy("visitor.id ASC").
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	visitors := visitorSlice{}
 	err = visitorRepo.database.driver.Select(&visitors, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", errs.DBQuery, err)
 	}
 
 	return visitors.toModels(), nil
@@ -88,13 +89,13 @@ func (visitorRepo VisitorRepo) GetCount(onlyActive bool, residentID string) (int
 
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrBuildingQuery, err)
+		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = visitorRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", ErrDatabaseQuery, err)
+		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", errs.DBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -115,13 +116,13 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 		Suffix("RETURNING visitor.id").
 		ToSql()
 	if err != nil {
-		return "", fmt.Errorf("visitor_repo.Create: %w: %v", ErrBuildingQuery, err)
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var visitorID string
 	err = visitorRepo.database.driver.Get(&visitorID, query, args...)
 	if err != nil {
-		return "", fmt.Errorf("visitor_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", errs.DBExec, err)
 	}
 
 	return visitorID, nil
@@ -129,19 +130,19 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 
 func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 	if visitorID == "" {
-		return fmt.Errorf("visitor_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+		return fmt.Errorf("visitor_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
 	}
 	const query = `DELETE FROM visitor WHERE id = $1`
 
 	res, err := visitorRepo.database.driver.Exec(query, visitorID)
 	if err != nil {
-		return fmt.Errorf("visitor_repo.Delete: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.DBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("visitor_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("visitor_repo.Delete: %w", ErrNoRows)
+		return fmt.Errorf("visitor_repo.Delete: %w", errs.NotFound("visitor"))
 	}
 
 	return nil
@@ -149,20 +150,20 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 
 func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) {
 	if visitorID == "" {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := visitorRepo.visitorSelect.Where("visitor.id = $1", visitorID).ToSql()
 	if err != nil {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	visitor := visitor{}
 	err = visitorRepo.database.driver.Get(&visitor, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", ErrNoRows)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NotFound("visitor"))
 	} else if err != nil {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
 
 	return visitor.toModels(), nil
