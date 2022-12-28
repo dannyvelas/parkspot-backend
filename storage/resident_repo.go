@@ -43,7 +43,7 @@ func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, err
 	resident := resident{}
 	err = residentRepo.database.driver.Get(&resident, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", errs.NotFound)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", errs.NotFound("resident"))
 	} else if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
@@ -64,7 +64,7 @@ func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, e
 	resident := resident{}
 	err = residentRepo.database.driver.Get(&resident, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", errs.NotFound)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", errs.NotFound("resident"))
 	} else if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", errs.DBQuery, err)
 	}
@@ -196,7 +196,7 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("resident_repo.Delete: %w", errs.NotFound)
+		return fmt.Errorf("resident_repo.Delete: %w", errs.NotFound("resident"))
 	}
 
 	return nil

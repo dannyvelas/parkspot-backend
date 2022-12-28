@@ -30,7 +30,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	var admin admin
 	err := adminRepo.database.driver.Get(&admin, query, id)
 	if err == sql.ErrNoRows {
-		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NotFound)
+		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NotFound("admin"))
 	} else if err != nil {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: %v", errs.DBQueryScanOneRow, err)
 	}
