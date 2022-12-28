@@ -51,21 +51,13 @@ func (h visitorHandler) getActive() http.HandlerFunc {
 
 func (h visitorHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		accessPayload, err := ctxGetAccessPayload(ctx)
-		if err != nil {
-			respondError(w, fmt.Errorf("error getting access payload in visitor handler: %v", err))
-			return
-		}
-
 		var payload models.Visitor
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, errs.Malformed("NewVisitorReq"))
 			return
 		}
 
-		visitor, err := h.visitorService.Create(accessPayload.ID, payload)
+		visitor, err := h.visitorService.Create(payload)
 		if err != nil {
 			respondError(w, err)
 			return

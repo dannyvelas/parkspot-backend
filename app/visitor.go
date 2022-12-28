@@ -34,7 +34,7 @@ func (s VisitorService) GetActive(limit, page int, search string, residentID str
 	return models.NewListWithMetadata(allVisitors, totalAmount), nil
 }
 
-func (s VisitorService) Create(residentID string, desiredVisitor models.Visitor) (models.Visitor, error) {
+func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, error) {
 	if err := desiredVisitor.ValidateCreation(); err != nil {
 		return models.Visitor{}, err
 	}
