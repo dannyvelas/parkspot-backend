@@ -1,9 +1,7 @@
 package app
 
 import (
-	"errors"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
@@ -19,36 +17,15 @@ func NewCarService(carRepo storage.CarRepo) CarService {
 }
 
 func (s CarService) GetOne(id string) (models.Car, error) {
-	car, err := s.carRepo.GetOne(id)
-	if errors.Is(err, storage.ErrNoRows) {
-		return models.Car{}, errs.NotFound("car")
-	} else if err != nil {
-		return models.Car{}, fmt.Errorf("error getting car from car repo: %v", err)
-	}
-
-	return car, nil
+	return s.carRepo.GetOne(id)
 }
 
 func (s CarService) GetByLicensePlate(licensePlate string) (*models.Car, error) {
-	car, err := s.carRepo.GetByLicensePlate(licensePlate)
-	if errors.Is(err, storage.ErrNoRows) {
-		return nil, errs.NotFound("car")
-	} else if err != nil {
-		return nil, fmt.Errorf("error getting car from car repo: %v", err)
-	}
-
-	return car, nil
+	return s.carRepo.GetByLicensePlate(licensePlate)
 }
 
 func (s CarService) Delete(id string) error {
-	err := s.carRepo.Delete(id)
-	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound("car")
-	} else if err != nil {
-		return fmt.Errorf("error deleting in carRepo: %v", err)
-	}
-
-	return nil
+	return s.carRepo.Delete(id)
 }
 
 func (s CarService) Update(id string, updatedFields models.Car) (models.Car, error) {
