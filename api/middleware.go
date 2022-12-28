@@ -25,14 +25,14 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
-				respondError(w, *errs.Unauthorized)
+				respondError(w, errs.Unauthorized)
 				return
 			}
 
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 			accessPayload, err := m.jwtService.ParseAccess(accessToken)
 			if err != nil {
-				respondError(w, *errs.Unauthorized)
+				respondError(w, errs.Unauthorized)
 				return
 			}
 
@@ -40,7 +40,7 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			userHasPermittedRole := util.Contains(permittedRoles, accessPayload.Role)
 			if !userHasPermittedRole {
 				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
-				respondError(w, *errs.Unauthorized)
+				respondError(w, errs.Unauthorized)
 				return
 			}
 
