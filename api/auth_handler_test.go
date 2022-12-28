@@ -38,11 +38,10 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	app, err := app.NewApp(c)
+	suite.app, err = app.NewApp(c)
 	if err != nil {
 		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
-	suite.app = app
 
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)

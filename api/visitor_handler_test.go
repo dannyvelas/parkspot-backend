@@ -31,22 +31,21 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	app, err := app.NewApp(c)
+	suite.app, err = app.NewApp(c)
 	if err != nil {
 		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
-	suite.app = app
 
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
 	{ // set jwts
-		suite.residentJWT, err = app.JWTService.NewAccess(testResident.ID, models.ResidentRole)
+		suite.residentJWT, err = suite.app.JWTService.NewAccess(testResident.ID, models.ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
 
-		suite.adminJWT, err = app.JWTService.NewAccess("some-uuid", models.AdminRole)
+		suite.adminJWT, err = suite.app.JWTService.NewAccess("some-uuid", models.AdminRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create JWT: %v", err)
 		}
