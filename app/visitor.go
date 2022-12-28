@@ -1,9 +1,7 @@
 package app
 
 import (
-	"errors"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
@@ -53,12 +51,5 @@ func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, e
 }
 
 func (s VisitorService) Delete(id string) error {
-	err := s.visitorRepo.Delete(id)
-	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound("visitor")
-	} else if err != nil {
-		return fmt.Errorf("error deleting in visitorRepo: %v", err)
-	}
-
-	return nil
+	return s.visitorRepo.Delete(id)
 }
