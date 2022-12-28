@@ -6,7 +6,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
-	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"net/http/httptest"
@@ -85,9 +84,12 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 			return fmt.Errorf("Error making request: %v", err)
 		}
 
-		if difference := cmp.Diff(test.expected, residentResp); difference != "" {
-			return fmt.Errorf("user in response did not equal expected user: " + difference)
-		}
+		suite.Equal(test.expected.ID, residentResp.ID)
+		suite.Equal(test.expected.FirstName, residentResp.FirstName)
+		suite.Equal(test.expected.LastName, residentResp.LastName)
+		suite.Equal(test.expected.Phone, residentResp.Phone)
+		suite.Equal(test.expected.Email, residentResp.Email)
+		suite.Equal(test.expected.Password, residentResp.Password)
 
 		return nil
 	}
