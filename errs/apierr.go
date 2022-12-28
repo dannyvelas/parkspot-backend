@@ -13,6 +13,6 @@ func NewApiErr(statusCode int, message string) *ApiErr {
 }
 
 // implements error interface
-func (e ApiErr) Error() string {
+func (e *ApiErr) Error() string {
 	return e.message
 }
