@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -29,7 +30,7 @@ func (h visitorHandler) getActive() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, *errs.Internalf("visitor_router.getVisitorsOfResident: %v", err))
+			respondError(w, fmt.Errorf("visitor_router.getVisitorsOfResident: %v", err))
 			return
 		}
 
@@ -38,9 +39,9 @@ func (h visitorHandler) getActive() http.HandlerFunc {
 			residentID = accessPayload.ID
 		}
 
-		visitorsWithMetadata, apiErr := h.visitorService.GetActive(limit, page, search, residentID)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		visitorsWithMetadata, err := h.visitorService.GetActive(limit, page, search, residentID)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -54,19 +55,19 @@ func (h visitorHandler) create() http.HandlerFunc {
 
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, *errs.Internalf("error getting access payload in visitor handler: %v", err))
+			respondError(w, fmt.Errorf("error getting access payload in visitor handler: %v", err))
 			return
 		}
 
 		var payload models.Visitor
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, *errs.Malformed("NewVisitorReq"))
+			respondError(w, errs.Malformed("NewVisitorReq"))
 			return
 		}
 
-		visitor, apiErr := h.visitorService.Create(accessPayload.ID, payload)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		visitor, err := h.visitorService.Create(accessPayload.ID, payload)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -78,12 +79,12 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, *errs.BadRequest("id parameter is not a UUID"))
+			respondError(w, errs.BadRequest("id parameter is not a UUID"))
 			return
 		}
 
-		if apiErr := h.visitorService.Delete(id); apiErr != nil {
-			respondError(w, *apiErr)
+		if err := h.visitorService.Delete(id); err != nil {
+			respondError(w, err)
 			return
 		}
 
