@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -30,7 +31,7 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, *errs.Internalf("error getting access payload: %v", err))
+			respondError(w, fmt.Errorf("error getting access payload: %v", err))
 			return
 		}
 
@@ -39,9 +40,9 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 			residentID = accessPayload.ID
 		}
 
-		permitsWithMetadata, apiErr := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -53,13 +54,13 @@ func (h permitHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
-			respondError(w, *errs.BadRequest("id parameter cannot be empty"))
+			respondError(w, errs.BadRequest("id parameter cannot be empty"))
 			return
 		}
 
-		permit, apiErr := h.permitService.GetOne(id)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		permit, err := h.permitService.GetOne(id)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -71,26 +72,26 @@ func (h permitHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
-			respondError(w, *errs.Malformed("NewPermitReq"))
+			respondError(w, errs.Malformed("NewPermitReq"))
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, *errs.Internalf("permit_router.createPermit: error getting access payload: %v", err))
+			respondError(w, fmt.Errorf("permit_router.createPermit: error getting access payload: %v", err))
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
 			message := "Residents cannot request parking permits with exceptions"
-			respondError(w, *errs.BadRequest(message))
+			respondError(w, errs.BadRequest(message))
 			return
 		}
 
-		createdPermit, apiErr := h.permitService.ValidateAndCreate(newPermitReq)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -102,13 +103,13 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		if id == 0 {
-			respondError(w, *errs.BadRequest("id parameter cannot be empty"))
+			respondError(w, errs.BadRequest("id parameter cannot be empty"))
 			return
 		}
 
-		apiErr := h.permitService.Delete(id)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		err := h.permitService.Delete(id)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
