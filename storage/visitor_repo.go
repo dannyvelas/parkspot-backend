@@ -142,7 +142,7 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("visitor_repo.Delete: %w", errs.NotFound("visitor"))
+		return fmt.Errorf("visitor_repo.Delete: %w", errs.NewNotFound("visitor"))
 	}
 
 	return nil
@@ -161,7 +161,7 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	visitor := visitor{}
 	err = visitorRepo.database.driver.Get(&visitor, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NotFound("visitor"))
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NewNotFound("visitor"))
 	} else if err != nil {
 		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}

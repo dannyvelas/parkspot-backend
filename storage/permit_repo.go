@@ -153,7 +153,7 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	permit := permit{}
 	err = permitRepo.database.driver.Get(&permit, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", errs.NotFound("permit"))
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", errs.NewNotFound("permit"))
 	} else if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
@@ -258,7 +258,7 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("permit_repo.Delete: %w", errs.NotFound("permit"))
+		return fmt.Errorf("permit_repo.Delete: %w", errs.NewNotFound("permit"))
 	}
 
 	return nil

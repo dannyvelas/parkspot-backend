@@ -39,7 +39,7 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NotFound("car"))
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NewNotFound("car"))
 	} else if err != nil {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
@@ -60,7 +60,7 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, erro
 	car := car{}
 	err = carRepo.database.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NotFound("car"))
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NewNotFound("car"))
 	} else if err != nil {
 		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBQuery, err)
 	}
