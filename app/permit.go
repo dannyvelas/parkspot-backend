@@ -41,29 +41,18 @@ func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int,
 }
 
 func (s PermitService) GetOne(id int) (models.Permit, error) {
-	permit, err := s.permitRepo.GetOne(id)
-	if errors.Is(err, storage.ErrNoRows) {
-		return models.Permit{}, errs.NotFound("permit")
-	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit from permit repo: %v", err)
-	}
-
-	return permit, nil
+	return s.permitRepo.GetOne(id)
 }
 
 func (s PermitService) Delete(permitID int) error {
 	permit, err := s.permitRepo.GetOne(permitID)
-	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound("permit")
-	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
+	if err != nil {
+		return err
 	}
 
 	err = s.permitRepo.Delete(permitID)
-	if errors.Is(err, storage.ErrNoRows) {
-		return errs.NotFound("permit")
-	} else if err != nil {
-		return fmt.Errorf("error getting permit from permit repo: %v", err)
+	if err != nil {
+		return err
 	}
 
 	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
@@ -74,10 +63,10 @@ func (s PermitService) Delete(permitID int) error {
 		}
 
 		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
-		if err != nil && !errors.Is(err, storage.ErrNoRows) {
+		if err != nil && !errors.Is(err, errs.NotFound) {
 			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
 		}
-		// purposely not returning error if error.Is(err, storage.ErrNoRows)
+		// purposely not returning error if error.Is(err, errs.NotFound)
 		// its possible that the car with id of permit.CarID was deleted and no longer exists.
 		// unlike a resident deletion, a car deletion does not cascade delete its permits
 	}
@@ -88,15 +77,15 @@ func (s PermitService) Delete(permitID int) error {
 func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
 	// error out if resident DNE
 	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
-	if errors.Is(err, storage.ErrNoRows) {
+	if errors.Is(err, errs.NotFound) {
 		return models.Permit{}, errs.ResidentForPermitDNE
 	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting one from residnet repo: %v", err)
+		return models.Permit{}, fmt.Errorf("error getting one from resident repo: %v", err)
 	}
 
 	// error out if car DNE
 	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
-	if errors.Is(err, storage.ErrNoRows) {
+	if errors.Is(err, errs.NotFound) {
 		return models.Permit{}, errs.CarForPermitDNE
 	} else if err != nil {
 		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
