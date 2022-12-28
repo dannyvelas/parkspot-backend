@@ -7,7 +7,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
-	"time"
+	"github.com/dannyvelas/lasvistas_api/util"
 )
 
 type PermitService struct {
@@ -140,7 +140,7 @@ func (s PermitService) validateCreation(desiredPermit models.Permit, existingRes
 		return nil
 	}
 
-	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if permitLength > config.MaxPermitLength {
 		return errs.PermitTooLong
 	}
@@ -175,7 +175,7 @@ func (s PermitService) validateCreation(desiredPermit models.Permit, existingRes
 }
 
 func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {
-	permitLength := getAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if desiredPermit.AffectsDays {
 		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
 		if err != nil {
@@ -199,9 +199,4 @@ func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error
 	}
 
 	return newPermit, nil
-}
-
-// helpers
-func getAmtDays(startDate, endDate time.Time) int {
-	return int(endDate.Sub(startDate).Hours() / 24)
 }
