@@ -48,22 +48,21 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	app, err := app.NewApp(c)
+	suite.app, err = app.NewApp(c)
 	if err != nil {
 		log.Fatal().Msgf("Failed to initialize app: %v", err)
 	}
-	suite.app = app
 
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
 	{ // set jwts
-		suite.residentJWT, err = app.JWTService.NewAccess(testResident.ID, models.ResidentRole)
+		suite.residentJWT, err = suite.app.JWTService.NewAccess(testResident.ID, models.ResidentRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create resident JWT: %v", err)
 		}
 
-		suite.adminJWT, err = app.JWTService.NewAccess("some-uuid", models.AdminRole)
+		suite.adminJWT, err = suite.app.JWTService.NewAccess("some-uuid", models.AdminRole)
 		if err != nil {
 			log.Fatal().Msgf("Failed to create admin JWT: %v", err)
 		}
@@ -77,7 +76,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("error creating test resident with unlimited days: %v", err.Error())
 	}
 
-	suite.createdCar, err = app.CarService.Create(models.NewCar("id", testResident.ID, "lp", "color", "make", "model", 0))
+	suite.createdCar, err = suite.app.CarService.Create(models.NewCar("id", testResident.ID, "lp1", "color", "make", "model", 0))
 	if err != nil {
 		log.Fatal().Msgf("error creating car: %v", err.Error())
 	}
@@ -108,13 +107,10 @@ func (suite permitRouterSuite) TearDownSuite() {
 
 func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() {
 	// initialize and create a permit
-	var permitOne = newTestPermitReq(testResident.ID, suite.createdCar.ID, "")
-	{
-		_, err := suite.app.PermitService.ValidateAndCreate(permitOne)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error creating permit: %v", err))
-			return
-		}
+	permitOne, err := suite.app.PermitService.ValidateAndCreate(newTestPermitReq(testResident.ID, suite.createdCar.ID, ""))
+	if err != nil {
+		suite.NoError(fmt.Errorf("Error creating permit: %v", err))
+		return
 	}
 
 	// initalize resident permits, each w a different car to eachother and to permitOne
@@ -165,15 +161,15 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 		}
 
 		for _, permit := range createdPermits {
-			err := deleteTestPermitAndCar(suite.app, suite.testServer.URL, suite.adminJWT, permit)
+			err := suite.deletePermitAndCar(permit)
 			if err != nil {
 				suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
 			}
 		}
 	}
 
-	// delete permitOne and car associated with it
-	err := deleteTestPermitAndCar(suite.app, suite.testServer.URL, suite.adminJWT, permitOne)
+	// delete permitOne
+	err = suite.app.PermitService.Delete(permitOne.ID)
 	if err != nil {
 		err := fmt.Errorf("Error deleting test permit: %v", err)
 		suite.NoError(err)
@@ -182,34 +178,32 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 
 func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	// initalize car with missing fields
-	var carMissingFields models.Car
-	{
-		var err error
-		carMissingFields, err = suite.app.CarService.Create(models.NewCar("id", testResident.ID, "OGYR3X", "blue", "", "", 0))
-		if err != nil {
-			log.Error().Msg("auth_router_test.TearDownSuite: " + err.Error())
-			return
-		}
+	createdCar, err := suite.app.CarService.Create(models.NewCar("id", testResident.ID, "lp2", "color", "make", "model", 0))
+	if err != nil {
+		suite.NoError(fmt.Errorf("Error creating car with missing fields: %v", err))
+		return
 	}
 
-	// initialize permit using car which is missing fields
-	requestBody := newTestPermitReq(testResident.ID, carMissingFields.ID, "")
+	// initialize permit using car above
+	requestBody := models.Permit{
+		ResidentID:      testResident.ID,
+		CarID:           createdCar.ID,
+		ExceptionReason: "",
+	}
 
-	_, err := authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &requestBody)
+	_, err = authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &requestBody)
 	if err == nil {
 		suite.NoError(fmt.Errorf("Successfully created permit when it shouldn't have"))
 		return
 	}
 
-	var apiErr errs.ApiErr
+	var apiErr *errs.ApiErr
 	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
 	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
-
-	suite.Contains("startDate, endDate", apiErr.Error())
 }
 
 func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
@@ -223,38 +217,32 @@ func (suite permitRouterSuite) TestCreate_EmptyStartEmptyEnd_ErrMalformed() {
 		return
 	}
 
-	var apiErr errs.ApiErr
+	var apiErr *errs.ApiErr
 	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
 	}
 
 	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
-
-	responseMsg := fmt.Sprintf("\"%v\"\n", errs.Malformed("NewPermitReq"))
-	suite.Equal(responseMsg, apiErr.Error())
 }
 
 func (suite permitRouterSuite) TestCreate_AddsResDays() {
 	for testName, testPermitReq := range suite.testPermitReqs {
-		residentBefore, apiErr := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
-		if apiErr != nil {
-			err := fmt.Errorf("%s failed: %v", testName, apiErr)
-			suite.NoError(err)
+		residentBefore, err := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
+		if err != nil {
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
 		}
 
 		createdPermit, err := authenticatedReq[models.Permit, models.Permit]("POST", suite.testServer.URL+"/api/permit", suite.adminJWT, &testPermitReq)
 		if err != nil {
-			err := fmt.Errorf("%s failed: %v", testName, err)
-			suite.NoError(err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
 		}
 
 		residentNow, err := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
 		if err != nil {
-			err := fmt.Errorf("%s failed: %v", testName, err)
-			suite.NoError(err)
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
 		}
 
@@ -262,10 +250,8 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 		// and exception reason is blank
 		shouldAddDays := testPermitReq.ResidentID == testResident.ID && testPermitReq.ExceptionReason == ""
 
-		lengthOfPermit := testPermitReq.EndDate.Sub(testPermitReq.StartDate)
-
 		amtDaysAddedToRes := *residentNow.AmtParkingDaysUsed - *residentBefore.AmtParkingDaysUsed
-		permitLength := int(lengthOfPermit.Hours() / 24)
+		permitLength := util.GetAmtDays(testPermitReq.StartDate, testPermitReq.EndDate)
 		if !shouldAddDays && amtDaysAddedToRes != 0 {
 			err := fmt.Errorf("%s failed: added %d days when it shouldn't have. Permit length was: %d", testName, amtDaysAddedToRes, permitLength)
 			suite.NoError(err)
@@ -276,7 +262,7 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 			return
 		}
 
-		err = deleteTestPermitAndCar(suite.app, suite.testServer.URL, suite.adminJWT, createdPermit)
+		err = suite.app.PermitService.Delete(createdPermit.ID)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: deleting test permit failed: %v", testName, err))
 			return
@@ -286,9 +272,9 @@ func (suite permitRouterSuite) TestCreate_AddsResDays() {
 
 func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 	for testName, testPermitReq := range suite.testPermitReqs {
-		residentBefore, apiErr := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
-		if apiErr != nil {
-			suite.NoError(fmt.Errorf("%s failed: %v", testName, apiErr))
+		residentBefore, err := suite.app.ResidentService.GetOne(testPermitReq.ResidentID)
+		if err != nil {
+			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
 		}
 
@@ -298,7 +284,7 @@ func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 			return
 		}
 
-		err = deleteTestPermitAndCar(suite.app, suite.testServer.URL, suite.adminJWT, createdPermit)
+		err = suite.app.PermitService.Delete(createdPermit.ID)
 		if err != nil {
 			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
 			return
@@ -310,8 +296,8 @@ func (suite permitRouterSuite) TestDelete_SubtractsResDays() {
 			return
 		}
 
-		if residentBefore.AmtParkingDaysUsed != residentNow.AmtParkingDaysUsed {
-			suite.NoError(fmt.Errorf("%s failed: did not subract days. Resident has %d instead of %d", testName, residentNow.AmtParkingDaysUsed, residentBefore.AmtParkingDaysUsed))
+		if *residentBefore.AmtParkingDaysUsed != *residentNow.AmtParkingDaysUsed {
+			suite.NoError(fmt.Errorf("%s failed: did not subract days. Resident has %d instead of %d", testName, *residentNow.AmtParkingDaysUsed, *residentBefore.AmtParkingDaysUsed))
 			return
 		}
 	}
@@ -327,13 +313,10 @@ func (suite permitRouterSuite) TestCreate_AllFieldsMatch() {
 }
 
 func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
-	var createdPermit = newTestPermitReq(testResident.ID, suite.createdCar.ID, "")
-	{
-		_, err := suite.app.PermitService.ValidateAndCreate(createdPermit)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error creating permit: %v", err))
-			return
-		}
+	createdPermit, err := suite.app.PermitService.ValidateAndCreate(newTestPermitReq(testResident.ID, suite.createdCar.ID, ""))
+	if err != nil {
+		suite.NoError(fmt.Errorf("Error creating permit: %v", err))
+		return
 	}
 
 	endpoint := fmt.Sprintf("%s/api/permits/active", suite.testServer.URL)
@@ -355,13 +338,19 @@ func (suite permitRouterSuite) TestGetActivePermitsOfResident_Postive() {
 	suite.Empty(cmp.Diff(createdPermit.StartDate, last.StartDate))
 	suite.Empty(cmp.Diff(createdPermit.EndDate, last.EndDate))
 
-	err = deleteTestPermitAndCar(suite.app, suite.testServer.URL, suite.adminJWT, createdPermit)
+	err = suite.app.PermitService.Delete(createdPermit.ID)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error deleting test permit and car: %v", err))
 	}
 }
 
 func (suite permitRouterSuite) TestGetMaxExceptions_Positive() {
+	createdPermit, err := suite.app.PermitService.ValidateAndCreate(newTestPermitReq(testResident.ID, suite.createdCar.ID, "an exception reason here"))
+	if err != nil {
+		suite.NoError(fmt.Errorf("error creating test permit: %v", err))
+		return
+	}
+
 	endpoint := fmt.Sprintf("%s/api/permits/exceptions?limit=%d", suite.testServer.URL, config.MaxLimit)
 	permitsResponse, err := authenticatedReq[any, models.ListWithMetadata[models.Permit]]("GET", endpoint, suite.adminJWT, nil)
 	if err != nil {
@@ -377,6 +366,19 @@ func (suite permitRouterSuite) TestGetMaxExceptions_Positive() {
 	if permitsResponse.Metadata.TotalAmount < config.MaxLimit {
 		suite.Equal(permitsResponse.Metadata.TotalAmount, len(permitsResponse.Records), "The amount of records reported in metadata is lower than limit, so the amount of records in the payload should be equal to metadata.totalAmount")
 	}
+
+	last := permitsResponse.Records[len(permitsResponse.Records)-1]
+
+	suite.Equal(createdPermit.ResidentID, last.ResidentID)
+	suite.Equal(createdPermit.LicensePlate, last.LicensePlate)
+	suite.Empty(cmp.Diff(createdPermit.StartDate, last.StartDate))
+	suite.Empty(cmp.Diff(createdPermit.EndDate, last.EndDate))
+
+	err = suite.app.PermitService.Delete(createdPermit.ID)
+	if err != nil {
+		suite.NoError(fmt.Errorf("error creating test permit: %v", err))
+		return
+	}
 }
 
 // helpers
@@ -390,14 +392,12 @@ func newTestPermitReq(residentID, carID, exceptionReason string) models.Permit {
 	}
 }
 
-func deleteTestPermitAndCar(app app.App, url, adminJWT string, permit models.Permit) error {
-	err := app.PermitService.Delete(permit.ID)
-	if err != nil {
+func (suite permitRouterSuite) deletePermitAndCar(permit models.Permit) error {
+	if err := suite.app.PermitService.Delete(permit.ID); err != nil {
 		return err
 	}
 
-	apiErr := app.CarService.Delete(permit.CarID)
-	if apiErr != nil {
+	if err := suite.app.CarService.Delete(permit.CarID); err != nil {
 		return fmt.Errorf("Error deleting car directly in carRepo: %v", err)
 	}
 
