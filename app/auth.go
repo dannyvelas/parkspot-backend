@@ -47,7 +47,7 @@ type Session struct {
 
 func (a AuthService) Login(id, password string) (Session, string, error) {
 	loginable, err := a.getUser(id)
-	if errors.Is(err, storage.ErrNoRows) {
+	if errors.Is(err, errs.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %v", err)
@@ -78,7 +78,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	loginable, err := a.getUser(user.ID)
-	if errors.Is(err, storage.ErrNoRows) {
+	if errors.Is(err, errs.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
@@ -105,7 +105,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 
 func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) error {
 	loginable, err := a.getUser(id)
-	if errors.Is(err, storage.ErrNoRows) {
+	if errors.Is(err, errs.NotFound) {
 		return errs.Unauthorized
 	} else if err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
