@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"strings"
 )
@@ -31,20 +32,20 @@ func NewResidentRepo(database Database) ResidentRepo {
 
 func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, error) {
 	if residentID == "" {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentID).ToSql()
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", ErrBuildingQuery, err)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	resident := resident{}
 	err = residentRepo.database.driver.Get(&resident, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", ErrNoRows)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", errs.NotFound)
 	} else if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", ErrDatabaseQuery, err)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBQuery, err)
 	}
 
 	return resident.toModels(), nil
@@ -52,20 +53,20 @@ func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, err
 
 func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, error) {
 	if email == "" {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: Empty ID argument", ErrInvalidArg)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := residentRepo.residentSelect.Where("resident.email = $1", email).ToSql()
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", ErrBuildingQuery, err)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	resident := resident{}
 	err = residentRepo.database.driver.Get(&resident, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", ErrNoRows)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", errs.NotFound)
 	} else if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", ErrDatabaseQuery, err)
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", errs.DBQuery, err)
 	}
 
 	return resident.toModels(), nil
@@ -73,7 +74,7 @@ func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, e
 
 func (residentRepo ResidentRepo) GetAll(limit, offset int, search string) ([]models.Resident, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: limit or offset cannot be zero", ErrInvalidArg)
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: limit or offset cannot be zero", errs.DBInvalidArg)
 	}
 
 	residentSelect := residentRepo.residentSelect
@@ -92,13 +93,13 @@ func (residentRepo ResidentRepo) GetAll(limit, offset int, search string) ([]mod
 		OrderBy("resident.id ASC").
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrBuildingQuery, err)
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	residents := residentSlice{}
 	err = residentRepo.database.driver.Select(&residents, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", ErrDatabaseQuery, err)
+		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", errs.DBQuery, err)
 	}
 
 	return residents.toModels(), nil
@@ -110,7 +111,7 @@ func (residentRepo ResidentRepo) GetAllTotalAmount() (int, error) {
 	var totalAmount int
 	err := residentRepo.database.driver.Get(&totalAmount, query)
 	if err != nil {
-		return 0, fmt.Errorf("resident_repo.GetAllTotalAmount: %w: %v", ErrDatabaseQuery, err)
+		return 0, fmt.Errorf("resident_repo.GetAllTotalAmount: %w: %v", errs.DBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -118,7 +119,7 @@ func (residentRepo ResidentRepo) GetAllTotalAmount() (int, error) {
 
 func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	if id == "" {
-		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: Empty ID argument", ErrInvalidArg)
+		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	const query = `
@@ -128,7 +129,7 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 
 	_, err := residentRepo.database.driver.Exec(query, days, id)
 	if err != nil {
-		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
@@ -136,15 +137,15 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 
 func (residentRepo ResidentRepo) SetPassword(id string, password string) error {
 	if id == "" {
-		return fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", ErrInvalidArg)
+		return fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	} else if password == "" {
-		return fmt.Errorf("resident_repo.GetOne: %w: Emtpy Password argument", ErrInvalidArg)
+		return fmt.Errorf("resident_repo.GetOne: %w: Emtpy Password argument", errs.DBInvalidArg)
 	}
 
 	const query = `UPDATE resident SET password = $1 WHERE id = $2`
 	_, err := residentRepo.database.driver.Exec(query, password, id)
 	if err != nil {
-		return fmt.Errorf("resident_repo.SetPasswordFor: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("resident_repo.SetPasswordFor: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
@@ -170,12 +171,12 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 			"unlim_days": unlimDays,
 		}).ToSql()
 	if err != nil {
-		return fmt.Errorf("resident_repo.Create: %w: %v", ErrBuildingQuery, err)
+		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	_, err = residentRepo.database.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Create: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
@@ -183,19 +184,19 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 
 func (residentRepo ResidentRepo) Delete(residentID string) error {
 	if residentID == "" {
-		return fmt.Errorf("resident_repo.Delete: %w: negative or zero ID argument", ErrInvalidArg)
+		return fmt.Errorf("resident_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
 	}
 	const query = `DELETE FROM resident WHERE id = $1`
 
 	res, err := residentRepo.database.driver.Exec(query, residentID)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Delete: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("resident_repo.Delete: %w: %v", ErrGetRowsAffected, err)
+		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("resident_repo.Delete: %w", ErrNoRows)
+		return fmt.Errorf("resident_repo.Delete: %w", errs.NotFound)
 	}
 
 	return nil
@@ -203,7 +204,7 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 
 func (residentRepo ResidentRepo) Update(id string, model models.Resident) error {
 	if id == "" {
-		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", ErrInvalidArg)
+		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
@@ -236,12 +237,12 @@ func (residentRepo ResidentRepo) Update(id string, model models.Resident) error 
 
 	query, args, err := residentUpdate.Where("resident.id = ?", id).ToSql()
 	if err != nil {
-		return fmt.Errorf("resident_repo.Update: %w: %v", ErrBuildingQuery, err)
+		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	_, err = residentRepo.database.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Update: %w: %v", ErrDatabaseExec, err)
+		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
