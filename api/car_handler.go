@@ -24,13 +24,13 @@ func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, *errs.BadRequest("id parameter is not a UUID"))
+			respondError(w, errs.BadRequest("id parameter is not a UUID"))
 			return
 		}
 
-		car, apiErr := h.carService.GetOne(id)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		car, err := h.carService.GetOne(id)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
@@ -42,19 +42,19 @@ func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, *errs.BadRequest("id parameter is not a UUID"))
+			respondError(w, errs.BadRequest("id parameter is not a UUID"))
 			return
 		}
 
 		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
-			respondError(w, *errs.Malformed("EditCarReq"))
+			respondError(w, errs.Malformed("EditCarReq"))
 			return
 		}
 
-		car, apiErr := h.carService.Update(id, editCarReq)
-		if apiErr != nil {
-			respondError(w, *apiErr)
+		car, err := h.carService.Update(id, editCarReq)
+		if err != nil {
+			respondError(w, err)
 			return
 		}
 
