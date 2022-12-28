@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/dannyvelas/lasvistas_api/errs"
+	"fmt"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ func sayHello() http.HandlerFunc {
 
 		AccessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, *errs.Internalf("hello_router.sayHello: error getting access payload: %v", err))
+			respondError(w, fmt.Errorf("hello_router.sayHello: error getting access payload: %v", err))
 			return
 		}
 
