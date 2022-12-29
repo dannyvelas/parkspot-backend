@@ -1,13 +1,16 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -108,6 +111,25 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 			break
 		}
 	}
+}
+
+func (suite residentRouterSuite) TestEdit_ResidentDNE_Negative() {
+	request := models.Resident{FirstName: "NEWFIRST"}
+
+	endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.ID)
+	_, err := authenticatedReq[models.Resident, models.Resident]("PUT", endpoint, suite.adminJWT, &request)
+	if err == nil {
+		suite.NoError(fmt.Errorf("No error encountered when editing a non-existing resident"))
+		return
+	}
+
+	var apiErr *errs.ApiErr
+	if !errors.As(err, &apiErr) {
+		suite.NoError(fmt.Errorf("Couldn't cast error to apiErr. Error is: %v", err))
+		return
+	}
+
+	suite.Equal(http.StatusNotFound, apiErr.StatusCode)
 }
 
 func merge(res1, res2 models.Resident) models.Resident {
