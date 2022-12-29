@@ -1,18 +1,26 @@
 package errs
 
+import (
+	"errors"
+)
+
 type ApiErr struct {
 	StatusCode int
-	message    string
+	err        error
 }
 
 func NewApiErr(statusCode int, message string) *ApiErr {
 	return &ApiErr{
 		StatusCode: statusCode,
-		message:    message,
+		err:        errors.New(message),
 	}
 }
 
 // implements error interface
 func (e *ApiErr) Error() string {
-	return e.message
+	return e.err.Error()
+}
+
+func (e *ApiErr) Unwrap() error {
+	return e.err
 }
