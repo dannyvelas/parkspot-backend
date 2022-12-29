@@ -115,6 +115,9 @@ func (carRepo CarRepo) Update(id string, editCar models.Car) error {
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	carUpdate := squirrel.Update("car")
 
+	if editCar.LicensePlate != "" {
+		carUpdate = carUpdate.Set("license_plate", editCar.LicensePlate)
+	}
 	if editCar.Color != "" {
 		carUpdate = carUpdate.Set("color", editCar.Color)
 	}

@@ -49,8 +49,8 @@ func (self Car) Equal(other Car) bool {
 }
 
 func (m Car) ValidateEdit() *errs.ApiErr {
-	if m.Color == "" && m.Make == "" && m.Model == "" {
-		return errs.EmptyFields("color, make, model")
+	if m.LicensePlate == "" && m.Color == "" && m.Make == "" && m.Model == "" {
+		return errs.EmptyFields("licensePlate, color, make, model")
 	}
 
 	if errors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {

@@ -1,7 +1,9 @@
 package app
 
 import (
+	"errors"
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
@@ -31,6 +33,15 @@ func (s CarService) Delete(id string) error {
 func (s CarService) Update(id string, updatedFields models.Car) (models.Car, error) {
 	if err := updatedFields.ValidateEdit(); err != nil {
 		return models.Car{}, err
+	}
+
+	// if license plate is being updated to a new one, make sure it's unique
+	if updatedFields.LicensePlate != "" {
+		if _, err := s.carRepo.GetByLicensePlate(updatedFields.LicensePlate); err == nil {
+			return models.Car{}, errs.AlreadyExists("a car with this license plate")
+		} else if !errors.Is(err, errs.NotFound) {
+			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %v", err)
+		}
 	}
 
 	err := s.carRepo.Update(id, updatedFields)
