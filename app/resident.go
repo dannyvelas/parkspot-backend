@@ -49,12 +49,12 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 func (s ResidentService) Update(id string, desiredResident models.Resident) (models.Resident, error) {
 	err := s.residentRepo.Update(id, desiredResident)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %v", err)
+		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %w", err)
 	}
 
 	resident, err := s.residentRepo.GetOne(id)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %v", err)
+		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %w", err)
 	}
 
 	return s.removeHash(resident), nil
