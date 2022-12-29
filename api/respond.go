@@ -32,7 +32,7 @@ func respondError(w http.ResponseWriter, err error) {
 	var apiErr *errs.ApiErr
 	if !errors.As(err, &apiErr) {
 		log.Error().Msg(err.Error())
-		respondJSON(w, apiErr.StatusCode, "Internal Server Error")
+		respondJSON(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
