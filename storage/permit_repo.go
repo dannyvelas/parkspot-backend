@@ -69,7 +69,7 @@ func (permitRepo PermitRepo) Get(
 	search string,
 ) ([]models.Permit, error) {
 	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be zero", errs.DBInvalidArg)
+		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be smaller than zero", errs.DBInvalidArg)
 	}
 
 	permitSelect := permitRepo.permitSelect
