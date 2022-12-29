@@ -23,18 +23,17 @@ func NewPermitRepo(database Database) PermitRepo {
 	permitSelect := squirrel.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
-		"car.id AS car_id",
-		"car.license_plate",
-		"car.color",
-		"car.make",
-		"car.model",
+		"permit.car_id",
+		"permit.license_plate",
+		"permit.color",
+		"permit.make",
+		"permit.model",
 		"permit.start_ts",
 		"permit.end_ts",
 		"permit.request_ts",
 		"permit.affects_days",
 		"permit.exception_reason",
-	).From("permit").
-		LeftJoin("car ON permit.car_id = car.id")
+	).From("permit")
 
 	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
 		models.ActivePermits: squirrel.And{
