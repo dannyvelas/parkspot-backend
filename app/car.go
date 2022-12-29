@@ -46,12 +46,12 @@ func (s CarService) Update(id string, updatedFields models.Car) (models.Car, err
 
 	err := s.carRepo.Update(id, updatedFields)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("error updating car from carRepo: %v", err)
+		return models.Car{}, fmt.Errorf("error updating car from carRepo: %w", err)
 	}
 
 	car, err := s.carRepo.GetOne(id)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("error getting car from carRepo: %v", err)
+		return models.Car{}, fmt.Errorf("error getting car from carRepo: %w", err)
 	}
 
 	return car, nil
