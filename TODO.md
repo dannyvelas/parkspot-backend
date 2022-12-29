@@ -22,8 +22,8 @@
 - [x] (DEPLOY) set up firewall on server again
 - [x] (DEPLOY) change receiving email of password resets from your personal email to the email of the user
 - [x] (DEPLOY) change parking days yearly limit to 20
-- [ ] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
-- [ ] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
+- [x] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
+- [x] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
 - [ ] (DEPLOY) (not important) use non-root user in vultr server
 - [ ] (DEPLOY) (not important) remove api hello world at "/"
 - [ ] (DEPLOY) (not important) remove /api/ prefix from routes
