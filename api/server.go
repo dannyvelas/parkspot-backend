@@ -88,7 +88,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			userRouter.Get("/permit/{id:[0-9]+}", permitHandler.getOne())
 			userRouter.Post("/permit", permitHandler.create())
 			userRouter.Get("/visitors", visitorHandler.getActive())
-			//userRouter.Put("/account/password", resetPassword(app.JWTService, app.AuthService))
+			userRouter.Put("/user/password", authHandler.resetPassword())
 		})
 
 		r.Group(func(residentRouter chi.Router) {
