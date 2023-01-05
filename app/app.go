@@ -19,7 +19,7 @@ type App struct {
 func NewApp(c config.Config) (App, error) {
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
-	database, err := storage.NewDatabase(c.Postgres())
+	database, err := storage.NewMockDatabase()
 	if err != nil {
 		return App{}, fmt.Errorf("Failed to start database: %v", err)
 	}
