@@ -20,13 +20,12 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0
 	golang.org/x/text v0.3.7
 	google.golang.org/api v0.86.0
-	modernc.org/ql v1.0.0
+	modernc.org/sqlite v1.10.6
 )
 
 require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -34,28 +33,30 @@ require (
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
 	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e // indirect
+	golang.org/x/tools v0.1.5 // indirect
+	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220706132729-d86698d07c53 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	modernc.org/b v1.0.0 // indirect
-	modernc.org/db v1.0.0 // indirect
-	modernc.org/file v1.0.0 // indirect
-	modernc.org/fileutil v1.0.0 // indirect
-	modernc.org/golex v1.0.0 // indirect
-	modernc.org/internal v1.0.0 // indirect
-	modernc.org/lldb v1.0.0 // indirect
+	modernc.org/cc/v3 v3.32.4 // indirect
+	modernc.org/ccgo/v3 v3.9.2 // indirect
+	modernc.org/libc v1.9.5 // indirect
 	modernc.org/mathutil v1.2.2 // indirect
-	modernc.org/sortutil v1.1.0 // indirect
+	modernc.org/memory v1.0.4 // indirect
+	modernc.org/opt v0.1.1 // indirect
 	modernc.org/strutil v1.1.0 // indirect
-	modernc.org/zappy v1.0.0 // indirect
+	modernc.org/token v1.0.0 // indirect
 )

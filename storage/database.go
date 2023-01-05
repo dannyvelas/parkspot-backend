@@ -5,11 +5,11 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/ql"
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	_ "modernc.org/ql/driver"
+	_ "modernc.org/sqlite"
 )
 
 type Database struct {
@@ -26,7 +26,7 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 }
 
 func NewMockDatabase() (Database, error) {
-	driver, err := sqlx.Connect("ql-mem", "mem.db")
+	driver, err := sqlx.Connect("sqlite", ":memory:")
 	if err != nil {
 		return Database{}, fmt.Errorf("database: %w: %v", errs.DBConnecting, err)
 	}
@@ -40,7 +40,7 @@ func NewMockDatabase() (Database, error) {
 }
 
 func seedMockDB(driver *sqlx.DB) error {
-	migrateDriver, err := ql.WithInstance(driver.DB, &ql.Config{})
+	migrateDriver, err := sqlite.WithInstance(driver.DB, &sqlite.Config{})
 	if err != nil {
 		return fmt.Errorf("Call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
 	}
