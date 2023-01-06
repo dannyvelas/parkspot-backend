@@ -1,6 +1,8 @@
 package config
 
 import (
+	"flag"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -8,10 +10,11 @@ import (
 )
 
 type Config struct {
-	http     HttpConfig
-	postgres PostgresConfig
-	token    TokenConfig
-	oauth    OAuthConfig
+	http              HttpConfig
+	postgres          PostgresConfig
+	token             TokenConfig
+	oauth             OAuthConfig
+	UseMemoryDatabase bool
 }
 
 const projectName = "go-lasvistas_api"
@@ -29,6 +32,13 @@ func loadDotEnv() error {
 }
 
 func NewConfig() (Config, error) {
+	// determine whether to use in-memory database
+	useMemoryDatabase := flag.Bool("memory", false, "if present, an in-memory database will be used")
+	if useMemoryDatabase == nil {
+		useMemoryDatabase = util.ToPtr(false)
+	}
+	flag.Parse()
+
 	err := loadDotEnv()
 	if err != nil {
 		log.Warn().Msgf("config: .env file not found: %v", err)
@@ -45,10 +55,11 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		http:     httpConfig,
-		postgres: newPostgresConfig(),
-		token:    newTokenConfig(),
-		oauth:    oauthConfig,
+		http:              httpConfig,
+		postgres:          newPostgresConfig(),
+		token:             newTokenConfig(),
+		oauth:             oauthConfig,
+		UseMemoryDatabase: *useMemoryDatabase,
 	}, nil
 }
 
