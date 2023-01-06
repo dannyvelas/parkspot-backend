@@ -208,7 +208,6 @@ def csv_out_row_to_resident(row: List[str]) -> Resident:
 
 
 class Permit:
-    id: int
     resident_id: str
     car_id: str
     license_plate: str
@@ -221,8 +220,7 @@ class Permit:
     affects_days: bool
     exception_reason: Union[str, None]
 
-    def __init__(self, id: int, resident_id: str, car_id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None], start_ts: int, end_ts: int, request_ts: Union[int, None], affects_days: bool, exception_reason: Union[str, None]):
-        self.id = id
+    def __init__(self, resident_id: str, car_id: str, license_plate: str, color: str, make: Union[str, None], model: Union[str, None], start_ts: int, end_ts: int, request_ts: Union[int, None], affects_days: bool, exception_reason: Union[str, None]):
         self.resident_id = resident_id
         self.car_id = car_id
         self.license_plate = license_plate
@@ -238,9 +236,8 @@ class Permit:
     def as_sql(self) -> str:
         escaped_reason = self.exception_reason.replace(
             "'", "''") if self.exception_reason else None
-        return (f"INSERT INTO permit(id, resident_id, car_id, license_plate, color, make, model, start_ts, end_ts, request_ts, affects_days, exception_reason) VALUES"
-                f"( {self.id}"
-                f", '{self.resident_id}'"
+        return (f"INSERT INTO permit(resident_id, car_id, license_plate, color, make, model, start_ts, end_ts, request_ts, affects_days, exception_reason) VALUES"
+                f"( '{self.resident_id}'"
                 f", '{self.car_id}'"
                 f", '{self.license_plate}'"
                 f", '{self.color}'"
@@ -254,8 +251,7 @@ class Permit:
 
     def as_csv(self) -> str:
         return (
-            f"{self.id}"
-            f"\t{self.resident_id}"
+            f"{self.resident_id}"
             f"\t{self.car_id}"
             f"\t{self.license_plate}"
             f"\t{self.color}"
@@ -271,22 +267,21 @@ class Permit:
 
 def row_to_permit(row: List[str]) -> Permit:
     return Permit(
-        id=int(row[0]),
-        resident_id=row[1],
-        car_id=row[2],
-        license_plate=row[3],
-        color=row[4],
-        make=row[5],
-        model=row[6],
-        start_ts=int(row[7]),
-        end_ts=int(row[8]),
-        request_ts=int(row[9]) if row[9] != '' else None,
-        affects_days=row[10] == 'True',
-        exception_reason=row[11]
+        resident_id=row[0],
+        car_id=row[1],
+        license_plate=row[2],
+        color=row[3],
+        make=row[4],
+        model=row[5],
+        start_ts=int(row[6]),
+        end_ts=int(row[7]),
+        request_ts=int(row[8]) if row[8] != '' else None,
+        affects_days=row[9] == 'True',
+        exception_reason=row[10]
     )
 
 
-def get_rand_permit(i: int, resident_id: str, car: Car) -> Permit:
+def get_rand_permit(resident_id: str, car: Car) -> Permit:
     def get_rand_sentance() -> str:
         with open('./scripts/gen/csv_in/sentances.csv', 'r') as in_file:
             random_line = next(in_file)
@@ -299,7 +294,6 @@ def get_rand_permit(i: int, resident_id: str, car: Car) -> Permit:
     request_ts = start_ts - random.randrange(0, 259200)
 
     return Permit(
-        i,
         resident_id,
         car.id,
         car.license_plate,
@@ -319,7 +313,8 @@ def get_rand_permit(i: int, resident_id: str, car: Car) -> Permit:
 
 
 class Visitor:
-    def __init__(self, resident_id: str, first_name: str, last_name: str, relationship: str, access_start: int, access_end: int):
+    def __init__(self, id: str, resident_id: str, first_name: str, last_name: str, relationship: str, access_start: int, access_end: int):
+        self.id = id
         self.resident_id = resident_id
         self.first_name = first_name
         self.last_name = last_name
@@ -328,8 +323,9 @@ class Visitor:
         self.access_end = access_end
 
     def as_sql(self) -> str:
-        return (f"INSERT INTO visitor(resident_id, first_name, last_name, relationship, access_start, access_end) VALUES"
-                f"( '{self.resident_id}'"
+        return (f"INSERT INTO visitor(id, resident_id, first_name, last_name, relationship, access_start, access_end) VALUES"
+                f"( '{self.id}'"
+                f", '{self.resident_id}'"
                 f", '{self.first_name}'"
                 f", '{self.last_name}'"
                 f", '{self.relationship}'"
@@ -340,7 +336,8 @@ class Visitor:
 
     def as_csv(self) -> str:
         return (
-            f"{self.resident_id}"
+            f"{self.id}"
+            f"\t{self.resident_id}"
             f"\t{self.first_name}"
             f"\t{self.last_name}"
             f"\t{self.relationship}"
@@ -355,6 +352,7 @@ def get_rand_visitor(resident_id: str) -> Visitor:
     split_line = line.split('\t')
 
     return Visitor(
+        id=str(uuid.UUID(int=random.getrandbits(128), version=4)),
         resident_id=resident_id,
         first_name=split_line[0],
         last_name=split_line[1],
@@ -367,12 +365,13 @@ def get_rand_visitor(resident_id: str) -> Visitor:
 
 def row_to_visitor(row: List[str]) -> Visitor:
     return Visitor(
-        resident_id=row[0],
-        first_name=row[1],
-        last_name=row[2],
-        relationship=row[3],
-        access_start=int(row[4]),
-        access_end=int(row[5])
+        id=row[0],
+        resident_id=row[1],
+        first_name=row[2],
+        last_name=row[3],
+        relationship=row[4],
+        access_start=int(row[5]),
+        access_end=int(row[6])
     )
 
 ########################################
@@ -396,7 +395,6 @@ if __name__ == '__main__':
         def csv_out_file_name(
             model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
 
-        amt_permits = 0
         with open(csv_out_file_name('resident'), 'w') as r_file_out:
             with open(csv_out_file_name('car'), 'w') as c_file_out:
                 with open(csv_out_file_name('visitor'), 'w') as v_file_out:
@@ -426,10 +424,9 @@ if __name__ == '__main__':
                                 for car in cars:
                                     for _ in range(random.randrange(5)):
                                         permit = get_rand_permit(
-                                            amt_permits + 1, resident.id, car)
+                                            resident.id, car)
                                         p_file_out.write(
                                             f'{permit.as_csv()}\n')
-                                        amt_permits += 1
 
     elif file_out == 'migration':
         def migration_in_file_name(
@@ -462,9 +459,6 @@ if __name__ == '__main__':
                         file_out.write(f'{permit.as_sql()}\n')
 
                         amt_rows += 1
-
-                    file_out.write(
-                        f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
 
             with open(migration_in_file_name('visitor'), 'r') as file_in:
                 with open(migration_out_file_name(6, 'visitor'), 'w') as file_out:
