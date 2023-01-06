@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -34,9 +33,6 @@ func loadDotEnv() error {
 func NewConfig() (Config, error) {
 	// determine whether to use in-memory database
 	useMemoryDatabase := flag.Bool("memory", false, "if present, an in-memory database will be used")
-	if useMemoryDatabase == nil {
-		useMemoryDatabase = util.ToPtr(false)
-	}
 	flag.Parse()
 
 	err := loadDotEnv()
