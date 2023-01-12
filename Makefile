@@ -20,6 +20,10 @@ test_storage:
 run: build
 	$(EXEC)
 
+.PHONY: run_memory
+run_memory: build
+	$(EXEC) -memory
+
 .PHONY: clean
 clean:
 	rm -rf bin/
