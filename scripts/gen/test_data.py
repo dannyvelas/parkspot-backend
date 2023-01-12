@@ -450,30 +450,30 @@ if __name__ == '__main__':
                     resident = csv_out_row_to_resident(row)
                     file_out.write(f'{resident.as_sql()}\n')
 
-            with open(migration_in_file_name('car'), 'r') as file_in:
-                with open(migration_out_file_name(4, 'car'), 'w') as file_out:
-                    reader = csv.reader(file_in, delimiter='\t')
-                    for _, row in enumerate(reader):
-                        car = row_to_car(row)
-                        file_out.write(f'{car.as_sql()}\n')
+        with open(migration_in_file_name('car'), 'r') as file_in:
+            with open(migration_out_file_name(4, 'car'), 'w') as file_out:
+                reader = csv.reader(file_in, delimiter='\t')
+                for _, row in enumerate(reader):
+                    car = row_to_car(row)
+                    file_out.write(f'{car.as_sql()}\n')
 
-            with open(migration_in_file_name('permit'), 'r') as file_in:
-                with open(migration_out_file_name(5, 'permit'), 'w') as file_out:
-                    reader = csv.reader(file_in, delimiter='\t')
+        with open(migration_in_file_name('permit'), 'r') as file_in:
+            with open(migration_out_file_name(5, 'permit'), 'w') as file_out:
+                reader = csv.reader(file_in, delimiter='\t')
 
-                    amt_rows = 0
-                    for _, row in enumerate(reader):
-                        permit = row_to_permit(row)
-                        file_out.write(f'{permit.as_sql()}\n')
+                amt_rows = 0
+                for _, row in enumerate(reader):
+                    permit = row_to_permit(row)
+                    file_out.write(f'{permit.as_sql()}\n')
 
-                        amt_rows += 1
+                    amt_rows += 1
 
-                    file_out.write(
-                        f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
+                file_out.write(
+                    f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
 
-            with open(migration_in_file_name('visitor'), 'r') as file_in:
-                with open(migration_out_file_name(6, 'visitor'), 'w') as file_out:
-                    reader = csv.reader(file_in, delimiter='\t')
-                    for _, row in enumerate(reader):
-                        visitor = row_to_visitor(row)
-                        file_out.write(f'{visitor.as_sql()}\n')
+        with open(migration_in_file_name('visitor'), 'r') as file_in:
+            with open(migration_out_file_name(6, 'visitor'), 'w') as file_out:
+                reader = csv.reader(file_in, delimiter='\t')
+                for _, row in enumerate(reader):
+                    visitor = row_to_visitor(row)
+                    file_out.write(f'{visitor.as_sql()}\n')
