@@ -32,7 +32,7 @@ func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int,
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting permits from permit repo: %v", err)
 	}
 
-	totalAmount, err := s.permitRepo.GetCount(permitFilter, residentID)
+	totalAmount, err := s.permitRepo.GetCount(permitFilter, residentID, search)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting total amount from permit repo: %v", err)
 	}
