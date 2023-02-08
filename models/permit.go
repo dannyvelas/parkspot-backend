@@ -18,7 +18,7 @@ type Permit struct {
 	EndDate         time.Time `json:"endDate"`
 	RequestTS       int64     `json:"requestTS"` // int64: type used by time package for unix time
 	AffectsDays     bool      `json:"affectsDays"`
-	ExceptionReason string    `json:"exceptionReason"`
+	ExceptionReason string    `json:"exceptionReason,omitempty"`
 }
 
 func NewPermit(
