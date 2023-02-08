@@ -28,10 +28,10 @@ def nullable_to_csv(value: Union[T, None]) -> str:
 
 
 def get_rand_tss() -> Tuple[int, int]:
-    year = 2022
-    month = 8
+    year = 2023
+    month = 2
 
-    rand_month = month + random.randrange(-2, 3)
+    rand_month = month + random.randrange(-1, 3)
 
     rand_day = random.randrange(1, 29)
 
