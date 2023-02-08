@@ -11,16 +11,10 @@ import (
 	"time"
 )
 
-type PermitRepo struct {
-	database     Database
-	permitSelect squirrel.SelectBuilder
-	filterToSQL  map[models.PermitFilter]squirrel.Sqlizer
-	permitASC    string
-	permitDESC   string
-}
+var (
+	stmtBuilder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-func NewPermitRepo(database Database) PermitRepo {
-	permitSelect := squirrel.Select(
+	permitSelect = stmtBuilder.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
 		"permit.car_id",
@@ -35,7 +29,7 @@ func NewPermitRepo(database Database) PermitRepo {
 		"permit.exception_reason",
 	).From("permit")
 
-	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
+	filterToSQL = map[models.PermitFilter]squirrel.Sqlizer{
 		models.ActivePermits: squirrel.And{
 			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
 			squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
@@ -47,15 +41,17 @@ func NewPermitRepo(database Database) PermitRepo {
 		},
 	}
 
-	permitASC := "permit.id ASC"
-	permitDESC := "permit.id DESC"
+	permitASC  = "permit.id ASC"
+	permitDESC = "permit.id DESC"
+)
 
+type PermitRepo struct {
+	database Database
+}
+
+func NewPermitRepo(database Database) PermitRepo {
 	return PermitRepo{
-		database:     database,
-		permitSelect: permitSelect,
-		filterToSQL:  filterToSQL,
-		permitASC:    permitASC,
-		permitDESC:   permitDESC,
+		database: database,
 	}
 }
 
@@ -71,31 +67,23 @@ func (permitRepo PermitRepo) Get(
 		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be smaller than zero", errs.DBInvalidArg)
 	}
 
-	permitSelect := permitRepo.permitSelect
-	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
+	permitSelect := permitSelect // deep copy global variable to avoid mutating it
+	if whereSQL, ok := filterToSQL[filter]; ok {
 		permitSelect = permitSelect.Where(whereSQL)
 	}
 
 	if residentID != "" {
-		permitSelect = permitSelect.Where("permit.resident_id = $1", residentID)
+		permitSelect = permitSelect.Where("permit.resident_id = ?", residentID)
 	}
 
 	if search != "" {
-		permitSelect = permitSelect.
-			Where(squirrel.Or{
-				squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = $1", strings.ToLower(search)),
-				squirrel.Expr("LOWER(permit.resident_id) = $1"),
-				squirrel.Expr("LOWER(car.license_plate) = $1"),
-				squirrel.Expr("LOWER(car.color) = $1"),
-				squirrel.Expr("LOWER(car.make) = $1"),
-				squirrel.Expr("LOWER(car.model) = $1"),
-			})
+		permitSelect = permitSelect.Where(permitRepo.cellEquals(search))
 	}
 
 	if !reversed {
-		permitSelect = permitSelect.OrderBy(permitRepo.permitASC)
+		permitSelect = permitSelect.OrderBy(permitASC)
 	} else {
-		permitSelect = permitSelect.OrderBy(permitRepo.permitDESC)
+		permitSelect = permitSelect.OrderBy(permitDESC)
 	}
 
 	query, args, err := permitSelect.
@@ -109,20 +97,24 @@ func (permitRepo PermitRepo) Get(
 	permits := permitSlice{}
 	err = permitRepo.database.driver.Select(&permits, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("permit_repo.Get: %w: %v. %s. %v", errs.DBQuery, err, query, args)
 	}
 
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) GetCount(filter models.PermitFilter, residentID string) (int, error) {
-	countSelect := squirrel.Select("count(*)").From("permit")
-	if whereSQL, ok := permitRepo.filterToSQL[filter]; ok {
+func (permitRepo PermitRepo) GetCount(filter models.PermitFilter, residentID, search string) (int, error) {
+	countSelect := stmtBuilder.Select("count(*)").From("permit")
+	if whereSQL, ok := filterToSQL[filter]; ok {
 		countSelect = countSelect.Where(whereSQL)
 	}
 
 	if residentID != "" {
-		countSelect = countSelect.Where("permit.resident_id = $1", residentID)
+		countSelect = countSelect.Where("permit.resident_id = ?", residentID)
+	}
+
+	if search != "" {
+		countSelect = countSelect.Where(permitRepo.cellEquals(search))
 	}
 
 	query, args, err := countSelect.ToSql()
@@ -144,7 +136,7 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
-	query, args, err := permitRepo.permitSelect.Where("permit.id = $1", id).ToSql()
+	query, args, err := permitSelect.Where("permit.id = $1", id).ToSql()
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -168,8 +160,7 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 		nullableReason = sql.NullString{String: desiredPermit.ExceptionReason, Valid: true}
 	}
 
-	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-	query, args, err := sq.
+	query, args, err := stmtBuilder.
 		Insert("permit").
 		SetMap(squirrel.Eq{
 			"resident_id":      desiredPermit.ResidentID,
@@ -200,11 +191,11 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 }
 
 func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDate time.Time) ([]models.Permit, error) {
-	query, args, err := permitRepo.permitSelect.
+	query, args, err := permitSelect.
 		Where("car_id = $1", carID).
 		Where("permit.start_ts <= $2", endDate.Unix()).
 		Where("permit.end_ts >= $3", startDate.Unix()).
-		OrderBy(permitRepo.permitASC).
+		OrderBy(permitASC).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActiveOfCarDuring: %w: %v", errs.DBBuildingQuery, err)
@@ -224,11 +215,11 @@ func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startD
 		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
-	query, args, err := permitRepo.permitSelect.
+	query, args, err := permitSelect.
 		Where("permit.resident_id = $1", residentID).
 		Where("permit.start_ts <= $2", endDate.Unix()).
 		Where("permit.end_ts >= $3", startDate.Unix()).
-		OrderBy(permitRepo.permitASC).
+		OrderBy(permitASC).
 		ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: %v", errs.DBBuildingQuery, err)
@@ -261,4 +252,17 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	}
 
 	return nil
+}
+
+// helpers
+func (permitRepo PermitRepo) cellEquals(query string) squirrel.Sqlizer {
+	lcQuery := strings.ToLower(query)
+	return squirrel.Or{
+		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),
+		squirrel.Expr("LOWER(permit.resident_id) = ?", lcQuery),
+		squirrel.Expr("LOWER(permit.license_plate) = ?", lcQuery),
+		squirrel.Expr("LOWER(permit.color) = ?", lcQuery),
+		squirrel.Expr("LOWER(permit.make) = ?", lcQuery),
+		squirrel.Expr("LOWER(permit.model) = ?", lcQuery),
+	}
 }
