@@ -17,10 +17,13 @@ type App struct {
 }
 
 func NewApp(c config.Config) (App, error) {
-	database, err := getDatabase(c)
+	// connect to database
+	// no defer close() because connection closes automatically on program exit
+	database, err := storage.NewPostgresDatabase(c.Postgres())
 	if err != nil {
-		return App{}, fmt.Errorf("error getting database: %v", err)
+		return App{}, fmt.Errorf("Failed to start database: %v", err)
 	}
+	log.Info().Msg("Connected to Database.")
 
 	// repos
 	adminRepo := storage.NewAdminRepo(database)
@@ -45,18 +48,4 @@ func NewApp(c config.Config) (App, error) {
 		CarService:      carService,
 		PermitService:   permitService,
 	}, nil
-}
-
-func getDatabase(c config.Config) (database storage.Database, err error) {
-	if c.UseMemoryDatabase {
-		database, err = storage.NewMemoryDatabase()
-	} else {
-		database, err = storage.NewPostgresDatabase(c.Postgres())
-	}
-	if err != nil {
-		return database, fmt.Errorf("Failed to start database: %v", err)
-	}
-	log.Info().Msg("Connected to Database.")
-
-	return database, err
 }
