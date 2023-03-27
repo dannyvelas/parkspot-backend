@@ -36,7 +36,7 @@ var (
 		},
 		models.ExceptionPermits: squirrel.Expr("permit.exception_reason IS NOT NULL"),
 		models.ExpiredPermits: squirrel.And{
-			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * $1))", config.DefaultExpiredWindow),
+			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * ?))", config.DefaultExpiredWindow),
 			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
 		},
 	}
