@@ -24,7 +24,7 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 	}
 }
 
-func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search string, residentID string) (models.ListWithMetadata[models.Permit], error) {
+func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
 	allPermits, err := s.permitRepo.Get(permitFilter, residentID, boundedLimit, offset, reversed, search)
@@ -91,8 +91,8 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
 	}
 
-	if apiErr := s.validateCreation(desiredPermit, existingResident, existingCar); apiErr != nil {
-		return models.Permit{}, apiErr
+	if err := s.validateCreation(desiredPermit, existingResident, existingCar); err != nil {
+		return models.Permit{}, err
 	}
 
 	// get a snapshot of the car being used and save it into the permit
@@ -111,8 +111,8 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 }
 
 func (s PermitService) validateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
-	if apiErr := desiredPermit.ValidateCreation(); apiErr != nil {
-		return apiErr
+	if err := desiredPermit.ValidateCreation(); err != nil {
+		return err
 	}
 
 	// error out if car has active permits during dates requested

@@ -65,8 +65,8 @@ func (s ResidentService) Delete(id string) error {
 }
 
 func (s ResidentService) Create(desiredRes models.Resident) error {
-	if apiErr := desiredRes.ValidateCreation(); apiErr != nil {
-		return apiErr
+	if err := desiredRes.ValidateCreation(); err != nil {
+		return err
 	}
 
 	if _, err := s.residentRepo.GetOne(desiredRes.ID); err == nil {
