@@ -62,7 +62,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		r.Group(func(anyoneRouter chi.Router) {
 			anyoneRouter.Post("/login", authHandler.login())
 			anyoneRouter.Post("/logout", authHandler.logout())
-			anyoneRouter.Post("/refresh-tokens", authHandler.refreshTokens())
+			anyoneRouter.Post("/refresh-tokens", authHandler.refreshTokens()) // needs to be here instead of userRouter. this is because user-router checks access tokens and an access token might be expired when this is called
 			anyoneRouter.Post("/password-reset-email", authHandler.sendResetPasswordEmail())
 		})
 
