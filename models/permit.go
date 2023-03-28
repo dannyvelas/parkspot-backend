@@ -93,6 +93,18 @@ func (m Permit) ValidateCreation() *errs.ApiErr {
 	return nil
 }
 
+func (m Permit) ValidateEdit() *errs.ApiErr {
+	if m.LicensePlate == "" && m.Color == "" && m.Make == "" && m.Model == "" {
+		return errs.EmptyFields("licensePlate, color, make, model")
+	}
+
+	if errors := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
+		return errs.InvalidFields(strings.Join(errors, ". "))
+	}
+
+	return nil
+}
+
 func (m Permit) emptyFields() *errs.ApiErr {
 	emptyFields := []string{}
 
@@ -101,6 +113,18 @@ func (m Permit) emptyFields() *errs.ApiErr {
 	}
 	if m.CarID == "" {
 		emptyFields = append(emptyFields, "carID")
+	}
+	if m.LicensePlate == "" {
+		emptyFields = append(emptyFields, "licensePlate")
+	}
+	if m.Color == "" {
+		emptyFields = append(emptyFields, "color")
+	}
+	if m.Make == "" {
+		emptyFields = append(emptyFields, "make")
+	}
+	if m.Model == "" {
+		emptyFields = append(emptyFields, "model")
 	}
 	if m.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "startDate")
@@ -124,11 +148,12 @@ func (m Permit) invalidFields() *errs.ApiErr {
 	} else if err := IsResidentID(m.ResidentID); err != nil {
 		errors = append(errors, err.Error())
 	}
-
+	if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
+		errors = append(errors, lpColorMakeModelErrs...)
+	}
 	if m.StartDate.After(m.EndDate) {
 		errors = append(errors, "startDate cannot be after endDate")
 	}
-
 	if m.StartDate.Equal(m.EndDate) {
 		errors = append(errors, "startDate cannot be equal to endDate")
 	}

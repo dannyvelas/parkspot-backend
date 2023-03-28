@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
-	"regexp"
 	"strings"
 )
 
@@ -53,7 +52,7 @@ func (m Car) ValidateEdit() *errs.ApiErr {
 		return errs.EmptyFields("licensePlate, color, make, model")
 	}
 
-	if errors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
+	if errors := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
 		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
@@ -104,14 +103,8 @@ func (m Car) invalidFields() *errs.ApiErr {
 	if err := IsResidentID(m.ResidentID); err != nil {
 		errors = append(errors, err.Error())
 	}
-	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(m.LicensePlate) {
-		errors = append(errors, "licensePlate can only be letters or numbers")
-	}
-	if len(m.LicensePlate) > 8 {
-		errors = append(errors, "licensePlate can be maximum 8 characters")
-	}
-	if colorMakeModelErrors := getColorMakeModelErrors(m.Color, m.Make, m.Model); len(errors) != 0 {
-		errors = append(errors, colorMakeModelErrors...)
+	if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
+		errors = append(errors, lpColorMakeModelErrs...)
 	}
 
 	if len(errors) > 0 {

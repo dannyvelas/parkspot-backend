@@ -91,16 +91,16 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
 	}
 
-	if err := s.validateCreation(desiredPermit, existingResident, existingCar); err != nil {
-		return models.Permit{}, err
-	}
-
 	// get a snapshot of the car being used and save it into the permit
 	desiredPermit.LicensePlate = existingCar.LicensePlate
 	desiredPermit.Color = existingCar.Color
 	desiredPermit.Make = existingCar.Make
 	desiredPermit.Model = existingCar.Model
 	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*existingResident.UnlimDays
+
+	if err := s.validateCreation(desiredPermit, existingResident, existingCar); err != nil {
+		return models.Permit{}, err
+	}
 
 	createdPermit, err := s.create(desiredPermit)
 	if err != nil {
