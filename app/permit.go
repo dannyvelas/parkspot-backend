@@ -189,3 +189,21 @@ func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error
 
 	return newPermit, nil
 }
+
+func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error) {
+	if err := updatedFields.ValidateEdit(); err != nil {
+		return models.Permit{}, err
+	}
+
+	err := s.permitRepo.Update(updatedFields)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error updating permit from permitRepo: %w", err)
+	}
+
+	permit, err := s.permitRepo.GetOne(updatedFields.ID)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error getting permit from permitRepo: %w", err)
+	}
+
+	return permit, nil
+}

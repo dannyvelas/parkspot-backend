@@ -116,3 +116,21 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 		respondJSON(w, http.StatusOK, message{"Successfully deleted permit"})
 	}
 }
+
+func (h permitHandler) edit() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var editPermitReq models.Permit
+		if err := json.NewDecoder(r.Body).Decode(&editPermitReq); err != nil {
+			respondError(w, errs.Malformed("EditPermitReq"))
+			return
+		}
+
+		permit, err := h.permitService.Update(editPermitReq)
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, permit)
+	}
+}
