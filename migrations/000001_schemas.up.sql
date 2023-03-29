@@ -1,3 +1,7 @@
+BEGIN;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS admin(
   id TEXT PRIMARY KEY UNIQUE NOT NULL,
   first_name TEXT NOT NULL,
@@ -21,7 +25,7 @@ CREATE TABLE IF NOT EXISTS resident(
 );
 
 CREATE TABLE IF NOT EXISTS car(
-  id UUID PRIMARY KEY UNIQUE NOT NULL,
+  id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
   resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
   license_plate VARCHAR(10) UNIQUE NOT NULL,
   color TEXT NOT NULL,
@@ -48,12 +52,15 @@ CREATE TABLE IF NOT EXISTS permit(
   exception_reason TEXT
 );
 
+CREATE TYPE relationship AS ENUM('fam/fri', 'contractor');
 CREATE TABLE IF NOT EXISTS visitor(
-  id UUID PRIMARY KEY UNIQUE NOT NULL,
+  id UUID PRIMARY KEY UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
   resident_id CHAR(8) REFERENCES resident(id) ON DELETE CASCADE NOT NULL,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
-  relationship TEXT NOT NULL,
+  relationship relationship NOT NULL,
   access_start BIGINT NOT NULL,
   access_end BIGINT NOT NULL
 );
+
+COMMIT;
