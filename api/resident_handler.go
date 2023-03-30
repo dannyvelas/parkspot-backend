@@ -56,19 +56,13 @@ func (h residentHandler) getOne() http.HandlerFunc {
 
 func (h residentHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if err := models.IsResidentID(id); err != nil {
-			respondError(w, errs.BadRequest(err.Error()))
-			return
-		}
-
 		var editResidentReq models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
 			respondError(w, errs.Malformed("EditResidentReq"))
 			return
 		}
 
-		resident, err := h.residentService.Update(id, editResidentReq)
+		resident, err := h.residentService.Update(editResidentReq)
 		if err != nil {
 			respondError(w, err)
 			return

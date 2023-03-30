@@ -202,11 +202,7 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Update(id string, model models.Resident) error {
-	if id == "" {
-		return fmt.Errorf("resident_repo.Update: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
+func (residentRepo ResidentRepo) Update(model models.Resident) error {
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	residentUpdate := squirrel.Update("resident")
 
@@ -235,7 +231,7 @@ func (residentRepo ResidentRepo) Update(id string, model models.Resident) error 
 		residentUpdate = residentUpdate.Set("token_version", model.TokenVersion)
 	}
 
-	query, args, err := residentUpdate.Where("resident.id = ?", id).ToSql()
+	query, args, err := residentUpdate.Where("resident.id = ?", model.ID).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}

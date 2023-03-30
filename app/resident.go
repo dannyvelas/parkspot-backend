@@ -46,13 +46,13 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 	return s.removeHash(resident), nil
 }
 
-func (s ResidentService) Update(id string, desiredResident models.Resident) (models.Resident, error) {
-	err := s.residentRepo.Update(id, desiredResident)
+func (s ResidentService) Update(desiredResident models.Resident) (models.Resident, error) {
+	err := s.residentRepo.Update(desiredResident)
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %w", err)
 	}
 
-	resident, err := s.residentRepo.GetOne(id)
+	resident, err := s.residentRepo.GetOne(desiredResident.ID)
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %w", err)
 	}
