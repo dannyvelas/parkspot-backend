@@ -73,16 +73,15 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, erro
 func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-	updateMap := squirrel.Eq{
-		"resident_id":   desiredCar.ResidentID,
-		"license_plate": desiredCar.LicensePlate,
-		"color":         desiredCar.Color,
-		"make":          desiredCar.Make,
-		"model":         desiredCar.Model,
-	}
+	updateMap := make(squirrel.Eq)
 	if desiredCar.ID != "" {
 		updateMap["id"] = desiredCar.ID
 	}
+	updateMap["resident_id"] = desiredCar.ResidentID
+	updateMap["license_plate"] = desiredCar.LicensePlate
+	updateMap["color"] = desiredCar.Color
+	updateMap["make"] = desiredCar.Make
+	updateMap["model"] = desiredCar.Model
 
 	query, args, err := sq.
 		Insert("car").
