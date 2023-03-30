@@ -58,21 +58,11 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	}
 
 	tests := map[string]test{
-		"firstName": {
-			request: models.Resident{FirstName: "NEWFIRST"},
-		},
-		"firstName, lastName": {
-			request: models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"},
-		},
-		"firstName, lastName, phone": {
-			request: models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"},
-		},
-		"unlimDays": {
-			request: models.Resident{UnlimDays: util.ToPtr(true)},
-		},
-		"amtParkingDaysUsed": {
-			request: models.Resident{AmtParkingDaysUsed: util.ToPtr(42)},
-		},
+		"firstName":                  {request: models.Resident{ID: testResident.ID, FirstName: "NEWFIRST"}},
+		"firstName, lastName":        {request: models.Resident{ID: testResident.ID, FirstName: "NEWFIRST", LastName: "NEWLAST"}},
+		"firstName, lastName, phone": {request: models.Resident{ID: testResident.ID, FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"}},
+		"unlimDays":                  {request: models.Resident{ID: testResident.ID, UnlimDays: util.ToPtr(true)}},
+		"amtParkingDaysUsed":         {request: models.Resident{ID: testResident.ID, AmtParkingDaysUsed: util.ToPtr(42)}},
 	}
 	for testName, test_ := range tests {
 		expected := test_.request
@@ -84,7 +74,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 	}
 
 	executeTest := func(test test) error {
-		endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.ID)
+		endpoint := fmt.Sprintf("%s/api/resident", suite.testServer.URL)
 		residentResp, err := authenticatedReq[models.Resident, models.Resident]("PUT", endpoint, suite.adminJWT, &test.request)
 		if err != nil {
 			return fmt.Errorf("Error making request: %v", err)
@@ -118,9 +108,9 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 }
 
 func (suite residentRouterSuite) TestEdit_ResidentDNE_Negative() {
-	request := models.Resident{FirstName: "NEWFIRST"}
+	request := models.Resident{ID: testResident.ID, FirstName: "NEWFIRST"}
 
-	endpoint := fmt.Sprintf("%s/api/resident/%s", suite.testServer.URL, testResident.ID)
+	endpoint := fmt.Sprintf("%s/api/resident", suite.testServer.URL)
 	_, err := authenticatedReq[models.Resident, models.Resident]("PUT", endpoint, suite.adminJWT, &request)
 	if err == nil {
 		suite.NoError(fmt.Errorf("No error encountered when editing a non-existing resident"))
