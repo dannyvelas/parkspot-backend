@@ -33,3 +33,7 @@ func Malformed(payload string) *ApiErr {
 func AlreadyExists(resource string) *ApiErr {
 	return NewApiErr(http.StatusBadRequest, resource+" already exists")
 }
+
+func AllEditFieldsEmpty(fields string) *ApiErr {
+	return NewApiErr(http.StatusBadRequest, fmt.Sprintf("All edit fields (%s) cannot be empty", fields))
+}
