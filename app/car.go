@@ -30,7 +30,7 @@ func (s CarService) Delete(id string) error {
 	return s.carRepo.Delete(id)
 }
 
-func (s CarService) Update(id string, updatedFields models.Car) (models.Car, error) {
+func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	if err := updatedFields.ValidateEdit(); err != nil {
 		return models.Car{}, err
 	}
@@ -44,12 +44,12 @@ func (s CarService) Update(id string, updatedFields models.Car) (models.Car, err
 		}
 	}
 
-	err := s.carRepo.Update(id, updatedFields)
+	err := s.carRepo.Update(updatedFields)
 	if err != nil {
 		return models.Car{}, fmt.Errorf("error updating car from carRepo: %w", err)
 	}
 
-	car, err := s.carRepo.GetOne(id)
+	car, err := s.carRepo.GetOne(updatedFields.ID)
 	if err != nil {
 		return models.Car{}, fmt.Errorf("error getting car from carRepo: %w", err)
 	}

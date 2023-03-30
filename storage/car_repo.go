@@ -72,15 +72,21 @@ func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, erro
 
 func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	updateMap := squirrel.Eq{
+		"resident_id":   desiredCar.ResidentID,
+		"license_plate": desiredCar.LicensePlate,
+		"color":         desiredCar.Color,
+		"make":          desiredCar.Make,
+		"model":         desiredCar.Model,
+	}
+	if desiredCar.ID != "" {
+		updateMap["id"] = desiredCar.ID
+	}
+
 	query, args, err := sq.
 		Insert("car").
-		SetMap(squirrel.Eq{
-			"resident_id":   desiredCar.ResidentID,
-			"license_plate": desiredCar.LicensePlate,
-			"color":         desiredCar.Color,
-			"make":          desiredCar.Make,
-			"model":         desiredCar.Model,
-		}).
+		SetMap(updateMap).
 		Suffix("RETURNING id").
 		ToSql()
 	if err != nil {
@@ -110,8 +116,7 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	return nil
 }
 
-func (carRepo CarRepo) Update(id string, editCar models.Car) error {
-	// assume id and editCar have already been checked for emptyness
+func (carRepo CarRepo) Update(editCar models.Car) error {
 	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	carUpdate := squirrel.Update("car")
 
@@ -128,7 +133,7 @@ func (carRepo CarRepo) Update(id string, editCar models.Car) error {
 		carUpdate = carUpdate.Set("model", editCar.Model)
 	}
 
-	query, args, err := carUpdate.Where("car.id = ?", id).ToSql()
+	query, args, err := carUpdate.Where("car.id = ?", editCar.ID).ToSql()
 	if err != nil {
 		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}

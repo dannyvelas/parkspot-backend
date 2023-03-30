@@ -40,19 +40,13 @@ func (h carHandler) getOne() http.HandlerFunc {
 
 func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if !util.IsUUIDV4(id) {
-			respondError(w, errs.BadRequest("id parameter is not a UUID"))
-			return
-		}
-
 		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
 			respondError(w, errs.Malformed("EditCarReq"))
 			return
 		}
 
-		car, err := h.carService.Update(id, editCarReq)
+		car, err := h.carService.Update(editCarReq)
 		if err != nil {
 			respondError(w, err)
 			return
