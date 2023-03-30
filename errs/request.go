@@ -6,8 +6,10 @@ import (
 )
 
 var (
-	Unauthorized = NewApiErr(http.StatusUnauthorized, "unauthorized")
-	NotFound     = NewApiErr(http.StatusNotFound, "not found")
+	Unauthorized   = NewApiErr(http.StatusUnauthorized, "unauthorized")
+	NotFound       = NewApiErr(http.StatusNotFound, "not found")
+	MissingIDField = NewApiErr(http.StatusBadRequest, "ID field is required but missing")
+	IDNotUUID      = NewApiErr(http.StatusBadRequest, "ID field is not a UUID")
 )
 
 func BadRequest(message string) *ApiErr {
