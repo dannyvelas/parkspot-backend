@@ -12,8 +12,6 @@ import (
 )
 
 var (
-	stmtBuilder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
 	permitSelect = stmtBuilder.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
