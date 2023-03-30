@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"regexp"
 	"strings"
@@ -143,7 +142,7 @@ func (m Resident) invalidFields() *errs.ApiErr {
 
 func IsResidentID(s string) error {
 	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(s) {
-		return errors.New("residentID must start be a 'B' or a 'T', followed by 7 numbers")
+		return errs.InvalidResID
 	}
 
 	return nil
