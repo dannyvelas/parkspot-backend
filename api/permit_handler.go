@@ -83,10 +83,19 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		if accessPayload.Role == models.ResidentRole && newPermitReq.ExceptionReason != "" {
-			message := "Residents cannot request parking permits with exceptions"
-			respondError(w, errs.BadRequest(message))
-			return
+		if accessPayload.Role == models.ResidentRole {
+			if newPermitReq.ExceptionReason != "" {
+				message := "Residents cannot request parking permits with exceptions"
+				respondError(w, errs.BadRequest(message))
+				return
+			}
+			if newPermitReq.ResidentID != "" && newPermitReq.ResidentID != accessPayload.ID {
+				respondError(w, errs.BadRequest("Residents cannot request a parking permit for another resident"))
+				return
+			}
+			if newPermitReq.ResidentID == "" {
+				newPermitReq.ResidentID = accessPayload.ID
+			}
 		}
 
 		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
