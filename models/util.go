@@ -7,7 +7,7 @@ import (
 func getLPColorMakeModelErrors(licensePlate, color, make, model string) []string {
 	errors := []string{}
 
-	if !regexp.MustCompile("^[A-Za-z0-9]+$").MatchString(licensePlate) {
+	if !regexp.MustCompile("^[A-Za-z0-9]*$").MatchString(licensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")
 	}
 	if len(licensePlate) > 8 {
