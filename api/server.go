@@ -75,7 +75,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			officeRouter.Delete("/resident/{id}", residentHandler.deleteOne())
 			officeRouter.Put("/resident", residentHandler.edit())
 			officeRouter.Get("/car/{id}", carHandler.getOne())
-			officeRouter.Put("/car", carHandler.edit())
+			officeRouter.Put("/permit", permitHandler.edit())
 		})
 
 		r.Group(func(userRouter chi.Router) {
@@ -89,6 +89,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			userRouter.Post("/permit", permitHandler.create())
 			userRouter.Get("/visitors", visitorHandler.getActive())
 			userRouter.Put("/user/password", authHandler.resetPassword())
+			userRouter.Put("/car", carHandler.edit())
 		})
 
 		r.Group(func(residentRouter chi.Router) {
