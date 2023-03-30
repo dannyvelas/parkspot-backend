@@ -25,3 +25,13 @@ func (car car) toModels() models.Car {
 		car.Model.String,
 		car.AmtParkingDaysUsed)
 }
+
+type carSlice []car
+
+func (cars carSlice) toModels() []models.Car {
+	modelsCars := make([]models.Car, 0, len(cars))
+	for _, car := range cars {
+		modelsCars = append(modelsCars, car.toModels())
+	}
+	return modelsCars
+}

@@ -70,3 +70,11 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	newCar := models.NewCar(carID, desiredCar.ResidentID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
 	return newCar, nil
 }
+
+func (s CarService) GetOfResident(residentID string) ([]models.Car, error) {
+	if err := models.IsResidentID(residentID); err != nil {
+		return nil, err
+	}
+
+	return s.carRepo.GetByResidentID(residentID)
+}

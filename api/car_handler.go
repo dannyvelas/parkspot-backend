@@ -55,3 +55,15 @@ func (h carHandler) edit() http.HandlerFunc {
 		respondJSON(w, http.StatusOK, car)
 	}
 }
+
+func (h carHandler) getOfResident() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cars, err := h.carService.GetOfResident(chi.URLParam(r, "id"))
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, cars)
+	}
+}

@@ -158,3 +158,20 @@ func (carRepo CarRepo) Delete(id string) error {
 
 	return nil
 }
+
+func (carRepo CarRepo) GetByResidentID(residentID string) ([]models.Car, error) {
+	query, args, err := carRepo.carSelect.Where("car.residentID = $1", residentID).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBBuildingQuery, err)
+	}
+
+	cars := carSlice{}
+	err = carRepo.database.driver.Select(&cars, query, args...)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NewNotFound("car"))
+	} else if err != nil {
+		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBQuery, err)
+	}
+
+	return cars.toModels(), nil
+}

@@ -90,6 +90,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			userRouter.Get("/visitors", visitorHandler.getActive())
 			userRouter.Put("/user/password", authHandler.resetPassword())
 			userRouter.Put("/car", carHandler.edit())
+			userRouter.Get("/resident/{id}/cars", carHandler.getOfResident())
 		})
 
 		r.Group(func(residentRouter chi.Router) {
