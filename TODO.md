@@ -65,21 +65,20 @@
 - [x] add resident edit/delete functionality
 - [x] make listWithMetadata not be generic. unnecessary. just use any. SOL: can't. i would have to convert each slice of structs to a slice of any to initialize listWithMetadata
 - [x] maybe use embedding for the LicensePlate, Color, Make, Model fields that Car and Permit share. WONT DO. ugly and not necessary since Permit won't need to re-use any functions that will be defined for Car (like checking for empty/invalid lp/color/make/model)
-- [ ] change UI so that permit requests require a pre-existing car
-- [ ] add check to make sure that contracts can't visit forever to sveltekit side
-- [ ] remove `<file_name>_<func>` error message convention. not sustainable
-- [ ] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
+- [x] remove `<file_name>_<func>` error message convention. not sustainable
+- [x] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
+- [x] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
+- [✗] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed` (wont do bc this should happen at service level not repo level)
+- [ ] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
+- [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
-- [ ] make sure that residents can't make an API request to create a permit for another person
 - [ ] make sure that residents can't make an API request to see someone elses permit
+- [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
 - [ ] add check that contractors can't stay until forever and can stay only for (x) days
-- [ ] change error messages for residents when they're creating a permit
+- [ ] increment token version on password reset
+- [ ] use a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
 - [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
-- [ ] make fatal test errors more informative
-- [ ] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
-- [ ] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed`
-- [ ] add check to make sure permit request start date is not in past
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
@@ -96,34 +95,26 @@
 - [x] think of a way to define the resident regex once
 - [✓] 500 errors come up when an account exists and the email is malformed. it would probably be better if the response was just: "if this account exists, password reset instructions have been sent to the email sent associated with this account". otherwise, a hacker could technically determine whether accounts exist 
 - [✓] do proper status checking in permit_router_test (not just suite.Equal(http.StatusOK, statusCode)) but an actual if check that returns the error response error message
-- [x] make a `/visitors` endpoint return all resident visitors if an admin made the query and only a resident's visitors, if that resident made the query. same goes for `permits/*`
-- [ ] make sure only residents can change their password (now that the reset password endpoint will be merged with the editResident endpoint)
-- [ ] increment token version on password reset
-- [ ] change the way that the code connects to postgres from being a bunch of variables to just being a DATABASE\_URL. (start using .env variable and add it to .env.example)
+- [✓] make a `/visitors` endpoint return all resident visitors if an admin made the query and only a resident's visitors, if that resident made the query. same goes for `permits/*`
+- [✓] change the way that the code connects to postgres from being a bunch of variables to just being a DATABASE\_URL. (start using .env variable and add it to .env.example)
+- [✓] maybe use an interface like { GetOne(), SetPasswordFor() } in the auth_router. this might be better than making if statements where one branch does admin.GetOne(...) and the other does resident.GetOne(...) with redundant error checking logic
+- [✓] remove constants from config files, just put them inline
+- [✓] remove NewPermitArgs NewCarArgs from models. i'd rather send the args individually from the router to the repo, than have a bunch of functions like permitReq.toNewPermitArgs(args...) or newPermitArgs.ToPermit(args..)
+- [✓] move all the business logic that routing funcs currently do into a new services package
+- [✗] remove `highestVersion` variable from migrator.go (wont do bc dne anymore)
+- [✗] make sure only residents can change their password (now that the reset password endpoint will be merged with the editResident endpoint) (wont do bc this isn't the case)
 - [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
-- [ ] start injecting a `sq` variable of type `StatementBuilderType` to every repo. this will be the variable used to create squirrel statements. this will be done instead of importing squirrel into every repo and using the default statement builder. the `sq` variable will be initialized like this:
-    `sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)`
-- [ ] remove constants from config files, just put them inline
-- [ ] maybe use an interface like { GetOne(), SetPasswordFor() } in the auth_router. this might be better than making if statements where one branch does admin.GetOne(...) and the other does resident.GetOne(...) with redundant error checking logic
-- [ ] add not authorized error message when a create permit payload has a residentID field that does not coincide with the id field of the JWT user payload, when that JWT payload has role === resident.
-- [ ] remove NewPermitArgs NewCarArgs from models. i'd rather send the args individually from the router to the repo, than have a bunch of functions like permitReq.toNewPermitArgs(args...) or newPermitArgs.ToPermit(args..)
-- [ ] remove "No error when" messages from repo_tests. unnecessary
 - [ ] add expiration JWT time to constants
 - [ ] make python script also generate down migration file 
 - [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
-- [ ] remove `highestVersion` variable from migrator.go
-- [ ] add warning when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
-- [ ] move all the business logic that routing funcs currently do into a new services package
-- [ ] remove \_repo\* tests. we can test the same functionality from the routers
-- [ ] use validator
-- [ ] share existingCreateCar variable between both permit_repo_test and car_repo_test
-- [ ] permit_router: put list of permits that are active during the create permit start/end date range when len(activePermitsDuring) != 0 in error message
+- [ ] add logging when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
+- [ ] explore using validator
 ## Testing
+- [✓] add test that resident can have two active permits at one time, but no more
 - [ ] add test to make sure residents can't create exception permits
+- [ ] add test to make sure that residents can't make an API request to create a permit for another person
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
 - [ ] add test to make sure that a permit from today to tomorrow is counted as active today
-- [ ] add test that resident can have two active permits at one time, but no more
-- [ ] add test to make sure that the error message for a resident creating a third active permit has the correct dates
 - [ ] add `getAllVisitors` testing to visitor\_router
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
