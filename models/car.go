@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"strings"
 )
 
@@ -48,10 +49,15 @@ func (self Car) Equal(other Car) bool {
 }
 
 func (m Car) ValidateEdit() *errs.ApiErr {
+	if m.ID == "" {
+		return errs.MissingIDField
+	}
+	if !util.IsUUIDV4(m.ID) {
+		return errs.IDNotUUID
+	}
 	if m.LicensePlate == "" && m.Color == "" && m.Make == "" && m.Model == "" {
 		return errs.AllEditFieldsEmpty("licensePlate, color, make, model")
 	}
-
 	if errors := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
 		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
@@ -60,6 +66,10 @@ func (m Car) ValidateEdit() *errs.ApiErr {
 }
 
 func (m Car) ValidateCreation() *errs.ApiErr {
+	// ID field is optional, but if provided, ensure it is UUID
+	if m.ID != "" && !util.IsUUIDV4(m.ID) {
+		return errs.IDNotUUID
+	}
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
