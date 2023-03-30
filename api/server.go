@@ -73,9 +73,9 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			officeRouter.Get("/resident/{id}", residentHandler.getOne())
 			officeRouter.Post("/resident", residentHandler.create())
 			officeRouter.Delete("/resident/{id}", residentHandler.deleteOne())
-			officeRouter.Put("/resident/{id}", residentHandler.edit())
+			officeRouter.Put("/resident", residentHandler.edit())
 			officeRouter.Get("/car/{id}", carHandler.getOne())
-			officeRouter.Put("/car/{id}", carHandler.edit())
+			officeRouter.Put("/car", carHandler.edit())
 		})
 
 		r.Group(func(userRouter chi.Router) {
