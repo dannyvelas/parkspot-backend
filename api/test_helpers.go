@@ -18,7 +18,14 @@ var (
 		Phone:     "1234567890",
 		Email:     "email@example.com",
 		Password:  "notapassword"}
-	testCar = models.NewCar("id", testResident.ID, "lp1", "color", "make", "model", 0)
+	testCar = models.NewCar(
+		"d1e0affb-14e7-4e9f-b8a3-70be7d49d063",
+		testResident.ID,
+		"lp1",
+		"color",
+		"make",
+		"model",
+		0)
 )
 
 func authenticatedReq[T, U any](method, url, accessToken string, requestBody *T) (parsedResp U, err error) {
