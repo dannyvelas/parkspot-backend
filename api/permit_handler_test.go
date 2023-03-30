@@ -116,8 +116,8 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 	// initalize resident permits, each w a different car to eachother and to permitOne
 	var resPermitTwo, resPermitThree models.Permit
 	{
-		carTwo, carTwoErr := suite.app.CarService.Create(models.NewCar("two", testResident.ID, "two", "two", "two", "two", 0))
-		carThree, carThreeErr := suite.app.CarService.Create(models.NewCar("three", testResident.ID, "three", "three", "three", "three", 0))
+		carTwo, carTwoErr := suite.app.CarService.Create(models.Car{ResidentID: testResident.ID, LicensePlate: "two", Color: "two", Make: "two", Model: "two", AmtParkingDaysUsed: 0})
+		carThree, carThreeErr := suite.app.CarService.Create(models.Car{ResidentID: testResident.ID, LicensePlate: "three", Color: "three", Make: "three", Model: "three", AmtParkingDaysUsed: 0})
 		if carTwoErr != nil || carThreeErr != nil {
 			suite.NoError(fmt.Errorf("Error creating carTwo: %v. or carThree: %v", carTwoErr, carThreeErr))
 			return
@@ -177,10 +177,9 @@ func (suite permitRouterSuite) TestCreate_ResidentAndCarMultipleActivePermits() 
 }
 
 func (suite permitRouterSuite) TestCreate_NoStartNoEnd_ErrMissing() {
-	// initalize car with missing fields
-	createdCar, err := suite.app.CarService.Create(models.NewCar("id", testResident.ID, "lp2", "color", "make", "model", 0))
+	createdCar, err := suite.app.CarService.Create(models.Car{ResidentID: testResident.ID, LicensePlate: "lp2", Color: "color", Make: "make", Model: "model", AmtParkingDaysUsed: 0})
 	if err != nil {
-		suite.NoError(fmt.Errorf("Error creating car with missing fields: %v", err))
+		suite.NoError(fmt.Errorf("Error creating car for test: %v", err))
 		return
 	}
 
