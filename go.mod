@@ -11,6 +11,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/go-cmp v0.5.8
+	github.com/imdario/mergo v0.3.12
 	github.com/jmoiron/sqlx v1.3.1
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.3
