@@ -8,6 +8,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
+	"github.com/imdario/mergo"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/suite"
 	"net/http"
@@ -58,25 +59,28 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 
 	tests := map[string]test{
 		"firstName": {
-			models.Resident{FirstName: "NEWFIRST"},
-			merge(testResident, models.Resident{FirstName: "NEWFIRST"}),
+			request: models.Resident{FirstName: "NEWFIRST"},
 		},
 		"firstName, lastName": {
-			models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"},
-			merge(testResident, models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"}),
+			request: models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST"},
 		},
 		"firstName, lastName, phone": {
-			models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"},
-			merge(testResident, models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"}),
+			request: models.Resident{FirstName: "NEWFIRST", LastName: "NEWLAST", Phone: "06181999"},
 		},
 		"unlimDays": {
-			models.Resident{UnlimDays: util.ToPtr(true)},
-			merge(testResident, models.Resident{UnlimDays: util.ToPtr(true)}),
+			request: models.Resident{UnlimDays: util.ToPtr(true)},
 		},
 		"amtParkingDaysUsed": {
-			models.Resident{AmtParkingDaysUsed: util.ToPtr(42)},
-			merge(testResident, models.Resident{AmtParkingDaysUsed: util.ToPtr(42)}),
+			request: models.Resident{AmtParkingDaysUsed: util.ToPtr(42)},
 		},
+	}
+	for testName, test_ := range tests {
+		expected := test_.request
+		if err := mergo.Merge(&expected, testResident); err != nil {
+			suite.NoError(fmt.Errorf("error merging when preparing test: %v\n", err))
+			return
+		}
+		tests[testName] = test{request: test_.request, expected: expected}
 	}
 
 	executeTest := func(test test) error {
@@ -91,7 +95,7 @@ func (suite residentRouterSuite) TestEdit_Resident_Positive() {
 		suite.Equal(test.expected.LastName, residentResp.LastName)
 		suite.Equal(test.expected.Phone, residentResp.Phone)
 		suite.Equal(test.expected.Email, residentResp.Email)
-		suite.Equal(test.expected.Password, residentResp.Password)
+		suite.Empty(residentResp.Password) // residentResp.Password should be "" and not equal to test.expected.Password
 
 		return nil
 	}
@@ -130,31 +134,4 @@ func (suite residentRouterSuite) TestEdit_ResidentDNE_Negative() {
 	}
 
 	suite.Equal(http.StatusNotFound, apiErr.StatusCode)
-}
-
-func merge(res1, res2 models.Resident) models.Resident {
-	mergeResult := res1
-
-	if res2.FirstName != "" {
-		mergeResult.FirstName = res2.FirstName
-	}
-	if res2.LastName != "" {
-		mergeResult.LastName = res2.LastName
-	}
-	if res2.Phone != "" {
-		mergeResult.Phone = res2.Phone
-	}
-	if res2.Email != "" {
-		mergeResult.Email = res2.Email
-	}
-	if res2.UnlimDays != nil {
-		mergeResult.UnlimDays = res2.UnlimDays
-	}
-	if res2.AmtParkingDaysUsed != nil {
-		mergeResult.AmtParkingDaysUsed = res2.AmtParkingDaysUsed
-	}
-
-	mergeResult.Password = "" // passwords are always "" in JSON responses
-
-	return mergeResult
 }
