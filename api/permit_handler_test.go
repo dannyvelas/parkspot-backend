@@ -76,7 +76,7 @@ func (suite *permitRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("error creating test resident with unlimited days: %v", err.Error())
 	}
 
-	suite.createdCar, err = suite.app.CarService.Create(models.NewCar("id", testResident.ID, "lp1", "color", "make", "model", 0))
+	suite.createdCar, err = suite.app.CarService.Create(testCar)
 	if err != nil {
 		log.Fatal().Msgf("error creating car: %v", err.Error())
 	}
