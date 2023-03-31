@@ -73,11 +73,16 @@
 - [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] make sure that residents can't make an API request to see someone elses permit
+- [ ] make sure that residents can't make an api request to edit someone elses car
 - [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
 - [ ] add check that contractors can't stay until forever and can stay only for (x) days
 - [ ] increment token version on password reset
-- [ ] use a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
+- [ ] make sure every db query uses a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
+- [ ] for every instance of having if checks for every field of a func, change it to:`rmEmptyVals(squirrel.Eq{"field1": maybeEmptyField1,...})`
+- [ ] change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car_repo
+- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
+- [ ] move some id checks to service and not handler or repo
 - [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
@@ -109,12 +114,14 @@
 - [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
 - [ ] add logging when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] explore using validator
+- [ ] probably change nomenclature from `edit()` to always be `update`
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
 - [ ] add test to make sure that a permit from today to tomorrow is counted as active today
+- [ ] add test to make sure that a permit using a previously created car won't error out, even if that car has missing fields
 - [ ] add `getAllVisitors` testing to visitor\_router
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
