@@ -47,32 +47,53 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
-func (carRepo CarRepo) GetByLicensePlate(licensePlate string) (*models.Car, error) {
-	if licensePlate == "" {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: Empty licensePlate argument", errs.DBInvalidArg)
-	}
-
-	query, args, err := carRepo.carSelect.Where("car.license_plate = $1", licensePlate).ToSql()
+func (carRepo CarRepo) SelectWhere(carFields models.Car) ([]models.Car, error) {
+	carSelect := carRepo.carSelect.Where(rmEmptyVals(squirrel.Eq{
+		"resident_id":   carFields.ResidentID,
+		"license_plate": carFields.LicensePlate,
+		"color":         carFields.Color,
+		"make":          carFields.Make,
+		"model":         carFields.Model,
+	}))
+	query, args, err := carSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	car := car{}
-	err = carRepo.database.driver.Get(&car, query, args...)
+	cars := carSlice{}
+	err = carRepo.database.driver.Select(&cars, query, args...)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NewNotFound("car"))
+		return nil, fmt.Errorf("car_repo.SelectWhere: %w", errs.NewNotFound("car"))
 	} else if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
 
-	asModels := car.toModels()
+	return cars.toModels(), nil
+}
 
-	return &asModels, nil
+func (carRepo CarRepo) SelectCountWhere(carFields models.Car) (int, error) {
+	countSelect := stmtBuilder.Select("count(*)").From("car").Where(rmEmptyVals(squirrel.Eq{
+		"resident_id":   carFields.ResidentID,
+		"license_plate": carFields.LicensePlate,
+		"color":         carFields.Color,
+		"make":          carFields.Make,
+		"model":         carFields.Model,
+	}))
+	query, args, err := countSelect.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("car_repo.SelectCount: %w: %v", errs.DBBuildingQuery, err)
+	}
+
+	var totalAmount int
+	err = carRepo.database.driver.Get(&totalAmount, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("car_repo.GetCount: %w: %v", errs.DBQuery, err)
+	}
+
+	return totalAmount, nil
 }
 
 func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
-	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
 	updateMap := make(squirrel.Eq)
 	if desiredCar.ID != "" {
 		updateMap["id"] = desiredCar.ID
@@ -83,11 +104,7 @@ func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 	updateMap["make"] = desiredCar.Make
 	updateMap["model"] = desiredCar.Model
 
-	query, args, err := sq.
-		Insert("car").
-		SetMap(updateMap).
-		Suffix("RETURNING id").
-		ToSql()
+	query, args, err := stmtBuilder.Insert("car").SetMap(updateMap).Suffix("RETURNING id").ToSql()
 	if err != nil {
 		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -115,24 +132,15 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 	return nil
 }
 
-func (carRepo CarRepo) Update(editCar models.Car) error {
-	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-	carUpdate := squirrel.Update("car")
+func (carRepo CarRepo) Update(carFields models.Car) error {
+	carUpdate := stmtBuilder.Update("car").SetMap(rmEmptyVals(squirrel.Eq{
+		"license_plate": carFields.LicensePlate,
+		"color":         carFields.Color,
+		"make":          carFields.Make,
+		"model":         carFields.Model,
+	}))
 
-	if editCar.LicensePlate != "" {
-		carUpdate = carUpdate.Set("license_plate", editCar.LicensePlate)
-	}
-	if editCar.Color != "" {
-		carUpdate = carUpdate.Set("color", editCar.Color)
-	}
-	if editCar.Make != "" {
-		carUpdate = carUpdate.Set("make", editCar.Make)
-	}
-	if editCar.Model != "" {
-		carUpdate = carUpdate.Set("model", editCar.Model)
-	}
-
-	query, args, err := carUpdate.Where("car.id = ?", editCar.ID).ToSql()
+	query, args, err := carUpdate.Where("car.id = ?", carFields.ID).ToSql()
 	if err != nil {
 		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -157,21 +165,4 @@ func (carRepo CarRepo) Delete(id string) error {
 	}
 
 	return nil
-}
-
-func (carRepo CarRepo) GetByResidentID(residentID string) ([]models.Car, error) {
-	query, args, err := carRepo.carSelect.Where("car.residentID = $1", residentID).ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBBuildingQuery, err)
-	}
-
-	cars := carSlice{}
-	err = carRepo.database.driver.Select(&cars, query, args...)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w", errs.NewNotFound("car"))
-	} else if err != nil {
-		return nil, fmt.Errorf("car_repo.GetByLicensePlate: %w: %v", errs.DBQuery, err)
-	}
-
-	return cars.toModels(), nil
 }
