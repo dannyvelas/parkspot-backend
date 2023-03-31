@@ -6,7 +6,7 @@ import (
 )
 
 type car struct {
-	CarID              string         `db:"car_id"`
+	CarID              string         `db:"id"`
 	ResidentID         string         `db:"resident_id"`
 	LicensePlate       string         `db:"license_plate"`
 	Color              string         `db:"color"`

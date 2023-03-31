@@ -14,8 +14,8 @@ type CarRepo struct {
 }
 
 func NewCarRepo(database Database) CarRepo {
-	carSelect := squirrel.Select(
-		"car.id AS car_id",
+	carSelect := stmtBuilder.Select(
+		"car.id",
 		"car.license_plate",
 		"car.color",
 		"car.make",
