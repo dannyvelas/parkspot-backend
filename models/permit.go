@@ -112,19 +112,20 @@ func (m Permit) emptyFields() *errs.ApiErr {
 		emptyFields = append(emptyFields, "residentID")
 	}
 	if m.CarID == "" {
-		emptyFields = append(emptyFields, "carID")
-	}
-	if m.LicensePlate == "" {
-		emptyFields = append(emptyFields, "licensePlate")
-	}
-	if m.Color == "" {
-		emptyFields = append(emptyFields, "color")
-	}
-	if m.Make == "" {
-		emptyFields = append(emptyFields, "make")
-	}
-	if m.Model == "" {
-		emptyFields = append(emptyFields, "model")
+		// only check that car fields are complete if carID == ""
+		// bc this means that a new car is being registered
+		if m.LicensePlate == "" {
+			emptyFields = append(emptyFields, "licensePlate")
+		}
+		if m.Color == "" {
+			emptyFields = append(emptyFields, "color")
+		}
+		if m.Make == "" {
+			emptyFields = append(emptyFields, "make")
+		}
+		if m.Model == "" {
+			emptyFields = append(emptyFields, "model")
+		}
 	}
 	if m.StartDate.IsZero() {
 		emptyFields = append(emptyFields, "startDate")
