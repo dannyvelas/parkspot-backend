@@ -22,10 +22,6 @@ func (s CarService) GetOne(id string) (models.Car, error) {
 	return s.carRepo.GetOne(id)
 }
 
-func (s CarService) GetByLicensePlate(licensePlate string) (*models.Car, error) {
-	return s.carRepo.GetByLicensePlate(licensePlate)
-}
-
 func (s CarService) Delete(id string) error {
 	return s.carRepo.Delete(id)
 }
@@ -37,7 +33,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 
 	// if license plate is being updated to a new one, make sure it's unique
 	if updatedFields.LicensePlate != "" {
-		if _, err := s.carRepo.GetByLicensePlate(updatedFields.LicensePlate); err == nil {
+		if _, err := s.carRepo.SelectWhere(models.Car{LicensePlate: updatedFields.LicensePlate}); err == nil {
 			return models.Car{}, errs.AlreadyExists("a car with this license plate")
 		} else if !errors.Is(err, errs.NotFound) {
 			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %v", err)
@@ -71,10 +67,20 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	return newCar, nil
 }
 
-func (s CarService) GetOfResident(residentID string) ([]models.Car, error) {
+func (s CarService) GetOfResident(residentID string) (models.ListWithMetadata[models.Car], error) {
 	if err := models.IsResidentID(residentID); err != nil {
-		return nil, err
+		return models.ListWithMetadata[models.Car]{}, err
 	}
 
-	return s.carRepo.GetByResidentID(residentID)
+	cars, err := s.carRepo.SelectWhere(models.Car{ResidentID: residentID})
+	if err != nil {
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("Error querying carRepo when getting cars of resident: %v", err)
+	}
+
+	count, err := s.carRepo.SelectCountWhere(models.Car{ResidentID: residentID})
+	if err != nil {
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("Error querying carRepo when getting amount of cars of resident: %v", err)
+	}
+
+	return models.NewListWithMetadata(cars, count), nil
 }
