@@ -75,31 +75,31 @@ func (s PermitService) Delete(permitID int) error {
 }
 
 func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
-	// error out if resident DNE
-	existingResident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
-	if errors.Is(err, errs.NotFound) {
-		return models.Permit{}, errs.ResidentForPermitDNE
-	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting one from resident repo: %v", err)
-	}
-
-	// error out if car DNE
-	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
-	if errors.Is(err, errs.NotFound) {
-		return models.Permit{}, errs.CarForPermitDNE
-	} else if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting one from carRepo: %v", err)
-	}
-
-	// get a snapshot of the car being used and save it into the permit
-	desiredPermit.LicensePlate = existingCar.LicensePlate
-	desiredPermit.Color = existingCar.Color
-	desiredPermit.Make = existingCar.Make
-	desiredPermit.Model = existingCar.Model
-	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*existingResident.UnlimDays
-
-	if err := s.validateCreation(desiredPermit, existingResident, existingCar); err != nil {
+	if err := desiredPermit.ValidateCreation(); err != nil {
 		return models.Permit{}, err
+	}
+
+	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+
+	resident, err := s.getAndValidateResident(desiredPermit, permitLength)
+	if err != nil {
+		return models.Permit{}, err
+	}
+
+	// if carID != "", this permit will be created for a pre-existing car
+	// find and validate that this car follows policy for creating a permit
+	if desiredPermit.CarID != "" {
+		car, err := s.getAndValidateCar(desiredPermit, *resident.UnlimDays, permitLength)
+		if err != nil {
+			return models.Permit{}, err
+		}
+
+		// get a snapshot of car and save it into the permit
+		desiredPermit.LicensePlate = car.LicensePlate
+		desiredPermit.Color = car.Color
+		desiredPermit.Make = car.Make
+		desiredPermit.Model = car.Model
+		desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && *resident.UnlimDays
 	}
 
 	createdPermit, err := s.create(desiredPermit)
@@ -110,57 +110,76 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 	return createdPermit, nil
 }
 
-func (s PermitService) validateCreation(desiredPermit models.Permit, existingResident models.Resident, existingCar models.Car) error {
-	if err := desiredPermit.ValidateCreation(); err != nil {
-		return err
-	}
-
-	// error out if car has active permits during dates requested
-	carActivePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
-		existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)
-	if err != nil {
-		return fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
-	} else if len(carActivePermitsDuring) != 0 {
-		return errs.CarActivePermit
+func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permitLength int) (models.Resident, error) {
+	resident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
+	if errors.Is(err, errs.NotFound) {
+		return models.Resident{}, errs.ResidentForPermitDNE
+	} else if err != nil {
+		return models.Resident{}, fmt.Errorf("error getting one from resident repo: %v", err)
 	}
 
 	// if this is an exception, there are no more checks to be performed. so return no errors
 	if desiredPermit.ExceptionReason != "" {
-		return nil
+		return resident, nil
 	}
 
-	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if permitLength > config.MaxPermitLength {
-		return errs.PermitTooLong
+		return models.Resident{}, errs.PermitTooLong
 	}
 
 	residentActivePermitsDuring, err := s.permitRepo.GetActiveOfResidentDuring(
-		existingResident.ID, desiredPermit.StartDate, desiredPermit.EndDate)
+		resident.ID, desiredPermit.StartDate, desiredPermit.EndDate)
 	if err != nil {
-		return fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
+		return models.Resident{}, fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
 	} else if len(residentActivePermitsDuring) >= 2 {
-		return errs.ResidentTwoActivePermits
+		return models.Resident{}, errs.ResidentTwoActivePermits
 	}
 
-	if existingResident.UnlimDays == nil || existingResident.AmtParkingDaysUsed == nil {
-		return fmt.Errorf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
+	if resident.UnlimDays == nil || resident.AmtParkingDaysUsed == nil {
+		return models.Resident{}, fmt.Errorf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
 	}
 
-	if !*existingResident.UnlimDays {
-		if *existingResident.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return errs.EntityDaysTooLong("resident", *existingResident.AmtParkingDaysUsed)
-		} else if *existingResident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return errs.PermitPlusEntityDaysTooLong("resident", *existingResident.AmtParkingDaysUsed)
-		}
-
-		if existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return errs.EntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
-		} else if existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return errs.PermitPlusEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
+	if !*resident.UnlimDays {
+		if *resident.AmtParkingDaysUsed >= config.MaxParkingDays {
+			return models.Resident{}, errs.EntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
+		} else if *resident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+			return models.Resident{}, errs.PermitPlusEntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
 		}
 	}
 
-	return nil
+	return resident, nil
+}
+
+func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays bool, permitLength int) (models.Car, error) {
+	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
+	if errors.Is(err, errs.NotFound) {
+		return models.Car{}, errs.CarForPermitDNE
+	} else if err != nil {
+		return models.Car{}, fmt.Errorf("error getting one from carRepo: %v", err)
+	}
+
+	// we found the car: error out if it has active permits during dates requested
+	carActivePermitsDuring, err := s.permitRepo.GetActiveOfCarDuring(
+		existingCar.ID, desiredPermit.StartDate, desiredPermit.EndDate)
+	if err != nil {
+		return models.Car{}, fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
+	} else if len(carActivePermitsDuring) != 0 {
+		return models.Car{}, errs.CarActivePermit
+	}
+
+	// if this is an exception, or if this resident has unlimited days,
+	// there are no more car checks to be performed. so return no errors
+	if desiredPermit.ExceptionReason != "" || unlimDays {
+		return existingCar, nil
+	}
+
+	if existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
+		return models.Car{}, errs.EntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
+	} else if existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+		return models.Car{}, errs.PermitPlusEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
+	}
+
+	return existingCar, nil
 }
 
 func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {

@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"strings"
 	"time"
 )
@@ -113,7 +114,7 @@ func (m Permit) emptyFields() *errs.ApiErr {
 	}
 	if m.CarID == "" {
 		// only check that car fields are complete if carID == ""
-		// bc this means that a new car is being registered
+		// bc this means that a new car will be registered
 		if m.LicensePlate == "" {
 			emptyFields = append(emptyFields, "licensePlate")
 		}
@@ -149,9 +150,15 @@ func (m Permit) invalidFields() *errs.ApiErr {
 	} else if err := IsResidentID(m.ResidentID); err != nil {
 		errors = append(errors, err.Error())
 	}
-	if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
-		errors = append(errors, lpColorMakeModelErrs...)
+
+	if m.CarID != "" && !util.IsUUIDV4(m.CarID) {
+		errors = append(errors, "CarID is not a UUID")
+	} else if m.CarID == "" {
+		if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
+			errors = append(errors, lpColorMakeModelErrs...)
+		}
 	}
+
 	if m.StartDate.After(m.EndDate) {
 		errors = append(errors, "startDate cannot be after endDate")
 	}
