@@ -63,13 +63,6 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 }
 
 func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
-	// ID field is optional, but if provided, ensure it is UUID
-	if desiredCar.ID != "" && !util.IsUUIDV4(desiredCar.ID) {
-		return models.Car{}, errs.IDNotUUID
-	}
-	if err := models.IsResidentID(desiredCar.ResidentID); err != nil {
-		return models.Car{}, errs.InvalidResID
-	}
 	if err := models.CreateCarValidator.Run(desiredCar); err != nil {
 		return models.Car{}, err
 	}
