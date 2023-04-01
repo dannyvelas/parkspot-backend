@@ -218,7 +218,7 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 }
 
 func (s PermitService) validateDates(desiredPermit models.Permit) error {
-	errors := []string{}
+	var errors []string
 
 	if desiredPermit.StartDate.IsZero() {
 		errors = append(errors, "startDate cannot be empty")

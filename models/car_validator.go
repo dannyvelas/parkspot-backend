@@ -28,7 +28,7 @@ func NewCarFieldValidator(emptyOk bool) CarFieldValidator {
 }
 
 func (v CarFieldValidator) Validate(licensePlate, color, make, model string) *errs.ApiErr {
-	errors := []string{}
+	var errors []string
 
 	if !v.licensePlateRe.MatchString(licensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")

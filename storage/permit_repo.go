@@ -210,7 +210,7 @@ func (permitRepo PermitRepo) GetActiveOfCarDuring(carID string, startDate, endDa
 
 func (permitRepo PermitRepo) GetActiveOfResidentDuring(residentID string, startDate, endDate time.Time) ([]models.Permit, error) {
 	if residentID == "" {
-		return []models.Permit{}, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", errs.DBInvalidArg)
+		return nil, fmt.Errorf("permit_repo.GetActiveOfResidentDuring: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
 	query, args, err := permitSelect.
