@@ -96,8 +96,11 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		desiredPermit.Color = car.Color
 		desiredPermit.Make = car.Make
 		desiredPermit.Model = car.Model
-	} else if err := models.NewCarFieldValidator(false).Validate(desiredPermit.LicensePlate, desiredPermit.Color, desiredPermit.Make, desiredPermit.Model); err != nil {
-		return models.Permit{}, err
+	} else {
+		newCar := models.Car{LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
+		if err := models.CreateCarValidator.Run(newCar); err != nil {
+			return models.Permit{}, err
+		}
 	}
 
 	if err := s.validateDates(desiredPermit); err != nil {
@@ -120,7 +123,8 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
 		return models.Permit{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
 	}
-	if err := models.NewCarFieldValidator(true).Validate(updatedFields.LicensePlate, updatedFields.Color, updatedFields.Make, updatedFields.Model); err != nil {
+	car := models.Car{LicensePlate: updatedFields.LicensePlate, Color: updatedFields.Color, Make: updatedFields.Make, Model: updatedFields.Model}
+	if err := models.EditCarValidator.Run(car); err != nil {
 		return models.Permit{}, err
 	}
 

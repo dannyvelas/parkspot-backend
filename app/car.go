@@ -36,7 +36,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
 		return models.Car{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
 	}
-	if err := models.NewCarFieldValidator(true).Validate(updatedFields.LicensePlate, updatedFields.Color, updatedFields.Make, updatedFields.Model); err != nil {
+	if err := models.EditCarValidator.Run(updatedFields); err != nil {
 		return models.Car{}, err
 	}
 
@@ -70,7 +70,7 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	if err := models.IsResidentID(desiredCar.ResidentID); err != nil {
 		return models.Car{}, errs.InvalidResID
 	}
-	if err := models.NewCarFieldValidator(false).Validate(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model); err != nil {
+	if err := models.CreateCarValidator.Run(desiredCar); err != nil {
 		return models.Car{}, err
 	}
 
