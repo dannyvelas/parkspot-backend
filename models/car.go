@@ -1,11 +1,5 @@
 package models
 
-import (
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/util"
-	"strings"
-)
-
 type Car struct {
 	ID                 string `json:"id"`
 	ResidentID         string `json:"residentID"`
@@ -46,80 +40,4 @@ func (self Car) Equal(other Car) bool {
 	}
 
 	return true
-}
-
-func (m Car) ValidateEdit() *errs.ApiErr {
-	if m.ID == "" {
-		return errs.MissingIDField
-	}
-	if !util.IsUUIDV4(m.ID) {
-		return errs.IDNotUUID
-	}
-	if m.LicensePlate == "" && m.Color == "" && m.Make == "" && m.Model == "" {
-		return errs.AllEditFieldsEmpty("licensePlate, color, make, model")
-	}
-	if errors := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
-		return errs.InvalidFields(strings.Join(errors, ". "))
-	}
-
-	return nil
-}
-
-func (m Car) ValidateCreation() *errs.ApiErr {
-	// ID field is optional, but if provided, ensure it is UUID
-	if m.ID != "" && !util.IsUUIDV4(m.ID) {
-		return errs.IDNotUUID
-	}
-	if err := m.emptyFields(); err != nil {
-		return err
-	}
-
-	if err := m.invalidFields(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m Car) emptyFields() *errs.ApiErr {
-	emptyFields := []string{}
-
-	if m.ResidentID == "" {
-		emptyFields = append(emptyFields, "residentID")
-	}
-	if m.LicensePlate == "" {
-		emptyFields = append(emptyFields, "licensePlate")
-	}
-	if m.Color == "" {
-		emptyFields = append(emptyFields, "color")
-	}
-	if m.Make == "" {
-		emptyFields = append(emptyFields, "make")
-	}
-	if m.Model == "" {
-		emptyFields = append(emptyFields, "model")
-	}
-
-	if len(emptyFields) > 0 {
-		return errs.EmptyFields(strings.Join(emptyFields, ", "))
-	}
-
-	return nil
-}
-
-func (m Car) invalidFields() *errs.ApiErr {
-	errors := []string{}
-
-	if err := IsResidentID(m.ResidentID); err != nil {
-		errors = append(errors, err.Error())
-	}
-	if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
-		errors = append(errors, lpColorMakeModelErrs...)
-	}
-
-	if len(errors) > 0 {
-		return errs.InvalidFields(strings.Join(errors, ". "))
-	}
-
-	return nil
 }

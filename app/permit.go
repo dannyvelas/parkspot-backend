@@ -8,6 +8,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/util"
+	"strings"
 )
 
 type PermitService struct {
@@ -75,10 +76,6 @@ func (s PermitService) Delete(permitID int) error {
 }
 
 func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
-	if err := desiredPermit.ValidateCreation(); err != nil {
-		return models.Permit{}, err
-	}
-
 	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 
 	resident, err := s.getAndValidateResident(desiredPermit, permitLength)
@@ -100,6 +97,12 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		desiredPermit.Make = car.Make
 		desiredPermit.Model = car.Model
 		desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && *resident.UnlimDays
+	} else if err := models.NewCarFieldValidator(false).Validate(desiredPermit.LicensePlate, desiredPermit.Color, desiredPermit.Make, desiredPermit.Model); err != nil {
+		return models.Permit{}, err
+	}
+
+	if err := s.validateDates(desiredPermit); err != nil {
+		return models.Permit{}, err
 	}
 
 	createdPermit, err := s.create(desiredPermit)
@@ -110,7 +113,35 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 	return createdPermit, nil
 }
 
+func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error) {
+	if updatedFields.ID == 0 {
+		return models.Permit{}, errs.MissingIDField
+	}
+	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
+		return models.Permit{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
+	}
+	if err := models.NewCarFieldValidator(true).Validate(updatedFields.LicensePlate, updatedFields.Color, updatedFields.Make, updatedFields.Model); err != nil {
+		return models.Permit{}, err
+	}
+
+	if err := s.permitRepo.Update(updatedFields); err != nil {
+		return models.Permit{}, fmt.Errorf("error updating permit from permitRepo: %w", err)
+	}
+
+	permit, err := s.permitRepo.GetOne(updatedFields.ID)
+	if err != nil {
+		return models.Permit{}, fmt.Errorf("error getting permit from permitRepo: %w", err)
+	}
+
+	return permit, nil
+}
+
+// helpers
 func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permitLength int) (models.Resident, error) {
+	if err := models.IsResidentID(desiredPermit.ResidentID); err != nil {
+		return models.Resident{}, errs.InvalidResID
+	}
+
 	resident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
 	if errors.Is(err, errs.NotFound) {
 		return models.Resident{}, errs.ResidentForPermitDNE
@@ -151,6 +182,10 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 }
 
 func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays bool, permitLength int) (models.Car, error) {
+	if !util.IsUUIDV4(desiredPermit.CarID) {
+		return models.Car{}, errs.InvalidFields("CarID is not a UUID")
+	}
+
 	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
 	if errors.Is(err, errs.NotFound) {
 		return models.Car{}, errs.CarForPermitDNE
@@ -182,6 +217,29 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 	return existingCar, nil
 }
 
+func (s PermitService) validateDates(desiredPermit models.Permit) error {
+	errors := []string{}
+
+	if desiredPermit.StartDate.IsZero() {
+		errors = append(errors, "startDate cannot be empty")
+	}
+	if desiredPermit.EndDate.IsZero() {
+		errors = append(errors, "endDate cannot be empty")
+	}
+	if desiredPermit.StartDate.After(desiredPermit.EndDate) {
+		errors = append(errors, "startDate cannot be after endDate")
+	}
+	if desiredPermit.StartDate.Equal(desiredPermit.EndDate) {
+		errors = append(errors, "startDate cannot be equal to endDate")
+	}
+
+	if len(errors) > 0 {
+		return errs.InvalidFields(strings.Join(errors, ". "))
+	}
+
+	return nil
+}
+
 func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {
 	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	if desiredPermit.AffectsDays {
@@ -207,22 +265,4 @@ func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error
 	}
 
 	return newPermit, nil
-}
-
-func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error) {
-	if err := updatedFields.ValidateEdit(); err != nil {
-		return models.Permit{}, err
-	}
-
-	err := s.permitRepo.Update(updatedFields)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error updating permit from permitRepo: %w", err)
-	}
-
-	permit, err := s.permitRepo.GetOne(updatedFields.ID)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit from permitRepo: %w", err)
-	}
-
-	return permit, nil
 }

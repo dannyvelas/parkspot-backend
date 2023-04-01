@@ -1,9 +1,6 @@
 package models
 
 import (
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/util"
-	"strings"
 	"time"
 )
 
@@ -80,95 +77,4 @@ func (self Permit) Equal(other Permit) bool {
 	}
 
 	return true
-}
-
-func (m Permit) ValidateCreation() *errs.ApiErr {
-	if err := m.emptyFields(); err != nil {
-		return err
-	}
-
-	if err := m.invalidFields(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m Permit) ValidateEdit() *errs.ApiErr {
-	if m.LicensePlate == "" && m.Color == "" && m.Make == "" && m.Model == "" {
-		return errs.EmptyFields("licensePlate, color, make, model")
-	}
-
-	if errors := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
-		return errs.InvalidFields(strings.Join(errors, ". "))
-	}
-
-	return nil
-}
-
-func (m Permit) emptyFields() *errs.ApiErr {
-	emptyFields := []string{}
-
-	if m.ResidentID == "" {
-		emptyFields = append(emptyFields, "residentID")
-	}
-	if m.CarID == "" {
-		// only check that car fields are complete if carID == ""
-		// bc this means that a new car will be registered
-		if m.LicensePlate == "" {
-			emptyFields = append(emptyFields, "licensePlate")
-		}
-		if m.Color == "" {
-			emptyFields = append(emptyFields, "color")
-		}
-		if m.Make == "" {
-			emptyFields = append(emptyFields, "make")
-		}
-		if m.Model == "" {
-			emptyFields = append(emptyFields, "model")
-		}
-	}
-	if m.StartDate.IsZero() {
-		emptyFields = append(emptyFields, "startDate")
-	}
-	if m.EndDate.IsZero() {
-		emptyFields = append(emptyFields, "endDate")
-	}
-
-	if len(emptyFields) > 0 {
-		return errs.EmptyFields(strings.Join(emptyFields, ", "))
-	}
-
-	return nil
-}
-
-func (m Permit) invalidFields() *errs.ApiErr {
-	errors := []string{}
-
-	if m.ResidentID[0] == 'P' {
-		errors = append(errors, "Accounts with a ResidentID starting with 'P' are not allowed to request permits")
-	} else if err := IsResidentID(m.ResidentID); err != nil {
-		errors = append(errors, err.Error())
-	}
-
-	if m.CarID != "" && !util.IsUUIDV4(m.CarID) {
-		errors = append(errors, "CarID is not a UUID")
-	} else if m.CarID == "" {
-		if lpColorMakeModelErrs := getLPColorMakeModelErrors(m.LicensePlate, m.Color, m.Make, m.Model); len(errors) != 0 {
-			errors = append(errors, lpColorMakeModelErrs...)
-		}
-	}
-
-	if m.StartDate.After(m.EndDate) {
-		errors = append(errors, "startDate cannot be after endDate")
-	}
-	if m.StartDate.Equal(m.EndDate) {
-		errors = append(errors, "startDate cannot be equal to endDate")
-	}
-
-	if len(errors) > 0 {
-		return errs.InvalidFields(strings.Join(errors, ". "))
-	}
-
-	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/util"
 )
 
 type CarService struct {
@@ -27,7 +28,16 @@ func (s CarService) Delete(id string) error {
 }
 
 func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
-	if err := updatedFields.ValidateEdit(); err != nil {
+	if updatedFields.ID == "" {
+		return models.Car{}, errs.MissingIDField
+	}
+	if !util.IsUUIDV4(updatedFields.ID) {
+		return models.Car{}, errs.IDNotUUID
+	}
+	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
+		return models.Car{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
+	}
+	if err := models.NewCarFieldValidator(true).Validate(updatedFields.LicensePlate, updatedFields.Color, updatedFields.Make, updatedFields.Model); err != nil {
 		return models.Car{}, err
 	}
 
@@ -54,7 +64,14 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 }
 
 func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
-	if err := desiredCar.ValidateCreation(); err != nil {
+	// ID field is optional, but if provided, ensure it is UUID
+	if desiredCar.ID != "" && !util.IsUUIDV4(desiredCar.ID) {
+		return models.Car{}, errs.IDNotUUID
+	}
+	if err := models.IsResidentID(desiredCar.ResidentID); err != nil {
+		return models.Car{}, errs.InvalidResID
+	}
+	if err := models.NewCarFieldValidator(false).Validate(desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model); err != nil {
 		return models.Car{}, err
 	}
 
