@@ -62,9 +62,7 @@ func (carRepo CarRepo) SelectWhere(carFields models.Car) ([]models.Car, error) {
 
 	cars := carSlice{}
 	err = carRepo.database.driver.Select(&cars, query, args...)
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("car_repo.SelectWhere: %w", errs.NewNotFound("car"))
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
 
