@@ -44,7 +44,7 @@ func (v carValidator) Run(car Car) *errs.ApiErr {
 		}
 	}
 	if v.validateResIDFn != nil {
-		if err := v.validateResIDFn(car.ID); err != nil {
+		if err := v.validateResIDFn(car.ResidentID); err != nil {
 			errors = append(errors, err.Error())
 		}
 	}
