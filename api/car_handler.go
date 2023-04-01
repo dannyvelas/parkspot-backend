@@ -5,7 +5,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -22,13 +21,7 @@ func newCarHandler(carService app.CarService) carHandler {
 
 func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if !util.IsUUIDV4(id) {
-			respondError(w, errs.BadRequest("id parameter is not a UUID"))
-			return
-		}
-
-		car, err := h.carService.GetOne(id)
+		car, err := h.carService.GetOne(chi.URLParam(r, "id"))
 		if err != nil {
 			respondError(w, err)
 			return
