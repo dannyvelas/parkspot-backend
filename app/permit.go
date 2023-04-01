@@ -76,8 +76,11 @@ func (s PermitService) Delete(permitID int) error {
 }
 
 func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
-	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
+	if err := s.validateDates(desiredPermit); err != nil {
+		return models.Permit{}, err
+	}
 
+	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
 	resident, err := s.getAndValidateResident(desiredPermit, permitLength)
 	if err != nil {
 		return models.Permit{}, err
@@ -101,10 +104,6 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		if err := models.CreateCarValidator.Run(newCar); err != nil {
 			return models.Permit{}, err
 		}
-	}
-
-	if err := s.validateDates(desiredPermit); err != nil {
-		return models.Permit{}, err
 	}
 
 	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*resident.UnlimDays
