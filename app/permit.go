@@ -96,7 +96,6 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		desiredPermit.Color = car.Color
 		desiredPermit.Make = car.Make
 		desiredPermit.Model = car.Model
-		desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && *resident.UnlimDays
 	} else if err := models.NewCarFieldValidator(false).Validate(desiredPermit.LicensePlate, desiredPermit.Color, desiredPermit.Make, desiredPermit.Model); err != nil {
 		return models.Permit{}, err
 	}
@@ -105,6 +104,7 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		return models.Permit{}, err
 	}
 
+	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*resident.UnlimDays
 	createdPermit, err := s.create(desiredPermit)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %v", err)
