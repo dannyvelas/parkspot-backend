@@ -25,8 +25,8 @@ func NewResident(
 	phone string,
 	email string,
 	password string,
-	unlimDays *bool,
-	amtParkingDaysUsed *int,
+	unlimDays bool,
+	amtParkingDaysUsed int,
 	tokenVersion int,
 ) Resident {
 	return Resident{
@@ -36,8 +36,8 @@ func NewResident(
 		Phone:              phone,
 		Email:              email,
 		Password:           password,
-		UnlimDays:          unlimDays,
-		AmtParkingDaysUsed: amtParkingDaysUsed,
+		UnlimDays:          &unlimDays,
+		AmtParkingDaysUsed: &amtParkingDaysUsed,
 		TokenVersion:       tokenVersion,
 	}
 }
