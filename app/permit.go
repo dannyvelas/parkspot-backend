@@ -208,10 +208,10 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 		return existingCar, nil
 	}
 
-	if existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
-		return models.Car{}, errs.EntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
-	} else if existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-		return models.Car{}, errs.PermitPlusEntityDaysTooLong("car", existingCar.AmtParkingDaysUsed)
+	if *existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
+		return models.Car{}, errs.EntityDaysTooLong("car", *existingCar.AmtParkingDaysUsed)
+	} else if *existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+		return models.Car{}, errs.PermitPlusEntityDaysTooLong("car", *existingCar.AmtParkingDaysUsed)
 	}
 
 	return existingCar, nil

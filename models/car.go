@@ -7,7 +7,7 @@ type Car struct {
 	Color              string `json:"color"`
 	Make               string `json:"make"`
 	Model              string `json:"model"`
-	AmtParkingDaysUsed int    `json:"amtParkingDaysUsed"`
+	AmtParkingDaysUsed *int   `json:"amtParkingDaysUsed"`
 }
 
 func NewCar(id, residentID, licensePlate, color, make, model string, amtParkingDaysUsed int) Car {
@@ -18,7 +18,7 @@ func NewCar(id, residentID, licensePlate, color, make, model string, amtParkingD
 		Color:              color,
 		Make:               make,
 		Model:              model,
-		AmtParkingDaysUsed: amtParkingDaysUsed,
+		AmtParkingDaysUsed: &amtParkingDaysUsed,
 	}
 }
 
