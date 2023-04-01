@@ -2,11 +2,14 @@ package models
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"regexp"
 	"strings"
 )
 
-type carFieldValidator struct {
+type carValidator struct {
+	validateIDFn      func(string) error
+	validateResIDFn   func(string) error
 	licensePlateRe    *regexp.Regexp
 	colorRe           *regexp.Regexp
 	makeModelRe       *regexp.Regexp
@@ -14,13 +17,17 @@ type carFieldValidator struct {
 }
 
 var (
-	CreateCarValidator = carFieldValidator{
+	CreateCarValidator = carValidator{
+		validateCarID,
+		IsResidentID,
 		regexp.MustCompile("^[A-Za-z0-9]+$"),
 		regexp.MustCompile("^[A-Za-z]+$"),
 		regexp.MustCompile("^[A-Za-z0-9 -]+$"),
 		nil,
 	}
-	EditCarValidator = carFieldValidator{
+	EditCarValidator = carValidator{
+		nil,
+		nil,
 		regexp.MustCompile("^[A-Za-z0-9]*$"),
 		regexp.MustCompile("^[A-Za-z]*$"),
 		regexp.MustCompile("^[A-Za-z0-9 -]*$"),
@@ -28,9 +35,19 @@ var (
 	}
 )
 
-func (v carFieldValidator) Run(car Car) *errs.ApiErr {
+func (v carValidator) Run(car Car) *errs.ApiErr {
 	var errors []string
 
+	if v.validateIDFn != nil {
+		if err := v.validateIDFn(car.ID); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+	if v.validateResIDFn != nil {
+		if err := v.validateResIDFn(car.ID); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
 	if !v.licensePlateRe.MatchString(car.LicensePlate) {
 		errors = append(errors, "licensePlate can only be letters or numbers")
 	}
@@ -56,6 +73,14 @@ func (v carFieldValidator) Run(car Car) *errs.ApiErr {
 		return errs.InvalidFields(strings.Join(errors, ". "))
 	}
 
+	return nil
+}
+
+func validateCarID(carID string) error {
+	// ID field is optional, but if provided, ensure it is UUID
+	if carID != "" && !util.IsUUIDV4(carID) {
+		return errs.IDNotUUID
+	}
 	return nil
 }
 
