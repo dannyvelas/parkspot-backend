@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -43,10 +42,10 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 
 	// if license plate is being updated to a new one, make sure it's unique
 	if updatedFields.LicensePlate != "" {
-		if _, err := s.carRepo.SelectWhere(models.Car{LicensePlate: updatedFields.LicensePlate}); err == nil {
-			return models.Car{}, errs.AlreadyExists("a car with this license plate")
-		} else if !errors.Is(err, errs.NotFound) {
+		if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: updatedFields.LicensePlate}); err != nil {
 			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %v", err)
+		} else if len(cars) != 0 {
+			return models.Car{}, errs.AlreadyExists("a car with this license plate")
 		}
 	}
 
