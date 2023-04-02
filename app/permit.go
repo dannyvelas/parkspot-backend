@@ -122,9 +122,11 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
 		return models.Permit{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
 	}
-	car := models.Car{LicensePlate: updatedFields.LicensePlate, Color: updatedFields.Color, Make: updatedFields.Make, Model: updatedFields.Model}
-	if err := models.EditCarValidator.Run(car); err != nil {
-		return models.Permit{}, err
+	{
+		car := models.Car{LicensePlate: updatedFields.LicensePlate, Color: updatedFields.Color, Make: updatedFields.Make, Model: updatedFields.Model}
+		if err := models.EditCarValidator.Run(car); err != nil {
+			return models.Permit{}, err
+		}
 	}
 
 	if err := s.permitRepo.Update(updatedFields); err != nil {
