@@ -69,6 +69,7 @@
 - [x] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
 - [x] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
 - [✗] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed` (wont do bc this should happen at service level not repo level)
+- [ ] allow the edit of parking days for cars
 - [ ] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
 - [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
@@ -122,6 +123,8 @@
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
 - [ ] add test to make sure that a permit from today to tomorrow is counted as active today
 - [ ] add test to make sure that a permit using a previously created car won't error out, even if that car has missing fields
+- [ ] add a test to make sure that requests to change a car's amount of days work
+- [ ] add a test to make sure that edits to permits work
 - [ ] add `getAllVisitors` testing to visitor\_router
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
