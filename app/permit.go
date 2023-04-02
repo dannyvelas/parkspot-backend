@@ -87,8 +87,8 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 	}
 
 	// if carID != "", this permit will be created for a pre-existing car
-	// find and validate that this car follows policy for creating a permit
 	if desiredPermit.CarID != "" {
+		// find and validate that this car follows policy for creating a permit
 		car, err := s.getAndValidateCar(desiredPermit, *resident.UnlimDays, permitLength)
 		if err != nil {
 			return models.Permit{}, err
