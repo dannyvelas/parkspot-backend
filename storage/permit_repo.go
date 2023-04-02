@@ -252,23 +252,15 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	return nil
 }
 
-func (permitRepo PermitRepo) Update(editPermit models.Permit) error {
-	permitUpdate := stmtBuilder.Update("permit")
+func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
+	permitUpdate := stmtBuilder.Update("permit").SetMap(rmEmptyVals(squirrel.Eq{
+		"license_plate": permitFields.LicensePlate,
+		"color":         permitFields.Color,
+		"make":          permitFields.Make,
+		"model":         permitFields.Model,
+	}))
 
-	if editPermit.LicensePlate != "" {
-		permitUpdate = permitUpdate.Set("license_plate", editPermit.LicensePlate)
-	}
-	if editPermit.Color != "" {
-		permitUpdate = permitUpdate.Set("color", editPermit.Color)
-	}
-	if editPermit.Make != "" {
-		permitUpdate = permitUpdate.Set("make", editPermit.Make)
-	}
-	if editPermit.Model != "" {
-		permitUpdate = permitUpdate.Set("model", editPermit.Model)
-	}
-
-	query, args, err := permitUpdate.Where("permit.id = ?", editPermit.ID).ToSql()
+	query, args, err := permitUpdate.Where("permit.id = ?", permitFields.ID).ToSql()
 	if err != nil {
 		return fmt.Errorf("permit_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
