@@ -33,8 +33,8 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	if !util.IsUUIDV4(updatedFields.ID) {
 		return models.Car{}, errs.IDNotUUID
 	}
-	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" {
-		return models.Car{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model")
+	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" && updatedFields.AmtParkingDaysUsed == nil {
+		return models.Car{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model, amtParkingDaysUsed")
 	}
 	if err := models.EditCarValidator.Run(updatedFields); err != nil {
 		return models.Car{}, err

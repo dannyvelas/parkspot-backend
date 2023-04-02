@@ -132,10 +132,11 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 
 func (carRepo CarRepo) Update(carFields models.Car) error {
 	carUpdate := stmtBuilder.Update("car").SetMap(rmEmptyVals(squirrel.Eq{
-		"license_plate": carFields.LicensePlate,
-		"color":         carFields.Color,
-		"make":          carFields.Make,
-		"model":         carFields.Model,
+		"license_plate":         carFields.LicensePlate,
+		"color":                 carFields.Color,
+		"make":                  carFields.Make,
+		"model":                 carFields.Model,
+		"amt_parking_days_used": carFields.AmtParkingDaysUsed,
 	}))
 
 	query, args, err := carUpdate.Where("car.id = ?", carFields.ID).ToSql()
