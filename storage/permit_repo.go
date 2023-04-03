@@ -16,24 +16,17 @@ var (
 	permitDESC = "permit.id DESC"
 )
 
-type PermitRepoFactory struct {
+type PermitRepo struct {
 	database Database
 }
 
-func NewPermitRepoFactory(database Database) PermitRepoFactory {
-	return PermitRepoFactory{database: database}
-}
-
-func (permitRepoFactory PermitRepoFactory) GetPermitRepo(opts ...func(*permitRepo)) permitRepo {
-	permitRepo := newPermitRepo(permitRepoFactory.database)
-	for _, opt := range opts {
-		opt(&permitRepo)
+func NewPermitRepo(database Database) PermitRepo {
+	return PermitRepo{
+		database: database,
 	}
-	return permitRepo
 }
 
-type permitRepo struct {
-	database     Database
+type SelectOpts struct {
 	permitSelect squirrel.SelectBuilder
 	countSelect  squirrel.SelectBuilder
 	limit        int
@@ -42,7 +35,7 @@ type permitRepo struct {
 	search       string
 }
 
-func newPermitRepo(database Database) permitRepo {
+func newSelectOps(opts ...func(*SelectOpts)) SelectOpts {
 	permitSelect := stmtBuilder.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
@@ -59,19 +52,25 @@ func newPermitRepo(database Database) permitRepo {
 	).From("permit")
 	countSelect := stmtBuilder.Select("count(*)").From("permit")
 
-	return permitRepo{
-		database:     database,
+	retVal := SelectOpts{
 		permitSelect: permitSelect,
 		countSelect:  countSelect,
 	}
+	for _, opt := range opts {
+		opt(&retVal)
+	}
+
+	return retVal
 }
 
-func (permitRepo permitRepo) SelectWhere(permitFields models.Permit) ([]models.Permit, error) {
-	if permitRepo.limit < 0 || permitRepo.offset < 0 {
+func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...func(*SelectOpts)) ([]models.Permit, error) {
+	opts := newSelectOps(optsArg...)
+
+	if opts.limit < 0 || opts.offset < 0 {
 		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be smaller than zero", errs.DBInvalidArg)
 	}
 
-	permitSelect := permitRepo.permitSelect.Where(rmEmptyVals(squirrel.Eq{
+	permitSelect := opts.permitSelect.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -82,11 +81,11 @@ func (permitRepo permitRepo) SelectWhere(permitFields models.Permit) ([]models.P
 		"end_ts":        permitFields.EndDate.Unix(),
 	}))
 
-	if permitRepo.search != "" {
-		permitSelect = permitSelect.Where(permitRepo.cellEquals(permitRepo.search))
+	if opts.search != "" {
+		permitSelect = permitSelect.Where(permitRepo.cellEquals(opts.search))
 	}
 
-	if !permitRepo.reversed {
+	if !opts.reversed {
 		permitSelect = permitSelect.OrderBy(permitASC)
 	} else {
 		permitSelect = permitSelect.OrderBy(permitDESC)
@@ -97,7 +96,6 @@ func (permitRepo permitRepo) SelectWhere(permitFields models.Permit) ([]models.P
 		Limit(uint64(getBoundedLimit(10))).
 		Offset(uint64(0)).
 		ToSql()
-	fmt.Println(query)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -111,8 +109,10 @@ func (permitRepo permitRepo) SelectWhere(permitFields models.Permit) ([]models.P
 	return permits.toModels(), nil
 }
 
-func (permitRepo permitRepo) SelectCountWhere(permitFields models.Permit) (int, error) {
-	countSelect := permitRepo.countSelect.Where(rmEmptyVals(squirrel.Eq{
+func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsArg ...func(*SelectOpts)) (int, error) {
+	opts := newSelectOps(optsArg...)
+
+	countSelect := opts.countSelect.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -123,8 +123,8 @@ func (permitRepo permitRepo) SelectCountWhere(permitFields models.Permit) (int, 
 		"end_ts":        permitFields.EndDate.Unix(),
 	}))
 
-	if permitRepo.search != "" {
-		countSelect = countSelect.Where(permitRepo.cellEquals(permitRepo.search))
+	if opts.search != "" {
+		countSelect = countSelect.Where(permitRepo.cellEquals(opts.search))
 	}
 
 	query, args, err := countSelect.ToSql()
@@ -141,12 +141,12 @@ func (permitRepo permitRepo) SelectCountWhere(permitFields models.Permit) (int, 
 	return totalAmount, nil
 }
 
-func (permitRepo permitRepo) GetOne(id int) (models.Permit, error) {
+func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	if id == 0 {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
 	}
 
-	query, args, err := permitRepo.permitSelect.Where("permit.id = $1", id).ToSql()
+	query, args, err := newSelectOps().permitSelect.Where("permit.id = $1", id).ToSql()
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -162,7 +162,7 @@ func (permitRepo permitRepo) GetOne(id int) (models.Permit, error) {
 	return permit.toModels(), nil
 }
 
-func (permitRepo permitRepo) Create(desiredPermit models.Permit) (int, error) {
+func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	// see whether exceptionReason is empty and convert appropriately
 	// assume everything else is already checked for emptyness
 	nullableReason := sql.NullString{}
@@ -200,7 +200,7 @@ func (permitRepo permitRepo) Create(desiredPermit models.Permit) (int, error) {
 	return permitID, nil
 }
 
-func (permitRepo permitRepo) Delete(id int) error {
+func (permitRepo PermitRepo) Delete(id int) error {
 	if id <= 0 {
 		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
 	}
@@ -220,7 +220,7 @@ func (permitRepo permitRepo) Delete(id int) error {
 	return nil
 }
 
-func (permitRepo permitRepo) Update(permitFields models.Permit) error {
+func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 	permitUpdate := stmtBuilder.Update("permit").SetMap(rmEmptyVals(squirrel.Eq{
 		"license_plate": permitFields.LicensePlate,
 		"color":         permitFields.Color,
@@ -242,7 +242,7 @@ func (permitRepo permitRepo) Update(permitFields models.Permit) error {
 }
 
 // helpers
-func (permitRepo permitRepo) cellEquals(query string) squirrel.Sqlizer {
+func (permitRepo PermitRepo) cellEquals(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),
@@ -255,7 +255,7 @@ func (permitRepo permitRepo) cellEquals(query string) squirrel.Sqlizer {
 }
 
 // permit repo options
-func WithFilter(filter models.PermitFilter) func(*permitRepo) {
+func WithFilter(filter models.PermitFilter) func(*SelectOpts) {
 	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
 		models.ActivePermits: squirrel.And{
 			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
@@ -268,32 +268,32 @@ func WithFilter(filter models.PermitFilter) func(*permitRepo) {
 		},
 	}
 
-	var whereClause squirrel.Sqlizer
-	if whereSQL, ok := filterToSQL[filter]; ok {
-		whereClause = whereSQL
+	whereSQL, ok := filterToSQL[filter]
+	if !ok {
+		return func(opts *SelectOpts) {}
 	}
 
-	return func(permitRepo *permitRepo) {
-		permitRepo.permitSelect = permitRepo.permitSelect.Where(whereClause)
-		permitRepo.countSelect = permitRepo.countSelect.Where(whereClause)
-	}
-}
-
-func WithSearch(search string) func(*permitRepo) {
-	return func(permitRepo *permitRepo) {
-		permitRepo.search = search
+	return func(opts *SelectOpts) {
+		opts.permitSelect = opts.permitSelect.Where(whereSQL)
+		opts.countSelect = opts.countSelect.Where(whereSQL)
 	}
 }
 
-func WithLimitAndOffset(limit, offset int) func(*permitRepo) {
-	return func(permitRepo *permitRepo) {
-		permitRepo.limit = limit
-		permitRepo.offset = offset
+func WithSearch(search string) func(*SelectOpts) {
+	return func(opts *SelectOpts) {
+		opts.search = search
 	}
 }
 
-func WithReversed(reversed bool) func(*permitRepo) {
-	return func(permitRepo *permitRepo) {
-		permitRepo.reversed = reversed
+func WithLimitAndOffset(limit, offset int) func(*SelectOpts) {
+	return func(opts *SelectOpts) {
+		opts.limit = limit
+		opts.offset = offset
+	}
+}
+
+func WithReversed(reversed bool) func(*SelectOpts) {
+	return func(opts *SelectOpts) {
+		opts.reversed = reversed
 	}
 }

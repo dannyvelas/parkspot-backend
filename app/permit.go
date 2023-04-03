@@ -12,34 +12,34 @@ import (
 )
 
 type PermitService struct {
-	permitRepoFactory storage.PermitRepoFactory
-	residentRepo      storage.ResidentRepo
-	carRepo           storage.CarRepo
+	permitRepo   storage.PermitRepo
+	residentRepo storage.ResidentRepo
+	carRepo      storage.CarRepo
 }
 
-func NewPermitService(permitRepoFactory storage.PermitRepoFactory, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) PermitService {
+func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) PermitService {
 	return PermitService{
-		permitRepoFactory: permitRepoFactory,
-		residentRepo:      residentRepo,
-		carRepo:           carRepo,
+		permitRepo:   permitRepo,
+		residentRepo: residentRepo,
+		carRepo:      carRepo,
 	}
 }
 
 func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-
-	permitRepo := s.permitRepoFactory.GetPermitRepo(
+	opts := []func(*storage.SelectOpts){
 		storage.WithFilter(permitFilter),
 		storage.WithLimitAndOffset(boundedLimit, offset),
 		storage.WithReversed(reversed),
 		storage.WithSearch(search),
-	)
-	allPermits, err := permitRepo.SelectWhere(models.Permit{ResidentID: residentID})
+	}
+
+	allPermits, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: residentID}, opts...)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting permits from permit repo: %v", err)
 	}
 
-	totalAmount, err := permitRepo.SelectCountWhere(models.Permit{ResidentID: residentID})
+	totalAmount, err := s.permitRepo.SelectCountWhere(models.Permit{ResidentID: residentID}, opts...)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting total amount from permit repo: %v", err)
 	}
@@ -48,17 +48,16 @@ func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int,
 }
 
 func (s PermitService) GetOne(id int) (models.Permit, error) {
-	return s.permitRepoFactory.GetPermitRepo().GetOne(id)
+	return s.permitRepo.GetOne(id)
 }
 
 func (s PermitService) Delete(permitID int) error {
-	permitRepo := s.permitRepoFactory.GetPermitRepo()
-	permit, err := permitRepo.GetOne(permitID)
+	permit, err := s.permitRepo.GetOne(permitID)
 	if err != nil {
 		return err
 	}
 
-	if err = permitRepo.Delete(permitID); err != nil {
+	if err = s.permitRepo.Delete(permitID); err != nil {
 		return err
 	}
 
@@ -140,12 +139,11 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 		}
 	}
 
-	permitRepo := s.permitRepoFactory.GetPermitRepo()
-	if err := permitRepo.Update(updatedFields); err != nil {
+	if err := s.permitRepo.Update(updatedFields); err != nil {
 		return models.Permit{}, fmt.Errorf("error updating permit from permitRepo: %w", err)
 	}
 
-	permit, err := permitRepo.GetOne(updatedFields.ID)
+	permit, err := s.permitRepo.GetOne(updatedFields.ID)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error getting permit from permitRepo: %w", err)
 	}
@@ -175,8 +173,7 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 		return models.Resident{}, errs.PermitTooLong
 	}
 
-	permitRepo := s.permitRepoFactory.GetPermitRepo()
-	residentActivePermitsDuring, err := permitRepo.SelectWhere(models.Permit{
+	residentActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{
 		ResidentID: resident.ID, StartDate: desiredPermit.StartDate, EndDate: desiredPermit.EndDate})
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
@@ -212,8 +209,7 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 	}
 
 	// we found the car: error out if it has active permits during dates requested
-	permitRepo := s.permitRepoFactory.GetPermitRepo()
-	carActivePermitsDuring, err := permitRepo.SelectWhere(models.Permit{
+	carActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{
 		CarID: existingCar.ID, StartDate: desiredPermit.StartDate, EndDate: desiredPermit.EndDate})
 	if err != nil {
 		return models.Car{}, fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
@@ -273,13 +269,12 @@ func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error
 		}
 	}
 
-	permitRepo := s.permitRepoFactory.GetPermitRepo()
-	permitID, err := permitRepo.Create(desiredPermit)
+	permitID, err := s.permitRepo.Create(desiredPermit)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
 	}
 
-	newPermit, err := permitRepo.GetOne(permitID)
+	newPermit, err := s.permitRepo.GetOne(permitID)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
 	}
