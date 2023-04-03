@@ -30,7 +30,7 @@ func NewApp(c config.Config) (App, error) {
 	residentRepo := storage.NewResidentRepo(database)
 	visitorRepo := storage.NewVisitorRepo(database)
 	carRepo := storage.NewCarRepo(database)
-	permitRepo := storage.NewPermitRepo(database)
+	permitRepoFactory := storage.NewPermitRepoFactory(database)
 
 	// services
 	jwtService := NewJWTService(c.Token())
@@ -38,7 +38,7 @@ func NewApp(c config.Config) (App, error) {
 	residentService := NewResidentService(residentRepo)
 	visitorService := NewVisitorService(visitorRepo)
 	carService := NewCarService(carRepo)
-	permitService := NewPermitService(permitRepo, residentRepo, carRepo)
+	permitService := NewPermitService(permitRepoFactory, residentRepo, carRepo)
 
 	return App{
 		JWTService:      jwtService,
