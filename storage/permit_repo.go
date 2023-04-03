@@ -29,10 +29,6 @@ func NewPermitRepo(database Database) PermitRepo {
 type SelectOpts struct {
 	permitSelect squirrel.SelectBuilder
 	countSelect  squirrel.SelectBuilder
-	limit        int
-	offset       int
-	reversed     bool
-	search       string
 }
 
 func newSelectOps(opts ...func(*SelectOpts)) SelectOpts {
@@ -66,10 +62,6 @@ func newSelectOps(opts ...func(*SelectOpts)) SelectOpts {
 func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...func(*SelectOpts)) ([]models.Permit, error) {
 	opts := newSelectOps(optsArg...)
 
-	if opts.limit < 0 || opts.offset < 0 {
-		return nil, fmt.Errorf("permit_repo.Get: %w: limit or offset cannot be smaller than zero", errs.DBInvalidArg)
-	}
-
 	permitSelect := opts.permitSelect.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
@@ -85,21 +77,7 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...
 		permitSelect = permitSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
 	}
 
-	if opts.search != "" {
-		permitSelect = permitSelect.Where(permitRepo.cellEquals(opts.search))
-	}
-
-	if !opts.reversed {
-		permitSelect = permitSelect.OrderBy(permitASC)
-	} else {
-		permitSelect = permitSelect.OrderBy(permitDESC)
-	}
-
-	query, args, err := permitSelect.
-		// TODO: fix
-		Limit(uint64(getBoundedLimit(10))).
-		Offset(uint64(0)).
-		ToSql()
+	query, args, err := permitSelect.ToSql()
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -129,10 +107,6 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsAr
 	}
 	if !permitFields.EndDate.IsZero() {
 		countSelect = countSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
-	}
-
-	if opts.search != "" {
-		countSelect = countSelect.Where(permitRepo.cellEquals(opts.search))
 	}
 
 	query, args, err := countSelect.ToSql()
@@ -250,7 +224,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 }
 
 // helpers
-func (permitRepo PermitRepo) cellEquals(query string) squirrel.Sqlizer {
+func (opts SelectOpts) cellEquals(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),
@@ -277,31 +251,39 @@ func WithFilter(filter models.PermitFilter) func(*SelectOpts) {
 	}
 
 	whereSQL, ok := filterToSQL[filter]
-	if !ok {
-		return func(opts *SelectOpts) {}
-	}
-
 	return func(opts *SelectOpts) {
-		opts.permitSelect = opts.permitSelect.Where(whereSQL)
-		opts.countSelect = opts.countSelect.Where(whereSQL)
+		if ok {
+			opts.permitSelect = opts.permitSelect.Where(whereSQL)
+			opts.countSelect = opts.countSelect.Where(whereSQL)
+		}
 	}
 }
 
 func WithSearch(search string) func(*SelectOpts) {
 	return func(opts *SelectOpts) {
-		opts.search = search
+		if search != "" {
+			opts.permitSelect = opts.permitSelect.Where(opts.cellEquals(search))
+			opts.countSelect = opts.countSelect.Where(opts.cellEquals(search))
+		}
 	}
 }
 
 func WithLimitAndOffset(limit, offset int) func(*SelectOpts) {
 	return func(opts *SelectOpts) {
-		opts.limit = limit
-		opts.offset = offset
+		if limit >= 0 && offset >= 0 {
+			opts.permitSelect = opts.permitSelect.
+				Limit(uint64(getBoundedLimit(10))).
+				Offset(uint64(0))
+		}
 	}
 }
 
 func WithReversed(reversed bool) func(*SelectOpts) {
 	return func(opts *SelectOpts) {
-		opts.reversed = reversed
+		if !reversed {
+			opts.permitSelect = opts.permitSelect.OrderBy(permitASC)
+		} else {
+			opts.permitSelect = opts.permitSelect.OrderBy(permitDESC)
+		}
 	}
 }
