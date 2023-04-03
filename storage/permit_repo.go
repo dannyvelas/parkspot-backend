@@ -77,9 +77,13 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...
 		"color":         permitFields.Color,
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
-		"start_ts":      permitFields.StartDate.Unix(),
-		"end_ts":        permitFields.EndDate.Unix(),
 	}))
+	if !permitFields.StartDate.IsZero() {
+		permitSelect = permitSelect.Where("start_ts = ?", permitFields.StartDate.Unix())
+	}
+	if !permitFields.EndDate.IsZero() {
+		permitSelect = permitSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
+	}
 
 	if opts.search != "" {
 		permitSelect = permitSelect.Where(permitRepo.cellEquals(opts.search))
@@ -119,9 +123,13 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsAr
 		"color":         permitFields.Color,
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
-		"start_ts":      permitFields.StartDate.Unix(),
-		"end_ts":        permitFields.EndDate.Unix(),
 	}))
+	if !permitFields.StartDate.IsZero() {
+		countSelect = countSelect.Where("start_ts = ?", permitFields.StartDate.Unix())
+	}
+	if !permitFields.EndDate.IsZero() {
+		countSelect = countSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
+	}
 
 	if opts.search != "" {
 		countSelect = countSelect.Where(permitRepo.cellEquals(opts.search))
