@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-var (
-	permitASC  = "permit.id ASC"
-	permitDESC = "permit.id DESC"
-)
-
 type PermitRepo struct {
 	database Database
 }
@@ -281,9 +276,9 @@ func WithLimitAndOffset(limit, offset int) func(*SelectOpts) {
 func WithReversed(reversed bool) func(*SelectOpts) {
 	return func(opts *SelectOpts) {
 		if !reversed {
-			opts.permitSelect = opts.permitSelect.OrderBy(permitASC)
+			opts.permitSelect = opts.permitSelect.OrderBy("permit.id ASC")
 		} else {
-			opts.permitSelect = opts.permitSelect.OrderBy(permitDESC)
+			opts.permitSelect = opts.permitSelect.OrderBy("permit.id DESC")
 		}
 	}
 }
