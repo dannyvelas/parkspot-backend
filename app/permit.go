@@ -48,16 +48,24 @@ func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int,
 }
 
 func (s PermitService) GetOne(id int) (models.Permit, error) {
+	if id == 0 {
+		return models.Permit{}, errs.MissingIDField
+	}
+
 	return s.permitRepo.GetOne(id)
 }
 
-func (s PermitService) Delete(permitID int) error {
-	permit, err := s.permitRepo.GetOne(permitID)
+func (s PermitService) Delete(id int) error {
+	if id == 0 {
+		return errs.MissingIDField
+	}
+
+	permit, err := s.permitRepo.GetOne(id)
 	if err != nil {
 		return err
 	}
 
-	if err = s.permitRepo.Delete(permitID); err != nil {
+	if err = s.permitRepo.Delete(id); err != nil {
 		return err
 	}
 

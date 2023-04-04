@@ -53,11 +53,6 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 func (h permitHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
-		if id == 0 {
-			respondError(w, errs.BadRequest("id parameter cannot be empty"))
-			return
-		}
-
 		permit, err := h.permitService.GetOne(id)
 		if err != nil {
 			respondError(w, err)
@@ -111,11 +106,6 @@ func (h permitHandler) create() http.HandlerFunc {
 func (h permitHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
-		if id == 0 {
-			respondError(w, errs.BadRequest("id parameter cannot be empty"))
-			return
-		}
-
 		err := h.permitService.Delete(id)
 		if err != nil {
 			respondError(w, err)
