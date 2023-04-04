@@ -69,22 +69,34 @@
 - [x] probably make resident creation/deletion endpoint paths consistent (these say `account`, others say `resident`)
 - [x] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
 - [✗] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed` (wont do bc this should happen at service level not repo level)
-- [ ] allow the edit of parking days for cars
+- [x] allow the edit of parking days for cars
+- [ ] make sure every db query uses a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
+- [ ] for every instance of having if checks for every field of a func, change it to:`rmEmptyVals(squirrel.Eq{"field1": maybeEmptyField1,...})`
+- [ ] change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car_repo
+- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
+- [ ] move some id checks to service and not handler or repo
+	- [x] permits
+	- [x] car
+	- [] resident
+	- [] visitor
 - [ ] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
-- [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic
+- [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+## Testing
+- [✓] add test that resident can have two active permits at one time, but no more
+- [ ] add test to make sure residents can't create exception permits
+- [ ] add test to make sure that residents can't make an API request to create a permit for another person
+- [ ] add test to make sure that a permit from yesterday to today is counted as active today
+- [ ] add test to make sure that a permit from today to tomorrow is counted as active today
+- [ ] add test to make sure that a permit using a previously created car won't error out, even if that car has missing fields
+- [ ] add a test to make sure that requests to change a car's amount of days work
+- [ ] add a test to make sure that edits to permits work
+- [ ] add `getAllVisitors` testing to visitor\_router
 - [ ] when deleting permits, make sure a resident is never set less than 0 days
 - [ ] make sure that residents can't make an API request to see someone elses permit
 - [ ] make sure that residents can't make an api request to edit someone elses car
 - [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
 - [ ] add check that contractors can't stay until forever and can stay only for (x) days
-- [ ] increment token version on password reset
-- [ ] make sure every db query uses a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
-- [ ] for every instance of having if checks for every field of a func, change it to:`rmEmptyVals(squirrel.Eq{"field1": maybeEmptyField1,...})`
-- [ ] change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car_repo
-- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
-- [ ] move some id checks to service and not handler or repo
-- [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
@@ -109,23 +121,14 @@
 - [✓] move all the business logic that routing funcs currently do into a new services package
 - [✗] remove `highestVersion` variable from migrator.go (wont do bc dne anymore)
 - [✗] make sure only residents can change their password (now that the reset password endpoint will be merged with the editResident endpoint) (wont do bc this isn't the case)
+- [ ] increment token version on password reset
 - [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] add expiration JWT time to constants
 - [ ] make python script also generate down migration file 
 - [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
 - [ ] add logging when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] explore using validator
-- [ ] probably change nomenclature from `edit()` to always be `update`
-## Testing
-- [✓] add test that resident can have two active permits at one time, but no more
-- [ ] add test to make sure residents can't create exception permits
-- [ ] add test to make sure that residents can't make an API request to create a permit for another person
-- [ ] add test to make sure that a permit from yesterday to today is counted as active today
-- [ ] add test to make sure that a permit from today to tomorrow is counted as active today
-- [ ] add test to make sure that a permit using a previously created car won't error out, even if that car has missing fields
-- [ ] add a test to make sure that requests to change a car's amount of days work
-- [ ] add a test to make sure that edits to permits work
-- [ ] add `getAllVisitors` testing to visitor\_router
+- [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
 ## Maybe going to do
 - [✗] whether i should make empty-field checking a decorator in repo functions
 - [✗] add `Validated<model-name>` type to prevent redundant calls to `<model-name>.Validate`. hard because everything coming out of the db won't be able to be of this type. (now, models types are validated by default)
