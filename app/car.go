@@ -19,10 +19,16 @@ func NewCarService(carRepo storage.CarRepo) CarService {
 }
 
 func (s CarService) GetOne(id string) (models.Car, error) {
+	if id == "" {
+		return models.Car{}, errs.MissingIDField
+	}
 	return s.carRepo.GetOne(id)
 }
 
 func (s CarService) Delete(id string) error {
+	if id == "" {
+		return errs.MissingIDField
+	}
 	return s.carRepo.Delete(id)
 }
 
