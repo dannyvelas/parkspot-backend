@@ -259,8 +259,8 @@ func WithLimitAndOffset(limit, offset int) func(*SelectOpts) {
 	return func(opts *SelectOpts) {
 		if limit >= 0 && offset >= 0 {
 			opts.permitSelect = opts.permitSelect.
-				Limit(uint64(getBoundedLimit(10))).
-				Offset(uint64(0))
+				Limit(uint64(getBoundedLimit(limit))).
+				Offset(uint64(offset))
 		}
 	}
 }
