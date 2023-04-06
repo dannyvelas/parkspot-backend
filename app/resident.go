@@ -38,6 +38,9 @@ func (s ResidentService) GetAll(limit, page int, search string) (models.ListWith
 }
 
 func (s ResidentService) GetOne(id string) (models.Resident, error) {
+	if id == "" {
+		return models.Resident{}, errs.MissingIDField
+	}
 	resident, err := s.residentRepo.GetOne(id)
 	if err != nil {
 		return models.Resident{}, err
@@ -61,6 +64,10 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 }
 
 func (s ResidentService) Delete(id string) error {
+	if id == "" {
+		return errs.MissingIDField
+	}
+
 	return s.residentRepo.Delete(id)
 }
 

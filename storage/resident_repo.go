@@ -31,10 +31,6 @@ func NewResidentRepo(database Database) ResidentRepo {
 }
 
 func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, error) {
-	if residentID == "" {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
 	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentID).ToSql()
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
@@ -183,11 +179,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 }
 
 func (residentRepo ResidentRepo) Delete(residentID string) error {
-	if residentID == "" {
-		return fmt.Errorf("resident_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
-	}
 	const query = `DELETE FROM resident WHERE id = $1`
-
 	res, err := residentRepo.database.driver.Exec(query, residentID)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBExec, err)
