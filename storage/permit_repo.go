@@ -119,10 +119,6 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsAr
 }
 
 func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
-	if id == 0 {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
 	query, args, err := newSelectOps().permitSelect.Where("permit.id = $1", id).ToSql()
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
@@ -141,7 +137,6 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 
 func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	// see whether exceptionReason is empty and convert appropriately
-	// assume everything else is already checked for emptyness
 	nullableReason := sql.NullString{}
 	if desiredPermit.ExceptionReason != "" {
 		nullableReason = sql.NullString{String: desiredPermit.ExceptionReason, Valid: true}
@@ -178,9 +173,6 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 }
 
 func (permitRepo PermitRepo) Delete(id int) error {
-	if id <= 0 {
-		return fmt.Errorf("permit_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
-	}
 	const query = `DELETE FROM permit WHERE id = $1`
 
 	res, err := permitRepo.database.driver.Exec(query, id)
