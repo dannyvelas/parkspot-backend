@@ -27,10 +27,6 @@ func NewCarRepo(database Database) CarRepo {
 }
 
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
-	if id == "" {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
 	query, args, err := carRepo.carSelect.Where("car.id = $1", id).ToSql()
 	if err != nil {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
@@ -153,9 +149,6 @@ func (carRepo CarRepo) Update(carFields models.Car) error {
 }
 
 func (carRepo CarRepo) Delete(id string) error {
-	if id == "" {
-		return fmt.Errorf("car_repo.Delete: %w: empty string ID argument", errs.DBInvalidArg)
-	}
 	const query = `DELETE FROM car WHERE id = $1`
 
 	_, err := carRepo.database.driver.Exec(query, id)
