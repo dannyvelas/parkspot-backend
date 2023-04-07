@@ -130,6 +130,12 @@ func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) erro
 }
 
 func (a AuthService) ResetPassword(id, newPass string) error {
+	if id == "" {
+		return errs.MissingIDField
+	} else if newPass == "" {
+		return errs.EmptyFields("password")
+	}
+
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("authService.resetPassword: error generating hash: %v", err)

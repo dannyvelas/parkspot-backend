@@ -111,9 +111,6 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			respondError(w, errs.Malformed("password object"))
 			return
-		} else if payload.Password == "" {
-			respondError(w, errs.EmptyFields("password"))
-			return
 		}
 
 		authHeader := r.Header.Get("Authorization")
