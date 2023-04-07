@@ -114,7 +114,7 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		desiredPermit.Model = car.Model
 	} else {
 		// otherwise, we will create a new car for this permit
-		newCar := models.Car{LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
+		newCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
 		if err := models.CreateCarValidator.Run(newCar); err != nil {
 			return models.Permit{}, err
 		}
