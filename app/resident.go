@@ -61,13 +61,10 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %w", err)
 	}
 
-	residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredResident.ID})
+	resident, err := s.GetOne(desiredResident.ID)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %w", err)
-	} else if len(residents) == 0 {
-		return models.Resident{}, errs.NewNotFound("resident")
+		return models.Resident{}, err
 	}
-	resident := residents[0]
 
 	return s.removeHash(resident), nil
 }
