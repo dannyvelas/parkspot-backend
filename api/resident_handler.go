@@ -38,13 +38,7 @@ func (h residentHandler) getAll() http.HandlerFunc {
 
 func (h residentHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			respondError(w, errs.BadRequest("id parameter cannot be empty"))
-			return
-		}
-
-		resident, err := h.residentService.GetOne(id)
+		resident, err := h.residentService.GetOne(chi.URLParam(r, "id"))
 		if err != nil {
 			respondError(w, err)
 			return
