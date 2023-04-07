@@ -27,8 +27,8 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 
 func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []func(*storage.SelectOpts){
-		storage.WithFilter(permitFilter),
+	opts := []func(*storage.Selector){
+		storage.WithPermitFilter(permitFilter),
 		storage.WithLimitAndOffset(boundedLimit, offset),
 		storage.WithReversed(reversed),
 		storage.WithSearch(search),
@@ -165,12 +165,13 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 		return models.Resident{}, errs.InvalidResID
 	}
 
-	resident, err := s.residentRepo.GetOne(desiredPermit.ResidentID)
-	if errors.Is(err, errs.NotFound) {
-		return models.Resident{}, errs.ResidentForPermitDNE
-	} else if err != nil {
+	residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredPermit.ResidentID})
+	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting one from resident repo: %v", err)
+	} else if len(residents) == 0 {
+		return models.Resident{}, errs.ResidentForPermitDNE
 	}
+	resident := residents[0]
 
 	// if this is an exception, there are no more checks to be performed. so return no errors
 	if desiredPermit.ExceptionReason != "" {

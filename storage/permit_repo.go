@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"strings"
@@ -13,20 +12,10 @@ import (
 
 type PermitRepo struct {
 	database Database
+	selector Selector
 }
 
 func NewPermitRepo(database Database) PermitRepo {
-	return PermitRepo{
-		database: database,
-	}
-}
-
-type SelectOpts struct {
-	permitSelect squirrel.SelectBuilder
-	countSelect  squirrel.SelectBuilder
-}
-
-func newSelectOps(opts ...func(*SelectOpts)) SelectOpts {
 	permitSelect := stmtBuilder.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
@@ -43,21 +32,18 @@ func newSelectOps(opts ...func(*SelectOpts)) SelectOpts {
 	).From("permit")
 	countSelect := stmtBuilder.Select("count(*)").From("permit")
 
-	retVal := SelectOpts{
-		permitSelect: permitSelect,
-		countSelect:  countSelect,
-	}
-	for _, opt := range opts {
-		opt(&retVal)
-	}
+	selector := newSelector(permitSelect, countSelect).withOpts(withSearchFn(searchPermitsSQL))
 
-	return retVal
+	return PermitRepo{
+		database: database,
+		selector: selector,
+	}
 }
 
-func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...func(*SelectOpts)) ([]models.Permit, error) {
-	opts := newSelectOps(optsArg...)
+func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts ...func(*Selector)) ([]models.Permit, error) {
+	selector := permitRepo.selector.withOpts(selectOpts...)
 
-	permitSelect := opts.permitSelect.Where(rmEmptyVals(squirrel.Eq{
+	permitSelect := selector.selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -86,10 +72,10 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, optsArg ...
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsArg ...func(*SelectOpts)) (int, error) {
-	opts := newSelectOps(optsArg...)
+func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, selectOpts ...func(*Selector)) (int, error) {
+	selector := permitRepo.selector.withOpts(selectOpts...)
 
-	countSelect := opts.countSelect.Where(rmEmptyVals(squirrel.Eq{
+	countSelect := selector.countSelect.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -119,7 +105,7 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, optsAr
 }
 
 func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
-	query, args, err := newSelectOps().permitSelect.Where("permit.id = $1", id).ToSql()
+	query, args, err := permitRepo.selector.selector.Where("permit.id = $1", id).ToSql()
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -211,7 +197,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 }
 
 // helpers
-func (opts SelectOpts) cellEquals(query string) squirrel.Sqlizer {
+func searchPermitsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),
@@ -220,57 +206,5 @@ func (opts SelectOpts) cellEquals(query string) squirrel.Sqlizer {
 		squirrel.Expr("LOWER(permit.color) = ?", lcQuery),
 		squirrel.Expr("LOWER(permit.make) = ?", lcQuery),
 		squirrel.Expr("LOWER(permit.model) = ?", lcQuery),
-	}
-}
-
-// permit repo options
-func WithFilter(filter models.PermitFilter) func(*SelectOpts) {
-	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
-		models.ActivePermits: squirrel.And{
-			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
-			squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
-		},
-		models.ExceptionPermits: squirrel.Expr("permit.exception_reason IS NOT NULL"),
-		models.ExpiredPermits: squirrel.And{
-			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * ?))", config.DefaultExpiredWindow),
-			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
-		},
-	}
-
-	whereSQL, ok := filterToSQL[filter]
-	return func(opts *SelectOpts) {
-		if ok {
-			opts.permitSelect = opts.permitSelect.Where(whereSQL)
-			opts.countSelect = opts.countSelect.Where(whereSQL)
-		}
-	}
-}
-
-func WithSearch(search string) func(*SelectOpts) {
-	return func(opts *SelectOpts) {
-		if search != "" {
-			opts.permitSelect = opts.permitSelect.Where(opts.cellEquals(search))
-			opts.countSelect = opts.countSelect.Where(opts.cellEquals(search))
-		}
-	}
-}
-
-func WithLimitAndOffset(limit, offset int) func(*SelectOpts) {
-	return func(opts *SelectOpts) {
-		if limit >= 0 && offset >= 0 {
-			opts.permitSelect = opts.permitSelect.
-				Limit(uint64(getBoundedLimit(limit))).
-				Offset(uint64(offset))
-		}
-	}
-}
-
-func WithReversed(reversed bool) func(*SelectOpts) {
-	return func(opts *SelectOpts) {
-		if !reversed {
-			opts.permitSelect = opts.permitSelect.OrderBy("permit.id ASC")
-		} else {
-			opts.permitSelect = opts.permitSelect.OrderBy("permit.id DESC")
-		}
 	}
 }

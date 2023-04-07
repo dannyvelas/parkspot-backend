@@ -214,12 +214,17 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 	return gmailMessage, nil
 }
 
-func (a AuthService) getUser(id string) (loginable models.Loginable, err error) {
-	// Unfortunately, dynamic dispatch via a common iface is impossible as both `GetOne` fns have diff return types
+func (a AuthService) getUser(id string) (models.Loginable, error) {
 	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
-		loginable, err = a.adminRepo.GetOne(id)
-	} else {
-		loginable, err = a.residentRepo.GetOne(id)
+		return a.adminRepo.GetOne(id)
 	}
-	return
+
+	residents, err := a.residentRepo.SelectWhere(models.Resident{ID: id})
+	if err != nil {
+		return nil, err
+	} else if len(residents) == 0 {
+		return nil, errs.NewNotFound("resident")
+	}
+
+	return residents[0], nil
 }

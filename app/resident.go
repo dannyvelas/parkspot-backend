@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -22,14 +21,18 @@ func NewResidentService(residentRepo storage.ResidentRepo) ResidentService {
 
 func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
+	opts := []func(*storage.Selector){
+		storage.WithLimitAndOffset(boundedLimit, offset),
+		storage.WithSearch(search),
+	}
 
-	allResidents, err := s.residentRepo.GetAll(boundedLimit, offset, search)
+	allResidents, err := s.residentRepo.SelectWhere(models.Resident{}, opts...)
 	if err != nil {
 		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error querying residentRepo: %v", err)
 	}
 	allResidents = util.MapSlice(allResidents, s.removeHash)
 
-	totalAmount, err := s.residentRepo.GetAllTotalAmount()
+	totalAmount, err := s.residentRepo.SelectCountWhere(models.Resident{}, opts...)
 	if err != nil {
 		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error getting total amount: %v", err)
 	}
@@ -41,10 +44,13 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 	if id == "" {
 		return models.Resident{}, errs.MissingIDField
 	}
-	resident, err := s.residentRepo.GetOne(id)
+	residents, err := s.residentRepo.SelectWhere(models.Resident{ID: id})
 	if err != nil {
 		return models.Resident{}, err
+	} else if len(residents) == 0 {
+		return models.Resident{}, errs.NewNotFound("resident")
 	}
+	resident := residents[0]
 
 	return s.removeHash(resident), nil
 }
@@ -55,10 +61,13 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %w", err)
 	}
 
-	resident, err := s.residentRepo.GetOne(desiredResident.ID)
+	residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredResident.ID})
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error getting resident: %w", err)
+	} else if len(residents) == 0 {
+		return models.Resident{}, errs.NewNotFound("resident")
 	}
+	resident := residents[0]
 
 	return s.removeHash(resident), nil
 }
@@ -76,16 +85,16 @@ func (s ResidentService) Create(desiredRes models.Resident) error {
 		return err
 	}
 
-	if _, err := s.residentRepo.GetOne(desiredRes.ID); err == nil {
-		return errs.AlreadyExists("resident with ID " + desiredRes.ID)
-	} else if !errors.Is(err, errs.NotFound) {
+	if residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredRes.ID}); err != nil {
 		return fmt.Errorf("resident_service.createResident: error getting resident by id: %v", err)
+	} else if len(residents) != 0 {
+		return errs.AlreadyExists("resident with ID " + desiredRes.ID)
 	}
 
-	if _, err := s.residentRepo.GetOneByEmail(desiredRes.Email); err == nil {
-		return errs.AlreadyExists("a resident with this email")
-	} else if !errors.Is(err, errs.NotFound) {
+	if residents, err := s.residentRepo.SelectWhere(models.Resident{Email: desiredRes.Email}); err != nil {
 		return fmt.Errorf("resident_service.createResident error getting resident by email: %v", err)
+	} else if len(residents) != 0 {
+		return errs.AlreadyExists("a resident with this email")
 	}
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredRes.Password), bcrypt.DefaultCost)

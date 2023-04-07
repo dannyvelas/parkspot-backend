@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
@@ -10,8 +9,8 @@ import (
 )
 
 type ResidentRepo struct {
-	database       Database
-	residentSelect squirrel.SelectBuilder
+	database Database
+	selector Selector
 }
 
 func NewResidentRepo(database Database) ResidentRepo {
@@ -26,98 +25,67 @@ func NewResidentRepo(database Database) ResidentRepo {
 		"amt_parking_days_used",
 		"token_version",
 	).From("resident")
+	countSelect := squirrel.Select("count(*)").From("resident")
 
-	return ResidentRepo{database: database, residentSelect: residentSelect}
+	selector := newSelector(residentSelect, countSelect).withOpts(withSearchFn(searchResidentsSQL))
+
+	return ResidentRepo{
+		database: database,
+		selector: selector,
+	}
 }
 
-func (residentRepo ResidentRepo) GetOne(residentID string) (models.Resident, error) {
-	query, args, err := residentRepo.residentSelect.Where("resident.id = $1", residentID).ToSql()
+func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...func(*Selector)) ([]models.Resident, error) {
+	selector := residentRepo.selector.withOpts(selectOpts...)
+
+	residentSelect := selector.selector.Where(rmEmptyVals(squirrel.Eq{
+		"resident_id": residentFields.ID,
+		"first_name":  residentFields.FirstName,
+		"last_name":   residentFields.LastName,
+		"phone":       residentFields.Phone,
+		"email":       residentFields.Email,
+	}))
+
+	query, args, err := residentSelect.ToSql()
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
-	}
-
-	resident := resident{}
-	err = residentRepo.database.driver.Get(&resident, query, args...)
-	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", errs.NewNotFound("resident"))
-	} else if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", errs.DBQuery, err)
-	}
-
-	return resident.toModels(), nil
-}
-
-func (residentRepo ResidentRepo) GetOneByEmail(email string) (models.Resident, error) {
-	if email == "" {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
-	query, args, err := residentRepo.residentSelect.Where("resident.email = $1", email).ToSql()
-	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", errs.DBBuildingQuery, err)
-	}
-
-	resident := resident{}
-	err = residentRepo.database.driver.Get(&resident, query, args...)
-	if err == sql.ErrNoRows {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w", errs.NewNotFound("resident"))
-	} else if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_repo.GetOneByEmail: %w: %v", errs.DBQuery, err)
-	}
-
-	return resident.toModels(), nil
-}
-
-func (residentRepo ResidentRepo) GetAll(limit, offset int, search string) ([]models.Resident, error) {
-	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: limit or offset cannot be zero", errs.DBInvalidArg)
-	}
-
-	residentSelect := residentRepo.residentSelect
-	if search != "" {
-		residentSelect = residentSelect.
-			Where(squirrel.Or{
-				squirrel.Expr("LOWER(resident.id) = $1", strings.ToLower(search)),
-				squirrel.Expr("LOWER(resident.first_name) = $1"),
-				squirrel.Expr("LOWER(resident.last_name) = $1"),
-			})
-	}
-
-	query, args, err := residentSelect.
-		Limit(uint64(getBoundedLimit(limit))).
-		Offset(uint64(offset)).
-		OrderBy("resident.id ASC").
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	residents := residentSlice{}
 	err = residentRepo.database.driver.Select(&residents, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("resident_repo.GetAll: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
 
 	return residents.toModels(), nil
 }
 
-func (residentRepo ResidentRepo) GetAllTotalAmount() (int, error) {
-	const query = "SELECT count(*) FROM resident"
+func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident, selectOpts ...func(*Selector)) (int, error) {
+	selector := residentRepo.selector.withOpts(selectOpts...)
+
+	countSelect := selector.countSelect.Where(rmEmptyVals(squirrel.Eq{
+		"resident_id": residentFields.ID,
+		"first_name":  residentFields.FirstName,
+		"last_name":   residentFields.LastName,
+		"phone":       residentFields.Phone,
+		"email":       residentFields.Email,
+	}))
+
+	query, args, err := countSelect.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.DBBuildingQuery, err)
+	}
 
 	var totalAmount int
-	err := residentRepo.database.driver.Get(&totalAmount, query)
+	err = residentRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("resident_repo.GetAllTotalAmount: %w: %v", errs.DBQuery, err)
+		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.DBQuery, err)
 	}
 
 	return totalAmount, nil
 }
 
 func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) error {
-	if id == "" {
-		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
 	const query = `
     UPDATE resident SET amt_parking_days_used = amt_parking_days_used + $1
     WHERE id = $2
@@ -132,12 +100,6 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 }
 
 func (residentRepo ResidentRepo) SetPassword(id string, password string) error {
-	if id == "" {
-		return fmt.Errorf("resident_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	} else if password == "" {
-		return fmt.Errorf("resident_repo.GetOne: %w: Emtpy Password argument", errs.DBInvalidArg)
-	}
-
 	const query = `UPDATE resident SET password = $1 WHERE id = $2`
 	_, err := residentRepo.database.driver.Exec(query, password, id)
 	if err != nil {
@@ -180,6 +142,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 
 func (residentRepo ResidentRepo) Delete(residentID string) error {
 	const query = `DELETE FROM resident WHERE id = $1`
+
 	res, err := residentRepo.database.driver.Exec(query, residentID)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBExec, err)
@@ -194,36 +157,19 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Update(model models.Resident) error {
-	squirrel := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-	residentUpdate := squirrel.Update("resident")
+func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
+	residentUpdate := stmtBuilder.Update("resident").SetMap(rmEmptyVals(squirrel.Eq{
+		"first_name":            residentFields.FirstName,
+		"last_name":             residentFields.LastName,
+		"phone":                 residentFields.Phone,
+		"email":                 residentFields.Email,
+		"password":              residentFields.Password,
+		"unlim_days":            *residentFields.UnlimDays,
+		"amt_parking_days_used": *residentFields.AmtParkingDaysUsed,
+		"token_version":         residentFields.TokenVersion,
+	}))
 
-	if model.FirstName != "" {
-		residentUpdate = residentUpdate.Set("first_name", model.FirstName)
-	}
-	if model.LastName != "" {
-		residentUpdate = residentUpdate.Set("last_name", model.LastName)
-	}
-	if model.Phone != "" {
-		residentUpdate = residentUpdate.Set("phone", model.Phone)
-	}
-	if model.Email != "" {
-		residentUpdate = residentUpdate.Set("email", model.Email)
-	}
-	if model.Password != "" {
-		residentUpdate = residentUpdate.Set("password", model.Password)
-	}
-	if model.UnlimDays != nil {
-		residentUpdate = residentUpdate.Set("unlim_days", *model.UnlimDays)
-	}
-	if model.AmtParkingDaysUsed != nil {
-		residentUpdate = residentUpdate.Set("amt_parking_days_used", *model.AmtParkingDaysUsed)
-	}
-	if model.TokenVersion != 0 {
-		residentUpdate = residentUpdate.Set("token_version", model.TokenVersion)
-	}
-
-	query, args, err := residentUpdate.Where("resident.id = ?", model.ID).ToSql()
+	query, args, err := residentUpdate.Where("resident.id = ?", residentFields.ID).ToSql()
 	if err != nil {
 		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -234,4 +180,14 @@ func (residentRepo ResidentRepo) Update(model models.Resident) error {
 	}
 
 	return nil
+}
+
+// helpers
+func searchResidentsSQL(query string) squirrel.Sqlizer {
+	lcQuery := strings.ToLower(query)
+	return squirrel.Or{
+		squirrel.Expr("LOWER(resident.id) = ?", strings.ToLower(lcQuery)),
+		squirrel.Expr("LOWER(resident.first_name) = ?", lcQuery),
+		squirrel.Expr("LOWER(resident.last_name) = ?", lcQuery),
+	}
 }
