@@ -56,7 +56,6 @@ func (s AdminService) Update(desiredAdmin models.Admin) (models.Admin, error) {
 
 // helpers
 func (s AdminService) removeHash(admin models.Admin) models.Admin {
-	newRes := admin
-	newRes.Password = ""
-	return newRes
+	admin.Password = ""
+	return admin
 }
