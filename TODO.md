@@ -75,7 +75,7 @@
 - [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
 - [ ] refactor resident and visitor repos so that they:
 	1. make sure every db query uses a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
-	2. move some id checks to service and not handler or repo. 
+	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
@@ -92,6 +92,8 @@
 - [ ] make sure that residents can't make an api request to edit someone elses car
 - [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
+- [ ] (handler test) make sure an edit resident request cannot change passwords
+- [ ] (app test) make sure that resident fields cant be updated with invalid values
 - [ ] add check that contractors can't stay until forever and can stay only for (x) days
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
