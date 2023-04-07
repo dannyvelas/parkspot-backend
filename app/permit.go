@@ -7,6 +7,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"strings"
 )
@@ -27,11 +28,11 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 
 func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []storage.SelectOpt{
-		storage.WithPermitFilter(permitFilter),
-		storage.WithLimitAndOffset(boundedLimit, offset),
-		storage.WithReversed(reversed),
-		storage.WithSearch(search),
+	opts := []selectopts.SelectOpt{
+		selectopts.WithPermitFilter(permitFilter),
+		selectopts.WithLimitAndOffset(boundedLimit, offset),
+		selectopts.WithReversed(reversed),
+		selectopts.WithSearch(search),
 	}
 
 	allPermits, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: residentID}, opts...)

@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"strings"
 	"time"
 )
@@ -40,10 +41,10 @@ func NewPermitRepo(database Database) PermitRepo {
 	}
 }
 
-func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts ...SelectOpt) ([]models.Permit, error) {
+func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts ...selectopts.SelectOpt) ([]models.Permit, error) {
 	selector := permitRepo.permitSelect
 	for _, opt := range selectOpts {
-		selector = opt.dispatch(permitRepo, selector)
+		selector = opt.Dispatch(permitRepo, selector)
 	}
 
 	permitSelect := selector.Where(rmEmptyVals(squirrel.Eq{
@@ -75,10 +76,10 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, selectOpts ...SelectOpt) (int, error) {
+func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, selectOpts ...selectopts.SelectOpt) (int, error) {
 	selector := permitRepo.countSelect
 	for _, opt := range selectOpts {
-		selector = opt.dispatch(permitRepo, selector)
+		selector = opt.Dispatch(permitRepo, selector)
 	}
 
 	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
@@ -203,7 +204,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 }
 
 // helpers
-func (permitRepo PermitRepo) searchSQL(query string) squirrel.Sqlizer {
+func (permitRepo PermitRepo) SearchSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),

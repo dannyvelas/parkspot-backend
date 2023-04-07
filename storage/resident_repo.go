@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"strings"
 )
 
@@ -35,10 +36,10 @@ func NewResidentRepo(database Database) ResidentRepo {
 	}
 }
 
-func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...SelectOpt) ([]models.Resident, error) {
+func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) ([]models.Resident, error) {
 	selector := residentRepo.residentSelect
 	for _, opt := range selectOpts {
-		selector = opt.dispatch(residentRepo, selector)
+		selector = opt.Dispatch(residentRepo, selector)
 	}
 
 	residentSelect := selector.Where(rmEmptyVals(squirrel.Eq{
@@ -63,10 +64,10 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 	return residents.toModels(), nil
 }
 
-func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident, selectOpts ...SelectOpt) (int, error) {
+func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) (int, error) {
 	selector := residentRepo.countSelect
 	for _, opt := range selectOpts {
-		selector = opt.dispatch(residentRepo, selector)
+		selector = opt.Dispatch(residentRepo, selector)
 	}
 
 	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
@@ -179,7 +180,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 }
 
 // helpers
-func (residentRepo ResidentRepo) searchSQL(query string) squirrel.Sqlizer {
+func (residentRepo ResidentRepo) SearchSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(resident.id) = ?", strings.ToLower(lcQuery)),

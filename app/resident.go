@@ -5,6 +5,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,9 +22,9 @@ func NewResidentService(residentRepo storage.ResidentRepo) ResidentService {
 
 func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []storage.SelectOpt{
-		storage.WithLimitAndOffset(boundedLimit, offset),
-		storage.WithSearch(search),
+	opts := []selectopts.SelectOpt{
+		selectopts.WithLimitAndOffset(boundedLimit, offset),
+		selectopts.WithSearch(search),
 	}
 
 	allResidents, err := s.residentRepo.SelectWhere(models.Resident{}, opts...)
