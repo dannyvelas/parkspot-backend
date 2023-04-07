@@ -68,13 +68,7 @@ func (h residentHandler) edit() http.HandlerFunc {
 
 func (h residentHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		if id == "" {
-			respondError(w, errs.BadRequest("id parameter cannot be empty"))
-			return
-		}
-
-		if err := h.residentService.Delete(id); err != nil {
+		if err := h.residentService.Delete(chi.URLParam(r, "id")); err != nil {
 			respondError(w, err)
 			return
 		}
