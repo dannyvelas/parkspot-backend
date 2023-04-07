@@ -27,7 +27,7 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 
 func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []func(*storage.Selector){
+	opts := []storage.SelectOpt{
 		storage.WithPermitFilter(permitFilter),
 		storage.WithLimitAndOffset(boundedLimit, offset),
 		storage.WithReversed(reversed),

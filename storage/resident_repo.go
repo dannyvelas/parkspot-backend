@@ -9,8 +9,9 @@ import (
 )
 
 type ResidentRepo struct {
-	database Database
-	selector Selector
+	database       Database
+	residentSelect squirrel.SelectBuilder
+	countSelect    squirrel.SelectBuilder
 }
 
 func NewResidentRepo(database Database) ResidentRepo {
@@ -27,18 +28,20 @@ func NewResidentRepo(database Database) ResidentRepo {
 	).From("resident")
 	countSelect := squirrel.Select("count(*)").From("resident")
 
-	selector := newSelector(residentSelect, countSelect).withOpts(withSearchFn(searchResidentsSQL))
-
 	return ResidentRepo{
-		database: database,
-		selector: selector,
+		database:       database,
+		residentSelect: residentSelect,
+		countSelect:    countSelect,
 	}
 }
 
-func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...func(*Selector)) ([]models.Resident, error) {
-	selector := residentRepo.selector.withOpts(selectOpts...)
+func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...SelectOpt) ([]models.Resident, error) {
+	selector := residentRepo.residentSelect
+	for _, opt := range selectOpts {
+		selector = opt.dispatch(residentRepo, selector)
+	}
 
-	residentSelect := selector.selector.Where(rmEmptyVals(squirrel.Eq{
+	residentSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id": residentFields.ID,
 		"first_name":  residentFields.FirstName,
 		"last_name":   residentFields.LastName,
@@ -60,10 +63,13 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 	return residents.toModels(), nil
 }
 
-func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident, selectOpts ...func(*Selector)) (int, error) {
-	selector := residentRepo.selector.withOpts(selectOpts...)
+func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident, selectOpts ...SelectOpt) (int, error) {
+	selector := residentRepo.countSelect
+	for _, opt := range selectOpts {
+		selector = opt.dispatch(residentRepo, selector)
+	}
 
-	countSelect := selector.countSelect.Where(rmEmptyVals(squirrel.Eq{
+	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id": residentFields.ID,
 		"first_name":  residentFields.FirstName,
 		"last_name":   residentFields.LastName,
@@ -173,7 +179,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 }
 
 // helpers
-func searchResidentsSQL(query string) squirrel.Sqlizer {
+func (residentRepo ResidentRepo) searchSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(resident.id) = ?", strings.ToLower(lcQuery)),

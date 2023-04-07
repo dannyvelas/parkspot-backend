@@ -11,8 +11,9 @@ import (
 )
 
 type PermitRepo struct {
-	database Database
-	selector Selector
+	database     Database
+	permitSelect squirrel.SelectBuilder
+	countSelect  squirrel.SelectBuilder
 }
 
 func NewPermitRepo(database Database) PermitRepo {
@@ -32,18 +33,20 @@ func NewPermitRepo(database Database) PermitRepo {
 	).From("permit")
 	countSelect := stmtBuilder.Select("count(*)").From("permit")
 
-	selector := newSelector(permitSelect, countSelect).withOpts(withSearchFn(searchPermitsSQL))
-
 	return PermitRepo{
-		database: database,
-		selector: selector,
+		database:     database,
+		permitSelect: permitSelect,
+		countSelect:  countSelect,
 	}
 }
 
-func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts ...func(*Selector)) ([]models.Permit, error) {
-	selector := permitRepo.selector.withOpts(selectOpts...)
+func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts ...SelectOpt) ([]models.Permit, error) {
+	selector := permitRepo.permitSelect
+	for _, opt := range selectOpts {
+		selector = opt.dispatch(permitRepo, selector)
+	}
 
-	permitSelect := selector.selector.Where(rmEmptyVals(squirrel.Eq{
+	permitSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -72,10 +75,13 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 	return permits.toModels(), nil
 }
 
-func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, selectOpts ...func(*Selector)) (int, error) {
-	selector := permitRepo.selector.withOpts(selectOpts...)
+func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, selectOpts ...SelectOpt) (int, error) {
+	selector := permitRepo.countSelect
+	for _, opt := range selectOpts {
+		selector = opt.dispatch(permitRepo, selector)
+	}
 
-	countSelect := selector.countSelect.Where(rmEmptyVals(squirrel.Eq{
+	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   permitFields.ResidentID,
 		"car_id":        permitFields.CarID,
 		"license_plate": permitFields.LicensePlate,
@@ -105,7 +111,7 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, select
 }
 
 func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
-	query, args, err := permitRepo.selector.selector.Where("permit.id = $1", id).ToSql()
+	query, args, err := permitRepo.permitSelect.Where("permit.id = $1", id).ToSql()
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
 	}
@@ -197,7 +203,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 }
 
 // helpers
-func searchPermitsSQL(query string) squirrel.Sqlizer {
+func (permitRepo PermitRepo) searchSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),

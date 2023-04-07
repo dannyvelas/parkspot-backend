@@ -6,24 +6,23 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 )
 
-type Selector struct {
-	selector    squirrel.SelectBuilder
-	countSelect squirrel.SelectBuilder
-	searchFn    func(string) squirrel.Sqlizer
+type selectableRepo interface {
+	searchSQL(string) squirrel.Sqlizer
 }
 
-func newSelector(selector, countSelect squirrel.SelectBuilder) Selector {
-	return Selector{selector: selector, countSelect: countSelect}
+type SelectOpt interface {
+	dispatch(selectableRepo, squirrel.SelectBuilder) squirrel.SelectBuilder
 }
 
-func (selector Selector) withOpts(opts ...func(*Selector)) Selector {
-	for _, opt := range opts {
-		opt(&selector)
-	}
-	return selector
+type permitFilter struct {
+	permitFilter models.PermitFilter
 }
 
-func WithPermitFilter(filter models.PermitFilter) func(*Selector) {
+func WithPermitFilter(filter models.PermitFilter) permitFilter {
+	return permitFilter{filter}
+}
+
+func (permitFilter permitFilter) dispatch(repo selectableRepo, selector squirrel.SelectBuilder) squirrel.SelectBuilder {
 	filterToSQL := map[models.PermitFilter]squirrel.Sqlizer{
 		models.ActivePermits: squirrel.And{
 			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
@@ -36,46 +35,54 @@ func WithPermitFilter(filter models.PermitFilter) func(*Selector) {
 		},
 	}
 
-	whereSQL, ok := filterToSQL[filter]
-	return func(opts *Selector) {
-		if ok {
-			opts.selector = opts.selector.Where(whereSQL)
-			opts.countSelect = opts.countSelect.Where(whereSQL)
-		}
+	whereSQL, ok := filterToSQL[permitFilter.permitFilter]
+	if ok {
+		return selector.Where(whereSQL)
 	}
+	return selector
 }
 
-func withSearchFn(searchFn func(string) squirrel.Sqlizer) func(*Selector) {
-	return func(opts *Selector) {
-		opts.searchFn = searchFn
-	}
+type searchFilter struct {
+	search string
 }
 
-func WithSearch(search string) func(*Selector) {
-	return func(opts *Selector) {
-		if search != "" && opts.searchFn != nil {
-			opts.selector = opts.selector.Where(opts.searchFn(search))
-			opts.countSelect = opts.countSelect.Where(opts.searchFn(search))
-		}
+func WithSearch(search string) searchFilter {
+	return searchFilter{search}
+}
+func (searchFilter searchFilter) dispatch(repo selectableRepo, selector squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if searchFilter.search == "" {
+		return selector
 	}
+	return selector.Where(repo.searchSQL(searchFilter.search))
 }
 
-func WithLimitAndOffset(limit, offset int) func(*Selector) {
-	return func(opts *Selector) {
-		if limit >= 0 && offset >= 0 {
-			opts.selector = opts.selector.
-				Limit(uint64(getBoundedLimit(limit))).
-				Offset(uint64(offset))
-		}
-	}
+type limitAndOffset struct {
+	limit, offset int
 }
 
-func WithReversed(reversed bool) func(*Selector) {
-	return func(opts *Selector) {
-		if !reversed {
-			opts.selector = opts.selector.OrderBy("permit.id ASC")
-		} else {
-			opts.selector = opts.selector.OrderBy("permit.id DESC")
-		}
+func WithLimitAndOffset(limit, offset int) limitAndOffset {
+	return limitAndOffset{limit, offset}
+}
+func (limitAndOffset limitAndOffset) dispatch(repo selectableRepo, selector squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if limitAndOffset.limit >= 0 && limitAndOffset.offset >= 0 {
+		return selector.
+			Limit(uint64(getBoundedLimit(limitAndOffset.limit))).
+			Offset(uint64(limitAndOffset.offset))
+	}
+	return selector
+}
+
+type reverseOp struct {
+	reversed bool
+}
+
+func WithReversed(reversed bool) reverseOp {
+	return reverseOp{reversed}
+}
+func (reverseOp reverseOp) dispatch(repo selectableRepo, selector squirrel.SelectBuilder) squirrel.SelectBuilder {
+	if !reverseOp.reversed {
+		return selector.OrderBy("permit.id ASC")
+	} else {
+		return selector.OrderBy("permit.id DESC")
 	}
 }
