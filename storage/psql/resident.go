@@ -1,4 +1,4 @@
-package storage
+package psql
 
 import (
 	"github.com/dannyvelas/lasvistas_api/models"

@@ -1,4 +1,4 @@
-package storage
+package psql
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ type Database struct {
 	driver *sqlx.DB
 }
 
-func NewPostgresDatabase(postgresConfig config.PostgresConfig) (Database, error) {
+func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	driver, err := sqlx.Connect("postgres", postgresConfig.URL())
 	if err != nil {
 		return Database{}, fmt.Errorf("database: %w: %v", errs.DBConnecting, err)
