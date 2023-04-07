@@ -267,12 +267,13 @@ func checkAccessToken(jwtService app.JWTService, token string, expectedUser mode
 }
 
 func checkRefreshToken(jwtService app.JWTService, cookies []*http.Cookie, expectedID string, expectedVersion int) error {
-	refreshCookie, ok := util.Find(cookies, func(cookie *http.Cookie) bool {
+	index := util.Find(cookies, func(cookie *http.Cookie) bool {
 		return cookie.Name == config.RefreshCookieKey
 	})
-	if !ok {
+	if index == -1 {
 		return fmt.Errorf("cookie with key of %s not found", config.RefreshCookieKey)
 	}
+	refreshCookie := cookies[index]
 
 	if payload, err := jwtService.ParseRefresh(refreshCookie.Value); err != nil {
 		return fmt.Errorf("Error parsing refresh token (%s): %v", refreshCookie.Value, err)

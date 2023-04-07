@@ -18,12 +18,12 @@ func Contains[T comparable](slice []T, needle T) bool {
 	return false
 }
 
-func Find[T any](slice []T, fn func(T) bool) (zeroValue T, ok bool) {
-	for _, e := range slice {
+func Find[T any](slice []T, fn func(T) bool) int {
+	for i, e := range slice {
 		if fn(e) {
-			return e, true
+			return i
 		}
 	}
 
-	return zeroValue, false
+	return -1
 }
