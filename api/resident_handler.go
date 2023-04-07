@@ -56,6 +56,11 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
+		if editResidentReq.Password != "" {
+			respondError(w, errs.BadRequest("Resident passwords cannot be edited. These can only be changed if a resident requests a password reset."))
+			return
+		}
+
 		resident, err := h.residentService.Update(editResidentReq)
 		if err != nil {
 			respondError(w, err)
