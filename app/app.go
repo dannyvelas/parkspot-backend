@@ -34,8 +34,9 @@ func NewApp(c config.Config) (App, error) {
 
 	// services
 	jwtService := NewJWTService(c.Token())
-	authService := NewAuthService(jwtService, adminRepo, residentRepo, c.Http(), c.OAuth())
+	adminService := NewAdminService(adminRepo)
 	residentService := NewResidentService(residentRepo)
+	authService := NewAuthService(jwtService, adminService, residentService, c.Http(), c.OAuth())
 	visitorService := NewVisitorService(visitorRepo)
 	carService := NewCarService(carRepo)
 	permitService := NewPermitService(permitRepo, residentRepo, carRepo)

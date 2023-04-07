@@ -99,16 +99,6 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 	return nil
 }
 
-func (residentRepo ResidentRepo) SetPassword(id string, password string) error {
-	const query = `UPDATE resident SET password = $1 WHERE id = $2`
-	_, err := residentRepo.database.driver.Exec(query, password, id)
-	if err != nil {
-		return fmt.Errorf("resident_repo.SetPasswordFor: %w: %v", errs.DBExec, err)
-	}
-
-	return nil
-}
-
 func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 	// cast *resident.UnlimDays to bool
 	unlimDays := false

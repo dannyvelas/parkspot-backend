@@ -56,9 +56,18 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 }
 
 func (s ResidentService) Update(desiredResident models.Resident) (models.Resident, error) {
+	// if a password is being changed, make sure it is hashed before setting it in db
+	if desiredResident.Password != "" {
+		hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredResident.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return models.Resident{}, fmt.Errorf("residentService.Update: error generating hash for password: %v", err)
+		}
+		desiredResident.Password = string(hashBytes)
+	}
+
 	err := s.residentRepo.Update(desiredResident)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.editResident: Error updating resident: %w", err)
+		return models.Resident{}, fmt.Errorf("residentService.Update: Error updating resident: %w", err)
 	}
 
 	resident, err := s.GetOne(desiredResident.ID)

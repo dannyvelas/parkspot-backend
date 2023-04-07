@@ -9,7 +9,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
@@ -17,26 +16,26 @@ import (
 )
 
 type AuthService struct {
-	jwtService   JWTService
-	adminRepo    storage.AdminRepo
-	residentRepo storage.ResidentRepo
-	httpConfig   config.HttpConfig
-	oauthConfig  config.OAuthConfig
+	jwtService      JWTService
+	adminService    AdminService
+	residentService ResidentService
+	httpConfig      config.HttpConfig
+	oauthConfig     config.OAuthConfig
 }
 
 func NewAuthService(
 	jwtService JWTService,
-	adminRepo storage.AdminRepo,
-	residentRepo storage.ResidentRepo,
+	adminService AdminService,
+	residentService ResidentService,
 	httpConfig config.HttpConfig,
 	oauthConfig config.OAuthConfig,
 ) AuthService {
 	return AuthService{
-		jwtService:   jwtService,
-		adminRepo:    adminRepo,
-		residentRepo: residentRepo,
-		httpConfig:   httpConfig,
-		oauthConfig:  oauthConfig,
+		jwtService:      jwtService,
+		adminService:    adminService,
+		residentService: residentService,
+		httpConfig:      httpConfig,
+		oauthConfig:     oauthConfig,
 	}
 }
 
@@ -136,21 +135,13 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 		return errs.EmptyFields("password")
 	}
 
-	hashBytes, err := bcrypt.GenerateFromPassword([]byte(newPass), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("authService.resetPassword: error generating hash: %v", err)
-	}
-
-	var userRepo interface {
-		SetPassword(id, password string) error
-	}
+	var err error
 	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
-		userRepo = a.adminRepo
+		_, err = a.adminService.Update(models.Admin{Password: newPass})
 	} else {
-		userRepo = a.residentRepo
+		_, err = a.residentService.Update(models.Resident{Password: newPass})
 	}
 
-	err = userRepo.SetPassword(id, string(hashBytes))
 	if err != nil {
 		return fmt.Errorf("authService.resetPassword: error updating password: %v", err)
 	}
@@ -216,15 +207,8 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 
 func (a AuthService) getUser(id string) (models.Loginable, error) {
 	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
-		return a.adminRepo.GetOne(id)
+		return a.adminService.GetOne(id)
+	} else {
+		return a.residentService.GetOne(id)
 	}
-
-	residents, err := a.residentRepo.SelectWhere(models.Resident{ID: id})
-	if err != nil {
-		return nil, err
-	} else if len(residents) == 0 {
-		return nil, errs.NewNotFound("resident")
-	}
-
-	return residents[0], nil
 }

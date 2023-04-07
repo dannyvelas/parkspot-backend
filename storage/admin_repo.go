@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 )
@@ -38,17 +39,24 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	return admin.toModels(), nil
 }
 
-func (adminRepo AdminRepo) SetPassword(id string, password string) error {
-	if id == "" {
-		return fmt.Errorf("admin_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	} else if password == "" {
-		return fmt.Errorf("admin_repo.GetOne: %w: Emtpy Password argument", errs.DBInvalidArg)
+func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
+	adminUpdate := stmtBuilder.Update("admin").SetMap(rmEmptyVals(squirrel.Eq{
+		"first_name":    adminFields.FirstName,
+		"last_name":     adminFields.LastName,
+		"email":         adminFields.Email,
+		"password":      adminFields.Password,
+		"is_privileged": adminFields.IsPrivileged,
+		"token_version": adminFields.TokenVersion,
+	}))
+
+	query, args, err := adminUpdate.Where("admin.id = ?", adminFields.ID).ToSql()
+	if err != nil {
+		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	const query = `UPDATE admin SET password = $1 WHERE id = $2`
-	_, err := adminRepo.database.driver.Exec(query, password, id)
+	_, err = adminRepo.database.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("admin_repo.SetPasswordFor: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
