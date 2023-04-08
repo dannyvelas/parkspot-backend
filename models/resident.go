@@ -14,7 +14,7 @@ type Resident struct {
 	Password           string `json:"password"`
 	UnlimDays          *bool  `json:"unlimDays"`
 	AmtParkingDaysUsed *int   `json:"amtParkingDaysUsed"`
-	TokenVersion       int    `json:"-"`
+	TokenVersion       *int   `json:"-"`
 }
 
 func NewResident(
@@ -37,7 +37,7 @@ func NewResident(
 		Password:           password,
 		UnlimDays:          &unlimDays,
 		AmtParkingDaysUsed: &amtParkingDaysUsed,
-		TokenVersion:       tokenVersion,
+		TokenVersion:       &tokenVersion,
 	}
 }
 
@@ -46,7 +46,7 @@ func (m Resident) GetPassword() string {
 }
 
 func (m Resident) AsUser() User {
-	return NewUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, m.TokenVersion)
+	return NewUser(m.ID, m.FirstName, m.LastName, m.Email, ResidentRole, *m.TokenVersion)
 }
 
 func IsResidentID(s string) error {

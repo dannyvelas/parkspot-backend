@@ -12,4 +12,5 @@ type ResidentRepo interface {
 	Create(resident models.Resident) error
 	Delete(residentID string) error
 	Update(residentFields models.Resident) error
+	Reset() // for testing
 }

@@ -163,7 +163,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 		"password":              residentFields.Password,
 		"unlim_days":            *residentFields.UnlimDays,
 		"amt_parking_days_used": *residentFields.AmtParkingDaysUsed,
-		"token_version":         residentFields.TokenVersion,
+		"token_version":         *residentFields.TokenVersion,
 	}))
 
 	query, args, err := residentUpdate.Where("resident.id = ?", residentFields.ID).ToSql()
@@ -178,6 +178,8 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 
 	return nil
 }
+
+func (residentRepo ResidentRepo) Reset() {}
 
 // helpers
 func (residentRepo ResidentRepo) SearchSQL(query string) squirrel.Sqlizer {

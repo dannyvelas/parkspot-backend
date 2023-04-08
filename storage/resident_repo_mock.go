@@ -76,5 +76,38 @@ func (residentRepoMock *ResidentRepoMock) Delete(id string) error {
 }
 
 func (residentRepoMock *ResidentRepoMock) Update(residentFields models.Resident) error {
+	i := util.Find(residentRepoMock.residents, func(resident models.Resident) bool { return resident.ID == residentFields.ID })
+	if i < 0 {
+		return errs.NewNotFound("resident")
+	}
+	resident := &residentRepoMock.residents[i]
+	if residentFields.FirstName != "" {
+		resident.FirstName = residentFields.FirstName
+	}
+	if residentFields.LastName != "" {
+		resident.LastName = residentFields.LastName
+	}
+	if residentFields.Phone != "" {
+		resident.Phone = residentFields.Phone
+	}
+	if residentFields.Email != "" {
+		resident.Email = residentFields.Email
+	}
+	if residentFields.Password != "" {
+		resident.Password = residentFields.Password
+	}
+	if residentFields.UnlimDays != nil {
+		resident.UnlimDays = residentFields.UnlimDays
+	}
+	if residentFields.AmtParkingDaysUsed != nil {
+		resident.AmtParkingDaysUsed = residentFields.AmtParkingDaysUsed
+	}
+	if residentFields.TokenVersion != nil {
+		resident.TokenVersion = residentFields.TokenVersion
+	}
 	return nil
+}
+
+func (residentRepoMock *ResidentRepoMock) Reset() {
+	residentRepoMock.residents = residentRepoMock.residents[:0]
 }
