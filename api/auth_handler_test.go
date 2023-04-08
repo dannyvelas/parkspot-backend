@@ -176,7 +176,7 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 		testResident.LastName,
 		testResident.Email,
 		models.ResidentRole,
-		testResident.TokenVersion)
+		*testResident.TokenVersion)
 	refreshToken, err := suite.app.JWTService.NewRefresh(user)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
