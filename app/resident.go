@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"github.com/dannyvelas/lasvistas_api/util"
@@ -69,7 +70,7 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 		return models.Resident{}, errs.AllEditFieldsEmpty("firstName, lastName, phone, email, unlimDays, amtParkingDaysUsed")
 	}
 
-	if err := models.EditResidentValidator.Run(desiredResident); err != nil {
+	if err := validator.EditResident.Run(desiredResident); err != nil {
 		return models.Resident{}, err
 	}
 
@@ -104,7 +105,7 @@ func (s ResidentService) Delete(id string) error {
 }
 
 func (s ResidentService) Create(desiredRes models.Resident) error {
-	if err := models.CreateResidentValidator.Run(desiredRes); err != nil {
+	if err := validator.CreateResident.Run(desiredRes); err != nil {
 		return err
 	}
 

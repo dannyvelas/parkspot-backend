@@ -1,7 +1,8 @@
-package models
+package validator
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"regexp"
 	"strings"
 )
@@ -15,14 +16,14 @@ type residentValidator struct {
 }
 
 var (
-	CreateResidentValidator = residentValidator{
+	CreateResident = residentValidator{
 		regexp.MustCompile("^[A-Za-z ]+$"),
 		regexp.MustCompile("^\\d{1,20}$"),
 		regexp.MustCompile("^.+@.+$"),
 		false,
 		nil,
 	}
-	EditResidentValidator = residentValidator{
+	EditResident = residentValidator{
 		regexp.MustCompile("^[A-Za-z ]*$"),
 		regexp.MustCompile("^\\d{0,20}$"),
 		regexp.MustCompile("^(.+@.+$|)$"),
@@ -31,10 +32,10 @@ var (
 	}
 )
 
-func (v residentValidator) Run(resident Resident) *errs.ApiErr {
+func (v residentValidator) Run(resident models.Resident) *errs.ApiErr {
 	var errors []string
 
-	if err := IsResidentID(resident.ID); err != nil {
+	if err := models.IsResidentID(resident.ID); err != nil {
 		errors = append(errors, err.Error())
 	}
 	if !v.firstLastRe.MatchString(resident.FirstName) {

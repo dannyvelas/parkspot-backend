@@ -1,7 +1,8 @@
-package models
+package validator
 
 import (
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"regexp"
 	"strings"
@@ -17,15 +18,15 @@ type carValidator struct {
 }
 
 var (
-	CreateCarValidator = carValidator{
+	CreateCar = carValidator{
 		validateCarID,
-		IsResidentID,
+		models.IsResidentID,
 		regexp.MustCompile("^[A-Za-z0-9]+$"),
 		regexp.MustCompile("^[A-Za-z]+$"),
 		regexp.MustCompile("^[A-Za-z0-9 -]+$"),
 		nil,
 	}
-	EditCarValidator = carValidator{
+	EditCar = carValidator{
 		nil,
 		nil,
 		regexp.MustCompile("^[A-Za-z0-9]*$"),
@@ -35,7 +36,7 @@ var (
 	}
 )
 
-func (v carValidator) Run(car Car) *errs.ApiErr {
+func (v carValidator) Run(car models.Car) *errs.ApiErr {
 	var errors []string
 
 	if v.validateIDFn != nil {

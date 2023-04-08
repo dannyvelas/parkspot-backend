@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/util"
 )
@@ -42,7 +43,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	if updatedFields.LicensePlate == "" && updatedFields.Color == "" && updatedFields.Make == "" && updatedFields.Model == "" && updatedFields.AmtParkingDaysUsed == nil {
 		return models.Car{}, errs.AllEditFieldsEmpty("licensePlate, color, make, model, amtParkingDaysUsed")
 	}
-	if err := models.EditCarValidator.Run(updatedFields); err != nil {
+	if err := validator.EditCar.Run(updatedFields); err != nil {
 		return models.Car{}, err
 	}
 
@@ -69,7 +70,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 }
 
 func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
-	if err := models.CreateCarValidator.Run(desiredCar); err != nil {
+	if err := validator.CreateCar.Run(desiredCar); err != nil {
 		return models.Car{}, err
 	}
 

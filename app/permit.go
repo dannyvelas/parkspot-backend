@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"github.com/dannyvelas/lasvistas_api/util"
@@ -116,7 +117,7 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 	} else {
 		// otherwise, we will create a new car for this permit
 		newCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
-		if err := models.CreateCarValidator.Run(newCar); err != nil {
+		if err := validator.CreateCar.Run(newCar); err != nil {
 			return models.Permit{}, err
 		}
 		_, err := s.carRepo.Create(newCar)
@@ -143,7 +144,7 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 	}
 	{
 		car := models.Car{LicensePlate: updatedFields.LicensePlate, Color: updatedFields.Color, Make: updatedFields.Make, Model: updatedFields.Model}
-		if err := models.EditCarValidator.Run(car); err != nil {
+		if err := validator.EditCar.Run(car); err != nil {
 			return models.Permit{}, err
 		}
 	}
