@@ -57,6 +57,22 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 }
 
 func (s ResidentService) Update(desiredResident models.Resident) (models.Resident, error) {
+	if desiredResident.ID == "" {
+		return models.Resident{}, errs.MissingIDField
+	}
+	if err := models.IsResidentID(desiredResident.ID); err != nil {
+		return models.Resident{}, err
+	}
+	if desiredResident.FirstName == "" && desiredResident.LastName == "" &&
+		desiredResident.Phone == "" && desiredResident.Email == "" &&
+		desiredResident.UnlimDays == nil && desiredResident.AmtParkingDaysUsed == nil {
+		return models.Resident{}, errs.AllEditFieldsEmpty("firstName, lastName, phone, email, unlimDays, amtParkingDaysUsed")
+	}
+
+	if err := models.EditResidentValidator.Run(desiredResident); err != nil {
+		return models.Resident{}, err
+	}
+
 	// if a password is being changed, make sure it is hashed before setting it in db
 	if desiredResident.Password != "" {
 		hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredResident.Password), bcrypt.DefaultCost)
@@ -88,7 +104,7 @@ func (s ResidentService) Delete(id string) error {
 }
 
 func (s ResidentService) Create(desiredRes models.Resident) error {
-	if err := desiredRes.ValidateCreation(); err != nil {
+	if err := models.CreateResidentValidator.Run(desiredRes); err != nil {
 		return err
 	}
 
