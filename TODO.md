@@ -70,11 +70,12 @@
 - [x] probably remove redundant checks for errnorows in routers that delete residents (you first check whether resident exists by using residentRepo.GetOne, and then by using residentRepo.Delete)
 - [✗] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed` (wont do bc this should happen at service level not repo level)
 - [x] allow the edit of parking days for cars
-- [ ] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
-- [ ] explore moving some tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+- [x] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
+- [ ] fix residentRepo.Update func. it won't create the SetMap correctly, it needs to dereference pointer values first
+- [ ] move tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
-- [ ] refactor resident and visitor repos so that they:
-	1. make sure every db query uses a `stmtBuilder` variable that will be global in repo files to build sql stmts (already exists in permit_repo)
+- [ ] refactor visitor repo so that:
+	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 ## Testing
