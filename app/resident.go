@@ -138,7 +138,6 @@ func (s ResidentService) Create(desiredRes models.Resident) error {
 
 // helpers
 func (s ResidentService) removeHash(resident models.Resident) models.Resident {
-	newRes := resident
-	newRes.Password = ""
-	return newRes
+	resident.Password = ""
+	return resident
 }
