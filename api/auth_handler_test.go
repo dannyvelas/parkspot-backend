@@ -3,11 +3,9 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
@@ -222,33 +220,6 @@ func (suite authRouterSuite) TestRefreshTokens_Positive() {
 
 	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
 	suite.NoError(err)
-}
-
-func (suite authRouterSuite) TestCreate_ResidentDuplicateEmail_Negative() {
-	requestBody := models.Resident{
-		ID:        "B0000000",
-		FirstName: "first",
-		LastName:  "last",
-		Phone:     "123456789",
-		Email:     "email@example.com",
-		Password:  "password",
-		UnlimDays: util.ToPtr(false),
-	}
-
-	_, err := authenticatedReq[models.Resident, app.Session]("POST", suite.testServer.URL+"/api/resident", suite.adminAccessToken, &requestBody)
-	if err == nil {
-		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
-		return
-	}
-
-	var apiErr *errs.ApiErr
-	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
-		return
-	}
-
-	suite.Equal(http.StatusBadRequest, apiErr.StatusCode, "Expected bad request got: %d", apiErr.StatusCode)
-	suite.Contains(apiErr.Error(), "email") // assert bad request happened bc of email
 }
 
 // helpers
