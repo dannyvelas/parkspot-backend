@@ -17,7 +17,7 @@ type residentTestSuite struct {
 	residentService ResidentService
 }
 
-func TestResidentRouter(t *testing.T) {
+func TestResidentService(t *testing.T) {
 	suite.Run(t, new(residentTestSuite))
 }
 
