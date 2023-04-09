@@ -46,8 +46,10 @@ func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
 		"email":         adminFields.Email,
 		"password":      adminFields.Password,
 		"is_privileged": adminFields.IsPrivileged,
-		"token_version": adminFields.TokenVersion,
 	}))
+	if adminFields.TokenVersion != nil {
+		adminUpdate = adminUpdate.Set("token_version", *adminFields.TokenVersion)
+	}
 
 	query, args, err := adminUpdate.Where("admin.id = ?", adminFields.ID).ToSql()
 	if err != nil {

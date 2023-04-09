@@ -156,15 +156,21 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 
 func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 	residentUpdate := stmtBuilder.Update("resident").SetMap(rmEmptyVals(squirrel.Eq{
-		"first_name":            residentFields.FirstName,
-		"last_name":             residentFields.LastName,
-		"phone":                 residentFields.Phone,
-		"email":                 residentFields.Email,
-		"password":              residentFields.Password,
-		"unlim_days":            *residentFields.UnlimDays,
-		"amt_parking_days_used": *residentFields.AmtParkingDaysUsed,
-		"token_version":         *residentFields.TokenVersion,
+		"first_name": residentFields.FirstName,
+		"last_name":  residentFields.LastName,
+		"phone":      residentFields.Phone,
+		"email":      residentFields.Email,
+		"password":   residentFields.Password,
 	}))
+	if residentFields.UnlimDays != nil {
+		residentUpdate = residentUpdate.Set("unlim_days", *residentFields.UnlimDays)
+	}
+	if residentFields.AmtParkingDaysUsed != nil {
+		residentUpdate = residentUpdate.Set("amt_parking_days_used", *residentFields.AmtParkingDaysUsed)
+	}
+	if residentFields.TokenVersion != nil {
+		residentUpdate = residentUpdate.Set("token_version", *residentFields.TokenVersion)
+	}
 
 	query, args, err := residentUpdate.Where("resident.id = ?", residentFields.ID).ToSql()
 	if err != nil {
