@@ -7,7 +7,7 @@ type Admin struct {
 	Email        string `json:"email"`
 	Password     string `json:"-"`
 	IsPrivileged bool   `json:"isPrivileged"`
-	TokenVersion int    `json:"-"`
+	TokenVersion *int   `json:"-"`
 }
 
 func NewAdmin(id string, firstName string, lastName string, email string, password string, isPrivileged bool, tokenVersion int) Admin {
@@ -18,7 +18,7 @@ func NewAdmin(id string, firstName string, lastName string, email string, passwo
 		Email:        email,
 		Password:     password,
 		IsPrivileged: isPrivileged,
-		TokenVersion: tokenVersion,
+		TokenVersion: &tokenVersion,
 	}
 }
 
@@ -27,5 +27,5 @@ func (a Admin) GetPassword() string {
 }
 
 func (a Admin) AsUser() User {
-	return NewUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, a.TokenVersion)
+	return NewUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, *a.TokenVersion)
 }
