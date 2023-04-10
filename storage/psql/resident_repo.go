@@ -16,7 +16,7 @@ type ResidentRepo struct {
 }
 
 func NewResidentRepo(database Database) ResidentRepo {
-	residentSelect := squirrel.Select(
+	residentSelect := stmtBuilder.Select(
 		"id",
 		"first_name",
 		"last_name",
@@ -43,11 +43,11 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 	}
 
 	residentSelect := selector.Where(rmEmptyVals(squirrel.Eq{
-		"resident_id": residentFields.ID,
-		"first_name":  residentFields.FirstName,
-		"last_name":   residentFields.LastName,
-		"phone":       residentFields.Phone,
-		"email":       residentFields.Email,
+		"id":         residentFields.ID,
+		"first_name": residentFields.FirstName,
+		"last_name":  residentFields.LastName,
+		"phone":      residentFields.Phone,
+		"email":      residentFields.Email,
 	}))
 
 	query, args, err := residentSelect.ToSql()
@@ -71,11 +71,11 @@ func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident
 	}
 
 	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
-		"resident_id": residentFields.ID,
-		"first_name":  residentFields.FirstName,
-		"last_name":   residentFields.LastName,
-		"phone":       residentFields.Phone,
-		"email":       residentFields.Email,
+		"id":         residentFields.ID,
+		"first_name": residentFields.FirstName,
+		"last_name":  residentFields.LastName,
+		"phone":      residentFields.Phone,
+		"email":      residentFields.Email,
 	}))
 
 	query, args, err := countSelect.ToSql()
