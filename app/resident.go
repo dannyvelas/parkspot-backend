@@ -22,17 +22,16 @@ func NewResidentService(residentRepo storage.ResidentRepo) ResidentService {
 
 func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []selectopts.SelectOpt{
+
+	allResidents, err := s.residentRepo.SelectWhere(models.Resident{},
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
 		selectopts.WithSearch(search),
-	}
-
-	allResidents, err := s.residentRepo.SelectWhere(models.Resident{}, opts...)
+	)
 	if err != nil {
 		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error querying residentRepo: %v", err)
 	}
 
-	totalAmount, err := s.residentRepo.SelectCountWhere(models.Resident{}, opts...)
+	totalAmount, err := s.residentRepo.SelectCountWhere(models.Resident{}, selectopts.WithSearch(search))
 	if err != nil {
 		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error getting total amount: %v", err)
 	}

@@ -29,19 +29,21 @@ func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.Reside
 
 func (s PermitService) GetAll(permitFilter models.PermitFilter, limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Permit], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
-	opts := []selectopts.SelectOpt{
+
+	allPermits, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: residentID},
 		selectopts.WithPermitFilter(permitFilter),
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
 		selectopts.WithReversed(reversed),
 		selectopts.WithSearch(search),
-	}
-
-	allPermits, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: residentID}, opts...)
+	)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting permits from permit repo: %v", err)
 	}
 
-	totalAmount, err := s.permitRepo.SelectCountWhere(models.Permit{ResidentID: residentID}, opts...)
+	totalAmount, err := s.permitRepo.SelectCountWhere(models.Permit{ResidentID: residentID},
+		selectopts.WithPermitFilter(permitFilter),
+		selectopts.WithSearch(search),
+	)
 	if err != nil {
 		return models.ListWithMetadata[models.Permit]{}, fmt.Errorf("error getting total amount from permit repo: %v", err)
 	}
