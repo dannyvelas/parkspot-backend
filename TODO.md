@@ -95,7 +95,8 @@
 - [ ] make sure residents can't create visitors with a start date in the past
 - [ ] (handler test) make sure an edit resident request cannot change passwords
 - [ ] (app test) make sure that resident fields cant be updated with invalid values
-- [ ] add check that contractors can't stay until forever and can stay only for (x) days
+- [ ] (app test) add check that contractors can't stay until forever and can stay only for (x) days
+- [ ] (repo test) add a test to make sure admin get one works
 ## Low priority
 - [x] change error format to be filename.func so that only errors are separated by :
 - [x] prepare limit and offset with squirrel, or at least make sure that its okay to not prepare them
