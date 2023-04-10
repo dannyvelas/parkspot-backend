@@ -71,13 +71,14 @@
 - [✗] add emptyID checking to getActiveDuring\* permit repo funcs as well as resident repo func: `AddToAmtParkingDaysUsed` (wont do bc this should happen at service level not repo level)
 - [x] allow the edit of parking days for cars
 - [x] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
-- [ ] fix residentRepo.Update func. it won't create the SetMap correctly, it needs to dereference pointer values first
-- [ ] move tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+- [x] fix residentRepo.Update func. it won't create the SetMap correctly, it needs to dereference pointer values first
+- [ ] move all tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
 - [ ] refactor visitor repo so that:
 	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
+- [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [ ] add test to make sure residents can't create exception permits
@@ -93,6 +94,9 @@
 - [ ] make sure that residents can't make an api request to edit someone elses car
 - [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
+- [ ] (app test) make sure that permit creating doesn't add days to resident or car if resident has unlim days
+- [ ] (app test) make sure that permit creatino does add days to resident and car if resident does not have unlimited days
+- [ ] (app test) make sure that cars are created correctly when a person chooses to add a new car when creating a permit 
 - [ ] (handler test) make sure an edit resident request cannot change passwords
 - [ ] (app test) make sure that resident fields cant be updated with invalid values
 - [ ] (app test) add check that contractors can't stay until forever and can stay only for (x) days
