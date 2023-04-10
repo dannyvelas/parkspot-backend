@@ -122,10 +122,13 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		if err := validator.CreateCar.Run(newCar); err != nil {
 			return models.Permit{}, err
 		}
-		_, err := s.carRepo.Create(newCar)
+		newCarID, err := s.carRepo.Create(newCar)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error creating car with carRepo: %v", err)
 		}
+
+		// record the carID that was used to create this car
+		desiredPermit.CarID = newCarID
 	}
 
 	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*resident.UnlimDays
