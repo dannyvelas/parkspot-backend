@@ -7,7 +7,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
-	"github.com/dannyvelas/lasvistas_api/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,7 +31,6 @@ func (s ResidentService) GetAll(limit, page int, search string) (models.ListWith
 	if err != nil {
 		return models.ListWithMetadata[models.Resident]{}, fmt.Errorf("resident_service.getAll: Error querying residentRepo: %v", err)
 	}
-	allResidents = util.MapSlice(allResidents, s.removeHash)
 
 	totalAmount, err := s.residentRepo.SelectCountWhere(models.Resident{}, opts...)
 	if err != nil {
@@ -54,7 +52,7 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 	}
 	resident := residents[0]
 
-	return s.removeHash(resident), nil
+	return resident, nil
 }
 
 func (s ResidentService) Update(desiredResident models.Resident) (models.Resident, error) {
@@ -93,7 +91,7 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 		return models.Resident{}, err
 	}
 
-	return s.removeHash(resident), nil
+	return resident, nil
 }
 
 func (s ResidentService) Delete(id string) error {
@@ -134,10 +132,4 @@ func (s ResidentService) Create(desiredRes models.Resident) error {
 	}
 
 	return nil
-}
-
-// helpers
-func (s ResidentService) removeHash(resident models.Resident) models.Resident {
-	resident.Password = ""
-	return resident
 }

@@ -31,6 +31,8 @@ func (h residentHandler) getAll() http.HandlerFunc {
 			respondError(w, err)
 			return
 		}
+		residents := util.MapSlice(residentsWithMetadata.Records, h.removeHash)
+		residentsWithMetadata.Records = residents
 
 		respondJSON(w, http.StatusOK, residentsWithMetadata)
 	}
@@ -44,7 +46,7 @@ func (h residentHandler) getOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, resident)
+		respondJSON(w, http.StatusOK, h.removeHash(resident))
 	}
 }
 
@@ -67,7 +69,7 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, resident)
+		respondJSON(w, http.StatusOK, h.removeHash(resident))
 	}
 }
 
@@ -97,4 +99,9 @@ func (h residentHandler) create() http.HandlerFunc {
 
 		respondJSON(w, http.StatusOK, message{"Resident successfully created."})
 	}
+}
+
+func (h residentHandler) removeHash(resident models.Resident) models.Resident {
+	resident.Password = ""
+	return resident
 }
