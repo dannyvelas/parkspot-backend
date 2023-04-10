@@ -28,7 +28,7 @@ func (s AdminService) GetOne(id string) (models.Admin, error) {
 		return models.Admin{}, err
 	}
 
-	return s.removeHash(admin), nil
+	return admin, nil
 }
 
 func (s AdminService) Update(desiredAdmin models.Admin) (models.Admin, error) {
@@ -51,11 +51,5 @@ func (s AdminService) Update(desiredAdmin models.Admin) (models.Admin, error) {
 		return models.Admin{}, err
 	}
 
-	return s.removeHash(admin), nil
-}
-
-// helpers
-func (s AdminService) removeHash(admin models.Admin) models.Admin {
-	admin.Password = ""
-	return admin
+	return admin, nil
 }
