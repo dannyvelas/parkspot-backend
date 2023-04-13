@@ -115,7 +115,7 @@ func (suite residentTestSuite) TestEdit_Resident_Positive() {
 		suite.Equal(test.expected.LastName, result.LastName)
 		suite.Equal(test.expected.Phone, result.Phone)
 		suite.Equal(test.expected.Email, result.Email)
-		suite.Empty(result.Password) // residentResp.Password should be "" and not equal to test.expected.Password
+		// passwords changes will be checked in another test, they require slightly different logic
 
 		return nil
 	}
