@@ -101,34 +101,34 @@ func (s ResidentService) Delete(id string) error {
 	return s.residentRepo.Delete(id)
 }
 
-func (s ResidentService) Create(desiredRes models.Resident) error {
+func (s ResidentService) Create(desiredRes models.Resident) (models.Resident, error) {
 	if err := validator.CreateResident.Run(desiredRes); err != nil {
-		return err
+		return models.Resident{}, err
 	}
 
 	if residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredRes.ID}); err != nil {
-		return fmt.Errorf("resident_service.createResident: error getting resident by id: %v", err)
+		return models.Resident{}, fmt.Errorf("resident_service.createResident: error getting resident by id: %v", err)
 	} else if len(residents) != 0 {
-		return errs.AlreadyExists("resident with ID " + desiredRes.ID)
+		return models.Resident{}, errs.AlreadyExists("resident with ID " + desiredRes.ID)
 	}
 
 	if residents, err := s.residentRepo.SelectWhere(models.Resident{Email: desiredRes.Email}); err != nil {
-		return fmt.Errorf("resident_service.createResident error getting resident by email: %v", err)
+		return models.Resident{}, fmt.Errorf("resident_service.createResident error getting resident by email: %v", err)
 	} else if len(residents) != 0 {
-		return errs.AlreadyExists("a resident with this email")
+		return models.Resident{}, errs.AlreadyExists("a resident with this email")
 	}
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredRes.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("resident_service.createResident: error generating hash:" + err.Error())
+		return models.Resident{}, fmt.Errorf("resident_service.createResident: error generating hash:" + err.Error())
 	}
 	hashString := string(hashBytes)
 
 	desiredRes.Password = hashString
 	err = s.residentRepo.Create(desiredRes)
 	if err != nil {
-		return fmt.Errorf("resident_service.createResident: Error querying residentRepo: %v", err)
+		return models.Resident{}, fmt.Errorf("resident_service.createResident: Error querying residentRepo: %v", err)
 	}
 
-	return nil
+	return desiredRes, nil
 }

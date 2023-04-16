@@ -92,12 +92,13 @@ func (h residentHandler) create() http.HandlerFunc {
 			return
 		}
 
-		if err := h.residentService.Create(payload); err != nil {
+		createdRes, err := h.residentService.Create(payload)
+		if err != nil {
 			respondError(w, err)
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Resident successfully created."})
+		respondJSON(w, http.StatusOK, h.removeHash(createdRes))
 	}
 }
 
