@@ -27,7 +27,7 @@ func NewResidentRepo(database Database) ResidentRepo {
 		"amt_parking_days_used",
 		"token_version",
 	).From("resident")
-	countSelect := squirrel.Select("count(*)").From("resident")
+	countSelect := stmtBuilder.Select("count(*)").From("resident")
 
 	return ResidentRepo{
 		database:       database,
