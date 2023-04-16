@@ -81,6 +81,7 @@
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
+- [ ] (fix and app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
