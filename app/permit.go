@@ -16,14 +16,14 @@ import (
 type PermitService struct {
 	permitRepo   storage.PermitRepo
 	residentRepo storage.ResidentRepo
-	carRepo      storage.CarRepo
+	carService   CarService
 }
 
-func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carRepo storage.CarRepo) PermitService {
+func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carService CarService) PermitService {
 	return PermitService{
 		permitRepo:   permitRepo,
 		residentRepo: residentRepo,
-		carRepo:      carRepo,
+		carService:   carService,
 	}
 }
 
@@ -80,7 +80,7 @@ func (s PermitService) Delete(id int) error {
 			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
+		err = s.carService.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
 		if err != nil && !errors.Is(err, errs.NotFound) {
 			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
 		}
@@ -118,17 +118,14 @@ func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Pe
 		desiredPermit.Model = car.Model
 	} else {
 		// otherwise, we will create a new car for this permit
-		newCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
-		if err := validator.CreateCar.Run(newCar); err != nil {
-			return models.Permit{}, err
-		}
-		newCarID, err := s.carRepo.Create(newCar)
+		desiredCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
+		createdCar, err := s.carService.Create(desiredCar)
 		if err != nil {
-			return models.Permit{}, fmt.Errorf("error creating car with carRepo: %v", err)
+			return models.Permit{}, fmt.Errorf("error creating car: %v", err)
 		}
 
 		// record the carID that was used to create this car
-		desiredPermit.CarID = newCarID
+		desiredPermit.CarID = createdCar.ID
 	}
 
 	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*resident.UnlimDays
@@ -217,7 +214,7 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 		return models.Car{}, errs.InvalidFields("CarID is not a UUID")
 	}
 
-	existingCar, err := s.carRepo.GetOne(desiredPermit.CarID)
+	existingCar, err := s.carService.GetOne(desiredPermit.CarID)
 	if errors.Is(err, errs.NotFound) {
 		return models.Car{}, errs.CarForPermitDNE
 	} else if err != nil {
@@ -279,7 +276,7 @@ func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
 		}
 
-		err = s.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
+		err = s.carService.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
 		}
