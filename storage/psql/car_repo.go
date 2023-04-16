@@ -160,3 +160,5 @@ func (carRepo CarRepo) Delete(id string) error {
 
 	return nil
 }
+
+func (carRepo CarRepo) Reset() {}
