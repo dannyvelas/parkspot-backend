@@ -20,11 +20,11 @@ func NewServer(c config.Config, app app.App) Server {
 	router := newRouter(c, app)
 
 	server := http.Server{
-		Addr:         ":" + c.Http().Port(),
+		Addr:         ":" + c.Http.Port,
 		Handler:      router,
-		ReadTimeout:  c.Http().ReadTimeout(),
-		WriteTimeout: c.Http().WriteTimeout(),
-		IdleTimeout:  c.Http().IdleTimeout(),
+		ReadTimeout:  c.Http.ReadTimeout,
+		WriteTimeout: c.Http.WriteTimeout,
+		IdleTimeout:  c.Http.IdleTimeout,
 	}
 
 	return Server{
@@ -37,7 +37,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 	// middlewares
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   c.Http().CORSAllowedOrigins(),
+		AllowedOrigins:   c.Http.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},

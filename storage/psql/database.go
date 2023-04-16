@@ -13,7 +13,7 @@ type Database struct {
 }
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
-	driver, err := sqlx.Connect("postgres", postgresConfig.URL())
+	driver, err := sqlx.Connect("postgres", postgresConfig.URL)
 	if err != nil {
 		return Database{}, fmt.Errorf("database: %w: %v", errs.DBConnecting, err)
 	}

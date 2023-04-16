@@ -21,8 +21,8 @@ type JWTService struct {
 
 func NewJWTService(tokenConfig config.TokenConfig) JWTService {
 	return JWTService{
-		accessSecret:  []byte(tokenConfig.AccessSecret()),
-		refreshSecret: []byte(tokenConfig.RefreshSecret()),
+		accessSecret:  []byte(tokenConfig.AccessSecret),
+		refreshSecret: []byte(tokenConfig.RefreshSecret),
 	}
 }
 

@@ -151,21 +151,21 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 
 func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error) {
 	config := &oauth2.Config{
-		ClientID:     a.oauthConfig.ClientID(),
-		ClientSecret: a.oauthConfig.ClientSecret(),
-		RedirectURL:  a.oauthConfig.RedirectURL(),
-		Scopes:       []string{a.oauthConfig.Scope()},
+		ClientID:     a.oauthConfig.ClientID,
+		ClientSecret: a.oauthConfig.ClientSecret,
+		RedirectURL:  a.oauthConfig.RedirectURL,
+		Scopes:       []string{a.oauthConfig.Scope},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  a.oauthConfig.AuthURL(),
-			TokenURL: a.oauthConfig.TokenURL(),
+			AuthURL:  a.oauthConfig.AuthURL,
+			TokenURL: a.oauthConfig.TokenURL,
 		},
 	}
 
 	token := &oauth2.Token{
-		AccessToken:  a.oauthConfig.AccessToken(),
-		RefreshToken: a.oauthConfig.RefreshToken(),
-		TokenType:    a.oauthConfig.TokenType(),
-		Expiry:       a.oauthConfig.Expiry(),
+		AccessToken:  a.oauthConfig.AccessToken,
+		RefreshToken: a.oauthConfig.RefreshToken,
+		TokenType:    a.oauthConfig.TokenType,
+		Expiry:       a.oauthConfig.Expiry,
 	}
 
 	client := config.Client(ctx, token)
@@ -198,7 +198,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
         <p>If you sent the request, please click the button below to reset your password.
            Otherwise, you can ignore this email.</p>
         <a href='%s/reset-password?token=%s'>Reset Your Password</a>
-    </body>`, a.httpConfig.Domain(), token)
+    </body>`, a.httpConfig.Domain, token)
 
 	gmailMessage := &gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
 

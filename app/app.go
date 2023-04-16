@@ -19,7 +19,7 @@ type App struct {
 func NewApp(c config.Config) (App, error) {
 	// connect to database
 	// no defer close() because connection closes automatically on program exit
-	database, err := psql.NewDatabase(c.Postgres())
+	database, err := psql.NewDatabase(c.Postgres)
 	if err != nil {
 		return App{}, fmt.Errorf("Failed to start database: %v", err)
 	}
@@ -33,10 +33,10 @@ func NewApp(c config.Config) (App, error) {
 	permitRepo := psql.NewPermitRepo(database)
 
 	// services
-	jwtService := NewJWTService(c.Token())
+	jwtService := NewJWTService(c.Token)
 	adminService := NewAdminService(adminRepo)
 	residentService := NewResidentService(residentRepo)
-	authService := NewAuthService(jwtService, adminService, residentService, c.Http(), c.OAuth())
+	authService := NewAuthService(jwtService, adminService, residentService, c.Http, c.OAuth)
 	visitorService := NewVisitorService(visitorRepo)
 	carService := NewCarService(carRepo)
 	permitService := NewPermitService(permitRepo, residentRepo, carService)

@@ -8,10 +8,10 @@ import (
 )
 
 type Config struct {
-	http     HttpConfig
-	postgres PostgresConfig
-	token    TokenConfig
-	oauth    OAuthConfig
+	Http     HttpConfig
+	Postgres PostgresConfig
+	Token    TokenConfig
+	OAuth    OAuthConfig
 }
 
 const projectName = "go-lasvistas_api"
@@ -45,25 +45,9 @@ func NewConfig() (Config, error) {
 	}
 
 	return Config{
-		http:     httpConfig,
-		postgres: newPostgresConfig(),
-		token:    newTokenConfig(),
-		oauth:    oauthConfig,
+		Http:     httpConfig,
+		Postgres: newPostgresConfig(),
+		Token:    newTokenConfig(),
+		OAuth:    oauthConfig,
 	}, nil
-}
-
-func (config Config) Http() HttpConfig {
-	return config.http
-}
-
-func (config Config) Postgres() PostgresConfig {
-	return config.postgres
-}
-
-func (config Config) Token() TokenConfig {
-	return config.token
-}
-
-func (config Config) OAuth() OAuthConfig {
-	return config.oauth
 }
