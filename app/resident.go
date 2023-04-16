@@ -128,5 +128,10 @@ func (s ResidentService) Create(desiredRes models.Resident) (models.Resident, er
 		return models.Resident{}, fmt.Errorf("resident_service.createResident: Error querying residentRepo: %v", err)
 	}
 
-	return desiredRes, nil
+	createdRes, err := s.GetOne(desiredRes.ID)
+	if err != nil {
+		return models.Resident{}, fmt.Errorf("error getting resident which was just created: %w", err)
+	}
+
+	return createdRes, nil
 }
