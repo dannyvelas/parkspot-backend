@@ -7,6 +7,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/imdario/mergo"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"net/http"
 	"testing"
@@ -24,6 +25,10 @@ func TestCarService(t *testing.T) {
 func (suite *carTestSuite) SetupSuite() {
 	carRepo := storage.NewCarRepoMock()
 	suite.carService = NewCarService(&carRepo)
+}
+
+func (suite *carTestSuite) TearDownTest() {
+	suite.carService.carRepo.Reset()
 }
 
 func (suite carTestSuite) TestEdit_CarDNE_Negative() {
@@ -99,4 +104,16 @@ func (suite carTestSuite) TestEdit_Car_Positive() {
 			break
 		}
 	}
+}
+
+func (suite carTestSuite) TestCreate_CarRepeatLP_Negative() {
+	prevExistingCar := models.NewCar("", "B0000000", "lp1", "color", "make", "model", 0)
+	_, err := suite.carService.Create(prevExistingCar)
+	require.NoError(suite.T(), err, fmt.Errorf("Error creating test car before running test: %v", err))
+
+	carWithSameLP := models.NewCar("", "B0000000", "lp1", "color", "make", "model", 0)
+	_, err = suite.carService.Create(carWithSameLP)
+	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
+
+	require.ErrorIs(suite.T(), err, errs.AlreadyExists, "error is expected to be one of already exists")
 }
