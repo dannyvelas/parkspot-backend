@@ -51,13 +51,13 @@ func (suite residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		UnlimDays: util.ToPtr(false),
 	}
 
-	err := suite.residentService.Create(resident1)
+	_, err := suite.residentService.Create(resident1)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error creating resident when setting up test"))
 		return
 	}
 
-	err = suite.residentService.Create(residentSameEmail)
+	_, err = suite.residentService.Create(residentSameEmail)
 	if err == nil {
 		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
 		return
@@ -121,7 +121,7 @@ func (suite residentTestSuite) TestEdit_Resident_Positive() {
 	}
 
 	for testName, test := range tests {
-		if err := suite.residentService.Create(residentToEdit); err != nil {
+		if _, err := suite.residentService.Create(residentToEdit); err != nil {
 			suite.NoError(fmt.Errorf("Error creating test resident before running test: %v", err))
 			break
 		}
