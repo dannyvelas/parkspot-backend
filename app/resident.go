@@ -58,6 +58,7 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 	if desiredResident.ID == "" {
 		return models.Resident{}, errs.MissingIDField
 	}
+	// this check goes here; not in `validator.EditResident` bc this err is mut. exclusive w those errs
 	if desiredResident.FirstName == "" && desiredResident.LastName == "" &&
 		desiredResident.Phone == "" && desiredResident.Email == "" &&
 		desiredResident.UnlimDays == nil && desiredResident.AmtParkingDaysUsed == nil {
