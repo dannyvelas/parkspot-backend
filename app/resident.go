@@ -58,9 +58,6 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 	if desiredResident.ID == "" {
 		return models.Resident{}, errs.MissingIDField
 	}
-	if err := models.IsResidentID(desiredResident.ID); err != nil {
-		return models.Resident{}, err
-	}
 	if desiredResident.FirstName == "" && desiredResident.LastName == "" &&
 		desiredResident.Phone == "" && desiredResident.Email == "" &&
 		desiredResident.UnlimDays == nil && desiredResident.AmtParkingDaysUsed == nil {
