@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -35,18 +34,12 @@ func (suite carTestSuite) TestEdit_CarDNE_Negative() {
 	carWithIDThatDNE := models.Car{ID: "9b6d89a6-0b66-4170-be8d-eba43f8bf478", LicensePlate: "NEWLP"}
 
 	_, err := suite.carService.Update(carWithIDThatDNE)
-	if err == nil {
-		suite.NoError(fmt.Errorf("No error encountered when editing a non-existing car"))
-		return
-	}
+	require.Error(suite.T(), err, "No error encountered when editing a non-existing car")
 
 	var apiErr *errs.ApiErr
-	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("Couldn't cast error to apiErr. Error is: %v", err))
-		return
-	}
+	require.ErrorAsf(suite.T(), err, &apiErr, "Couldn't cast error to apiErr. Error is: %v", err)
 
-	suite.Equal(http.StatusNotFound, apiErr.StatusCode, "response was: %v", apiErr.Error())
+	require.Equal(suite.T(), http.StatusNotFound, apiErr.StatusCode, "response was: %v", apiErr.Error())
 }
 
 func (suite carTestSuite) TestEdit_Car_Positive() {
@@ -90,19 +83,13 @@ func (suite carTestSuite) TestEdit_Car_Positive() {
 
 	for testName, test := range tests {
 		createdCar, err := suite.carService.Create(carToEdit)
-		if err != nil {
-			suite.NoError(fmt.Errorf("Error creating test car before running test: %v", err))
-			break
-		}
+		require.NoError(suite.T(), err, fmt.Errorf("Error creating test car before running test: %v", err))
 
-		if err := executeTest(test); err != nil {
-			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
-		}
+		err = executeTest(test)
+		require.NoError(suite.T(), err, fmt.Errorf("%s failed: %v", testName, err))
 
-		if err := suite.carService.Delete(createdCar.ID); err != nil {
-			suite.NoError(fmt.Errorf("Error deleting test car after running test: %v", err))
-			break
-		}
+		err = suite.carService.Delete(createdCar.ID)
+		require.NoError(suite.T(), err, fmt.Errorf("Error deleting test car after running test: %v", err))
 	}
 }
 
