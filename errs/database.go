@@ -12,4 +12,5 @@ var (
 	DBInvalidArg      = errors.New("Invalid argument to database")
 	DBBuildingQuery   = errors.New("Error building database query")
 	DBGetRowsAffected = errors.New("Error getting rows affected by database query")
+	DBPinging         = errors.New("Error pinging database")
 )
