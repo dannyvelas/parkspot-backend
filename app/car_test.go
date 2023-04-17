@@ -137,7 +137,7 @@ func (suite carTestSuite) TestCreate_CarRepeatLP_Negative() {
 		require.NoError(suite.T(), fmt.Errorf("Error creating test car before running test: %v", err))
 	}
 
-	carWithSameLP := models.NewCar("", "B0000000", "lp1", "color", "make", "model", 0)
+	carWithSameLP := models.NewCar("", suite.resident.ID, "lp1", "color", "make", "model", 0)
 	_, err := suite.carService.Create(carWithSameLP)
 	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
 
