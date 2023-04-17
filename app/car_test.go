@@ -1,19 +1,23 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/imdario/mergo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 	"net/http"
 	"testing"
 )
 
 type carTestSuite struct {
 	suite.Suite
+	container  testcontainers.Container
+	resident   models.Resident // resident to be used in tests
 	carService CarService
 }
 
@@ -22,12 +26,43 @@ func TestCarService(t *testing.T) {
 }
 
 func (suite *carTestSuite) SetupSuite() {
-	carRepo := storage.NewCarRepoMock()
-	suite.carService = NewCarService(&carRepo)
+	// configure and start container
+	container, database, err := getSandboxDatabase()
+	if err != nil {
+		suite.T().Fatalf("error getting sandbox database: %v", err)
+	}
+	// save container in suite struct so we can terminate it on suite teardown
+	suite.container = container
+
+	suite.resident = models.Resident{
+		ID:        "B1234567",
+		FirstName: "Daniel",
+		LastName:  "Velasquez",
+		Phone:     "1234567890",
+		Email:     "email@example.com",
+		Password:  "notapassword"}
+	residentService := NewResidentService(psql.NewResidentRepo(database))
+	if _, err := residentService.Create(suite.resident); err != nil {
+		suite.TearDownSuite()
+		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
+	}
+
+	carRepo := psql.NewCarRepo(database)
+	suite.carService = NewCarService(carRepo)
 }
 
-func (suite *carTestSuite) TearDownTest() {
-	suite.carService.carRepo.Reset()
+func (suite carTestSuite) TearDownSuite() {
+	err := suite.container.Terminate(context.Background())
+	if err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error tearing down container: %v", err))
+	}
+}
+
+func (suite carTestSuite) TearDownTest() {
+	err := suite.carService.carRepo.Reset()
+	if err != nil {
+		suite.T().Fatalf("encountered error resetting car repo in-between tests")
+	}
 }
 
 func (suite carTestSuite) TestEdit_CarDNE_Negative() {
@@ -43,7 +78,7 @@ func (suite carTestSuite) TestEdit_CarDNE_Negative() {
 }
 
 func (suite carTestSuite) TestEdit_Car_Positive() {
-	carToEdit := models.NewCar("d1e0affb-14e7-4e9f-b8a3-70be7d49d063", "B0000000", "lp1", "color", "make", "model", 0)
+	carToEdit := models.NewCar("d1e0affb-14e7-4e9f-b8a3-70be7d49d063", suite.resident.ID, "lp1", "color", "make", "model", 0)
 
 	// set up a table of tests
 	type test struct {
@@ -59,8 +94,7 @@ func (suite carTestSuite) TestEdit_Car_Positive() {
 	for testName, test_ := range tests {
 		expected := test_.argument
 		if err := mergo.Merge(&expected, carToEdit); err != nil {
-			suite.NoError(fmt.Errorf("error merging when preparing test: %v\n", err))
-			return
+			require.NoError(suite.T(), fmt.Errorf("error merging when preparing test: %v\n", err))
 		}
 		tests[testName] = test{argument: test_.argument, expected: expected}
 	}
@@ -83,23 +117,28 @@ func (suite carTestSuite) TestEdit_Car_Positive() {
 
 	for testName, test := range tests {
 		createdCar, err := suite.carService.Create(carToEdit)
-		require.NoError(suite.T(), err, fmt.Errorf("Error creating test car before running test: %v", err))
+		require.NoError(suite.T(), err)
 
 		err = executeTest(test)
-		require.NoError(suite.T(), err, fmt.Errorf("%s failed: %v", testName, err))
+		if err != nil {
+			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
+		}
 
 		err = suite.carService.Delete(createdCar.ID)
-		require.NoError(suite.T(), err, fmt.Errorf("Error deleting test car after running test: %v", err))
+		if err != nil {
+			require.NoError(suite.T(), err)
+		}
 	}
 }
 
 func (suite carTestSuite) TestCreate_CarRepeatLP_Negative() {
-	prevExistingCar := models.NewCar("", "B0000000", "lp1", "color", "make", "model", 0)
-	_, err := suite.carService.Create(prevExistingCar)
-	require.NoError(suite.T(), err, fmt.Errorf("Error creating test car before running test: %v", err))
+	prevExistingCar := models.NewCar("", suite.resident.ID, "lp1", "color", "make", "model", 0)
+	if _, err := suite.carService.Create(prevExistingCar); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("Error creating test car before running test: %v", err))
+	}
 
 	carWithSameLP := models.NewCar("", "B0000000", "lp1", "color", "make", "model", 0)
-	_, err = suite.carService.Create(carWithSameLP)
+	_, err := suite.carService.Create(carWithSameLP)
 	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
 
 	require.ErrorIs(suite.T(), err, errs.AlreadyExists, "error is expected to be one of already exists")
