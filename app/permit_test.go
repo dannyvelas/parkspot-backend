@@ -165,9 +165,13 @@ func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
 
-	permitSameCar := activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: ogPermit.CarID}, 0)
+	permitSameCar := activeFor24Hrs(
+		models.Permit{ResidentID: suite.resident.ID, CarID: ogPermit.CarID},
+		2,
+	)
 
 	_, err = suite.permitService.ValidateAndCreate(permitSameCar)
+	require.NotNil(suite.T(), err)
 	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
 }
 
