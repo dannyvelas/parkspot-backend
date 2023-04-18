@@ -28,7 +28,7 @@ type permitTestSuite struct {
 	residentUnlimDays models.Resident
 	car               models.Car
 
-	// this map is shared between two tests so it is kept here
+	// this map is shared between multiple tests so it is kept here
 	desiredPermits map[string]models.Permit
 }
 
@@ -98,11 +98,12 @@ func (suite *permitTestSuite) SetupSuite() {
 		}
 	}
 
+	// for testing whether resident/car days are added/subtracted correctly across separate funcs
 	suite.desiredPermits = map[string]models.Permit{
-		"NoUnlimDays,NoException": addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}),
-		"UnlimDays,NoException":   addStartAndEndDate(models.Permit{ResidentID: suite.residentUnlimDays.ID, CarID: suite.car.ID}),
-		"NoUnlimDays,Exception":   addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "some exception reason"}),
-		"UnlimDays,Exception":     addStartAndEndDate(models.Permit{ResidentID: suite.residentUnlimDays.ID, CarID: suite.car.ID, ExceptionReason: "some exception reason"}),
+		"NoUnlimDays,NoException": activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0),
+		"UnlimDays,NoException":   activeFor24Hrs(models.Permit{ResidentID: suite.residentUnlimDays.ID, CarID: suite.car.ID}, 0),
+		"NoUnlimDays,Exception":   activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "some exception reason"}, 0),
+		"UnlimDays,Exception":     activeFor24Hrs(models.Permit{ResidentID: suite.residentUnlimDays.ID, CarID: suite.car.ID, ExceptionReason: "some exception reason"}, 0),
 	}
 }
 
@@ -121,14 +122,21 @@ func (suite permitTestSuite) TearDownTest() {
 }
 
 func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
-	_, err := suite.permitService.ValidateAndCreate(addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}))
+	_, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
 
-	// initalize resident permits, each w a different car to eachother and to permitOne
-	resPermitTwo := addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, LicensePlate: "two", Color: "two", Make: "two", Model: "two"})
-	resPermitThree := addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, LicensePlate: "three", Color: "three", Make: "three", Model: "three"})
+	// initalize resident permits, each w a different car to eachother and to permitOne.
+	// these are created 2 and 4 hours after the original permit, respectively
+	resPermitTwo := activeFor24Hrs(
+		models.Permit{ResidentID: suite.resident.ID, LicensePlate: "two", Color: "two", Make: "two", Model: "two"},
+		2,
+	)
+	resPermitThree := activeFor24Hrs(
+		models.Permit{ResidentID: suite.resident.ID, LicensePlate: "three", Color: "three", Make: "three", Model: "three"},
+		4,
+	)
 
 	type createPermitTest struct {
 		name       string
@@ -152,12 +160,12 @@ func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 }
 
 func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
-	ogPermit, err := suite.permitService.ValidateAndCreate(addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}))
+	ogPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
 
-	permitSameCar := addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: ogPermit.CarID})
+	permitSameCar := activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: ogPermit.CarID}, 0)
 
 	_, err = suite.permitService.ValidateAndCreate(permitSameCar)
 	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
@@ -253,7 +261,7 @@ func (suite permitTestSuite) TestCreate_AllFieldsMatch() {
 }
 
 func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
-	createdPermit, err := suite.permitService.ValidateAndCreate(addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}))
+	createdPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
@@ -271,7 +279,7 @@ func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 }
 
 func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
-	createdPermit, err := suite.permitService.ValidateAndCreate(addStartAndEndDate(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "an exception reason here"}))
+	createdPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "an exception reason here"}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
@@ -293,8 +301,8 @@ func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
 }
 
 // helpers
-func addStartAndEndDate(permit models.Permit) models.Permit {
-	permit.StartDate = time.Now().Truncate(time.Second)
-	permit.EndDate = time.Now().Add(time.Hour * 24).Truncate(time.Second)
+func activeFor24Hrs(permit models.Permit, offset time.Duration) models.Permit {
+	permit.StartDate = time.Now().Add(time.Hour * offset).Truncate(time.Second)
+	permit.EndDate = permit.StartDate.Add(time.Hour * 24)
 	return permit
 }
