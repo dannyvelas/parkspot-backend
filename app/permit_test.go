@@ -258,16 +258,16 @@ func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
 
-	permits, err := suite.permitService.GetAll(models.ActivePermits, 10, 0, true, "", suite.resident.ID)
+	permits, err := suite.permitService.GetAll(models.ActivePermits, config.MaxLimit, 0, true, "", suite.resident.ID)
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
 
 	last := permits.Records[len(permits.Records)-1]
 
-	suite.Equal(createdPermit.ResidentID, last.ResidentID)
-	suite.Equal(createdPermit.LicensePlate, last.LicensePlate)
-	suite.Empty(cmp.Diff(createdPermit.StartDate, last.StartDate))
-	suite.Empty(cmp.Diff(createdPermit.EndDate, last.EndDate))
+	require.Equal(suite.T(), createdPermit.ResidentID, last.ResidentID)
+	require.Equal(suite.T(), createdPermit.LicensePlate, last.LicensePlate)
+	require.Empty(suite.T(), cmp.Diff(createdPermit.StartDate, last.StartDate))
+	require.Empty(suite.T(), cmp.Diff(createdPermit.EndDate, last.EndDate))
 }
 
 func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
@@ -276,7 +276,7 @@ func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
-	permits, err := suite.permitService.GetAll(models.ExceptionPermits, 10, 0, true, "", suite.resident.ID)
+	permits, err := suite.permitService.GetAll(models.ExceptionPermits, config.MaxLimit, 0, true, "", suite.resident.ID)
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
 
@@ -286,10 +286,10 @@ func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
 
 	last := permits.Records[len(permits.Records)-1]
 
-	suite.Equal(createdPermit.ResidentID, last.ResidentID)
-	suite.Equal(createdPermit.LicensePlate, last.LicensePlate)
-	suite.Empty(cmp.Diff(createdPermit.StartDate, last.StartDate))
-	suite.Empty(cmp.Diff(createdPermit.EndDate, last.EndDate))
+	require.Equal(suite.T(), createdPermit.ResidentID, last.ResidentID)
+	require.Equal(suite.T(), createdPermit.LicensePlate, last.LicensePlate)
+	require.Empty(suite.T(), cmp.Diff(createdPermit.StartDate, last.StartDate))
+	require.Empty(suite.T(), cmp.Diff(createdPermit.EndDate, last.EndDate))
 }
 
 // helpers
