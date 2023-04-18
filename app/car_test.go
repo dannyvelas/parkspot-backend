@@ -17,8 +17,8 @@ import (
 type carTestSuite struct {
 	suite.Suite
 	container  testcontainers.Container
-	resident   models.Resident // resident to be used in tests
 	carService CarService
+	resident   models.Resident // will exist in db for duration of tests
 }
 
 func TestCarService(t *testing.T) {

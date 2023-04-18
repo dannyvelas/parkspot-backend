@@ -164,7 +164,7 @@ func (carRepo CarRepo) Delete(id string) error {
 func (carRepo CarRepo) Reset() error {
 	_, err := carRepo.database.driver.Exec("DELETE FROM car")
 	if err != nil {
-		return fmt.Errorf("car_repo.Delete: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("car_repo.Reset: %w: %v", errs.DBExec, err)
 	}
 
 	return nil
