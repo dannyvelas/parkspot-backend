@@ -92,7 +92,7 @@ func (s PermitService) Delete(id int) error {
 	return nil
 }
 
-func (s PermitService) ValidateAndCreate(desiredPermit models.Permit) (models.Permit, error) {
+func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error) {
 	if err := s.validateDates(desiredPermit); err != nil {
 		return models.Permit{}, err
 	}

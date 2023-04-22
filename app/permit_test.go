@@ -122,7 +122,7 @@ func (suite permitTestSuite) TearDownTest() {
 }
 
 func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
-	_, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
+	_, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
@@ -149,7 +149,7 @@ func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 
 	// see which permit creations succeed/fail
 	for _, test := range tests {
-		_, err := suite.permitService.ValidateAndCreate(test.permit)
+		_, err := suite.permitService.Create(test.permit)
 		if err != nil && test.shouldBeOk {
 			suite.NoError(fmt.Errorf("%s failed: Error creating permit when it should've been okay: %v", test.name, err))
 		} else if err == nil && !test.shouldBeOk {
@@ -160,7 +160,7 @@ func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 }
 
 func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
-	ogPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
+	ogPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
@@ -170,7 +170,7 @@ func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
 		2,
 	)
 
-	_, err = suite.permitService.ValidateAndCreate(permitSameCar)
+	_, err = suite.permitService.Create(permitSameCar)
 	require.NotNil(suite.T(), err)
 	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
 }
@@ -185,7 +185,7 @@ func (suite permitTestSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	}
 
 	var apiErr *errs.ApiErr
-	_, err := suite.permitService.ValidateAndCreate(desiredPermit)
+	_, err := suite.permitService.Create(desiredPermit)
 	require.ErrorAs(suite.T(), err, &apiErr, "expected error to be instance of apiErr")
 
 	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
@@ -198,7 +198,7 @@ func (suite permitTestSuite) TestCreate_AddsResDays() {
 			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		createdPermit, err := suite.permitService.ValidateAndCreate(desiredPermit)
+		createdPermit, err := suite.permitService.Create(desiredPermit)
 		if err != nil {
 			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
 		}
@@ -234,7 +234,7 @@ func (suite permitTestSuite) TestDelete_SubtractsResDays() {
 			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		createdPermit, err := suite.permitService.ValidateAndCreate(desiredPermit)
+		createdPermit, err := suite.permitService.Create(desiredPermit)
 		if err != nil {
 			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
 		}
@@ -265,7 +265,7 @@ func (suite permitTestSuite) TestCreate_AllFieldsMatch() {
 }
 
 func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
-	createdPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
+	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
@@ -283,7 +283,7 @@ func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 }
 
 func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
-	createdPermit, err := suite.permitService.ValidateAndCreate(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "an exception reason here"}, 0))
+	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "an exception reason here"}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}

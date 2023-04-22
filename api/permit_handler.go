@@ -93,7 +93,7 @@ func (h permitHandler) create() http.HandlerFunc {
 			}
 		}
 
-		createdPermit, err := h.permitService.ValidateAndCreate(newPermitReq)
+		createdPermit, err := h.permitService.Create(newPermitReq)
 		if err != nil {
 			respondError(w, err)
 			return
