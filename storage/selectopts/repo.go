@@ -2,8 +2,10 @@ package selectopts
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/models"
 )
 
 type Repo interface {
-	SearchSQL(string) squirrel.Sqlizer
+	SearchAsSQL(string) squirrel.Sqlizer
+	StatusAsSQL(models.Status) (squirrel.Sqlizer, bool)
 }

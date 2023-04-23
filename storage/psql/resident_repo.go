@@ -188,11 +188,15 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 func (residentRepo ResidentRepo) Reset() {}
 
 // helpers
-func (residentRepo ResidentRepo) SearchSQL(query string) squirrel.Sqlizer {
+func (residentRepo ResidentRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(resident.id) = ?", strings.ToLower(lcQuery)),
 		squirrel.Expr("LOWER(resident.first_name) = ?", lcQuery),
 		squirrel.Expr("LOWER(resident.last_name) = ?", lcQuery),
 	}
+}
+
+func (residentRepo ResidentRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
+	return nil, false
 }

@@ -21,7 +21,7 @@ func newPermitHandler(permitService app.PermitService) permitHandler {
 	}
 }
 
-func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
+func (h permitHandler) get(status models.Status) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -40,7 +40,7 @@ func (h permitHandler) get(permitFilter models.PermitFilter) http.HandlerFunc {
 			residentID = accessPayload.ID
 		}
 
-		permitsWithMetadata, err := h.permitService.GetAll(permitFilter, limit, page, reversed, search, residentID)
+		permitsWithMetadata, err := h.permitService.GetAll(status, limit, page, reversed, search, residentID)
 		if err != nil {
 			respondError(w, err)
 			return

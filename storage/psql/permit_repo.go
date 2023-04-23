@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
+	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
@@ -201,7 +202,7 @@ func (permitRepo PermitRepo) Reset() error {
 }
 
 // helpers
-func (permitRepo PermitRepo) SearchSQL(query string) squirrel.Sqlizer {
+func (permitRepo PermitRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
 		squirrel.Expr("LOWER(CAST(permit.id AS TEXT)) = ?", lcQuery),
@@ -211,4 +212,21 @@ func (permitRepo PermitRepo) SearchSQL(query string) squirrel.Sqlizer {
 		squirrel.Expr("LOWER(permit.make) = ?", lcQuery),
 		squirrel.Expr("LOWER(permit.model) = ?", lcQuery),
 	}
+}
+
+func (permitRepo PermitRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
+	statusToSQL := map[models.Status]squirrel.Sqlizer{
+		models.ActiveStatus: squirrel.And{
+			squirrel.Expr("permit.start_ts <= extract(epoch from now())"),
+			squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
+		},
+		models.ExceptionStatus: squirrel.Expr("permit.exception_reason IS NOT NULL"),
+		models.ExpiredStatus: squirrel.And{
+			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * ?))", config.DefaultExpiredWindow),
+			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
+		},
+	}
+
+	whereSQL, ok := statusToSQL[status]
+	return whereSQL, ok
 }

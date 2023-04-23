@@ -81,10 +81,10 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		r.Group(func(userRouter chi.Router) {
 			userRouter.Use(middleware.authenticate(models.AdminRole, models.ResidentRole)) //, SecurityRole
 			userRouter.Get("/hello", sayHello())
-			userRouter.Get("/permits/all", permitHandler.get(models.AllPermits))
-			userRouter.Get("/permits/active", permitHandler.get(models.ActivePermits))
-			userRouter.Get("/permits/exceptions", permitHandler.get(models.ExceptionPermits))
-			userRouter.Get("/permits/expired", permitHandler.get(models.ExpiredPermits))
+			userRouter.Get("/permits/all", permitHandler.get(models.AnyStatus))
+			userRouter.Get("/permits/active", permitHandler.get(models.ActiveStatus))
+			userRouter.Get("/permits/exceptions", permitHandler.get(models.ExceptionStatus))
+			userRouter.Get("/permits/expired", permitHandler.get(models.ExpiredStatus))
 			userRouter.Get("/permit/{id:[0-9]+}", permitHandler.getOne())
 			userRouter.Post("/permit", permitHandler.create())
 			userRouter.Get("/visitors", visitorHandler.getActive())
