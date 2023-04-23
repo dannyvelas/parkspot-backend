@@ -51,13 +51,28 @@ func (h visitorHandler) getActive() http.HandlerFunc {
 
 func (h visitorHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var payload models.Visitor
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, errs.Malformed("NewVisitorReq"))
+		var desiredVisitor models.Visitor
+		if err := json.NewDecoder(r.Body).Decode(&desiredVisitor); err != nil {
+			respondError(w, errs.Malformed("New Visitor Request"))
 			return
 		}
 
-		visitor, err := h.visitorService.Create(payload)
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			respondError(w, fmt.Errorf("visitor_handler.create(): error getting access payload: %v", err))
+			return
+		}
+
+		if desiredVisitor.ResidentID != "" && desiredVisitor.ResidentID != accessPayload.ID {
+			respondError(w, errs.BadRequest("Residents cannot create a visitor for another resident"))
+			return
+		}
+		if desiredVisitor.ResidentID == "" {
+			desiredVisitor.ResidentID = accessPayload.ID
+		}
+
+		visitor, err := h.visitorService.Create(desiredVisitor)
 		if err != nil {
 			respondError(w, err)
 			return
