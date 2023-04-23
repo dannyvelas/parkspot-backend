@@ -186,8 +186,9 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 		return models.Resident{}, errs.PermitTooLong
 	}
 
-	residentActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{
-		ResidentID: resident.ID, StartDate: desiredPermit.StartDate, EndDate: desiredPermit.EndDate})
+	residentActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: resident.ID},
+		selectopts.WithDateIntersect(desiredPermit.StartDate, desiredPermit.EndDate),
+	)
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting active of resident during dates in permitRepo: %v", err)
 	} else if len(residentActivePermitsDuring) >= 2 {
@@ -222,8 +223,9 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 	}
 
 	// we found the car: error out if it has active permits during dates requested
-	carActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{
-		CarID: existingCar.ID, StartDate: desiredPermit.StartDate, EndDate: desiredPermit.EndDate})
+	carActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{CarID: existingCar.ID},
+		selectopts.WithDateIntersect(desiredPermit.StartDate, desiredPermit.EndDate),
+	)
 	if err != nil {
 		return models.Car{}, fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
 	} else if len(carActivePermitsDuring) != 0 {
