@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
@@ -51,5 +52,8 @@ func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, e
 }
 
 func (s VisitorService) Delete(id string) error {
+	if id == "" {
+		return errs.MissingIDField
+	}
 	return s.visitorRepo.Delete(id)
 }

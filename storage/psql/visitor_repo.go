@@ -130,9 +130,6 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 }
 
 func (visitorRepo VisitorRepo) Delete(visitorID string) error {
-	if visitorID == "" {
-		return fmt.Errorf("visitor_repo.Delete: %w: negative or zero ID argument", errs.DBInvalidArg)
-	}
 	const query = `DELETE FROM visitor WHERE id = $1`
 
 	res, err := visitorRepo.database.driver.Exec(query, visitorID)
@@ -150,10 +147,6 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 }
 
 func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) {
-	if visitorID == "" {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: Empty ID argument", errs.DBInvalidArg)
-	}
-
 	query, args, err := visitorRepo.visitorSelect.Where("visitor.id = $1", visitorID).ToSql()
 	if err != nil {
 		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
