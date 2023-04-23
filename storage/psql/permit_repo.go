@@ -55,12 +55,6 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
 	}))
-	if !permitFields.StartDate.IsZero() {
-		permitSelect = permitSelect.Where("start_ts = ?", permitFields.StartDate.Unix())
-	}
-	if !permitFields.EndDate.IsZero() {
-		permitSelect = permitSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
-	}
 
 	query, args, err := permitSelect.ToSql()
 	if err != nil {
@@ -90,12 +84,6 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, select
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
 	}))
-	if !permitFields.StartDate.IsZero() {
-		countSelect = countSelect.Where("start_ts = ?", permitFields.StartDate.Unix())
-	}
-	if !permitFields.EndDate.IsZero() {
-		countSelect = countSelect.Where("end_ts = ?", permitFields.EndDate.Unix())
-	}
 
 	query, args, err := countSelect.ToSql()
 	if err != nil {
