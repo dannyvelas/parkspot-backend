@@ -5,6 +5,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 )
 
 type VisitorService struct {
@@ -17,15 +18,22 @@ func NewVisitorService(visitorRepo storage.VisitorRepo) VisitorService {
 	}
 }
 
-func (s VisitorService) GetActive(limit, page int, search string, residentID string) (models.ListWithMetadata[models.Visitor], error) {
+func (s VisitorService) Get(status models.Status, limit, page int, search, residentID string) (models.ListWithMetadata[models.Visitor], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-	allVisitors, err := s.visitorRepo.Get(true, residentID, search, boundedLimit, offset)
+	allVisitors, err := s.visitorRepo.SelectWhere(models.Visitor{ResidentID: residentID},
+		selectopts.WithStatus(status),
+		selectopts.WithSearch(search),
+		selectopts.WithLimitAndOffset(boundedLimit, offset),
+	)
 	if err != nil {
 		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting all visitors from visitor repo: %v", err)
 	}
 
-	totalAmount, err := s.visitorRepo.GetCount(true, residentID)
+	totalAmount, err := s.visitorRepo.SelectCountWhere(models.Visitor{ResidentID: residentID},
+		selectopts.WithStatus(status),
+		selectopts.WithSearch(search),
+	)
 	if err != nil {
 		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting count of all visitors from visitor repo: %v", err)
 	}

@@ -21,7 +21,7 @@ func newVisitorHandler(visitorService app.VisitorService) visitorHandler {
 	}
 }
 
-func (h visitorHandler) getActive() http.HandlerFunc {
+func (h visitorHandler) get(status models.Status) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		limit := util.ToPosInt(r.URL.Query().Get("limit"))
 		page := util.ToPosInt(r.URL.Query().Get("page"))
@@ -39,7 +39,7 @@ func (h visitorHandler) getActive() http.HandlerFunc {
 			residentID = accessPayload.ID
 		}
 
-		visitorsWithMetadata, err := h.visitorService.GetActive(limit, page, search, residentID)
+		visitorsWithMetadata, err := h.visitorService.Get(status, limit, page, search, residentID)
 		if err != nil {
 			respondError(w, err)
 			return

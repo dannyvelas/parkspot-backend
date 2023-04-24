@@ -87,7 +87,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			userRouter.Get("/permits/expired", permitHandler.get(models.ExpiredStatus))
 			userRouter.Get("/permit/{id:[0-9]+}", permitHandler.getOne())
 			userRouter.Post("/permit", permitHandler.create())
-			userRouter.Get("/visitors", visitorHandler.getActive())
+			userRouter.Get("/visitors/active", visitorHandler.get(models.ActiveStatus))
 			userRouter.Put("/user/password", authHandler.resetPassword())
 			userRouter.Put("/car", carHandler.edit())
 			userRouter.Get("/resident/{id}/cars", carHandler.getOfResident())
