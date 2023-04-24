@@ -6,16 +6,18 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"strings"
 )
 
 type VisitorRepo struct {
 	database      Database
 	visitorSelect squirrel.SelectBuilder
-	whereActive   squirrel.Sqlizer
+	countSelect   squirrel.SelectBuilder
 }
 
 func NewVisitorRepo(database Database) VisitorRepo {
-	visitorSelect := squirrel.Select(
+	visitorSelect := stmtBuilder.Select(
 		"id",
 		"resident_id",
 		"first_name",
@@ -24,79 +26,63 @@ func NewVisitorRepo(database Database) VisitorRepo {
 		"access_start",
 		"access_end",
 	).From("visitor")
-
-	whereActive := squirrel.And{
-		squirrel.Expr("visitor.access_start <= extract(epoch from now())"),
-		squirrel.Expr("visitor.access_end >= extract(epoch from now())"),
-	}
+	countSelect := stmtBuilder.Select("count(*)").From("visitor")
 
 	return VisitorRepo{
 		database:      database,
 		visitorSelect: visitorSelect,
-		whereActive:   whereActive,
+		countSelect:   countSelect,
 	}
 }
 
-func (visitorRepo VisitorRepo) Get(onlyActive bool, residentID, search string, limit, offset int) ([]models.Visitor, error) {
-	if limit < 0 || offset < 0 {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: limit or offset cannot be zero", errs.DBInvalidArg)
+func (visitorRepo VisitorRepo) SelectWhere(visitorFields models.Visitor, selectOpts ...selectopts.SelectOpt) ([]models.Visitor, error) {
+	selector := visitorRepo.visitorSelect
+	for _, opt := range selectOpts {
+		selector = opt.Dispatch(visitorRepo, selector)
 	}
 
-	visitorSelect := visitorRepo.visitorSelect
-	if onlyActive {
-		visitorSelect = visitorSelect.Where(visitorRepo.whereActive)
-	}
+	visitorSelect := selector.Where(rmEmptyVals(squirrel.Eq{
+		"id":          visitorFields.ID,
+		"resident_id": visitorFields.ResidentID,
+		"first_name":  visitorFields.FirstName,
+		"last_name":   visitorFields.LastName,
+	}))
 
-	if residentID != "" {
-		visitorSelect = visitorSelect.Where("visitor.resident_id = $1", residentID)
-	}
-
-	if search != "" {
-		visitorSelect = visitorSelect.Where(squirrel.Or{
-			squirrel.Expr("visitor.resident_id ILIKE $1", "%"+search+"%"),
-			squirrel.Expr("visitor.first_name ILIKE $1"),
-			squirrel.Expr("visitor.last_name ILIKE $1"),
-		})
-	}
-
-	query, args, err := visitorSelect.
-		// TODO: fix
-		Limit(uint64(10)).
-		Offset(uint64(offset)).
-		OrderBy("visitor.id ASC").
-		ToSql()
+	query, args, err := visitorSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	visitors := visitorSlice{}
 	err = visitorRepo.database.driver.Select(&visitors, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.Get: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
 
 	return visitors.toModels(), nil
 }
 
-func (visitorRepo VisitorRepo) GetCount(onlyActive bool, residentID string) (int, error) {
-	countSelect := squirrel.Select("count(*)").From("visitor")
-	if onlyActive {
-		countSelect = countSelect.Where(visitorRepo.whereActive)
+func (visitorRepo VisitorRepo) SelectCountWhere(visitorFields models.Visitor, selectOpts ...selectopts.SelectOpt) (int, error) {
+	selector := visitorRepo.countSelect
+	for _, opt := range selectOpts {
+		selector = opt.Dispatch(visitorRepo, selector)
 	}
 
-	if residentID != "" {
-		countSelect = countSelect.Where("visitor.resident_id = $1", residentID)
-	}
-
+	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
+		"id":          visitorFields.ID,
+		"resident_id": visitorFields.ResidentID,
+		"first_name":  visitorFields.FirstName,
+		"last_name":   visitorFields.LastName,
+	}))
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", errs.DBBuildingQuery, err)
+		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = visitorRepo.database.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.GetCount: %w: %v", errs.DBQuery, err)
+		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", errs.DBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -161,4 +147,24 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	}
 
 	return visitor.toModels(), nil
+}
+
+// helpers
+func (visitorRepo VisitorRepo) SearchAsSQL(query string) squirrel.Sqlizer {
+	likeQuery := "%" + strings.ToLower(query) + "%"
+	return squirrel.Or{
+		squirrel.Expr("visitor.resident_id ILIKE ?", likeQuery),
+		squirrel.Expr("visitor.first_name ILIKE ?", likeQuery),
+		squirrel.Expr("visitor.last_name ILIKE ?", likeQuery),
+	}
+}
+
+func (visitorRepo VisitorRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
+	if status == models.ActiveStatus {
+		return squirrel.And{
+			squirrel.Expr("visitor.access_start <= extract(epoch from now())"),
+			squirrel.Expr("visitor.access_end >= extract(epoch from now())"),
+		}, true
+	}
+	return nil, false
 }
