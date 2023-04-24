@@ -72,16 +72,22 @@
 - [x] allow the edit of parking days for cars
 - [x] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
 - [x] fix residentRepo.Update func. it won't create the SetMap correctly, it needs to dereference pointer values first
-- [ ] move all tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
-- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
+- [x] move resident,car,permit tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+- [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
+- [ ] start using require in resident\_test
+- [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+- [ ] use a shared testResident between app/car\_test.go and app/permit\_test.go
+- [ ] probably use docker-compose to initialize test container in app/test\_helpers.go
 - [ ] refactor visitor repo so that:
 	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
-- [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
+- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
-- [ ] (fix and app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
+- [✓] (fix) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
+- [ ] (app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
+- [ ] that a permit can't be created if there's another
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
 - [ ] add test to make sure that a permit from yesterday to today is counted as active today
