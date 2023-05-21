@@ -19,6 +19,7 @@ type CarRepo struct {
 func NewCarRepo(database Database) CarRepo {
 	carSelect := stmtBuilder.Select(
 		"car.id",
+		"car.resident_id",
 		"car.license_plate",
 		"car.color",
 		"car.make",
