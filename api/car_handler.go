@@ -2,9 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -16,6 +18,35 @@ type carHandler struct {
 func newCarHandler(carService app.CarService) carHandler {
 	return carHandler{
 		carService: carService,
+	}
+}
+
+func (h carHandler) get() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		limit := util.ToPosInt(r.URL.Query().Get("limit"))
+		page := util.ToPosInt(r.URL.Query().Get("page"))
+		reversed := util.ToBool(r.URL.Query().Get("reversed"))
+		search := r.URL.Query().Get("search")
+
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			respondError(w, fmt.Errorf("error getting access payload: %v", err))
+			return
+		}
+
+		residentID := ""
+		if accessPayload.Role == models.ResidentRole {
+			residentID = accessPayload.ID
+		}
+
+		carsWithMetadata, err := h.carService.GetAll(limit, page, reversed, search, residentID)
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, carsWithMetadata)
 	}
 }
 
@@ -51,7 +82,13 @@ func (h carHandler) edit() http.HandlerFunc {
 
 func (h carHandler) getOfResident() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cars, err := h.carService.GetOfResident(chi.URLParam(r, "id"))
+		residentID := chi.URLParam(r, "id")
+		if residentID == "" {
+			respondError(w, errs.MissingIDField)
+			return
+		}
+
+		cars, err := h.carService.GetAll(0, 0, false, "", residentID)
 		if err != nil {
 			respondError(w, err)
 			return

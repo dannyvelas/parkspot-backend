@@ -118,21 +118,3 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	newCar := models.NewCar(carID, desiredCar.ResidentID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
 	return newCar, nil
 }
-
-func (s CarService) GetOfResident(residentID string) (models.ListWithMetadata[models.Car], error) {
-	if err := models.IsResidentID(residentID); err != nil {
-		return models.ListWithMetadata[models.Car]{}, err
-	}
-
-	cars, err := s.carRepo.SelectWhere(models.Car{ResidentID: residentID})
-	if err != nil {
-		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("Error querying carRepo when getting cars of resident: %v", err)
-	}
-
-	count, err := s.carRepo.SelectCountWhere(models.Car{ResidentID: residentID})
-	if err != nil {
-		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("Error querying carRepo when getting amount of cars of resident: %v", err)
-	}
-
-	return models.NewListWithMetadata(cars, count), nil
-}
