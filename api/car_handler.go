@@ -50,6 +50,23 @@ func (h carHandler) get() http.HandlerFunc {
 	}
 }
 
+func (h carHandler) deleteOne() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "ID")
+		if !util.IsUUIDV4(id) {
+			respondError(w, errs.IDNotUUID)
+			return
+		}
+
+		if err := h.carService.Delete(id); err != nil {
+			respondError(w, err)
+			return
+		}
+
+		respondJSON(w, http.StatusOK, message{"Successfully deleted car"})
+	}
+}
+
 func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		car, err := h.carService.GetOne(chi.URLParam(r, "id"))
