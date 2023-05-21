@@ -80,7 +80,7 @@ func (carRepo CarRepo) SelectWhere(carFields models.Car, selectOpts ...selectopt
 }
 
 func (carRepo CarRepo) SelectCountWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) (int, error) {
-	selector := stmtBuilder.Select("count(*)").From("car")
+	selector := carRepo.countSelect
 	for _, opt := range selectOpts {
 		selector = opt.Dispatch(carRepo, selector)
 	}
