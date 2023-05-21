@@ -73,6 +73,10 @@
 - [x] explore mocking repos so that we don't need to worry about creating/cleaning up rows in db in and in-between tests
 - [x] fix residentRepo.Update func. it won't create the SetMap correctly, it needs to dereference pointer values first
 - [x] move resident,car,permit tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
+- [x] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
+- [x] remove empty StatusAsSQL functions
+- [ ] add resident getone functions which just wraps over resident.selectwhere
+- [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 - [ ] start using require in resident\_test
 - [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
@@ -82,7 +86,6 @@
 	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
-- [ ] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [✓] (fix) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
