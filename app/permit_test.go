@@ -270,7 +270,7 @@ func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
 	}
 
-	permits, err := suite.permitService.GetAll(models.ActivePermits, config.MaxLimit, 0, true, "", suite.resident.ID)
+	permits, err := suite.permitService.GetAll(models.ActiveStatus, config.MaxLimit, 0, true, "", suite.resident.ID)
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
 
@@ -288,7 +288,7 @@ func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
-	permits, err := suite.permitService.GetAll(models.ExceptionPermits, config.MaxLimit, 0, true, "", suite.resident.ID)
+	permits, err := suite.permitService.GetAll(models.ExceptionStatus, config.MaxLimit, 0, true, "", suite.resident.ID)
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
 
