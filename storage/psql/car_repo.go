@@ -6,11 +6,14 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"strings"
 )
 
 type CarRepo struct {
-	database  Database
-	carSelect squirrel.SelectBuilder
+	database    Database
+	carSelect   squirrel.SelectBuilder
+	countSelect squirrel.SelectBuilder
 }
 
 func NewCarRepo(database Database) CarRepo {
@@ -22,8 +25,13 @@ func NewCarRepo(database Database) CarRepo {
 		"car.model",
 		"car.amt_parking_days_used",
 	).From("car")
+	countSelect := stmtBuilder.Select("count(*)").From("car")
 
-	return CarRepo{database: database, carSelect: carSelect}
+	return CarRepo{
+		database:    database,
+		carSelect:   carSelect,
+		countSelect: countSelect,
+	}
 }
 
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
@@ -43,8 +51,13 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
-func (carRepo CarRepo) SelectWhere(carFields models.Car) ([]models.Car, error) {
-	carSelect := carRepo.carSelect.Where(rmEmptyVals(squirrel.Eq{
+func (carRepo CarRepo) SelectWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) ([]models.Car, error) {
+	selector := carRepo.carSelect
+	for _, opt := range selectOpts {
+		selector = opt.Dispatch(carRepo, selector)
+	}
+
+	carSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   carFields.ResidentID,
 		"license_plate": carFields.LicensePlate,
 		"color":         carFields.Color,
@@ -65,8 +78,13 @@ func (carRepo CarRepo) SelectWhere(carFields models.Car) ([]models.Car, error) {
 	return cars.toModels(), nil
 }
 
-func (carRepo CarRepo) SelectCountWhere(carFields models.Car) (int, error) {
-	countSelect := stmtBuilder.Select("count(*)").From("car").Where(rmEmptyVals(squirrel.Eq{
+func (carRepo CarRepo) SelectCountWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) (int, error) {
+	selector := stmtBuilder.Select("count(*)").From("car")
+	for _, opt := range selectOpts {
+		selector = opt.Dispatch(carRepo, selector)
+	}
+
+	countSelect := selector.Where(rmEmptyVals(squirrel.Eq{
 		"resident_id":   carFields.ResidentID,
 		"license_plate": carFields.LicensePlate,
 		"color":         carFields.Color,
@@ -168,4 +186,20 @@ func (carRepo CarRepo) Reset() error {
 	}
 
 	return nil
+}
+
+// implement selectops.Repo
+func (carRepo CarRepo) SearchAsSQL(query string) squirrel.Sqlizer {
+	lcQuery := strings.ToLower(query)
+	return squirrel.Or{
+		squirrel.Expr("LOWER(car.resident_id) = ?", lcQuery),
+		squirrel.Expr("LOWER(car.license_plate) = ?", lcQuery),
+		squirrel.Expr("LOWER(car.color) = ?", lcQuery),
+		squirrel.Expr("LOWER(car.make) = ?", lcQuery),
+		squirrel.Expr("LOWER(car.model) = ?", lcQuery),
+	}
+}
+
+func (carRepo CarRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
+	return nil, false
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"github.com/dannyvelas/lasvistas_api/util"
 )
 
@@ -17,6 +18,28 @@ func NewCarService(carRepo storage.CarRepo) CarService {
 	return CarService{
 		carRepo: carRepo,
 	}
+}
+
+func (s CarService) GetAll(limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Car], error) {
+	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
+
+	allCars, err := s.carRepo.SelectWhere(models.Car{ResidentID: residentID},
+		selectopts.WithLimitAndOffset(boundedLimit, offset),
+		selectopts.WithReversed(reversed),
+		selectopts.WithSearch(search),
+	)
+	if err != nil {
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting cars from car repo: %v", err)
+	}
+
+	totalAmount, err := s.carRepo.SelectCountWhere(models.Car{ResidentID: residentID},
+		selectopts.WithSearch(search),
+	)
+	if err != nil {
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting total amount from car repo: %v", err)
+	}
+
+	return models.NewListWithMetadata(allCars, totalAmount), nil
 }
 
 func (s CarService) GetOne(id string) (models.Car, error) {
