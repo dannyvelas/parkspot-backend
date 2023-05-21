@@ -86,7 +86,7 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, errs.BadRequest("id parameter is not a UUID"))
+			respondError(w, errs.IDNotUUID)
 			return
 		}
 
