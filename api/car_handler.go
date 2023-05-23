@@ -58,6 +58,24 @@ func (h carHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			respondError(w, fmt.Errorf("car_handler.deleteOne: error getting access payload: %v", err))
+			return
+		}
+
+		carToDelete, err := h.carService.GetOne(id)
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+
+		if carToDelete.ResidentID != accessPayload.ID {
+			respondError(w, errs.Unauthorized)
+			return
+		}
+
 		if err := h.carService.Delete(id); err != nil {
 			respondError(w, err)
 			return
