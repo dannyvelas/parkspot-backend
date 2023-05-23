@@ -41,6 +41,13 @@ func (s VisitorService) Get(status models.Status, limit, page int, search, resid
 	return models.NewListWithMetadata(allVisitors, totalAmount), nil
 }
 
+func (s VisitorService) GetOne(id string) (models.Visitor, error) {
+	if id == "" {
+		return models.Visitor{}, errs.MissingIDField
+	}
+	return s.visitorRepo.GetOne(id)
+}
+
 func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, error) {
 	if err := desiredVisitor.ValidateCreation(); err != nil {
 		return models.Visitor{}, err

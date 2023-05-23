@@ -90,6 +90,24 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			respondError(w, fmt.Errorf("visitor_handler.deleteOne: error getting access payload: %v", err))
+			return
+		}
+
+		visitorToDelete, err := h.visitorService.GetOne(id)
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+
+		if visitorToDelete.ResidentID != accessPayload.ID {
+			respondError(w, errs.Unauthorized)
+			return
+		}
+
 		if err := h.visitorService.Delete(id); err != nil {
 			respondError(w, err)
 			return
