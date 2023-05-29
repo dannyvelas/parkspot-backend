@@ -75,21 +75,26 @@
 - [x] move resident,car,permit tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [x] make sure that service functions don't take an id argument when they can simply have the id as a field in an object argument that's also already being passed (e.g. `editPermit(desiredPermit)` is preferrable to `editPermit(id, desiredPermit)`)
 - [x] remove empty StatusAsSQL functions
+- [x] refactor visitor repo so that:
+	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
+	2. move id checks to service and not handler or repo. 
+	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
+- [x] add a security role that has a subset of admin role permissions
+- [ ] read in configs using marshalling instead of using if/elseif/else logic
 - [ ] add resident getone functions which just wraps over resident.selectwhere
+- [ ] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
 - [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 - [ ] start using require in resident\_test
 - [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [ ] use a shared testResident between app/car\_test.go and app/permit\_test.go
 - [ ] probably use docker-compose to initialize test container in app/test\_helpers.go
-- [ ] refactor visitor repo so that:
-	1. every db query it uses is a `stmtBuilder` variable that will be global in repo files to build sql stmts
-	2. move id checks to service and not handler or repo. 
-	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [✓] (fix) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
+- [ ] (api test) add a test to make sure that security aren't allowed to delete, create, or edit, cars, residents, or permits. but they are allowed to see them
 - [ ] (app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
+- [ ] (app test) make sure that a resident cannot delete another residents cars
 - [ ] that a permit can't be created if there's another
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
@@ -135,8 +140,8 @@
 - [✓] move all the business logic that routing funcs currently do into a new services package
 - [✗] remove `highestVersion` variable from migrator.go (wont do bc dne anymore)
 - [✗] make sure only residents can change their password (now that the reset password endpoint will be merged with the editResident endpoint) (wont do bc this isn't the case)
+- [x] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] increment token version on password reset
-- [ ] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] add expiration JWT time to constants
 - [ ] make python script also generate down migration file 
 - [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
