@@ -99,6 +99,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 			residentRouter.Post("/visitor", visitorHandler.create())
 			residentRouter.Delete("/visitor/{id}", visitorHandler.deleteOne())
 			residentRouter.Delete("/car/{id}", carHandler.deleteOne())
+			residentRouter.Post("/car", carHandler.create())
 		})
 	})
 

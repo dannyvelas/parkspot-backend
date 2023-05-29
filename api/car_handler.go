@@ -115,6 +115,38 @@ func (h carHandler) edit() http.HandlerFunc {
 	}
 }
 
+func (h carHandler) create() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var desiredCar models.Car
+		if err := json.NewDecoder(r.Body).Decode(&desiredCar); err != nil {
+			respondError(w, errs.Malformed("New Car Request"))
+			return
+		}
+
+		ctx := r.Context()
+		accessPayload, err := ctxGetAccessPayload(ctx)
+		if err != nil {
+			respondError(w, fmt.Errorf("car_handler.create(): error getting access payload: %v", err))
+			return
+		}
+
+		if desiredCar.ResidentID != "" && desiredCar.ResidentID != accessPayload.ID {
+			respondError(w, errs.BadRequest("Residents cannot create a car for another resident"))
+			return
+		}
+		if desiredCar.ResidentID == "" {
+			desiredCar.ResidentID = accessPayload.ID
+		}
+
+		car, err := h.carService.Create(desiredCar)
+		if err != nil {
+			respondError(w, err)
+			return
+		}
+		respondJSON(w, http.StatusOK, car)
+	}
+}
+
 func (h carHandler) getOfResident() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		residentID := chi.URLParam(r, "id")
