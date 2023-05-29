@@ -5,4 +5,5 @@ type Role string
 const (
 	AdminRole    Role = "admin"
 	ResidentRole Role = "resident"
+	SecurityRole Role = "security"
 )

@@ -27,5 +27,10 @@ func (a Admin) GetPassword() string {
 }
 
 func (a Admin) AsUser() User {
-	return NewUser(a.ID, a.FirstName, a.LastName, a.Email, AdminRole, *a.TokenVersion)
+	role := SecurityRole
+	if a.IsPrivileged {
+		role = AdminRole
+	}
+
+	return NewUser(a.ID, a.FirstName, a.LastName, a.Email, role, *a.TokenVersion)
 }
