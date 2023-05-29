@@ -52,7 +52,7 @@ func (h carHandler) get() http.HandlerFunc {
 
 func (h carHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "ID")
+		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
 			respondError(w, errs.IDNotUUID)
 			return
