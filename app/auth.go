@@ -206,6 +206,11 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 }
 
 func (a AuthService) getUser(id string) (models.Loginable, error) {
+	// i wanted to define an interface that both adminService and residentService implement:
+	// type UserService interface { GetOne(id string) (models.Loginable, error) }
+	// but adminService and residentService cannot implement the GetOne function
+	// because they return different types (models.Admin) and (models.User).
+	// and, go mandates that structs must return the same exact type to implement a common interface
 	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
 		return a.adminService.GetOne(id)
 	} else {
