@@ -13,13 +13,13 @@ import (
 )
 
 type Server struct {
-	http.Server
+	*http.Server
 }
 
 func NewServer(c config.Config, app app.App) Server {
 	router := newRouter(c, app)
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:         ":" + c.Http.Port,
 		Handler:      router,
 		ReadTimeout:  c.Http.ReadTimeout,
