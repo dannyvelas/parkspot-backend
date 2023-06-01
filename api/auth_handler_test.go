@@ -57,12 +57,12 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msgf("Failed to create JWT: %v", err)
 	}
 
-	if err := suite.app.ResidentService.Create(testResident); err != nil {
+	if _, err := suite.app.ResidentService.Create(testResident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 }
 
-func (suite authRouterSuite) TearDownSuite() {
+func (suite *authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
 	if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
@@ -70,7 +70,7 @@ func (suite authRouterSuite) TearDownSuite() {
 	}
 }
 
-func (suite authRouterSuite) TestLogin_Admin_Positive() {
+func (suite *authRouterSuite) TestLogin_Admin_Positive() {
 	requestBody := []byte(fmt.Sprintf(`{
     "id":"%s",
     "password":"%s"
@@ -115,7 +115,7 @@ func (suite authRouterSuite) TestLogin_Admin_Positive() {
 	suite.NoError(err)
 }
 
-func (suite authRouterSuite) TestLogin_Resident_Positive() {
+func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 	requestBody := []byte(fmt.Sprintf(`{
     "id":"%s",
     "password":"%s"
@@ -164,7 +164,7 @@ func (suite authRouterSuite) TestLogin_Resident_Positive() {
 	suite.NoError(err)
 }
 
-func (suite authRouterSuite) TestRefreshTokens_Positive() {
+func (suite *authRouterSuite) TestRefreshTokens_Positive() {
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/refresh-tokens", bytes.NewBuffer([]byte{}))
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating http.Request: %s", err))
