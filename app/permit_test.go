@@ -107,21 +107,21 @@ func (suite *permitTestSuite) SetupSuite() {
 	}
 }
 
-func (suite permitTestSuite) TearDownSuite() {
+func (suite *permitTestSuite) TearDownSuite() {
 	err := suite.container.Terminate(context.Background())
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error tearing down container: %v", err))
 	}
 }
 
-func (suite permitTestSuite) TearDownTest() {
+func (suite *permitTestSuite) TearDownTest() {
 	err := suite.permitService.permitRepo.Reset()
 	if err != nil {
 		suite.T().Fatalf("encountered error resetting permit repo in-between tests")
 	}
 }
 
-func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
+func (suite *permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 	_, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
@@ -159,7 +159,7 @@ func (suite permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 	}
 }
 
-func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
+func (suite *permitTestSuite) TestCreate_CarTwoActivePermits() {
 	ogPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
@@ -175,7 +175,7 @@ func (suite permitTestSuite) TestCreate_CarTwoActivePermits() {
 	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
 }
 
-func (suite permitTestSuite) TestCreate_NoStartNoEnd_ErrMissing() {
+func (suite *permitTestSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	desiredPermit := models.Permit{
 		ResidentID:   suite.resident.ID,
 		LicensePlate: "lp2",
@@ -191,7 +191,7 @@ func (suite permitTestSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 	suite.Equal(http.StatusBadRequest, apiErr.StatusCode)
 }
 
-func (suite permitTestSuite) TestCreate_AddsResDays() {
+func (suite *permitTestSuite) TestCreate_AddsResDays() {
 	for testName, desiredPermit := range suite.desiredPermits {
 		residentBefore, err := suite.residentService.GetOne(desiredPermit.ResidentID)
 		if err != nil {
@@ -227,7 +227,7 @@ func (suite permitTestSuite) TestCreate_AddsResDays() {
 	}
 }
 
-func (suite permitTestSuite) TestDelete_SubtractsResDays() {
+func (suite *permitTestSuite) TestDelete_SubtractsResDays() {
 	for testName, desiredPermit := range suite.desiredPermits {
 		residentBefore, err := suite.residentService.GetOne(desiredPermit.ResidentID)
 		if err != nil {
@@ -255,16 +255,16 @@ func (suite permitTestSuite) TestDelete_SubtractsResDays() {
 	}
 }
 
-func (suite permitTestSuite) TestDelete_AddsCarDays() {
+func (suite *permitTestSuite) TestDelete_AddsCarDays() {
 }
 
-func (suite permitTestSuite) TestDelete_SubtractsCarDays() {
+func (suite *permitTestSuite) TestDelete_SubtractsCarDays() {
 }
 
-func (suite permitTestSuite) TestCreate_AllFieldsMatch() {
+func (suite *permitTestSuite) TestCreate_AllFieldsMatch() {
 }
 
-func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
+func (suite *permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
@@ -282,7 +282,7 @@ func (suite permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 	require.Empty(suite.T(), cmp.Diff(createdPermit.EndDate, last.EndDate))
 }
 
-func (suite permitTestSuite) TestGetMaxExceptions_Positive() {
+func (suite *permitTestSuite) TestGetMaxExceptions_Positive() {
 	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID, ExceptionReason: "an exception reason here"}, 0))
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))

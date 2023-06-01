@@ -51,21 +51,21 @@ func (suite *carTestSuite) SetupSuite() {
 	suite.carService = NewCarService(carRepo)
 }
 
-func (suite carTestSuite) TearDownSuite() {
+func (suite *carTestSuite) TearDownSuite() {
 	err := suite.container.Terminate(context.Background())
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error tearing down container: %v", err))
 	}
 }
 
-func (suite carTestSuite) TearDownTest() {
+func (suite *carTestSuite) TearDownTest() {
 	err := suite.carService.carRepo.Reset()
 	if err != nil {
 		suite.T().Fatalf("encountered error resetting car repo in-between tests")
 	}
 }
 
-func (suite carTestSuite) TestEdit_CarDNE_Negative() {
+func (suite *carTestSuite) TestEdit_CarDNE_Negative() {
 	carWithIDThatDNE := models.Car{ID: "9b6d89a6-0b66-4170-be8d-eba43f8bf478", LicensePlate: "NEWLP"}
 
 	_, err := suite.carService.Update(carWithIDThatDNE)
@@ -77,7 +77,7 @@ func (suite carTestSuite) TestEdit_CarDNE_Negative() {
 	require.Equal(suite.T(), http.StatusNotFound, apiErr.StatusCode, "response was: %v", apiErr.Error())
 }
 
-func (suite carTestSuite) TestEdit_Car_Positive() {
+func (suite *carTestSuite) TestEdit_Car_Positive() {
 	carToEdit := models.NewCar("d1e0affb-14e7-4e9f-b8a3-70be7d49d063", suite.resident.ID, "lp1", "color", "make", "model", 0)
 
 	// set up a table of tests
@@ -131,7 +131,7 @@ func (suite carTestSuite) TestEdit_Car_Positive() {
 	}
 }
 
-func (suite carTestSuite) TestCreate_CarRepeatLP_Negative() {
+func (suite *carTestSuite) TestCreate_CarRepeatLP_Negative() {
 	prevExistingCar := models.NewCar("", suite.resident.ID, "lp1", "color", "make", "model", 0)
 	if _, err := suite.carService.Create(prevExistingCar); err != nil {
 		require.NoError(suite.T(), fmt.Errorf("Error creating test car before running test: %v", err))

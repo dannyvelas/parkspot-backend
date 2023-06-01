@@ -51,7 +51,7 @@ func (suite *visitorRouterSuite) SetupSuite() {
 		}
 	}
 
-	if err := suite.app.ResidentService.Create(testResident); err != nil {
+	if _, err := suite.app.ResidentService.Create(testResident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 
@@ -73,7 +73,7 @@ func (suite *visitorRouterSuite) SetupSuite() {
 	}
 }
 
-func (suite visitorRouterSuite) TearDownSuite() {
+func (suite *visitorRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
 	// visitors that were created in `SetupSuite` would automatically be deleted
@@ -89,7 +89,7 @@ func (suite visitorRouterSuite) TearDownSuite() {
 	}
 }
 
-func (suite visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
+func (suite *visitorRouterSuite) TestGet_VisitorsOfResident_Positive() {
 	visitorsResp, err := authenticatedReq[any, models.ListWithMetadata[models.Visitor]]("GET", suite.testServer.URL+"/api/visitors", suite.residentJWT, nil)
 	if err != nil {
 		suite.NoError(fmt.Errorf("Error making request: %v", err))

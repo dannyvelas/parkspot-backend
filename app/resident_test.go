@@ -31,7 +31,7 @@ func (suite *residentTestSuite) TearDownTest() {
 	suite.residentService.residentRepo.Reset()
 }
 
-func (suite residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
+func (suite *residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 	resident1 := models.Resident{
 		ID:        "B0000000",
 		FirstName: "first",
@@ -73,7 +73,7 @@ func (suite residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 	suite.Contains(apiErr.Error(), "email") // assert bad request happened bc of email
 }
 
-func (suite residentTestSuite) TestEdit_Resident_Positive() {
+func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 	residentToEdit := models.Resident{
 		ID:        "B0000000",
 		FirstName: "first",
@@ -137,7 +137,7 @@ func (suite residentTestSuite) TestEdit_Resident_Positive() {
 	}
 }
 
-func (suite residentTestSuite) TestEdit_ResidentDNE_Negative() {
+func (suite *residentTestSuite) TestEdit_ResidentDNE_Negative() {
 	residentThatDNE := models.Resident{ID: "B0000000", FirstName: "NEWFIRST"}
 
 	_, err := suite.residentService.Update(residentThatDNE)
