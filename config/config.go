@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	"os"
-	"regexp"
+	"path/filepath"
+	"runtime"
 )
 
 type Config struct {
@@ -14,23 +14,8 @@ type Config struct {
 	OAuth    OAuthConfig
 }
 
-const projectName = "go-lasvistas_api"
-
-func loadDotEnv() error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	re := regexp.MustCompile(`^(.*` + projectName + `)`)
-	rootPath := re.Find([]byte(cwd))
-
-	return godotenv.Load(string(rootPath) + `/.env`)
-}
-
 func NewConfig() (Config, error) {
-	err := loadDotEnv()
-	if err != nil {
+	if err := loadDotEnv(); err != nil {
 		log.Warn().Msgf("config: .env file not found: %v", err)
 	}
 
@@ -50,4 +35,14 @@ func NewConfig() (Config, error) {
 		Token:    newTokenConfig(),
 		OAuth:    oauthConfig,
 	}, nil
+}
+
+func loadDotEnv() error {
+	rootPath := getRootPath()
+	return godotenv.Load(filepath.Join(rootPath, ".env"))
+}
+
+func getRootPath() string {
+	_, file, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(file), "..")
 }
