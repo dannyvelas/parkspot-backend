@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
+	"golang.org/x/crypto/bcrypt"
 	"testing"
 )
 
@@ -69,7 +70,20 @@ func (suite *authTestSuite) TearDownTest() {
 }
 
 func (suite *authTestSuite) TestResetPassword() {
-	if err := suite.authService.ResetPassword(suite.resident.ID, "newPass"); err != nil {
+	const desiredPassword = "newPass"
+	if err := suite.authService.ResetPassword(suite.resident.ID, desiredPassword); err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error resetting password: %v", err))
+	}
+
+	resident, err := suite.residentService.GetOne(suite.resident.ID)
+	if err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error getting resident from database: %v", err))
+	}
+
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(resident.Password),
+		[]byte(desiredPassword),
+	); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("expected passwords to be the same but they werent: %v", err))
 	}
 }
