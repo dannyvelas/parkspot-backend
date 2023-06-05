@@ -60,7 +60,7 @@ func (s ResidentService) Update(desiredResident models.Resident) (models.Residen
 	}
 	// this check goes here; not in `validator.EditResident` bc this err is mut. exclusive w those errs
 	if desiredResident.FirstName == "" && desiredResident.LastName == "" &&
-		desiredResident.Phone == "" && desiredResident.Email == "" &&
+		desiredResident.Phone == "" && desiredResident.Email == "" && desiredResident.Password == "" &&
 		desiredResident.UnlimDays == nil && desiredResident.AmtParkingDaysUsed == nil {
 		return models.Resident{}, errs.AllEditFieldsEmpty("firstName, lastName, phone, email, unlimDays, amtParkingDaysUsed")
 	}
