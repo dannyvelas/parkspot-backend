@@ -79,8 +79,6 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	loginable, err := a.getUser(user.ID)
 	if errors.Is(err, errs.NotFound) {
-		log.Info().Msgf("user not found")
-		log.Debug().Msgf("user not found")
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
@@ -88,8 +86,10 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 
 	userFromDB := loginable.AsUser()
 	if userFromDB.TokenVersion != user.TokenVersion {
-		log.Info().Msgf("token version not same. %s != %s", userFromDB.TokenVersion, user.TokenVersion)
-		log.Debug().Msgf("token version not same. %s != %s", userFromDB.TokenVersion, user.TokenVersion)
+		log.Debug().
+			Int("dbTokenVersion", userFromDB.TokenVersion).
+			Int("tokenVersion", user.TokenVersion).
+			Msgf("token version not same")
 		return Session{}, "", errs.Unauthorized
 	}
 
