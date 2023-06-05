@@ -80,6 +80,7 @@
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 - [x] add a security role that has a subset of admin role permissions
+- [ ] make "Domain" property of httpCookie a config value instead of a hard-coded one
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
 - [ ] add resident getone functions which just wraps over resident.selectwhere
 - [ ] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
