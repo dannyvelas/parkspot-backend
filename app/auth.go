@@ -142,9 +142,9 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 
 	var err error
 	if resCheckErr := models.IsResidentID(id); resCheckErr != nil {
-		_, err = a.adminService.Update(models.Admin{Password: newPass})
+		_, err = a.adminService.Update(models.Admin{ID: id, Password: newPass})
 	} else {
-		_, err = a.residentService.Update(models.Resident{Password: newPass})
+		_, err = a.residentService.Update(models.Resident{ID: id, Password: newPass})
 	}
 
 	if err != nil {
