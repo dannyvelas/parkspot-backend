@@ -64,7 +64,6 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 			respondError(w, errs.Unauthorized)
 			return
 		}
-		log.Debug().Msgf("found cookie")
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
