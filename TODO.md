@@ -96,6 +96,7 @@
 - [ ] (api test) add a test to make sure that security aren't allowed to delete, create, or edit, cars, residents, or permits. but they are allowed to see them
 - [ ] (app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
 - [ ] (app test) make sure that a resident cannot delete another residents cars
+- [ ] (app test) make sure that the authService.ResetPassword function works
 - [ ] that a permit can't be created if there's another
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
