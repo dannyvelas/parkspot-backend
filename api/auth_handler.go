@@ -60,18 +60,24 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
+			log.Info().Msgf("could not find cookie")
+			log.Debug().Msgf("could not find cookie")
 			respondError(w, errs.Unauthorized)
 			return
 		}
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
+			log.Info().Msgf("could not parse cookie: %v", err)
+			log.Debug().Msgf("could not parse cookie: %v", err)
 			respondError(w, errs.Unauthorized)
 			return
 		}
 
 		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
 		if err != nil {
+			log.Info().Msgf("could not have auth service refresh tokens: %v")
+			log.Debug().Msgf("could not have auth service refresh tokens: %v")
 			respondError(w, err)
 			return
 		}

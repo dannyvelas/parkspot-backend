@@ -9,6 +9,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/gmail/v1"
@@ -78,6 +79,8 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	loginable, err := a.getUser(user.ID)
 	if errors.Is(err, errs.NotFound) {
+		log.Info().Msgf("user not found")
+		log.Debug().Msgf("user not found")
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
@@ -85,6 +88,8 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 
 	userFromDB := loginable.AsUser()
 	if userFromDB.TokenVersion != user.TokenVersion {
+		log.Info().Msgf("token version not same. %s != %s", userFromDB.TokenVersion, user.TokenVersion)
+		log.Debug().Msgf("token version not same. %s != %s", userFromDB.TokenVersion, user.TokenVersion)
 		return Session{}, "", errs.Unauthorized
 	}
 
