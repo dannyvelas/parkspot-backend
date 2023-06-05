@@ -108,6 +108,7 @@ func (residentRepoMock *ResidentRepoMock) Update(residentFields models.Resident)
 	return nil
 }
 
-func (residentRepoMock *ResidentRepoMock) Reset() {
+func (residentRepoMock *ResidentRepoMock) Reset() error {
 	residentRepoMock.residents = residentRepoMock.residents[:0]
+	return nil
 }
