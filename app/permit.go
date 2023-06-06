@@ -121,7 +121,7 @@ func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error
 		desiredCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
 		createdCar, err := s.carService.Create(desiredCar)
 		if err != nil {
-			return models.Permit{}, fmt.Errorf("error creating car: %v", err)
+			return models.Permit{}, fmt.Errorf("error creating car: %w", err)
 		}
 
 		// record the carID that was used to create this car
