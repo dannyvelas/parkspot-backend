@@ -12,12 +12,14 @@ import (
 )
 
 type authHandler struct {
+	httpConfig  config.HttpConfig
 	jwtService  app.JWTService
 	authService app.AuthService
 }
 
-func newAuthHandler(jwtService app.JWTService, authService app.AuthService) authHandler {
+func newAuthHandler(httpConfig config.HttpConfig, jwtService app.JWTService, authService app.AuthService) authHandler {
 	return authHandler{
+		httpConfig:  httpConfig,
 		jwtService:  jwtService,
 		authService: authService,
 	}
@@ -145,7 +147,7 @@ func (h authHandler) sendRefreshToken(w http.ResponseWriter, refreshToken string
 		Value:    refreshToken,
 		HttpOnly: true,
 		Path:     "/",
-		Domain:   "park-spot.co",
+		Domain:   h.httpConfig.CookieDomain,
 	}
 	http.SetCookie(w, &cookie)
 }

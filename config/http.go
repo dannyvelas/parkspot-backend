@@ -1,13 +1,12 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"time"
 )
 
 type HttpConfig struct {
-	Domain             string
+	FrontendURL        string
+	CookieDomain       string
 	Port               string
 	ReadTimeout        time.Duration
 	WriteTimeout       time.Duration
@@ -16,13 +15,9 @@ type HttpConfig struct {
 }
 
 func newHttpConfig() (HttpConfig, error) {
-	var domain string
-	if domain = os.Getenv("DOMAIN"); domain == "" {
-		return HttpConfig{}, fmt.Errorf("DOMAIN is required.")
-	}
-
 	return HttpConfig{
-		Domain:             domain,
+		FrontendURL:        readEnvString("FRONTENDURL", "http://localhost:5173"),
+		CookieDomain:       readEnvString("COOKIEDOMAIN", "localhost"),
 		Port:               readEnvString("PORT", "5000"),
 		ReadTimeout:        readEnvDuration("READTIMEOUT", 5),
 		WriteTimeout:       readEnvDuration("WRITETIMEOUT", 10),

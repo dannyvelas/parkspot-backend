@@ -203,7 +203,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
         <p>If you sent the request, please click the button below to reset your password.
            Otherwise, you can ignore this email.</p>
         <a href='%s/reset-password?token=%s'>Reset Your Password</a>
-    </body>`, a.httpConfig.Domain, token)
+    </body>`, a.httpConfig.FrontendURL, token)
 
 	gmailMessage := &gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
 
