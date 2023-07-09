@@ -24,9 +24,7 @@
 - [x] (DEPLOY) change parking days yearly limit to 20
 - [x] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
 - [x] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
-- [ ] (DEPLOY) (not important) use non-root user in vultr server
-- [ ] (DEPLOY) (not important) remove api hello world at "/"
-- [ ] (DEPLOY) (not important) remove /api/ prefix from routes
+- [ ] give admins the power to be able to change car colors 
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -80,9 +78,10 @@
 	2. move id checks to service and not handler or repo. 
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 - [x] add a security role that has a subset of admin role permissions
-- [ ] make "Domain" property of httpCookie a config value instead of a hard-coded one
-- [ ] read in configs using marshalling instead of using if/elseif/else logic
+- [x] make "Domain" property of httpCookie a config value instead of a hard-coded one
+- [ ] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
 - [ ] add resident getone functions which just wraps over resident.selectwhere
+- [ ] read in configs using marshalling instead of using if/elseif/else logic
 - [ ] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
 - [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
@@ -97,6 +96,8 @@
 - [ ] (app test) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
 - [ ] (app test) make sure that a resident cannot delete another residents cars
 - [ ] (app test) make sure that the authService.ResetPassword function works
+- [ ] (auth handler test) that reset password function works
+- [ ] (auth handler test) make login test functions table-driven
 - [ ] that a permit can't be created if there's another
 - [ ] add test to make sure residents can't create exception permits
 - [ ] add test to make sure that residents can't make an API request to create a permit for another person
@@ -112,7 +113,7 @@
 - [ ] add check to make sure permit request start date is not in past
 - [ ] make sure residents can't create visitors with a start date in the past
 - [ ] (app test) make sure that permit creating doesn't add days to resident or car if resident has unlim days
-- [ ] (app test) make sure that permit creatino does add days to resident and car if resident does not have unlimited days
+- [ ] (app test) make sure that permit creation does add days to resident and car if resident does not have unlimited days
 - [ ] (app test) make sure that cars are created correctly when a person chooses to add a new car when creating a permit 
 - [ ] (handler test) make sure an edit resident request cannot change passwords
 - [ ] (app test) make sure that resident fields cant be updated with invalid values
