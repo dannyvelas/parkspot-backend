@@ -321,6 +321,30 @@ func (suite *permitTestSuite) TestGetMaxExceptions_Positive() {
 	require.Empty(suite.T(), cmp.Diff(createdPermit.EndDate, last.EndDate))
 }
 
+func (suite *permitTestSuite) TestGetMaxExpired_Positive() {
+	const twentyOneDays = 21 * 24
+	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: suite.resident.ID, CarID: suite.car.ID}, -twentyOneDays))
+	if err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
+	}
+
+	fmt.Println(createdPermit.StartDate.Format("2006-01-02"))
+	permits, err := suite.permitService.GetAll(models.ExpiredStatus, config.MaxLimit, 0, true, "", suite.resident.ID)
+	require.NoError(suite.T(), err)
+	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
+
+	if permits.Metadata.TotalAmount < config.MaxLimit {
+		suite.Equal(permits.Metadata.TotalAmount, len(permits.Records), "The amount of records reported in metadata is lower than limit, so the amount of records in the payload should be equal to metadata.totalAmount")
+	}
+
+	last := permits.Records[len(permits.Records)-1]
+
+	require.Equal(suite.T(), createdPermit.ResidentID, last.ResidentID)
+	require.Equal(suite.T(), createdPermit.LicensePlate, last.LicensePlate)
+	require.Empty(suite.T(), cmp.Diff(createdPermit.StartDate, last.StartDate))
+	require.Empty(suite.T(), cmp.Diff(createdPermit.EndDate, last.EndDate))
+}
+
 // helpers
 func activeFor24Hrs(permit models.Permit, offset time.Duration) models.Permit {
 	permit.StartDate = time.Now().Add(time.Hour * offset).Truncate(time.Second)

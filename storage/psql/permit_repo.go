@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
@@ -221,10 +220,7 @@ func (permitRepo PermitRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer
 			squirrel.Expr("permit.end_ts >= extract(epoch from now())"),
 		},
 		models.ExceptionStatus: squirrel.Expr("permit.exception_reason IS NOT NULL"),
-		models.ExpiredStatus: squirrel.And{
-			squirrel.Expr("permit.end_ts >= extract(epoch from (CURRENT_DATE - '1 DAY'::interval * ?))", config.DefaultExpiredWindow),
-			squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
-		},
+		models.ExpiredStatus:   squirrel.Expr("permit.end_ts <= extract(epoch from (CURRENT_DATE-2))"),
 	}
 
 	whereSQL, ok := statusToSQL[status]
