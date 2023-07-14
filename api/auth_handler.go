@@ -76,7 +76,7 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 
 		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
 		if err != nil {
-			log.Debug().Msgf("could not have auth service refresh tokens: %v")
+			log.Debug().Msgf("could not have auth service refresh tokens: %v", err)
 			respondError(w, err)
 			return
 		}
