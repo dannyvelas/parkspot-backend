@@ -71,7 +71,7 @@ func (h carHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
-		if carToDelete.ResidentID != accessPayload.ID {
+		if accessPayload.Role == models.ResidentRole && carToDelete.ResidentID != accessPayload.ID {
 			respondError(w, errs.Unauthorized)
 			return
 		}
@@ -130,12 +130,14 @@ func (h carHandler) create() http.HandlerFunc {
 			return
 		}
 
-		if desiredCar.ResidentID != "" && desiredCar.ResidentID != accessPayload.ID {
-			respondError(w, errs.BadRequest("Residents cannot create a car for another resident"))
-			return
-		}
-		if desiredCar.ResidentID == "" {
-			desiredCar.ResidentID = accessPayload.ID
+		if accessPayload.Role == models.ResidentRole {
+			if desiredCar.ResidentID != "" && desiredCar.ResidentID != accessPayload.ID {
+				respondError(w, errs.BadRequest("Residents cannot create a car for another resident"))
+				return
+			}
+			if desiredCar.ResidentID == "" {
+				desiredCar.ResidentID = accessPayload.ID
+			}
 		}
 
 		car, err := h.carService.Create(desiredCar)

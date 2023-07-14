@@ -85,15 +85,15 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		r.Group(func(adminAndResidentRouter chi.Router) {
 			adminAndResidentRouter.Use(middleware.authenticate(models.AdminRole, models.ResidentRole))
 			adminAndResidentRouter.Post("/permit", permitHandler.create())
+			adminAndResidentRouter.Post("/car", carHandler.create())
+			adminAndResidentRouter.Put("/car", carHandler.edit())
+			adminAndResidentRouter.Delete("/car/{id}", carHandler.deleteOne())
 		})
 
 		r.Group(func(residentRouter chi.Router) {
 			residentRouter.Use(middleware.authenticate(models.ResidentRole))
 			residentRouter.Post("/visitor", visitorHandler.create())
 			residentRouter.Delete("/visitor/{id}", visitorHandler.deleteOne())
-			residentRouter.Delete("/car/{id}", carHandler.deleteOne())
-			residentRouter.Post("/car", carHandler.create())
-			residentRouter.Put("/car", carHandler.edit())
 		})
 
 		r.Group(func(userRouter chi.Router) {
