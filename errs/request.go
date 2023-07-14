@@ -22,6 +22,10 @@ func NewNotFound(resource string) *ApiErr {
 	return &ApiErr{http.StatusNotFound, fmt.Errorf("%s %w", resource, NotFound)}
 }
 
+func NewUnauthorized(message string) *ApiErr {
+	return &ApiErr{http.StatusUnauthorized, fmt.Errorf("%s %w", message, Unauthorized)}
+}
+
 func EmptyFields(fields string) *ApiErr {
 	return NewApiErr(http.StatusBadRequest, "One or more missing fields: "+fields)
 }
