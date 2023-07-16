@@ -65,3 +65,44 @@ func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
 
 	return nil
 }
+
+func (adminRepo AdminRepo) Create(desiredAdmin models.Admin) error {
+	sq := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+	query, args, err := sq.
+		Insert("admin").
+		SetMap(squirrel.Eq{
+			"id":            desiredAdmin.ID,
+			"first_name":    desiredAdmin.FirstName,
+			"last_name":     desiredAdmin.LastName,
+			"email":         desiredAdmin.Email,
+			"password":      desiredAdmin.Password,
+			"is_privileged": desiredAdmin.IsPrivileged,
+		}).ToSql()
+	if err != nil {
+		return fmt.Errorf("admin_repo.Create: %w: %v", errs.DBBuildingQuery, err)
+	}
+
+	_, err = adminRepo.driver.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("admin_repo.Create: %w: %v", errs.DBExec, err)
+	}
+
+	return nil
+}
+
+func (adminRepo AdminRepo) Delete(id string) error {
+	const query = `DELETE FROM admin WHERE id = $1`
+
+	res, err := adminRepo.driver.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("admin_repo.Delete: %w: %v", errs.DBExec, err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return fmt.Errorf("admin_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
+	} else if rowsAffected == 0 {
+		return fmt.Errorf("admin_repo.Delete: %w", errs.NewNotFound("admin"))
+	}
+
+	return nil
+}

@@ -2,15 +2,19 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/rs/zerolog/log"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/testcontainers/testcontainers-go"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,11 +23,9 @@ import (
 
 type authRouterSuite struct {
 	suite.Suite
-	testServer        *httptest.Server
-	app               app.App
-	adminUser         models.User
-	adminUserPassword string
-	adminAccessToken  string
+	container  testcontainers.Container
+	testServer *httptest.Server
+	app        app.App
 }
 
 func TestAuthRouter(t *testing.T) {
@@ -36,28 +38,24 @@ func (suite *authRouterSuite) SetupSuite() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	suite.app, err = app.NewApp(c)
+	// configure and start container
+	container, database, err := psql.NewSandboxDatabase()
 	if err != nil {
-		log.Fatal().Msgf("Failed to initialize app: %v", err)
+		suite.T().Fatalf("error getting sandbox database: %v", err)
 	}
+	// save container in suite struct so we can terminate it on suite teardown
+	suite.container = container
+
+	suite.app = app.NewApp(c, database)
 
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
-	suite.adminUser = models.NewUser("test",
-		"Daniel",
-		"Velasquez",
-		"email@example.com",
-		models.AdminRole,
-		0)
-	suite.adminUserPassword = "notapassword"
-
-	suite.adminAccessToken, err = suite.app.JWTService.NewAccess(suite.adminUser.ID, models.AdminRole)
-	if err != nil {
-		log.Fatal().Msgf("Failed to create JWT: %v", err)
+	if _, err := suite.app.AdminService.Create(models.Test_admin); err != nil {
+		log.Fatal().Msgf("error creating test admin: %v", err.Error())
 	}
 
-	if _, err := suite.app.ResidentService.Create(testResident); err != nil {
+	if _, err := suite.app.ResidentService.Create(models.Test_resident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 }
@@ -65,8 +63,8 @@ func (suite *authRouterSuite) SetupSuite() {
 func (suite *authRouterSuite) TearDownSuite() {
 	defer suite.testServer.Close()
 
-	if err := suite.app.ResidentService.Delete(testResident.ID); err != nil {
-		log.Fatal().Msgf("error deleting test resident: %v", err.Error())
+	if err := suite.container.Terminate(context.Background()); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error tearing down container: %v", err))
 	}
 }
 
@@ -75,8 +73,8 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
     "id":"%s",
     "password":"%s"
   }`,
-		suite.adminUser.ID,
-		suite.adminUserPassword))
+		models.Test_admin.ID,
+		models.Test_admin.Password))
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -106,12 +104,13 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	suite.Empty(cmp.Diff(suite.adminUser, session.User), "user in response did not equal expected user")
+	expectedUser := models.Test_admin.AsUser()
+	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
-	err = checkAccessToken(suite.app.JWTService, session.AccessToken, suite.adminUser)
+	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
 	suite.NoError(err)
 
-	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), suite.adminUser.ID, suite.adminUser.TokenVersion)
+	err = checkRefreshToken(suite.app.JWTService, response.Cookies(), expectedUser.ID, expectedUser.TokenVersion)
 	suite.NoError(err)
 }
 
@@ -119,7 +118,7 @@ func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 	requestBody := []byte(fmt.Sprintf(`{
     "id":"%s",
     "password":"%s"
-  }`, testResident.ID, testResident.Password))
+  }`, models.Test_resident.ID, models.Test_resident.Password))
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -149,12 +148,7 @@ func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	expectedUser := models.NewUser(testResident.ID,
-		testResident.FirstName,
-		testResident.LastName,
-		testResident.Email,
-		models.ResidentRole,
-		0)
+	expectedUser := models.Test_resident.AsUser()
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
 	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
@@ -171,13 +165,8 @@ func (suite *authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	user := models.NewUser(testResident.ID,
-		testResident.FirstName,
-		testResident.LastName,
-		testResident.Email,
-		models.ResidentRole,
-		*testResident.TokenVersion)
-	refreshToken, err := suite.app.JWTService.NewRefresh(user)
+	expectedUser := models.Test_resident.AsUser()
+	refreshToken, err := suite.app.JWTService.NewRefresh(expectedUser)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
 		return
@@ -207,12 +196,6 @@ func (suite *authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	expectedUser := models.NewUser(testResident.ID,
-		testResident.FirstName,
-		testResident.LastName,
-		testResident.Email,
-		models.ResidentRole,
-		0)
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
 	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)

@@ -1,9 +1,11 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/models/validator"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -52,4 +54,47 @@ func (s AdminService) Update(desiredAdmin models.Admin) (models.Admin, error) {
 	}
 
 	return admin, nil
+}
+
+func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
+	if err := validator.CreateAdmin.Run(desiredAdmin); err != nil {
+		return models.Admin{}, err
+	}
+
+	// make sure admin doesn't already exist
+	if _, err := s.adminRepo.GetOne(desiredAdmin.ID); err != nil && !errors.Is(err, errs.NotFound) {
+		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: error getting admin by id: %v", err)
+	} else if err == nil {
+		return models.Admin{}, errs.NewAlreadyExists("an admin with ID: " + desiredAdmin.ID)
+	}
+
+	// TODO: check for duplicate email here
+
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredAdmin.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return models.Admin{}, fmt.Errorf("admin_service.create: error generating hash:" + err.Error())
+	}
+	hashString := string(hashBytes)
+
+	desiredAdmin.Password = hashString
+	err = s.adminRepo.Create(desiredAdmin)
+	if err != nil {
+		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: Error querying adminRepo: %v", err)
+	}
+
+	createdAdmin, err := s.GetOne(desiredAdmin.ID)
+	if err != nil {
+		return models.Admin{}, fmt.Errorf("error getting admin which was just created: %w", err)
+	}
+
+	return createdAdmin, nil
+}
+
+// not used yet but could come in handy
+func (s AdminService) Delete(id string) error {
+	if id == "" {
+		return errs.MissingIDField
+	}
+
+	return s.adminRepo.Delete(id)
 }

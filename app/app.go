@@ -8,6 +8,7 @@ import (
 type App struct {
 	JWTService      JWTService
 	AuthService     AuthService
+	AdminService    AdminService
 	ResidentService ResidentService
 	VisitorService  VisitorService
 	CarService      CarService
@@ -27,6 +28,7 @@ func NewApp(c config.Config, database storage.Database) App {
 	return App{
 		JWTService:      jwtService,
 		AuthService:     authService,
+		AdminService:    adminService,
 		ResidentService: residentService,
 		VisitorService:  visitorService,
 		CarService:      carService,
