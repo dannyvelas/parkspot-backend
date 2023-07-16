@@ -34,10 +34,7 @@ func main() {
 	log.Info().Msg("Connected to Database.")
 
 	// create app
-	app, err := app.NewApp(c, database)
-	if err != nil {
-		log.Fatal().Msgf("Error initializing app: %v", err)
-	}
+	app := app.NewApp(c, database)
 
 	// initialize error channel
 	errChannel := make(chan error)

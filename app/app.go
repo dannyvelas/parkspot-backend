@@ -14,7 +14,7 @@ type App struct {
 	PermitService   PermitService
 }
 
-func NewApp(c config.Config, database storage.Database) (App, error) {
+func NewApp(c config.Config, database storage.Database) App {
 	// services
 	jwtService := NewJWTService(c.Token)
 	adminService := NewAdminService(database.AdminRepo())
@@ -31,5 +31,5 @@ func NewApp(c config.Config, database storage.Database) (App, error) {
 		VisitorService:  visitorService,
 		CarService:      carService,
 		PermitService:   permitService,
-	}, nil
+	}
 }
