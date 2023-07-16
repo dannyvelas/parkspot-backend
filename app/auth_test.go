@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -41,7 +42,7 @@ func (suite *authTestSuite) SetupSuite() {
 	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HttpConfig{}, config.OAuthConfig{})
 
 	// create resident
-	if _, err := suite.residentService.Create(test_resident); err != nil {
+	if _, err := suite.residentService.Create(models.Test_resident); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
@@ -62,11 +63,11 @@ func (suite *authTestSuite) TearDownTest() {
 
 func (suite *authTestSuite) TestResetPassword() {
 	const desiredPassword = "newPass"
-	if err := suite.authService.ResetPassword(test_resident.ID, desiredPassword); err != nil {
+	if err := suite.authService.ResetPassword(models.Test_resident.ID, desiredPassword); err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error resetting password: %v", err))
 	}
 
-	resident, err := suite.residentService.GetOne(test_resident.ID)
+	resident, err := suite.residentService.GetOne(models.Test_resident.ID)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error getting resident from database: %v", err))
 	}
