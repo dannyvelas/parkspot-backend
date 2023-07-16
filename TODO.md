@@ -79,6 +79,8 @@
 	3. change `Get/GetCount` repo funcs to be more like `SelectWhere/SelectCountWhere` funcs in car\_repo/permit\_repo
 - [x] add a security role that has a subset of admin role permissions
 - [x] make "Domain" property of httpCookie a config value instead of a hard-coded one
+- [x] use a shared testResident between app/car\_test.go and app/permit\_test.go
+- [x] move app/test_helpers.go to storage/
 - [ ] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
 - [ ] add resident getone functions which just wraps over resident.selectwhere
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
@@ -87,7 +89,6 @@
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 - [ ] start using require in resident\_test
 - [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
-- [ ] use a shared testResident between app/car\_test.go and app/permit\_test.go
 - [ ] probably use docker-compose to initialize test container in app/test\_helpers.go
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
