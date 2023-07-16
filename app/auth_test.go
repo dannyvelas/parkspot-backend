@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -36,10 +35,10 @@ func (suite *authTestSuite) SetupSuite() {
 
 	// create services that are needed to create services used in this suite
 	jwtService := NewJWTService(config.TokenConfig{AccessSecret: "accessSecret", RefreshSecret: "refereshSecret"})
-	adminService := NewAdminService(psql.NewAdminRepo(database))
+	adminService := NewAdminService(database.AdminRepo())
 
 	// create services used in this test suite
-	suite.residentService = NewResidentService(psql.NewResidentRepo(database))
+	suite.residentService = NewResidentService(database.ResidentRepo())
 	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HttpConfig{}, config.OAuthConfig{})
 
 	// create resident

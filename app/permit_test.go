@@ -6,7 +6,6 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -45,15 +44,10 @@ func (suite *permitTestSuite) SetupSuite() {
 	// save container in suite struct so we can terminate it on suite teardown
 	suite.container = container
 
-	// define repos
-	residentRepo := psql.NewResidentRepo(database)
-	permitRepo := psql.NewPermitRepo(database)
-	carRepo := psql.NewCarRepo(database)
-
-	// define services
-	suite.residentService = NewResidentService(residentRepo)
-	carService := NewCarService(carRepo)
-	suite.permitService = NewPermitService(permitRepo, residentRepo, carService)
+	// service dependency
+	carService := NewCarService(database.CarRepo())
+	suite.residentService = NewResidentService(database.ResidentRepo())
+	suite.permitService = NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
 
 	{ // create residents
 		suite.resident = models.Resident{

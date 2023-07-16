@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/imdario/mergo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -41,14 +40,13 @@ func (suite *carTestSuite) SetupSuite() {
 		Phone:     "1234567890",
 		Email:     "email@example.com",
 		Password:  "notapassword"}
-	residentService := NewResidentService(psql.NewResidentRepo(database))
+	residentService := NewResidentService(database.ResidentRepo())
 	if _, err := residentService.Create(suite.resident); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
 
-	carRepo := psql.NewCarRepo(database)
-	suite.carService = NewCarService(carRepo)
+	suite.carService = NewCarService(database.CarRepo())
 }
 
 func (suite *carTestSuite) TearDownSuite() {
