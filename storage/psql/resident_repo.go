@@ -5,17 +5,18 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
 	"strings"
 )
 
 type ResidentRepo struct {
-	database       Database
+	database       storage.Database
 	residentSelect squirrel.SelectBuilder
 	countSelect    squirrel.SelectBuilder
 }
 
-func NewResidentRepo(database Database) ResidentRepo {
+func NewResidentRepo(database storage.Database) ResidentRepo {
 	residentSelect := stmtBuilder.Select(
 		"id",
 		"first_name",
@@ -56,7 +57,7 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 	}
 
 	residents := residentSlice{}
-	err = residentRepo.database.driver.Select(&residents, query, args...)
+	err = residentRepo.database.Driver().Select(&residents, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
@@ -84,7 +85,7 @@ func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident
 	}
 
 	var totalAmount int
-	err = residentRepo.database.driver.Get(&totalAmount, query, args...)
+	err = residentRepo.database.Driver().Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.DBQuery, err)
 	}
@@ -98,7 +99,7 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
     WHERE id = $2
   `
 
-	_, err := residentRepo.database.driver.Exec(query, days, id)
+	_, err := residentRepo.database.Driver().Exec(query, days, id)
 	if err != nil {
 		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
 	}
@@ -129,7 +130,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = residentRepo.database.driver.Exec(query, args...)
+	_, err = residentRepo.database.Driver().Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBExec, err)
 	}
@@ -140,7 +141,7 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 func (residentRepo ResidentRepo) Delete(residentID string) error {
 	const query = `DELETE FROM resident WHERE id = $1`
 
-	res, err := residentRepo.database.driver.Exec(query, residentID)
+	res, err := residentRepo.database.Driver().Exec(query, residentID)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBExec, err)
 	}
@@ -177,7 +178,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = residentRepo.database.driver.Exec(query, args...)
+	_, err = residentRepo.database.Driver().Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBExec, err)
 	}
@@ -186,7 +187,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 }
 
 func (residentRepo ResidentRepo) Reset() error {
-	_, err := residentRepo.database.driver.Exec("DELETE FROM resident")
+	_, err := residentRepo.database.Driver().Exec("DELETE FROM resident")
 	if err != nil {
 		return fmt.Errorf("resident_repo.Reset: %w: %v", errs.DBExec, err)
 	}

@@ -1,10 +1,9 @@
 package app
 
 import (
-	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
-	"github.com/rs/zerolog/log"
 )
 
 type App struct {
@@ -16,15 +15,7 @@ type App struct {
 	PermitService   PermitService
 }
 
-func NewApp(c config.Config) (App, error) {
-	// connect to database
-	// no defer close() because connection closes automatically on program exit
-	database, err := psql.NewDatabase(c.Postgres)
-	if err != nil {
-		return App{}, fmt.Errorf("Failed to start database: %v", err)
-	}
-	log.Info().Msg("Connected to Database.")
-
+func NewApp(c config.Config, database storage.Database) (App, error) {
 	// repos
 	adminRepo := psql.NewAdminRepo(database)
 	residentRepo := psql.NewResidentRepo(database)

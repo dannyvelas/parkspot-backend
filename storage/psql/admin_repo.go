@@ -6,13 +6,14 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage"
 )
 
 type AdminRepo struct {
-	database Database
+	database storage.Database
 }
 
-func NewAdminRepo(database Database) AdminRepo {
+func NewAdminRepo(database storage.Database) AdminRepo {
 	return AdminRepo{database: database}
 }
 
@@ -29,7 +30,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
   `
 
 	var admin admin
-	err := adminRepo.database.driver.Get(&admin, query, id)
+	err := adminRepo.database.Driver().Get(&admin, query, id)
 	if err == sql.ErrNoRows {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NewNotFound("admin"))
 	} else if err != nil {
@@ -56,7 +57,7 @@ func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
 		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = adminRepo.database.driver.Exec(query, args...)
+	_, err = adminRepo.database.Driver().Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBExec, err)
 	}

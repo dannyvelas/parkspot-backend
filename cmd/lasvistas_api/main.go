@@ -5,6 +5,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/api"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"
@@ -24,8 +25,16 @@ func main() {
 		log.Fatal().Msgf("Error loading config: %v", err)
 	}
 
+	// connect to database
+	// no defer close() because connection closes automatically on program exit
+	database, err := psql.NewDatabase(c.Postgres)
+	if err != nil {
+		log.Fatal().Msgf("Failed to start database: %v", err)
+	}
+	log.Info().Msg("Connected to Database.")
+
 	// create app
-	app, err := app.NewApp(c)
+	app, err := app.NewApp(c, database)
 	if err != nil {
 		log.Fatal().Msgf("Error initializing app: %v", err)
 	}

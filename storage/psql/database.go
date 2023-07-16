@@ -55,3 +55,7 @@ func (database Database) CreateSchemas() error {
 
 	return nil
 }
+
+func (database Database) Driver() *sqlx.DB {
+	return database.driver
+}
