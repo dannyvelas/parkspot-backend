@@ -8,16 +8,17 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"github.com/jmoiron/sqlx"
 	"strings"
 )
 
 type CarRepo struct {
-	database    storage.Database
+	driver      *sqlx.DB
 	carSelect   squirrel.SelectBuilder
 	countSelect squirrel.SelectBuilder
 }
 
-func NewCarRepo(database storage.Database) CarRepo {
+func NewCarRepo(driver *sqlx.DB) storage.CarRepo {
 	carSelect := stmtBuilder.Select(
 		"car.id",
 		"car.resident_id",
@@ -30,7 +31,7 @@ func NewCarRepo(database storage.Database) CarRepo {
 	countSelect := stmtBuilder.Select("count(*)").From("car")
 
 	return CarRepo{
-		database:    database,
+		driver:      driver,
 		carSelect:   carSelect,
 		countSelect: countSelect,
 	}
@@ -43,7 +44,7 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	}
 
 	car := car{}
-	err = carRepo.database.Driver().Get(&car, query, args...)
+	err = carRepo.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NewNotFound("car"))
 	} else if err != nil {
@@ -72,7 +73,7 @@ func (carRepo CarRepo) SelectWhere(carFields models.Car, selectOpts ...selectopt
 	}
 
 	cars := carSlice{}
-	err = carRepo.database.Driver().Select(&cars, query, args...)
+	err = carRepo.driver.Select(&cars, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
@@ -99,7 +100,7 @@ func (carRepo CarRepo) SelectCountWhere(carFields models.Car, selectOpts ...sele
 	}
 
 	var totalAmount int
-	err = carRepo.database.Driver().Get(&totalAmount, query, args...)
+	err = carRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("car_repo.GetCount: %w: %v", errs.DBQuery, err)
 	}
@@ -124,7 +125,7 @@ func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 	}
 
 	var id string
-	err = carRepo.database.Driver().Get(&id, query, args...)
+	err = carRepo.driver.Get(&id, query, args...)
 	if err != nil {
 		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBExec, err)
 	}
@@ -138,7 +139,7 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
     WHERE id = $2
   `
 
-	_, err := carRepo.database.Driver().Exec(query, days, id)
+	_, err := carRepo.driver.Exec(query, days, id)
 	if err != nil {
 		return fmt.Errorf("car_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
 	}
@@ -162,7 +163,7 @@ func (carRepo CarRepo) Update(carFields models.Car) error {
 		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = carRepo.database.Driver().Exec(query, args...)
+	_, err = carRepo.driver.Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBExec, err)
 	}
@@ -173,7 +174,7 @@ func (carRepo CarRepo) Update(carFields models.Car) error {
 func (carRepo CarRepo) Delete(id string) error {
 	const query = `DELETE FROM car WHERE id = $1`
 
-	_, err := carRepo.database.Driver().Exec(query, id)
+	_, err := carRepo.driver.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("car_repo.Delete: %w: %v", errs.DBExec, err)
 	}
@@ -182,7 +183,7 @@ func (carRepo CarRepo) Delete(id string) error {
 }
 
 func (carRepo CarRepo) Reset() error {
-	_, err := carRepo.database.Driver().Exec("DELETE FROM car")
+	_, err := carRepo.driver.Exec("DELETE FROM car")
 	if err != nil {
 		return fmt.Errorf("car_repo.Reset: %w: %v", errs.DBExec, err)
 	}

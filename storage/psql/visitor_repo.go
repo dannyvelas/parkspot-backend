@@ -8,16 +8,17 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"github.com/jmoiron/sqlx"
 	"strings"
 )
 
 type VisitorRepo struct {
-	database      storage.Database
+	driver        *sqlx.DB
 	visitorSelect squirrel.SelectBuilder
 	countSelect   squirrel.SelectBuilder
 }
 
-func NewVisitorRepo(database storage.Database) VisitorRepo {
+func NewVisitorRepo(driver *sqlx.DB) storage.VisitorRepo {
 	visitorSelect := stmtBuilder.Select(
 		"id",
 		"resident_id",
@@ -30,7 +31,7 @@ func NewVisitorRepo(database storage.Database) VisitorRepo {
 	countSelect := stmtBuilder.Select("count(*)").From("visitor")
 
 	return VisitorRepo{
-		database:      database,
+		driver:        driver,
 		visitorSelect: visitorSelect,
 		countSelect:   countSelect,
 	}
@@ -55,7 +56,7 @@ func (visitorRepo VisitorRepo) SelectWhere(visitorFields models.Visitor, selectO
 	}
 
 	visitors := visitorSlice{}
-	err = visitorRepo.database.Driver().Select(&visitors, query, args...)
+	err = visitorRepo.driver.Select(&visitors, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", errs.DBQuery, err)
 	}
@@ -81,7 +82,7 @@ func (visitorRepo VisitorRepo) SelectCountWhere(visitorFields models.Visitor, se
 	}
 
 	var totalAmount int
-	err = visitorRepo.database.Driver().Get(&totalAmount, query, args...)
+	err = visitorRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", errs.DBQuery, err)
 	}
@@ -108,7 +109,7 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 	}
 
 	var visitorID string
-	err = visitorRepo.database.Driver().Get(&visitorID, query, args...)
+	err = visitorRepo.driver.Get(&visitorID, query, args...)
 	if err != nil {
 		return "", fmt.Errorf("visitor_repo.Create: %w: %v", errs.DBExec, err)
 	}
@@ -119,7 +120,7 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 	const query = `DELETE FROM visitor WHERE id = $1`
 
-	res, err := visitorRepo.database.Driver().Exec(query, visitorID)
+	res, err := visitorRepo.driver.Exec(query, visitorID)
 	if err != nil {
 		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.DBExec, err)
 	}
@@ -140,7 +141,7 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	}
 
 	visitor := visitor{}
-	err = visitorRepo.database.Driver().Get(&visitor, query, args...)
+	err = visitorRepo.driver.Get(&visitor, query, args...)
 	if err == sql.ErrNoRows {
 		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NewNotFound("visitor"))
 	} else if err != nil {

@@ -7,14 +7,15 @@ import (
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/jmoiron/sqlx"
 )
 
 type AdminRepo struct {
-	database storage.Database
+	driver *sqlx.DB
 }
 
-func NewAdminRepo(database storage.Database) AdminRepo {
-	return AdminRepo{database: database}
+func NewAdminRepo(driver *sqlx.DB) storage.AdminRepo {
+	return AdminRepo{driver}
 }
 
 func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
@@ -30,7 +31,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
   `
 
 	var admin admin
-	err := adminRepo.database.Driver().Get(&admin, query, id)
+	err := adminRepo.driver.Get(&admin, query, id)
 	if err == sql.ErrNoRows {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NewNotFound("admin"))
 	} else if err != nil {
@@ -57,7 +58,7 @@ func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
 		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = adminRepo.database.Driver().Exec(query, args...)
+	_, err = adminRepo.driver.Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("admin_repo.Update: %w: %v", errs.DBExec, err)
 	}

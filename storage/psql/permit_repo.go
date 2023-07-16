@@ -8,17 +8,18 @@ import (
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"github.com/jmoiron/sqlx"
 	"strings"
 	"time"
 )
 
 type PermitRepo struct {
-	database     storage.Database
+	driver       *sqlx.DB
 	permitSelect squirrel.SelectBuilder
 	countSelect  squirrel.SelectBuilder
 }
 
-func NewPermitRepo(database storage.Database) PermitRepo {
+func NewPermitRepo(driver *sqlx.DB) storage.PermitRepo {
 	permitSelect := stmtBuilder.Select(
 		"permit.id AS permit_id",
 		"permit.resident_id",
@@ -36,7 +37,7 @@ func NewPermitRepo(database storage.Database) PermitRepo {
 	countSelect := stmtBuilder.Select("count(*)").From("permit")
 
 	return PermitRepo{
-		database:     database,
+		driver:       driver,
 		permitSelect: permitSelect,
 		countSelect:  countSelect,
 	}
@@ -63,7 +64,7 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 	}
 
 	permits := permitSlice{}
-	err = permitRepo.database.Driver().Select(&permits, query, args...)
+	err = permitRepo.driver.Select(&permits, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("permit_repo.Get: %w: %v. %s. %v", errs.DBQuery, err, query, args)
 	}
@@ -92,7 +93,7 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, select
 	}
 
 	var totalAmount int
-	err = permitRepo.database.Driver().Get(&totalAmount, query, args...)
+	err = permitRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.GetCount: %w: %v", errs.DBQuery, err)
 	}
@@ -107,7 +108,7 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	}
 
 	permit := permit{}
-	err = permitRepo.database.Driver().Get(&permit, query, args...)
+	err = permitRepo.driver.Get(&permit, query, args...)
 	if err == sql.ErrNoRows {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", errs.NewNotFound("permit"))
 	} else if err != nil {
@@ -146,7 +147,7 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	}
 
 	var permitID int
-	err = permitRepo.database.Driver().Get(&permitID, query, args...)
+	err = permitRepo.driver.Get(&permitID, query, args...)
 	if err != nil {
 		return 0, fmt.Errorf("permit_repo.Create: %w: %v", errs.DBExec, err)
 	}
@@ -157,7 +158,7 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 func (permitRepo PermitRepo) Delete(id int) error {
 	const query = `DELETE FROM permit WHERE id = $1`
 
-	res, err := permitRepo.database.Driver().Exec(query, id)
+	res, err := permitRepo.driver.Exec(query, id)
 	if err != nil {
 		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.DBExec, err)
 	}
@@ -184,7 +185,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 		return fmt.Errorf("permit_repo.Update: %w: %v", errs.DBBuildingQuery, err)
 	}
 
-	_, err = permitRepo.database.Driver().Exec(query, args...)
+	_, err = permitRepo.driver.Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("permit_repo.Update: %w: %v", errs.DBExec, err)
 	}
@@ -193,7 +194,7 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 }
 
 func (permitRepo PermitRepo) Reset() error {
-	_, err := permitRepo.database.Driver().Exec("DELETE FROM permit")
+	_, err := permitRepo.driver.Exec("DELETE FROM permit")
 	if err != nil {
 		return fmt.Errorf("permit_repo.Reset: %w: %v", errs.DBExec, err)
 	}

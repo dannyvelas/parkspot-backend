@@ -1,9 +1,9 @@
 package storage
 
-import (
-	"github.com/jmoiron/sqlx"
-)
-
 type Database interface {
-	Driver() *sqlx.DB
+	AdminRepo() AdminRepo
+	ResidentRepo() ResidentRepo
+	CarRepo() CarRepo
+	PermitRepo() PermitRepo
+	VisitorRepo() VisitorRepo
 }

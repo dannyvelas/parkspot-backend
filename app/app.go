@@ -3,7 +3,6 @@ package app
 import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/storage"
-	"github.com/dannyvelas/lasvistas_api/storage/psql"
 )
 
 type App struct {
@@ -16,21 +15,14 @@ type App struct {
 }
 
 func NewApp(c config.Config, database storage.Database) (App, error) {
-	// repos
-	adminRepo := psql.NewAdminRepo(database)
-	residentRepo := psql.NewResidentRepo(database)
-	visitorRepo := psql.NewVisitorRepo(database)
-	carRepo := psql.NewCarRepo(database)
-	permitRepo := psql.NewPermitRepo(database)
-
 	// services
 	jwtService := NewJWTService(c.Token)
-	adminService := NewAdminService(adminRepo)
-	residentService := NewResidentService(residentRepo)
+	adminService := NewAdminService(database.AdminRepo())
+	residentService := NewResidentService(database.ResidentRepo())
 	authService := NewAuthService(jwtService, adminService, residentService, c.Http, c.OAuth)
-	visitorService := NewVisitorService(visitorRepo)
-	carService := NewCarService(carRepo)
-	permitService := NewPermitService(permitRepo, residentRepo, carService)
+	visitorService := NewVisitorService(database.VisitorRepo())
+	carService := NewCarService(database.CarRepo())
+	permitService := NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
 
 	return App{
 		JWTService:      jwtService,

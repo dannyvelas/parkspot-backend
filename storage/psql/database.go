@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/lasvistas_api/storage"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -13,7 +14,12 @@ import (
 )
 
 type Database struct {
-	driver *sqlx.DB
+	driver       *sqlx.DB
+	adminRepo    storage.AdminRepo
+	residentRepo storage.ResidentRepo
+	carRepo      storage.CarRepo
+	permitRepo   storage.PermitRepo
+	visitorRepo  storage.VisitorRepo
 }
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
@@ -27,7 +33,14 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 		return Database{}, fmt.Errorf("database: %w: %v", errs.DBPinging, err)
 	}
 
-	return Database{driver: driver}, nil
+	return Database{
+		driver:       driver,
+		adminRepo:    NewAdminRepo(driver),
+		residentRepo: NewResidentRepo(driver),
+		carRepo:      NewCarRepo(driver),
+		permitRepo:   NewPermitRepo(driver),
+		visitorRepo:  NewVisitorRepo(driver),
+	}, nil
 }
 
 func (database Database) CreateSchemas() error {
@@ -56,6 +69,18 @@ func (database Database) CreateSchemas() error {
 	return nil
 }
 
-func (database Database) Driver() *sqlx.DB {
-	return database.driver
+func (database Database) AdminRepo() storage.AdminRepo {
+	return database.adminRepo
+}
+func (database Database) ResidentRepo() storage.ResidentRepo {
+	return database.residentRepo
+}
+func (database Database) CarRepo() storage.CarRepo {
+	return database.carRepo
+}
+func (database Database) PermitRepo() storage.PermitRepo {
+	return database.permitRepo
+}
+func (database Database) VisitorRepo() storage.VisitorRepo {
+	return database.visitorRepo
 }
