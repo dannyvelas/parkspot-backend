@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/imdario/mergo"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -26,7 +27,7 @@ func TestCarService(t *testing.T) {
 
 func (suite *carTestSuite) SetupSuite() {
 	// configure and start container
-	container, database, err := getSandboxDatabase()
+	container, database, err := psql.NewSandboxDatabase()
 	if err != nil {
 		suite.T().Fatalf("error getting sandbox database: %v", err)
 	}

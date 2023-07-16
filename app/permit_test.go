@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/dannyvelas/lasvistas_api/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestPermitRouter(t *testing.T) {
 
 func (suite *permitTestSuite) SetupSuite() {
 	// configure and start container
-	container, database, err := getSandboxDatabase()
+	container, database, err := psql.NewSandboxDatabase()
 	if err != nil {
 		suite.T().Fatalf("error getting sandbox database: %v", err)
 	}

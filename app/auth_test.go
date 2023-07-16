@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -26,7 +27,7 @@ func TestAuthService(t *testing.T) {
 
 func (suite *authTestSuite) SetupSuite() {
 	// configure and start container
-	container, database, err := getSandboxDatabase()
+	container, database, err := psql.NewSandboxDatabase()
 	if err != nil {
 		suite.T().Fatalf("error getting sandbox database: %v", err)
 	}
@@ -34,7 +35,7 @@ func (suite *authTestSuite) SetupSuite() {
 	suite.container = container
 
 	// create services that are needed to create services used in this suite
-	jwtService := NewJWTService(config.TokenConfig{AccessSecret: "accessSecret", RefreshSecret: "refereshSecret"})
+	jwtService := NewJWTService(config.TokenConfig{AccessSecret: "accessSecret", RefreshSecret: "refreshSecret"})
 	adminService := NewAdminService(database.AdminRepo())
 
 	// create services used in this test suite
