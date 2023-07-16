@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,7 +17,6 @@ type authTestSuite struct {
 	container       testcontainers.Container
 	authService     AuthService
 	residentService ResidentService // kept here so we can tear down between tests
-	resident        models.Resident // will exist in db for duration of tests
 }
 
 func TestAuthService(t *testing.T) {
@@ -43,14 +41,7 @@ func (suite *authTestSuite) SetupSuite() {
 	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HttpConfig{}, config.OAuthConfig{})
 
 	// create resident
-	suite.resident = models.Resident{
-		ID:        "B1234567",
-		FirstName: "Daniel",
-		LastName:  "Velasquez",
-		Phone:     "1234567890",
-		Email:     "email@example.com",
-		Password:  "notapassword"}
-	if _, err := suite.residentService.Create(suite.resident); err != nil {
+	if _, err := suite.residentService.Create(test_resident); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
@@ -71,11 +62,11 @@ func (suite *authTestSuite) TearDownTest() {
 
 func (suite *authTestSuite) TestResetPassword() {
 	const desiredPassword = "newPass"
-	if err := suite.authService.ResetPassword(suite.resident.ID, desiredPassword); err != nil {
+	if err := suite.authService.ResetPassword(test_resident.ID, desiredPassword); err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error resetting password: %v", err))
 	}
 
-	resident, err := suite.residentService.GetOne(suite.resident.ID)
+	resident, err := suite.residentService.GetOne(test_resident.ID)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error getting resident from database: %v", err))
 	}
