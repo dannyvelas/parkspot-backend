@@ -74,7 +74,9 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	if updatedFields.LicensePlate != "" {
 		if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: updatedFields.LicensePlate}); err != nil {
 			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %v", err)
-		} else if len(cars) != 0 {
+		} else if len(cars) != 0 && cars[0].ID != updatedFields.ID {
+			// it's possible that the car we found with the same licensePlate in the database is the car we're currently updating
+			// in this case, don't raise an error
 			return models.Car{}, errs.NewAlreadyExists("a car with this licensePlate: " + updatedFields.LicensePlate)
 		}
 	}

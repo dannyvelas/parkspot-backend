@@ -82,6 +82,7 @@ func (suite *carTestSuite) TestEdit_Car_Positive() {
 		"licensePlate, color":       {argument: models.Car{ID: carToEdit.ID, LicensePlate: "NEWLP", Color: "NEWCOLOR"}},
 		"licensePlate, color, make": {argument: models.Car{ID: carToEdit.ID, LicensePlate: "NEWLP", Color: "NEWCOLOR", Make: "NEWMAKE"}},
 		"model":                     {argument: models.Car{ID: carToEdit.ID, Model: "NEWMODEL"}},
+		"licensePlateNoChange":      {argument: models.Car{ID: carToEdit.ID, LicensePlate: "lp1"}},
 	}
 	for testName, test_ := range tests {
 		expected := test_.argument
