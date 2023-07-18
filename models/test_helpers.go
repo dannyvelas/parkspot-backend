@@ -46,6 +46,16 @@ var (
 		"Velasquez",
 		"email@example.com",
 		"notapassword",
+		true,
+		0,
+	)
+	// this is the default test security.
+	Test_security = NewAdmin(
+		"security",
+		"Daniel",
+		"Velasquez",
+		"email@example.com",
+		"notapassword",
 		false,
 		0,
 	)
