@@ -294,7 +294,6 @@ func (suite *permitTestSuite) TestGetMaxExpired_Positive() {
 		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
-	fmt.Println(createdPermit.StartDate.Format("2006-01-02"))
 	permits, err := suite.permitService.GetAll(models.ExpiredStatus, config.MaxLimit, 0, true, "", models.Test_resident.ID)
 	require.NoError(suite.T(), err)
 	require.NotEmpty(suite.T(), permits.Records, "length of permits should not be zero")
