@@ -27,23 +27,23 @@ clean:
 # Migrations
 .PHONY: migrate_up
 migrate_up:
-	migrate -path migrations -database $(DATABASE_URL) -verbose up
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) up
 
 .PHONY: migrate_up_step
 migrate_up_step:
-	migrate -path migrations -database $(DATABASE_URL) -verbose up 1
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) up 1
 
 .PHONY: migrate_down
 migrate_down:
-	migrate -path migrations -database $(DATABASE_URL) -verbose down
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) down
 
 .PHONY: migrate_down_step
 migrate_down_step:
-	migrate -path migrations -database $(DATABASE_URL) -verbose down 1
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) down 1
 
 .PHONY: migrate_force_version
 migrate_force_version:
-	migrate -path migrations -database $(DATABASE_URL) -verbose force $(version)
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) force $(version)
 
 .PHONY: migrate_create
 migrate_create:
@@ -51,15 +51,7 @@ migrate_create:
 
 .PHONY: migrate_version
 migrate_version:
-	migrate -path migrations -database $(DATABASE_URL) version
-
-.PHONY: migrate_prod_up_step
-migrate_prod_up_step:
-	migrate -path .prodmigrations -database $(DATABASE_URL) -verbose up 1
-
-.PHONY: migrate_prod_down_step
-migrate_prod_down_step:
-	migrate -path .prodmigrations -database $(DATABASE_URL) -verbose down 1
+	go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) version
 
 # test data
 .PHONY: gen_test_csvs

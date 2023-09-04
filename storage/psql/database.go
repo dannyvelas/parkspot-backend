@@ -14,7 +14,7 @@ import (
 )
 
 type Database struct {
-	driver       *sqlx.DB
+	Driver       *sqlx.DB
 	adminRepo    storage.AdminRepo
 	residentRepo storage.ResidentRepo
 	carRepo      storage.CarRepo
@@ -34,7 +34,7 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	}
 
 	return Database{
-		driver:       driver,
+		Driver:       driver,
 		adminRepo:    NewAdminRepo(driver),
 		residentRepo: NewResidentRepo(driver),
 		carRepo:      NewCarRepo(driver),
@@ -44,7 +44,7 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 }
 
 func (database Database) CreateSchemas() error {
-	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
+	driver, err := postgres.WithInstance(database.Driver.DB, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("Call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
 	}
@@ -69,6 +69,7 @@ func (database Database) CreateSchemas() error {
 	return nil
 }
 
+// these are needed to satisfy storage/database interface
 func (database Database) AdminRepo() storage.AdminRepo {
 	return database.adminRepo
 }
