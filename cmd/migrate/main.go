@@ -108,6 +108,10 @@ func getSettings() (settings, error) {
 		command:      command,
 	}
 
+	// `args` should hold every argument after the `command` argument
+	// for example, for the following flags:
+	// `go run cmd/migrate/main.go -path migrations -database $(DATABASE_URL) down 1`
+	// `args` should be equal to ["1"]
 	args := flag.Args()[1:]
 	flagSet := flag.NewFlagSet(command, flag.ExitOnError)
 	if flagSet.NArg() == 0 && command == "force" {
