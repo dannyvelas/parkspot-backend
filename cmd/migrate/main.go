@@ -114,11 +114,11 @@ func getSettings() (settings, error) {
 	// `args` should be equal to ["1"]
 	args := flag.Args()[1:]
 	flagSet := flag.NewFlagSet(command, flag.ExitOnError)
-	if flagSet.NArg() == 0 && command == "force" {
-		return settings{}, fmt.Errorf("error: need <version> argument to \"force\" subcommand")
+	if err := flagSet.Parse(args); err != nil {
+		return settings{}, fmt.Errorf("error parsing: %v", err)
 	}
 
-	if err := flagSet.Parse(args); err != nil {
+	if flagSet.NArg() == 0 && command == "force" {
 		return settings{}, fmt.Errorf("error: need <version> argument to \"force\" subcommand")
 	}
 
