@@ -45,7 +45,7 @@ func (suite *carRouterSuite) SetupSuite() {
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
-	// owner of car must exit before creating test car
+	// owner of car must exist before creating test car
 	if _, err := suite.app.ResidentService.Create(models.Test_resident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
