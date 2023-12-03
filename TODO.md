@@ -24,6 +24,7 @@
 - [x] (DEPLOY) change parking days yearly limit to 20
 - [x] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
 - [x] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
+- [ ] arreglar error de editar días de parqueo
 - [ ] give admins the power to be able to change car colors 
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
@@ -80,7 +81,7 @@
 - [x] add a security role that has a subset of admin role permissions
 - [x] make "Domain" property of httpCookie a config value instead of a hard-coded one
 - [x] use a shared testResident between app/car\_test.go and app/permit\_test.go
-- [x] move app/test_helpers.go to storage/
+- [x] move `app/test_helpers.go` to storage/
 - [ ] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
 - [ ] add resident getone functions which just wraps over resident.selectwhere
 - [ ] read in configs using marshalling instead of using if/elseif/else logic

@@ -36,6 +36,7 @@
     * $1 is for auto backups
 * The VPS is using Debian 11 x64
 * There is another VPS that is would be $3.50, with half the ram and 10GB of SSD, but it is not available in Miami
+        * Another reason it may not make sense to use the VPS that is $3.50 is that it is only 500MB of RAM and our current deployment tool, dokku, requires at least 1GB of RAM.
 
 ## Deployment
 * To deploy the frontend, the backend, and the landing page, we use [dokku](https://dokku.com/).
