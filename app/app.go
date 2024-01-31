@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/email"
 	"github.com/dannyvelas/lasvistas_api/storage"
 )
 
@@ -15,12 +16,12 @@ type App struct {
 	PermitService   PermitService
 }
 
-func NewApp(c config.Config, database storage.Database) App {
-	// services
+func NewApp(c config.Config, database storage.Database, emailSender email.Sender) App {
+	// initialize internal services
 	jwtService := NewJWTService(c.Token)
 	adminService := NewAdminService(database.AdminRepo())
 	residentService := NewResidentService(database.ResidentRepo())
-	authService := NewAuthService(jwtService, adminService, residentService, c.Http, c.OAuth)
+	authService := NewAuthService(jwtService, adminService, residentService, emailSender, c.Http)
 	visitorService := NewVisitorService(database.VisitorRepo())
 	carService := NewCarService(database.CarRepo())
 	permitService := NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)

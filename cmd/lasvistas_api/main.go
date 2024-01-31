@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/api"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/email"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -33,8 +35,14 @@ func main() {
 	}
 	log.Info().Msg("Connected to Database.")
 
+	// get gmail service
+	gmailService, err := email.NewGmailService(context.Background(), c.OAuth)
+	if err != nil {
+		log.Fatal().Msgf("failed to get gmail service: %v", err)
+	}
+
 	// create app
-	app := app.NewApp(c, database)
+	app := app.NewApp(c, database, gmailService)
 
 	// initialize error channel
 	errChannel := make(chan error)

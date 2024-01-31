@@ -3,40 +3,37 @@ package app
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/email"
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/oauth2"
-	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/option"
 )
 
 type AuthService struct {
 	jwtService      JWTService
 	adminService    AdminService
 	residentService ResidentService
+	emailSender     email.Sender
 	httpConfig      config.HttpConfig
-	oauthConfig     config.OAuthConfig
 }
 
 func NewAuthService(
 	jwtService JWTService,
 	adminService AdminService,
 	residentService ResidentService,
+	emailSender email.Sender,
 	httpConfig config.HttpConfig,
-	oauthConfig config.OAuthConfig,
 ) AuthService {
 	return AuthService{
 		jwtService:      jwtService,
 		adminService:    adminService,
 		residentService: residentService,
+		emailSender:     emailSender,
 		httpConfig:      httpConfig,
-		oauthConfig:     oauthConfig,
 	}
 }
 
@@ -115,18 +112,12 @@ func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) erro
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
 	}
 
-	service, err := a.getGmailService(ctx)
+	message, err := a.createMessage(loginable.AsUser())
 	if err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: %v", err)
 	}
 
-	gmailMessage, err := a.createGmailMessage(loginable.AsUser())
-	if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: %v", err)
-	}
-
-	_, err = service.Users.Messages.Send("me", gmailMessage).Do()
-	if err != nil {
+	if err := a.emailSender.Send(message); err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error sending mail: %v", err)
 	}
 
@@ -154,43 +145,13 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 	return nil
 }
 
-func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error) {
-	config := &oauth2.Config{
-		ClientID:     a.oauthConfig.ClientID,
-		ClientSecret: a.oauthConfig.ClientSecret,
-		RedirectURL:  a.oauthConfig.RedirectURL,
-		Scopes:       []string{a.oauthConfig.Scope},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  a.oauthConfig.AuthURL,
-			TokenURL: a.oauthConfig.TokenURL,
-		},
-	}
-
-	token := &oauth2.Token{
-		AccessToken:  a.oauthConfig.AccessToken,
-		RefreshToken: a.oauthConfig.RefreshToken,
-		TokenType:    a.oauthConfig.TokenType,
-		Expiry:       a.oauthConfig.Expiry,
-	}
-
-	client := config.Client(ctx, token)
-
-	service, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve Gmail client: %v", err)
-	}
-
-	return service, nil
-}
-
-func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, error) {
-	body := &bytes.Buffer{}
-
+func (a AuthService) createMessage(toUser models.User) ([]byte, error) {
 	token, err := a.jwtService.NewAccess(toUser.ID, toUser.Role)
 	if err != nil {
 		return nil, fmt.Errorf("Error generating JWT: %v", err)
 	}
 
+	body := &bytes.Buffer{}
 	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")
 	fmt.Fprintf(body, "To: %s %s <%s>\r\n", toUser.FirstName, toUser.LastName, toUser.Email)
 	fmt.Fprintf(body, "Subject: Password Reset\r\n")
@@ -205,9 +166,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
         <a href='%s/reset-password?token=%s'>Reset Your Password</a>
     </body>`, a.httpConfig.FrontendURL, token)
 
-	gmailMessage := &gmail.Message{Raw: base64.URLEncoding.EncodeToString(body.Bytes())}
-
-	return gmailMessage, nil
+	return body.Bytes(), nil
 }
 
 func (a AuthService) getUser(id string) (models.Loginable, error) {
