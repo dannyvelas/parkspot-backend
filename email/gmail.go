@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var _ Sender = (*GmailService)(nil)
+var _ Sender = GmailService{}
 
 type GmailService struct {
 	gmailService *gmail.Service

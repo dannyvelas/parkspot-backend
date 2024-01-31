@@ -1,6 +1,6 @@
 package email
 
-var _ Sender = (*MockService)(nil)
+var _ Sender = MockService{}
 
 type MockService struct {
 }
