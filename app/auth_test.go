@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/email"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/stretchr/testify/require"
@@ -39,7 +40,7 @@ func (suite *authTestSuite) SetupSuite() {
 
 	// create services used in this test suite
 	suite.residentService = NewResidentService(database.ResidentRepo())
-	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HttpConfig{}, config.OAuthConfig{})
+	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, email.NewMockService(), config.HttpConfig{})
 
 	// create resident
 	if _, err := suite.residentService.Create(models.Test_resident); err != nil {

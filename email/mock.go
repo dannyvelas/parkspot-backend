@@ -3,13 +3,12 @@ package email
 var _ Sender = (*MockService)(nil)
 
 type MockService struct {
-	expectedErr error
 }
 
-func NewMockService(err error) MockService {
-	return MockService{err}
+func NewMockService() MockService {
+	return MockService{}
 }
 
 func (s MockService) Send(body []byte) error {
-	return s.expectedErr
+	return nil
 }

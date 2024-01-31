@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/lasvistas_api/email"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/storage/psql"
 	"github.com/rs/zerolog/log"
@@ -40,7 +41,7 @@ func (suite *carRouterSuite) SetupSuite() {
 	// save container in suite struct so we can terminate it on suite teardown
 	suite.container = container
 
-	suite.app = app.NewApp(c, database)
+	suite.app = app.NewApp(c, database, email.NewMockService())
 
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
