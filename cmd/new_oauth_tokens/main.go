@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/dannyvelas/lasvistas_api/config"
 	"golang.org/x/oauth2"
-	"log"
 )
 
 func main() {
 	// load config
 	c, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("Error loading config: %v", err)
+		log.Fatalf("Error loading config: %v", err)
 	}
 
 	// create oauth config service
