@@ -1,3 +1,6 @@
+// +heroku goVersion 1.24.2
+// +heroku install main.go
+
 module github.com/dannyvelas/lasvistas_api
 
 go 1.24.2
