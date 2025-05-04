@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/models/validator"
@@ -72,7 +73,7 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredAdmin.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return models.Admin{}, fmt.Errorf("admin_service.create: error generating hash:" + err.Error())
+		return models.Admin{}, fmt.Errorf("admin_service.create: error generating hash: %v", err)
 	}
 	hashString := string(hashBytes)
 

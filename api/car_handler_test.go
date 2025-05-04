@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/dannyvelas/lasvistas_api/app"
 	"github.com/dannyvelas/lasvistas_api/config"
 	"github.com/dannyvelas/lasvistas_api/models"
@@ -11,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"net/http/httptest"
-	"testing"
 )
 
 type carRouterSuite struct {
@@ -165,7 +166,7 @@ func (suite *carRouterSuite) TestResident_DeleteOthersCar_Negative() {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for resident: %v", err))
 	}
 
-	endpoint := fmt.Sprintf(suite.testServer.URL + "/api/car/" + models.Test_car.ID)
+	endpoint := fmt.Sprintf("%s/api/car/%s", suite.testServer.URL, models.Test_car.ID)
 	_, err = authenticatedReq[models.Car, models.Car]("DELETE", endpoint, token, nil)
 	require.Error(suite.T(), err)
 

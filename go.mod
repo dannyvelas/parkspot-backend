@@ -1,9 +1,6 @@
-// +heroku goVersion 1.24
-// +heroku install main.go
-
 module github.com/dannyvelas/lasvistas_api
 
-go 1.24
+go 1.24.2
 
 require (
 	github.com/Masterminds/squirrel v1.5.2

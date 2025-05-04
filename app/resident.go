@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/dannyvelas/lasvistas_api/errs"
 	"github.com/dannyvelas/lasvistas_api/models"
 	"github.com/dannyvelas/lasvistas_api/models/validator"
@@ -118,7 +119,7 @@ func (s ResidentService) Create(desiredRes models.Resident) (models.Resident, er
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredRes.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return models.Resident{}, fmt.Errorf("resident_service.createResident: error generating hash:" + err.Error())
+		return models.Resident{}, fmt.Errorf("resident_service.createResident: error generating hash: %v", err)
 	}
 	hashString := string(hashBytes)
 
