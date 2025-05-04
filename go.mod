@@ -1,8 +1,8 @@
-// +heroku goVersion 1.18
+// +heroku goVersion 1.24.2
 
 module github.com/dannyvelas/lasvistas_api
 
-go 1.18
+go 1.24.2
 
 require (
 	github.com/Masterminds/squirrel v1.5.2
