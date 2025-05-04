@@ -297,7 +297,7 @@ if model not in allowed_files:
     exit(1)
 
 
-file_name = f'./scripts/gen/prod_csv_in/{model}.csv'
+file_name = f'./scripts/db/gen/prod_csv_in/{model}.csv'
 if not os.path.isfile(file_name):
     print(f"Error: {file_name} not found")
     exit(1)

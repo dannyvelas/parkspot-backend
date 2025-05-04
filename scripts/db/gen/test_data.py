@@ -106,7 +106,7 @@ def get_rand_car(resident_id: str) -> Car:
     def get_rand_lp() -> str:
         return ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(random.randrange(6, 9))])
 
-    line = get_rand_line('./scripts/gen/csv_in/car.csv')
+    line = get_rand_line('./scripts/db/gen/csv_in/car.csv')
     split_line = line.split('\t')
 
     return Car(
@@ -288,7 +288,7 @@ def row_to_permit(row: List[str]) -> Permit:
 
 def get_rand_permit(i: int, resident_id: str, car: Car) -> Permit:
     def get_rand_sentance() -> str:
-        with open('./scripts/gen/csv_in/sentances.csv', 'r') as in_file:
+        with open('./scripts/db/gen/csv_in/sentances.csv', 'r') as in_file:
             random_line = next(in_file)
             for i, line in enumerate(in_file, 2):
                 if random.randrange(i) == 0:
@@ -354,7 +354,7 @@ class Visitor:
 
 def get_rand_visitor(resident_id: str) -> Visitor:
     start_ts, end_ts = get_rand_tss()
-    line = get_rand_line('./scripts/gen/csv_in/resident.csv')
+    line = get_rand_line('./scripts/db/gen/csv_in/resident.csv')
     split_line = line.split('\t')
 
     return Visitor(
@@ -387,19 +387,19 @@ def row_to_visitor(row: List[str]) -> Visitor:
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('usage: python3 scripts/gen/test_data.py [ csv | migration ]')
+        print('usage: python3 scripts/db/gen/test_data.py [ csv | migration ]')
         exit(1)
     file_out = sys.argv[1]
     if file_out not in ['csv', 'migration']:
-        print('usage: python3 scripts/gen/test_data.py [ csv | migration ]')
+        print('usage: python3 scripts/db/gen/test_data.py [ csv | migration ]')
         exit(1)
 
     if file_out == 'csv':
         def csv_in_file_name(
-            model: str) -> str: return f'./scripts/gen/csv_in/{model}.csv'
+            model: str) -> str: return f'./scripts/db/gen/csv_in/{model}.csv'
 
         def csv_out_file_name(
-            model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
+            model: str) -> str: return f'./scripts/db/gen/csv_out/{model}.csv'
 
         amt_permits = 0
         with open(csv_out_file_name('resident'), 'w') as r_file_out:
@@ -438,7 +438,7 @@ if __name__ == '__main__':
 
     elif file_out == 'migration':
         def migration_in_file_name(
-            model: str) -> str: return f'./scripts/gen/csv_out/{model}.csv'
+            model: str) -> str: return f'./scripts/db/gen/csv_out/{model}.csv'
 
         def migration_out_file_name(
             version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'

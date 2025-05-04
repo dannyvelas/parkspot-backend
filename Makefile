@@ -64,8 +64,8 @@ migrate_prod_down_step:
 # test data
 .PHONY: gen_test_csvs
 gen_test_csvs:
-	python3 scripts/gen/test_data.py csv
+	python3 scripts/db/gen/test_data.py csv
 
 .PHONY: gen_test_migrations
 gen_test_migrations:
-	python3 scripts/gen/test_data.py migration
+	python3 scripts/db/gen/test_data.py migration
