@@ -3,14 +3,15 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 	"github.com/jmoiron/sqlx"
-	"strings"
-	"time"
 )
 
 type PermitRepo struct {
@@ -60,13 +61,13 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 
 	query, args, err := permitSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Get: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("permit_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
 	}
 
 	permits := permitSlice{}
 	err = permitRepo.driver.Select(&permits, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("permit_repo.Get: %w: %v. %s. %v", errs.DBQuery, err, query, args)
+		return nil, fmt.Errorf("permit_repo.SelectWhere: %w: %v. %s. %v", errs.DBQuery, err, query, args)
 	}
 
 	return permits.toModels(), nil

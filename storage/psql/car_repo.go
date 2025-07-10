@@ -3,13 +3,14 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 	"github.com/jmoiron/sqlx"
-	"strings"
 )
 
 type CarRepo struct {
@@ -201,8 +202,4 @@ func (carRepo CarRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 		squirrel.Expr("LOWER(car.make) = ?", lcQuery),
 		squirrel.Expr("LOWER(car.model) = ?", lcQuery),
 	}
-}
-
-func (carRepo CarRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
-	return nil, false
 }

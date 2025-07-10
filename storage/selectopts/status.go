@@ -14,9 +14,15 @@ func WithStatus(s models.Status) status {
 }
 
 func (status status) Dispatch(repo Repo, selector squirrel.SelectBuilder) squirrel.SelectBuilder {
-	statusAsSQL, ok := repo.StatusAsSQL(status.status)
+	statusRepo, ok := repo.(StatusRepo)
 	if !ok {
 		return selector
 	}
+
+	statusAsSQL, ok := statusRepo.StatusAsSQL(status.status)
+	if !ok {
+		return selector
+	}
+
 	return selector.Where(statusAsSQL)
 }

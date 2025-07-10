@@ -2,13 +2,14 @@ package psql
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 	"github.com/jmoiron/sqlx"
-	"strings"
 )
 
 type ResidentRepo struct {
@@ -204,8 +205,4 @@ func (residentRepo ResidentRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 		squirrel.Expr("LOWER(resident.first_name) = ?", lcQuery),
 		squirrel.Expr("LOWER(resident.last_name) = ?", lcQuery),
 	}
-}
-
-func (residentRepo ResidentRepo) StatusAsSQL(status models.Status) (squirrel.Sqlizer, bool) {
-	return nil, false
 }
