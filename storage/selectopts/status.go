@@ -2,7 +2,7 @@ package selectopts
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type status struct {

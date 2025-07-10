@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/storage"
 )
 
 type App struct {

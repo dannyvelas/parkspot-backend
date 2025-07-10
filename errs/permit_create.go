@@ -2,7 +2,7 @@ package errs
 
 import (
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/parkspot-backend/config"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"net/http"

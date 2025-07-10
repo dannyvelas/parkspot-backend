@@ -3,13 +3,13 @@ package app
 import (
 	"errors"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/models/validator"
-	"github.com/dannyvelas/lasvistas_api/storage"
-	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
-	"github.com/dannyvelas/lasvistas_api/util"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/models/validator"
+	"github.com/dannyvelas/parkspot-backend/storage"
+	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
+	"github.com/dannyvelas/parkspot-backend/util"
 	"strings"
 )
 

@@ -1,8 +1,8 @@
 package validator
 
 import (
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
 	"regexp"
 	"strings"
 )

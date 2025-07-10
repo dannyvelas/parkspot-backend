@@ -3,7 +3,7 @@ package psql
 import (
 	"context"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )

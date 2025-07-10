@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"io"
 	"net/http"
 )

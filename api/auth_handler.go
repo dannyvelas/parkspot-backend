@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/dannyvelas/lasvistas_api/app"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/parkspot-backend/app"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"

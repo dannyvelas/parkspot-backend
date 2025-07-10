@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/models/validator"
-	"github.com/dannyvelas/lasvistas_api/storage"
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/models/validator"
+	"github.com/dannyvelas/parkspot-backend/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 

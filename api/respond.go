@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"

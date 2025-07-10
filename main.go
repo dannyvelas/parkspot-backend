@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/dannyvelas/lasvistas_api/api"
-	"github.com/dannyvelas/lasvistas_api/app"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/storage/psql"
+	"github.com/dannyvelas/parkspot-backend/api"
+	"github.com/dannyvelas/parkspot-backend/app"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/storage/psql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"os"

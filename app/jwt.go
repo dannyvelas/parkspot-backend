@@ -2,8 +2,8 @@ package app
 
 import (
 	"errors"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )

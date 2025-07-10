@@ -1,10 +1,10 @@
 package storage
 
 import (
-	"github.com/dannyvelas/lasvistas_api/errs"
-	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
-	"github.com/dannyvelas/lasvistas_api/util"
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
+	"github.com/dannyvelas/parkspot-backend/util"
 )
 
 type ResidentRepoMock struct {

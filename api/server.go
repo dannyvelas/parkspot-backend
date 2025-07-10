@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
-	"github.com/dannyvelas/lasvistas_api/app"
-	"github.com/dannyvelas/lasvistas_api/config"
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/app"
+	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"

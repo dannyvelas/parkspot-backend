@@ -1,7 +1,7 @@
 // +heroku goVersion 1.24.2
 // +heroku install main.go
 
-module github.com/dannyvelas/lasvistas_api
+module github.com/dannyvelas/parkspot-backend
 
 go 1.24.2
 

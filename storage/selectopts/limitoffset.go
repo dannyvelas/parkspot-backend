@@ -2,7 +2,7 @@ package selectopts
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/parkspot-backend/config"
 )
 
 type limitAndOffset struct {

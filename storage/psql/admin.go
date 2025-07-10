@@ -1,7 +1,7 @@
 package psql
 
 import (
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type admin struct {

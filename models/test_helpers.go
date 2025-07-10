@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/dannyvelas/lasvistas_api/util"
+	"github.com/dannyvelas/parkspot-backend/util"
 )
 
 // test_ prefix should help differentiate variables that are used for tests

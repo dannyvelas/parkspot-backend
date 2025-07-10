@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/dannyvelas/lasvistas_api/errs"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"strings"
 	"time"
 )

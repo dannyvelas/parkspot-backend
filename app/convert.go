@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/parkspot-backend/config"
 )
 
 func getBoundedLimitAndOffset(limit, page int) (boundedLimit, offset int) {

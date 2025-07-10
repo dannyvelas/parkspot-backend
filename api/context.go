@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/dannyvelas/lasvistas_api/app"
+	"github.com/dannyvelas/parkspot-backend/app"
 )
 
 type accessKeyType string

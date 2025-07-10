@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/dannyvelas/lasvistas_api/models"
-	"github.com/dannyvelas/lasvistas_api/storage/selectopts"
+	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 )
 
 type CarRepo interface {

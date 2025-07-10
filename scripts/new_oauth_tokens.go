@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dannyvelas/lasvistas_api/config"
+	"github.com/dannyvelas/parkspot-backend/config"
 	"golang.org/x/oauth2"
 )
 

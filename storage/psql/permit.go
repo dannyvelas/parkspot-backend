@@ -2,7 +2,7 @@ package psql
 
 import (
 	"database/sql"
-	"github.com/dannyvelas/lasvistas_api/models"
+	"github.com/dannyvelas/parkspot-backend/models"
 	"time"
 )
 
