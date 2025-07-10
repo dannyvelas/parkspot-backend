@@ -51,7 +51,7 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 		"last_name":  residentFields.LastName,
 		"phone":      residentFields.Phone,
 		"email":      residentFields.Email,
-	}))
+	})).OrderBy("first_name ASC")
 
 	query, args, err := residentSelect.ToSql()
 	if err != nil {
