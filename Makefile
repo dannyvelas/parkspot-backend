@@ -1,29 +1,5 @@
 include .env
 
-PROJECTNAME := lasvistas_api
-BIN := bin
-
-MAIN = ./cmd/$(PROJECTNAME)/main.go
-EXEC = $(BIN)/$(PROJECTNAME)
-
-all: build
-
-.PHONY: build
-build: $(MAIN)
-	go build -v -o $(EXEC) $< || exit
-
-.PHONY: test_storage
-test_storage:
-	go test -v ./storage/
-
-.PHONY: run
-run: build
-	$(EXEC)
-
-.PHONY: clean
-clean:
-	rm -rf bin/
-
 # Migrations
 .PHONY: migrate_up
 migrate_up:
