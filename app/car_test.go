@@ -34,8 +34,8 @@ func (suite *carTestSuite) SetupSuite() {
 	suite.container = container
 
 	residentService := NewResidentService(database.ResidentRepo())
-	// use default models.Test_resident for duration of tests
-	if _, err := residentService.Create(models.Test_resident); err != nil {
+	// use default models.TestResident for duration of tests
+	if _, err := residentService.Create(models.TestResident); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
@@ -70,7 +70,7 @@ func (suite *carTestSuite) TestEdit_CarDNE_Negative() {
 }
 
 func (suite *carTestSuite) TestEdit_Car_Positive() {
-	carToEdit := models.NewCar("d1e0affb-14e7-4e9f-b8a3-70be7d49d063", models.Test_resident.ID, "lp1", "color", "make", "model", 0)
+	carToEdit := models.NewCar("d1e0affb-14e7-4e9f-b8a3-70be7d49d063", models.TestResident.ID, "lp1", "color", "make", "model", 0)
 
 	// set up a table of tests
 	type test struct {
@@ -125,12 +125,12 @@ func (suite *carTestSuite) TestEdit_Car_Positive() {
 }
 
 func (suite *carTestSuite) TestCreate_CarRepeatLP_Negative() {
-	prevExistingCar := models.NewCar("", models.Test_resident.ID, "lp1", "color", "make", "model", 0)
+	prevExistingCar := models.NewCar("", models.TestResident.ID, "lp1", "color", "make", "model", 0)
 	if _, err := suite.carService.Create(prevExistingCar); err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating test car before running test: %v", err))
 	}
 
-	carWithSameLP := models.NewCar("", models.Test_resident.ID, "lp1", "color", "make", "model", 0)
+	carWithSameLP := models.NewCar("", models.TestResident.ID, "lp1", "color", "make", "model", 0)
 	_, err := suite.carService.Create(carWithSameLP)
 	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
 

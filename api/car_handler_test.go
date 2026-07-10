@@ -47,7 +47,7 @@ func (suite *carRouterSuite) SetupSuite() {
 	suite.testServer = httptest.NewServer(router)
 
 	// owner of car must exist before creating test car
-	if _, err := suite.app.ResidentService.Create(models.Test_resident); err != nil {
+	if _, err := suite.app.ResidentService.Create(models.TestResident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 }
@@ -62,7 +62,7 @@ func (suite *carRouterSuite) TearDownSuite() {
 
 func (suite *carRouterSuite) SetupTest() {
 	// create fresh instance of car before each test
-	if _, err := suite.app.CarService.Create(models.Test_car); err != nil {
+	if _, err := suite.app.CarService.Create(models.TestCar); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
@@ -70,26 +70,26 @@ func (suite *carRouterSuite) SetupTest() {
 
 func (suite *carRouterSuite) TearDownTest() {
 	// delete car after each test
-	if err := suite.app.CarService.Delete(models.Test_car.ID); err != nil {
+	if err := suite.app.CarService.Delete(models.TestCar.ID); err != nil {
 		suite.TearDownSuite()
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
 }
 
 func (suite *carRouterSuite) TestAdmin_Edit_Positive() {
-	newColor := models.Test_car.Color + "NEW"
+	newColor := models.TestCar.Color + "NEW"
 
-	token, err := suite.app.JWTService.NewAccess(models.Test_admin.ID, models.AdminRole)
+	token, err := suite.app.JWTService.NewAccess(models.TestAdmin.ID, models.AdminRole)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for admin: %v", err))
 	}
 
 	returnedCar, _ := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
-		ID:    models.Test_car.ID,
+		ID:    models.TestCar.ID,
 		Color: newColor,
 	})
 
-	expectedCar := models.Test_car
+	expectedCar := models.TestCar
 	expectedCar.Color = newColor
 	require.Equal(suite.T(), expectedCar.ID, returnedCar.ID, "id in car response was not the same as expected")
 	require.Equal(suite.T(), expectedCar.ResidentID, returnedCar.ResidentID, "residentID in car response was not the same as expected")
@@ -100,15 +100,15 @@ func (suite *carRouterSuite) TestAdmin_Edit_Positive() {
 }
 
 func (suite *carRouterSuite) TestSecurity_Edit_Negative() {
-	newColor := models.Test_car.Color + "NEW"
+	newColor := models.TestCar.Color + "NEW"
 
-	token, err := suite.app.JWTService.NewAccess(models.Test_security.ID, models.SecurityRole)
+	token, err := suite.app.JWTService.NewAccess(models.TestSecurity.ID, models.SecurityRole)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for security: %v", err))
 	}
 
 	_, err = authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
-		ID:    models.Test_car.ID,
+		ID:    models.TestCar.ID,
 		Color: newColor,
 	})
 	require.Error(suite.T(), err)
@@ -117,19 +117,19 @@ func (suite *carRouterSuite) TestSecurity_Edit_Negative() {
 }
 
 func (suite *carRouterSuite) TestResident_EditCar_Positive() {
-	newColor := models.Test_car.Color + "NEW"
+	newColor := models.TestCar.Color + "NEW"
 
-	token, err := suite.app.JWTService.NewAccess(models.Test_resident.ID, models.ResidentRole)
+	token, err := suite.app.JWTService.NewAccess(models.TestResident.ID, models.ResidentRole)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for resident: %v", err))
 	}
 
 	returnedCar, _ := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
-		ID:    models.Test_car.ID,
+		ID:    models.TestCar.ID,
 		Color: newColor,
 	})
 
-	expectedCar := models.Test_car
+	expectedCar := models.TestCar
 	expectedCar.Color = newColor
 	require.Equal(suite.T(), expectedCar.ID, returnedCar.ID, "id in car response was not the same as expected")
 	require.Equal(suite.T(), expectedCar.ResidentID, returnedCar.ResidentID, "residentID in car response was not the same as expected")
@@ -140,17 +140,17 @@ func (suite *carRouterSuite) TestResident_EditCar_Positive() {
 }
 
 func (suite *carRouterSuite) TestResident_EditOthersCar_Negative() {
-	newColor := models.Test_car.Color + "NEW"
+	newColor := models.TestCar.Color + "NEW"
 
-	// this is an access token belonging to models.Test_residentUnlimDays.
-	// however, the car that is edited in the request belongs to models.Test_resident
-	token, err := suite.app.JWTService.NewAccess(models.Test_residentUnlimDays.ID, models.ResidentRole)
+	// this is an access token belonging to models.TestResidentUnlimDays.
+	// however, the car that is edited in the request belongs to models.TestResident
+	token, err := suite.app.JWTService.NewAccess(models.TestResidentUnlimDays.ID, models.ResidentRole)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for resident: %v", err))
 	}
 
 	_, err = authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
-		ID:    models.Test_car.ID,
+		ID:    models.TestCar.ID,
 		Color: newColor,
 	})
 	require.Error(suite.T(), err)
@@ -159,14 +159,14 @@ func (suite *carRouterSuite) TestResident_EditOthersCar_Negative() {
 }
 
 func (suite *carRouterSuite) TestResident_DeleteOthersCar_Negative() {
-	// this is an access token belonging to models.Test_residentUnlimDays.
-	// however, the car that is deleted in the request belongs to models.Test_resident
-	token, err := suite.app.JWTService.NewAccess(models.Test_residentUnlimDays.ID, models.ResidentRole)
+	// this is an access token belonging to models.TestResidentUnlimDays.
+	// however, the car that is deleted in the request belongs to models.TestResident
+	token, err := suite.app.JWTService.NewAccess(models.TestResidentUnlimDays.ID, models.ResidentRole)
 	if err != nil {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for resident: %v", err))
 	}
 
-	endpoint := fmt.Sprintf("%s/api/car/%s", suite.testServer.URL, models.Test_car.ID)
+	endpoint := fmt.Sprintf("%s/api/car/%s", suite.testServer.URL, models.TestCar.ID)
 	_, err = authenticatedReq[models.Car, models.Car]("DELETE", endpoint, token, nil)
 	require.Error(suite.T(), err)
 

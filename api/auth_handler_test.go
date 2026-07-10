@@ -52,11 +52,11 @@ func (suite *authRouterSuite) SetupSuite() {
 	router := newRouter(c, suite.app)
 	suite.testServer = httptest.NewServer(router)
 
-	if _, err := suite.app.AdminService.Create(models.Test_admin); err != nil {
+	if _, err := suite.app.AdminService.Create(models.TestAdmin); err != nil {
 		log.Fatal().Msgf("error creating test admin: %v", err.Error())
 	}
 
-	if _, err := suite.app.ResidentService.Create(models.Test_resident); err != nil {
+	if _, err := suite.app.ResidentService.Create(models.TestResident); err != nil {
 		log.Fatal().Msgf("error creating test resident: %v", err.Error())
 	}
 }
@@ -74,8 +74,8 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
     "id":"%s",
     "password":"%s"
   }`,
-		models.Test_admin.ID,
-		models.Test_admin.Password)
+		models.TestAdmin.ID,
+		models.TestAdmin.Password)
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -105,7 +105,7 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
 		return
 	}
 
-	expectedUser := models.Test_admin.AsUser()
+	expectedUser := models.TestAdmin.AsUser()
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
 	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
@@ -119,7 +119,7 @@ func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 	requestBody := fmt.Appendf(nil, `{
     "id":"%s",
     "password":"%s"
-  }`, models.Test_resident.ID, models.Test_resident.Password)
+  }`, models.TestResident.ID, models.TestResident.Password)
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -149,7 +149,7 @@ func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 		return
 	}
 
-	expectedUser := models.Test_resident.AsUser()
+	expectedUser := models.TestResident.AsUser()
 	suite.Empty(cmp.Diff(expectedUser, session.User), "user in response did not equal expected user")
 
 	err = checkAccessToken(suite.app.JWTService, session.AccessToken, expectedUser)
@@ -166,7 +166,7 @@ func (suite *authRouterSuite) TestRefreshTokens_Positive() {
 		return
 	}
 
-	expectedUser := models.Test_resident.AsUser()
+	expectedUser := models.TestResident.AsUser()
 	refreshToken, err := suite.app.JWTService.NewRefresh(expectedUser)
 	if err != nil {
 		suite.NoError(fmt.Errorf("error creating refresh token: %s", err))
