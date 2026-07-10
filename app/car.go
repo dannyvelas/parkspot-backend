@@ -47,6 +47,9 @@ func (s CarService) GetOne(id string) (models.Car, error) {
 	if id == "" {
 		return models.Car{}, errs.MissingIDField
 	}
+	if !util.IsUUIDV4(id) {
+		return models.Car{}, errs.IDNotUUID
+	}
 	return s.carRepo.GetOne(id)
 }
 

@@ -147,35 +147,39 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 // helpers
 func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
 	associatedCar, err := s.findCar(p)
-	if !errors.Is(err, errs.NotFound) && err != nil {
+	if errors.Is(err, errs.NotFound) {
+		if p.CarID != "" {
+			// the caller asked for a specific, pre-existing car that doesn't exist:
+			// this is an error, not a signal to create a new car
+			return models.Permit{}, errs.CarForPermitDNE
+		}
+
+		// otherwise, we will create a new car for this permit
+		desiredCar := models.Car{ResidentID: p.ResidentID, LicensePlate: p.LicensePlate, Color: p.Color, Make: p.Make, Model: p.Model}
+		createdCar, err := s.carService.Create(desiredCar)
+		if err != nil {
+			return models.Permit{}, fmt.Errorf("error creating car: %w", err)
+		}
+
+		// record the carID that was used to create this car
+		retPermit := p
+		retPermit.CarID = createdCar.ID
+		return retPermit, nil
+	} else if err != nil {
 		return models.Permit{}, err
 	}
 
-	// if we found a car that already exists like this in the database, lets use that one
-	if err == nil {
-		if err := s.validateCar(p, associatedCar, residentUnlimDays, permitLength); err != nil {
-			return models.Permit{}, err
-		}
-		// get a snapshot of car and save it into the permit
-		p.CarID = associatedCar.ID
-		p.LicensePlate = associatedCar.LicensePlate
-		p.Color = associatedCar.Color
-		p.Make = associatedCar.Make
-		p.Model = associatedCar.Model
-		return p, nil
+	// we found a car that already exists like this in the database, lets use that one
+	if err := s.validateCar(p, associatedCar, residentUnlimDays, permitLength); err != nil {
+		return models.Permit{}, err
 	}
-
-	// otherwise, we will create a new car for this permit
-	desiredCar := models.Car{ResidentID: p.ResidentID, LicensePlate: p.LicensePlate, Color: p.Color, Make: p.Make, Model: p.Model}
-	createdCar, err := s.carService.Create(desiredCar)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error creating car: %w", err)
-	}
-
-	// record the carID that was used to create this car
-	retPermit := p
-	retPermit.CarID = createdCar.ID
-	return retPermit, nil
+	// get a snapshot of car and save it into the permit
+	p.CarID = associatedCar.ID
+	p.LicensePlate = associatedCar.LicensePlate
+	p.Color = associatedCar.Color
+	p.Make = associatedCar.Make
+	p.Model = associatedCar.Model
+	return p, nil
 }
 
 func (s PermitService) findCar(p models.Permit) (models.Car, error) {
