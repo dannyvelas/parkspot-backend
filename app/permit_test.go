@@ -168,6 +168,35 @@ func (suite *permitTestSuite) TestCreate_SameLicensePlateDifferentResident_Posit
 	require.NoError(suite.T(), err, "resident B should be able to create a permit for a car with the same licensePlate as resident A's car")
 }
 
+func (suite *permitTestSuite) TestCreate_MalformedCarID_Negative() {
+	desiredPermit := activeFor24Hrs(models.Permit{
+		ResidentID: models.TestResident.ID,
+		CarID:      "not-a-uuid",
+	}, 0)
+
+	_, err := suite.permitService.Create(desiredPermit)
+	require.NotNil(suite.T(), err)
+
+	var apiErr *errs.APIErr
+	require.ErrorAs(suite.T(), err, &apiErr, "expected a malformed CarID to produce a clean api error instead of a raw database error")
+	require.ErrorIs(suite.T(), err, errs.IDNotUUID, "expected error to be IDNotUUID")
+}
+
+func (suite *permitTestSuite) TestCreate_NonexistentCarID_Negative() {
+	desiredPermit := activeFor24Hrs(models.Permit{
+		ResidentID:   models.TestResident.ID,
+		CarID:        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+		LicensePlate: "staleLP",
+		Color:        "color",
+		Make:         "make",
+		Model:        "model",
+	}, 0)
+
+	_, err := suite.permitService.Create(desiredPermit)
+	require.NotNil(suite.T(), err)
+	require.ErrorIs(suite.T(), err, errs.CarForPermitDNE, "expected a nonexistent CarID to error out instead of silently creating an unrelated car")
+}
+
 func (suite *permitTestSuite) TestCreate_CarInvalidFields() {
 	// define permit that will create a new car
 	desiredPermit := models.Permit{
