@@ -10,7 +10,7 @@ type Admin struct {
 	TokenVersion *int   `json:"-"`
 }
 
-func NewAdmin(id string, firstName string, lastName string, email string, password string, isPrivileged bool, tokenVersion int) Admin {
+func NewAdmin(id, firstName, lastName, email, password string, isPrivileged bool, tokenVersion int) Admin {
 	return Admin{
 		ID:           id,
 		FirstName:    firstName,
