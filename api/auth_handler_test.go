@@ -211,7 +211,7 @@ func checkAccessToken(jwtService app.JWTService, token string, expectedUser mode
 	if token == "" {
 		return fmt.Errorf("accessToken was empty")
 	} else if payload, err := jwtService.ParseAccess(token); err != nil {
-		return fmt.Errorf("Error parsing access token (%s): %v", token, err)
+		return fmt.Errorf("error parsing access token (%s): %v", token, err)
 	} else if expectedUser.ID != payload.ID {
 		return fmt.Errorf("user id (%s) was not the same to access payload id (%s)", expectedUser.ID, payload.ID)
 	} else if expectedUser.Role != payload.Role {
@@ -231,7 +231,7 @@ func checkRefreshToken(jwtService app.JWTService, cookies []*http.Cookie, expect
 	refreshCookie := cookies[index]
 
 	if payload, err := jwtService.ParseRefresh(refreshCookie.Value); err != nil {
-		return fmt.Errorf("Error parsing refresh token (%s): %v", refreshCookie.Value, err)
+		return fmt.Errorf("error parsing refresh token (%s): %v", refreshCookie.Value, err)
 	} else if expectedID != payload.ID {
 		return fmt.Errorf("user id (%s) was not the same to refresh payload id (%s)", expectedID, payload.ID)
 	} else if expectedVersion != payload.TokenVersion {

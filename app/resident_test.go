@@ -53,19 +53,19 @@ func (suite *residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 
 	_, err := suite.residentService.Create(resident1)
 	if err != nil {
-		suite.NoError(fmt.Errorf("Error creating resident when setting up test"))
+		suite.NoError(fmt.Errorf("error creating resident when setting up test"))
 		return
 	}
 
 	_, err = suite.residentService.Create(residentSameEmail)
 	if err == nil {
-		suite.NoError(fmt.Errorf("Successfully created resident with duplicate email when it shouldn't have"))
+		suite.NoError(fmt.Errorf("successfully created resident with duplicate email when it shouldn't have"))
 		return
 	}
 
 	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
+		suite.NoError(fmt.Errorf("unexpected error: %v", err))
 		return
 	}
 
@@ -107,7 +107,7 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 	executeTest := func(test test) error {
 		result, err := suite.residentService.Update(test.argument)
 		if err != nil {
-			return fmt.Errorf("Error making request: %v", err)
+			return fmt.Errorf("error making request: %v", err)
 		}
 
 		suite.Equal(test.expected.ID, result.ID)
@@ -122,7 +122,7 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 
 	for testName, test := range tests {
 		if _, err := suite.residentService.Create(residentToEdit); err != nil {
-			suite.NoError(fmt.Errorf("Error creating test resident before running test: %v", err))
+			suite.NoError(fmt.Errorf("error creating test resident before running test: %v", err))
 			break
 		}
 
@@ -131,7 +131,7 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 		}
 
 		if err := suite.residentService.Delete(residentToEdit.ID); err != nil {
-			suite.NoError(fmt.Errorf("Error deleting test resident after running test: %v", err))
+			suite.NoError(fmt.Errorf("error deleting test resident after running test: %v", err))
 			break
 		}
 	}
@@ -142,13 +142,13 @@ func (suite *residentTestSuite) TestEdit_ResidentDNE_Negative() {
 
 	_, err := suite.residentService.Update(residentThatDNE)
 	if err == nil {
-		suite.NoError(fmt.Errorf("No error encountered when editing a non-existing resident"))
+		suite.NoError(fmt.Errorf("no error encountered when editing a non-existing resident"))
 		return
 	}
 
 	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("Couldn't cast error to apiErr. Error is: %v", err))
+		suite.NoError(fmt.Errorf("couldn't cast error to apiErr. Error is: %v", err))
 		return
 	}
 

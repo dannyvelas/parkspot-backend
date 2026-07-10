@@ -90,7 +90,7 @@ func (suite *permitTestSuite) TearDownTest() {
 func (suite *permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 	_, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: models.Test_resident.ID, CarID: models.Test_car.ID}, 0))
 	if err != nil {
-		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
+		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
 	// initalize resident permits, each w a different car to eachother and to permitOne.
@@ -128,7 +128,7 @@ func (suite *permitTestSuite) TestCreate_ResidentMultipleActivePermits() {
 func (suite *permitTestSuite) TestCreate_CarTwoActivePermits() {
 	ogPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: models.Test_resident.ID, CarID: models.Test_car.ID}, 0))
 	if err != nil {
-		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
+		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
 	permitSameCar := activeFor24Hrs(
@@ -250,7 +250,7 @@ func (suite *permitTestSuite) TestCreate_AllFieldsMatch() {
 func (suite *permitTestSuite) TestGetActivePermitsOfResident_Postive() {
 	createdPermit, err := suite.permitService.Create(activeFor24Hrs(models.Permit{ResidentID: models.Test_resident.ID, CarID: models.Test_car.ID}, 0))
 	if err != nil {
-		require.NoError(suite.T(), fmt.Errorf("Error creating permit before test: %v", err))
+		require.NoError(suite.T(), fmt.Errorf("error creating permit before test: %v", err))
 	}
 
 	permits, err := suite.permitService.GetAll(models.ActiveStatus, config.MaxLimit, 0, true, "", models.Test_resident.ID)

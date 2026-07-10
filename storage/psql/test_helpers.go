@@ -26,7 +26,7 @@ func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 		Started:          true,
 	})
 	if err != nil {
-		return nil, Database{}, fmt.Errorf("Failed to set up container: %v", err)
+		return nil, Database{}, fmt.Errorf("failed to set up container: %v", err)
 	}
 
 	// get the endpoint of the container we just created

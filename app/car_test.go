@@ -96,7 +96,7 @@ func (suite *carTestSuite) TestEdit_Car_Positive() {
 	executeTest := func(test test) error {
 		result, err := suite.carService.Update(test.argument)
 		if err != nil {
-			return fmt.Errorf("Error making request: %v", err)
+			return fmt.Errorf("error making request: %v", err)
 		}
 
 		suite.Equal(test.expected.ID, result.ID)
@@ -127,7 +127,7 @@ func (suite *carTestSuite) TestEdit_Car_Positive() {
 func (suite *carTestSuite) TestCreate_CarRepeatLP_Negative() {
 	prevExistingCar := models.NewCar("", models.Test_resident.ID, "lp1", "color", "make", "model", 0)
 	if _, err := suite.carService.Create(prevExistingCar); err != nil {
-		require.NoError(suite.T(), fmt.Errorf("Error creating test car before running test: %v", err))
+		require.NoError(suite.T(), fmt.Errorf("error creating test car before running test: %v", err))
 	}
 
 	carWithSameLP := models.NewCar("", models.Test_resident.ID, "lp1", "color", "make", "model", 0)
