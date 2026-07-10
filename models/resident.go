@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"regexp"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
 )
 
 type Resident struct {
@@ -50,7 +51,7 @@ func (m Resident) AsUser() User {
 }
 
 func IsResidentID(s string) error {
-	if !regexp.MustCompile("^(B|T)\\d{7}$").MatchString(s) {
+	if !regexp.MustCompile(`^(B|T)\d{7}$`).MatchString(s) {
 		return errs.InvalidResID
 	}
 

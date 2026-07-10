@@ -22,20 +22,20 @@ func NewCar(id, residentID, licensePlate, color, make, model string, amtParkingD
 	}
 }
 
-func (self Car) Equal(other Car) bool {
-	if self.ID != other.ID {
+func (c Car) Equal(other Car) bool {
+	if c.ID != other.ID {
 		return false
-	} else if self.ResidentID != other.ResidentID {
+	} else if c.ResidentID != other.ResidentID {
 		return false
-	} else if self.LicensePlate != other.LicensePlate {
+	} else if c.LicensePlate != other.LicensePlate {
 		return false
-	} else if self.Color != other.Color {
+	} else if c.Color != other.Color {
 		return false
-	} else if self.Make != other.Make {
+	} else if c.Make != other.Make {
 		return false
-	} else if self.Model != other.Model {
+	} else if c.Model != other.Model {
 		return false
-	} else if self.AmtParkingDaysUsed != other.AmtParkingDaysUsed {
+	} else if c.AmtParkingDaysUsed != other.AmtParkingDaysUsed {
 		return false
 	}
 

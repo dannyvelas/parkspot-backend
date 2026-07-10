@@ -49,30 +49,30 @@ func NewPermit(
 	}
 }
 
-func (self Permit) Equal(other Permit) bool {
-	if self.ID != other.ID {
+func (p Permit) Equal(other Permit) bool {
+	if p.ID != other.ID {
 		return false
-	} else if self.ResidentID != other.ResidentID {
+	} else if p.ResidentID != other.ResidentID {
 		return false
-	} else if self.CarID != other.CarID {
+	} else if p.CarID != other.CarID {
 		return false
-	} else if self.LicensePlate != other.LicensePlate {
+	} else if p.LicensePlate != other.LicensePlate {
 		return false
-	} else if self.Color != other.Color {
+	} else if p.Color != other.Color {
 		return false
-	} else if self.Make != other.Make {
+	} else if p.Make != other.Make {
 		return false
-	} else if self.Model != other.Model {
+	} else if p.Model != other.Model {
 		return false
-	} else if !self.StartDate.Equal(other.StartDate) {
+	} else if !p.StartDate.Equal(other.StartDate) {
 		return false
-	} else if !self.EndDate.Equal(other.EndDate) {
+	} else if !p.EndDate.Equal(other.EndDate) {
 		return false
-	} else if self.RequestTS != other.RequestTS {
+	} else if p.RequestTS != other.RequestTS {
 		return false
-	} else if self.AffectsDays != other.AffectsDays {
+	} else if p.AffectsDays != other.AffectsDays {
 		return false
-	} else if self.ExceptionReason != other.ExceptionReason {
+	} else if p.ExceptionReason != other.ExceptionReason {
 		return false
 	}
 
