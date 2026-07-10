@@ -141,6 +141,33 @@ func (suite *permitTestSuite) TestCreate_CarTwoActivePermits() {
 	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
 }
 
+func (suite *permitTestSuite) TestCreate_SameLicensePlateDifferentResident_Positive() {
+	sharedCarFields := models.Permit{LicensePlate: "sharedLP", Color: "color", Make: "make", Model: "model"}
+
+	residentAPermit := activeFor24Hrs(models.Permit{
+		ResidentID:   models.TestResident.ID,
+		LicensePlate: sharedCarFields.LicensePlate,
+		Color:        sharedCarFields.Color,
+		Make:         sharedCarFields.Make,
+		Model:        sharedCarFields.Model,
+	}, 0)
+	_, err := suite.permitService.Create(residentAPermit)
+	require.NoError(suite.T(), err, "failed creating permit for resident A")
+
+	// give resident B's permit a start date well after resident A's permit ends,
+	// so this test is only about whether a duplicate car by licensePlate is allowed,
+	// not about whether two residents can have active permits for the same car at the same time
+	residentBPermit := activeFor24Hrs(models.Permit{
+		ResidentID:   models.TestResidentUnlimDays.ID,
+		LicensePlate: sharedCarFields.LicensePlate,
+		Color:        sharedCarFields.Color,
+		Make:         sharedCarFields.Make,
+		Model:        sharedCarFields.Model,
+	}, 48)
+	_, err = suite.permitService.Create(residentBPermit)
+	require.NoError(suite.T(), err, "resident B should be able to create a permit for a car with the same licensePlate as resident A's car")
+}
+
 func (suite *permitTestSuite) TestCreate_CarInvalidFields() {
 	// define permit that will create a new car
 	desiredPermit := models.Permit{
