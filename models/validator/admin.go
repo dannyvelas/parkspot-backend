@@ -19,7 +19,7 @@ var (
 	}
 )
 
-func (v adminValidator) Run(admin models.Admin) *errs.ApiErr {
+func (v adminValidator) Run(admin models.Admin) *errs.APIErr {
 	var errors []string
 
 	if admin.ID == "" {

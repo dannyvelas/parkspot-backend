@@ -20,7 +20,7 @@ func NewApp(c config.Config, database storage.Database) App {
 	jwtService := NewJWTService(c.Token)
 	adminService := NewAdminService(database.AdminRepo())
 	residentService := NewResidentService(database.ResidentRepo())
-	authService := NewAuthService(jwtService, adminService, residentService, c.Http, c.OAuth)
+	authService := NewAuthService(jwtService, adminService, residentService, c.HTTP, c.OAuth)
 	visitorService := NewVisitorService(database.VisitorRepo())
 	carService := NewCarService(database.CarRepo())
 	permitService := NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)

@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/models"
@@ -15,10 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 type authRouterSuite struct {
@@ -69,12 +70,12 @@ func (suite *authRouterSuite) TearDownSuite() {
 }
 
 func (suite *authRouterSuite) TestLogin_Admin_Positive() {
-	requestBody := []byte(fmt.Sprintf(`{
+	requestBody := fmt.Appendf(nil, `{
     "id":"%s",
     "password":"%s"
   }`,
 		models.Test_admin.ID,
-		models.Test_admin.Password))
+		models.Test_admin.Password)
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -86,7 +87,7 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
 		suite.NoError(err)
 		return
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
 		bodyBytes, err := io.ReadAll(response.Body)
@@ -115,10 +116,10 @@ func (suite *authRouterSuite) TestLogin_Admin_Positive() {
 }
 
 func (suite *authRouterSuite) TestLogin_Resident_Positive() {
-	requestBody := []byte(fmt.Sprintf(`{
+	requestBody := fmt.Appendf(nil, `{
     "id":"%s",
     "password":"%s"
-  }`, models.Test_resident.ID, models.Test_resident.Password))
+  }`, models.Test_resident.ID, models.Test_resident.Password)
 	request, err := http.NewRequest("POST", suite.testServer.URL+"/api/login", bytes.NewBuffer(requestBody))
 	if err != nil {
 		suite.NoError(err)
@@ -130,7 +131,7 @@ func (suite *authRouterSuite) TestLogin_Resident_Positive() {
 		suite.NoError(err)
 		return
 	}
-	defer response.Body.Close()
+	defer func() { _ = response.Body.Close() }()
 
 	if response.StatusCode != http.StatusOK {
 		bodyBytes, err := io.ReadAll(response.Body)

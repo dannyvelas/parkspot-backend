@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
@@ -20,7 +21,7 @@ type AuthService struct {
 	jwtService      JWTService
 	adminService    AdminService
 	residentService ResidentService
-	httpConfig      config.HttpConfig
+	httpConfig      config.HTTPConfig
 	oauthConfig     config.OAuthConfig
 }
 
@@ -28,7 +29,7 @@ func NewAuthService(
 	jwtService JWTService,
 	adminService AdminService,
 	residentService ResidentService,
-	httpConfig config.HttpConfig,
+	httpConfig config.HTTPConfig,
 	oauthConfig config.OAuthConfig,
 ) AuthService {
 	return AuthService{
@@ -177,7 +178,7 @@ func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error
 
 	service, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve Gmail client: %v", err)
+		return nil, fmt.Errorf("unable to retrieve Gmail client: %v", err)
 	}
 
 	return service, nil
@@ -188,7 +189,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 
 	token, err := a.jwtService.NewAccess(toUser.ID, toUser.Role)
 	if err != nil {
-		return nil, fmt.Errorf("Error generating JWT: %v", err)
+		return nil, fmt.Errorf("error generating JWT: %v", err)
 	}
 
 	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")

@@ -9,19 +9,19 @@ import (
 )
 
 var (
-	ResidentForPermitDNE = NewApiErr(
+	ResidentForPermitDNE = NewAPIErr(
 		http.StatusBadRequest,
 		"Users must have a registered account to request a guest parking"+
 			" permit. Please create their account before requesting their permit.")
-	CarForPermitDNE = NewApiErr(
+	CarForPermitDNE = NewAPIErr(
 		http.StatusBadRequest,
 		"The car that you chose for this permit does not"+
 			" exist. Please create or choose another car.")
-	CarActivePermit = NewApiErr(
+	CarActivePermit = NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+
 			" because this car has at least one active permit during that time.")
-	PermitTooLong = NewApiErr(
+	PermitTooLong = NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: Requests cannot be longer than %d days,"+
 			" unless there is an exception."+
@@ -30,17 +30,17 @@ var (
 			config.MaxPermitLength,
 			config.MaxPermitLength),
 	)
-	ResidentTwoActivePermits = NewApiErr(
+	ResidentTwoActivePermits = NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+
 			" because this resident has at least two active permits during that time.")
 )
 
-func EntityDaysTooLong(entity string, amtDaysUsed int) *ApiErr {
+func EntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {
 	entityLower := cases.Lower(language.English).String(entity)
 	entityTitle := cases.Title(language.English).String(entity)
 
-	return NewApiErr(
+	return NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: This %s has used parking permits that have lasted"+
 			" a combined total of %d days."+
@@ -52,10 +52,10 @@ func EntityDaysTooLong(entity string, amtDaysUsed int) *ApiErr {
 	)
 }
 
-func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *ApiErr {
+func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {
 	entityLower := cases.Lower(language.English).String(entity)
 
-	return NewApiErr(
+	return NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: This request would exceed the %s's"+
 			" yearly guest parking pass limit of %d days."+

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type HttpConfig struct {
+type HTTPConfig struct {
 	FrontendURL        string
 	CookieDomain       string
 	Port               string
@@ -14,8 +14,8 @@ type HttpConfig struct {
 	CORSAllowedOrigins []string
 }
 
-func newHttpConfig() (HttpConfig, error) {
-	return HttpConfig{
+func newHTTPConfig() (HTTPConfig, error) {
+	return HTTPConfig{
 		FrontendURL:        readEnvString("FRONTENDURL", "http://localhost:5173"),
 		CookieDomain:       readEnvString("COOKIEDOMAIN", "localhost"),
 		Port:               readEnvString("PORT", "5000"),

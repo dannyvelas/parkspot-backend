@@ -63,7 +63,7 @@ func (suite *residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 		return
 	}
 
-	var apiErr *errs.ApiErr
+	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Unexpected error: %v", err))
 		return
@@ -146,7 +146,7 @@ func (suite *residentTestSuite) TestEdit_ResidentDNE_Negative() {
 		return
 	}
 
-	var apiErr *errs.ApiErr
+	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
 		suite.NoError(fmt.Errorf("Couldn't cast error to apiErr. Error is: %v", err))
 		return

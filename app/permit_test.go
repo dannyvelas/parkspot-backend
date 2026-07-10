@@ -154,7 +154,7 @@ func (suite *permitTestSuite) TestCreate_CarInvalidFields() {
 	_, err := suite.permitService.Create(activeFor24Hrs(desiredPermit, 0))
 	require.NotNil(suite.T(), err)
 
-	var apiErr *errs.ApiErr
+	var apiErr *errs.APIErr
 	require.ErrorAs(suite.T(), err, &apiErr, "expected error to be instance of api error")
 }
 
@@ -167,7 +167,7 @@ func (suite *permitTestSuite) TestCreate_NoStartNoEnd_ErrMissing() {
 		Model:        "model",
 	}
 
-	var apiErr *errs.ApiErr
+	var apiErr *errs.APIErr
 	_, err := suite.permitService.Create(desiredPermit)
 	require.ErrorAs(suite.T(), err, &apiErr, "expected error to be instance of apiErr")
 

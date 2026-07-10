@@ -1,13 +1,14 @@
 package api
 
 import (
+	"net/http"
+	"slices"
+	"strings"
+
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
-	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"strings"
 )
 
 type middleware struct {
@@ -37,7 +38,7 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			}
 
 			permittedRoles := append([]models.Role{firstRole}, roles...)
-			userHasPermittedRole := util.Contains(permittedRoles, accessPayload.Role)
+			userHasPermittedRole := slices.Contains(permittedRoles, accessPayload.Role)
 			if !userHasPermittedRole {
 				log.Debug().Msgf("User role: %s, not in permittedRoles: %v", accessPayload.Role, permittedRoles)
 				respondError(w, errs.Unauthorized)

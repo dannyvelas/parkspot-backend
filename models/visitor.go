@@ -36,7 +36,7 @@ func NewVisitor(
 	}
 }
 
-func (m Visitor) ValidateCreation() *errs.ApiErr {
+func (m Visitor) ValidateCreation() *errs.APIErr {
 	if err := m.emptyFields(); err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (m Visitor) ValidateCreation() *errs.ApiErr {
 	return nil
 }
 
-func (m Visitor) emptyFields() *errs.ApiErr {
+func (m Visitor) emptyFields() *errs.APIErr {
 	emptyFields := []string{}
 
 	if m.FirstName == "" {
@@ -74,7 +74,7 @@ func (m Visitor) emptyFields() *errs.ApiErr {
 	return nil
 }
 
-func (m Visitor) invalidFields() *errs.ApiErr {
+func (m Visitor) invalidFields() *errs.APIErr {
 	errors := []string{}
 
 	if m.Relationship != "fam/fri" && m.Relationship != "contractor" {

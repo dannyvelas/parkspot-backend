@@ -41,7 +41,7 @@ func NewCarRepo(driver *sqlx.DB) storage.CarRepo {
 func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	query, args, err := carRepo.carSelect.Where("car.id = $1", id).ToSql()
 	if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBBuildingQuery, err)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	car := car{}
@@ -49,7 +49,7 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	if err == sql.ErrNoRows {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NewNotFound("car"))
 	} else if err != nil {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.DBQuery, err)
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", errs.ErrDBQuery, err)
 	}
 
 	return car.toModels(), nil
@@ -70,13 +70,13 @@ func (carRepo CarRepo) SelectWhere(carFields models.Car, selectOpts ...selectopt
 	}))
 	query, args, err := carSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	cars := carSlice{}
 	err = carRepo.driver.Select(&cars, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("car_repo.SelectWhere: %w: %v", errs.ErrDBQuery, err)
 	}
 
 	return cars.toModels(), nil
@@ -97,13 +97,13 @@ func (carRepo CarRepo) SelectCountWhere(carFields models.Car, selectOpts ...sele
 	}))
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("car_repo.SelectCount: %w: %v", errs.DBBuildingQuery, err)
+		return 0, fmt.Errorf("car_repo.SelectCount: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = carRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("car_repo.GetCount: %w: %v", errs.DBQuery, err)
+		return 0, fmt.Errorf("car_repo.GetCount: %w: %v", errs.ErrDBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -122,13 +122,13 @@ func (carRepo CarRepo) Create(desiredCar models.Car) (string, error) {
 
 	query, args, err := stmtBuilder.Insert("car").SetMap(updateMap).Suffix("RETURNING id").ToSql()
 	if err != nil {
-		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBBuildingQuery, err)
+		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	var id string
 	err = carRepo.driver.Get(&id, query, args...)
 	if err != nil {
-		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.DBExec, err)
+		return "", fmt.Errorf("car_repo.Create: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return id, nil
@@ -142,7 +142,7 @@ func (carRepo CarRepo) AddToAmtParkingDaysUsed(id string, days int) error {
 
 	_, err := carRepo.driver.Exec(query, days, id)
 	if err != nil {
-		return fmt.Errorf("car_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("car_repo.AddToAmtParkingDaysUsed: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -161,12 +161,12 @@ func (carRepo CarRepo) Update(carFields models.Car) error {
 
 	query, args, err := carUpdate.Where("car.id = ?", carFields.ID).ToSql()
 	if err != nil {
-		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBBuildingQuery, err)
+		return fmt.Errorf("car_repo.Update: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	_, err = carRepo.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("car_repo.Update: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("car_repo.Update: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -177,7 +177,7 @@ func (carRepo CarRepo) Delete(id string) error {
 
 	_, err := carRepo.driver.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("car_repo.Delete: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("car_repo.Delete: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -186,13 +186,13 @@ func (carRepo CarRepo) Delete(id string) error {
 func (carRepo CarRepo) Reset() error {
 	_, err := carRepo.driver.Exec("DELETE FROM car")
 	if err != nil {
-		return fmt.Errorf("car_repo.Reset: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("car_repo.Reset: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
 }
 
-// implement selectops.Repo
+// SearchAsSQL implements selectops.Repo
 func (carRepo CarRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{

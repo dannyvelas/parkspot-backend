@@ -18,7 +18,7 @@ type (
 )
 
 func (e NotFoundError) Error() string {
-	err := fmt.Sprintf("No config value found for %s", e.variableName)
+	err := fmt.Sprintf("no config value found for %s", e.variableName)
 	return fmt.Sprintf("%s. Using default of: %v", err, e.defaultValue)
 }
 

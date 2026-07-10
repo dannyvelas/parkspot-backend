@@ -55,13 +55,13 @@ func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, sel
 
 	query, args, err := residentSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.DBBuildingQuery, err)
+		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	residents := residentSlice{}
 	err = residentRepo.driver.Select(&residents, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.DBQuery, err)
+		return nil, fmt.Errorf("resident_repo.SelectWhere: %w: %v", errs.ErrDBQuery, err)
 	}
 
 	return residents.toModels(), nil
@@ -83,13 +83,13 @@ func (residentRepo ResidentRepo) SelectCountWhere(residentFields models.Resident
 
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.DBBuildingQuery, err)
+		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = residentRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.DBQuery, err)
+		return 0, fmt.Errorf("resident_repo.SelectCountWhere: %w: %v", errs.ErrDBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -103,7 +103,7 @@ func (residentRepo ResidentRepo) AddToAmtParkingDaysUsed(id string, days int) er
 
 	_, err := residentRepo.driver.Exec(query, days, id)
 	if err != nil {
-		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("resident_repo.AddToAmtParkingDaysUsed: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -129,12 +129,12 @@ func (residentRepo ResidentRepo) Create(resident models.Resident) error {
 			"unlim_days": unlimDays,
 		}).ToSql()
 	if err != nil {
-		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBBuildingQuery, err)
+		return fmt.Errorf("resident_repo.Create: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	_, err = residentRepo.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Create: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("resident_repo.Create: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -145,11 +145,11 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 
 	res, err := residentRepo.driver.Exec(query, residentID)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.ErrDBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.DBGetRowsAffected, err)
+		return fmt.Errorf("resident_repo.Delete: %w: %v", errs.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
 		return fmt.Errorf("resident_repo.Delete: %w", errs.NewNotFound("resident"))
 	}
@@ -177,12 +177,12 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 
 	query, args, err := residentUpdate.Where("resident.id = ?", residentFields.ID).ToSql()
 	if err != nil {
-		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBBuildingQuery, err)
+		return fmt.Errorf("resident_repo.Update: %w: %v", errs.ErrDBBuildingQuery, err)
 	}
 
 	_, err = residentRepo.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("resident_repo.Update: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("resident_repo.Update: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil
@@ -191,7 +191,7 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 func (residentRepo ResidentRepo) Reset() error {
 	_, err := residentRepo.driver.Exec("DELETE FROM resident")
 	if err != nil {
-		return fmt.Errorf("resident_repo.Reset: %w: %v", errs.DBExec, err)
+		return fmt.Errorf("resident_repo.Reset: %w: %v", errs.ErrDBExec, err)
 	}
 
 	return nil

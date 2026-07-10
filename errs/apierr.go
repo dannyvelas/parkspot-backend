@@ -4,23 +4,23 @@ import (
 	"errors"
 )
 
-type ApiErr struct {
+type APIErr struct {
 	StatusCode int
 	err        error
 }
 
-func NewApiErr(statusCode int, message string) *ApiErr {
-	return &ApiErr{
+func NewAPIErr(statusCode int, message string) *APIErr {
+	return &APIErr{
 		StatusCode: statusCode,
 		err:        errors.New(message),
 	}
 }
 
-// implements error interface
-func (e *ApiErr) Error() string {
+// Error implements error interface
+func (e *APIErr) Error() string {
 	return e.err.Error()
 }
 
-func (e *ApiErr) Unwrap() error {
+func (e *APIErr) Unwrap() error {
 	return e.err
 }

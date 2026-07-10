@@ -12,12 +12,12 @@ import (
 )
 
 type authHandler struct {
-	httpConfig  config.HttpConfig
+	httpConfig  config.HTTPConfig
 	jwtService  app.JWTService
 	authService app.AuthService
 }
 
-func newAuthHandler(httpConfig config.HttpConfig, jwtService app.JWTService, authService app.AuthService) authHandler {
+func newAuthHandler(httpConfig config.HTTPConfig, jwtService app.JWTService, authService app.AuthService) authHandler {
 	return authHandler{
 		httpConfig:  httpConfig,
 		jwtService:  jwtService,

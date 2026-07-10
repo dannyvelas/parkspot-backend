@@ -1,14 +1,15 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
-	"github.com/rs/zerolog/log"
 	"path/filepath"
 	"runtime"
+
+	"github.com/joho/godotenv"
+	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
-	Http     HttpConfig
+	HTTP     HTTPConfig
 	Postgres PostgresConfig
 	Token    TokenConfig
 	OAuth    OAuthConfig
@@ -24,13 +25,13 @@ func NewConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	httpConfig, err := newHttpConfig()
+	httpConfig, err := newHTTPConfig()
 	if err != nil {
 		return Config{}, err
 	}
 
 	return Config{
-		Http:     httpConfig,
+		HTTP:     httpConfig,
 		Postgres: newPostgresConfig(),
 		Token:    newTokenConfig(),
 		OAuth:    oauthConfig,

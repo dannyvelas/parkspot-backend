@@ -84,7 +84,7 @@ func (suite *carRouterSuite) TestAdmin_Edit_Positive() {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for admin: %v", err))
 	}
 
-	returnedCar, err := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
+	returnedCar, _ := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
 		ID:    models.Test_car.ID,
 		Color: newColor,
 	})
@@ -124,7 +124,7 @@ func (suite *carRouterSuite) TestResident_EditCar_Positive() {
 		require.NoError(suite.T(), fmt.Errorf("error creating access token for resident: %v", err))
 	}
 
-	returnedCar, err := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
+	returnedCar, _ := authenticatedReq[models.Car, models.Car]("PUT", suite.testServer.URL+"/api/car", token, &models.Car{
 		ID:    models.Test_car.ID,
 		Color: newColor,
 	})

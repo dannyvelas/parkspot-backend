@@ -2,6 +2,7 @@ package psql
 
 import (
 	"fmt"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/storage"
@@ -25,12 +26,12 @@ type Database struct {
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	driver, err := sqlx.Open("postgres", postgresConfig.URL)
 	if err != nil {
-		return Database{}, fmt.Errorf("database: %w: %v", errs.DBConnecting, err)
+		return Database{}, fmt.Errorf("database: %w: %v", errs.ErrDBConnecting, err)
 	}
 
 	err = driver.Ping()
 	if err != nil {
-		return Database{}, fmt.Errorf("database: %w: %v", errs.DBPinging, err)
+		return Database{}, fmt.Errorf("database: %w: %v", errs.ErrDBPinging, err)
 	}
 
 	return Database{
@@ -46,23 +47,23 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 func (database Database) CreateSchemas() error {
 	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
 	if err != nil {
-		return fmt.Errorf("Call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
+		return fmt.Errorf("call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
 	}
 
 	migrator, err := migrate.NewWithDatabaseInstance("file://../migrations", "postgres", driver)
 	if err != nil {
-		return fmt.Errorf("Failed to initialize migrate with migrate.Driver instance: %v", err)
+		return fmt.Errorf("failed to initialize migrate with migrate.Driver instance: %v", err)
 	}
 
 	if version, dirty, err := migrator.Version(); dirty {
-		return fmt.Errorf("Error: database version is dirty. Please fix it.")
+		return fmt.Errorf("error: database version is dirty. Please fix it")
 	} else if err != nil && err != migrate.ErrNilVersion {
-		return fmt.Errorf("Error getting migrator version: %v", err)
+		return fmt.Errorf("error getting migrator version: %v", err)
 	} else if err != migrate.ErrNilVersion {
 		log.Info().Msgf("not applying any migrations because found a version of %d", version)
 	} else {
 		if err := migrator.Migrate(1); err != nil {
-			return fmt.Errorf("Failed to migrate up to the first migration: %v", err)
+			return fmt.Errorf("failed to migrate up to the first migration: %v", err)
 		}
 	}
 
@@ -72,15 +73,19 @@ func (database Database) CreateSchemas() error {
 func (database Database) AdminRepo() storage.AdminRepo {
 	return database.adminRepo
 }
+
 func (database Database) ResidentRepo() storage.ResidentRepo {
 	return database.residentRepo
 }
+
 func (database Database) CarRepo() storage.CarRepo {
 	return database.carRepo
 }
+
 func (database Database) PermitRepo() storage.PermitRepo {
 	return database.permitRepo
 }
+
 func (database Database) VisitorRepo() storage.VisitorRepo {
 	return database.visitorRepo
 }

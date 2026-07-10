@@ -90,12 +90,3 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 
 	return createdAdmin, nil
 }
-
-// not used yet but could come in handy
-func (s AdminService) Delete(id string) error {
-	if id == "" {
-		return errs.MissingIDField
-	}
-
-	return s.adminRepo.Delete(id)
-}

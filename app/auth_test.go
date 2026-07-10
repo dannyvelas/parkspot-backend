@@ -39,7 +39,7 @@ func (suite *authTestSuite) SetupSuite() {
 
 	// create services used in this test suite
 	suite.residentService = NewResidentService(database.ResidentRepo())
-	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HttpConfig{}, config.OAuthConfig{})
+	suite.authService = NewAuthService(jwtService, adminService, suite.residentService, config.HTTPConfig{}, config.OAuthConfig{})
 
 	// create resident
 	if _, err := suite.residentService.Create(models.Test_resident); err != nil {

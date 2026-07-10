@@ -36,7 +36,7 @@ var (
 	}
 )
 
-func (v carValidator) Run(car models.Car) *errs.ApiErr {
+func (v carValidator) Run(car models.Car) *errs.APIErr {
 	var errors []string
 
 	if v.validateIDFn != nil {

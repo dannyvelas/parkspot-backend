@@ -20,11 +20,11 @@ func NewServer(c config.Config, app app.App) Server {
 	router := newRouter(c, app)
 
 	server := &http.Server{
-		Addr:         ":" + c.Http.Port,
+		Addr:         ":" + c.HTTP.Port,
 		Handler:      router,
-		ReadTimeout:  c.Http.ReadTimeout,
-		WriteTimeout: c.Http.WriteTimeout,
-		IdleTimeout:  c.Http.IdleTimeout,
+		ReadTimeout:  c.HTTP.ReadTimeout,
+		WriteTimeout: c.HTTP.WriteTimeout,
+		IdleTimeout:  c.HTTP.IdleTimeout,
 	}
 
 	return Server{
@@ -37,7 +37,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 	// middlewares
 	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   c.Http.CORSAllowedOrigins,
+		AllowedOrigins:   c.HTTP.CORSAllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
@@ -46,7 +46,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 	// handlers
 	middleware := newMiddleware(app.JWTService)
-	authHandler := newAuthHandler(c.Http, app.JWTService, app.AuthService)
+	authHandler := newAuthHandler(c.HTTP, app.JWTService, app.AuthService)
 	residentHandler := newResidentHandler(app.ResidentService)
 	visitorHandler := newVisitorHandler(app.VisitorService)
 	carHandler := newCarHandler(app.CarService)

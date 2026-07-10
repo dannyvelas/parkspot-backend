@@ -32,7 +32,7 @@ var (
 	}
 )
 
-func (v residentValidator) Run(resident models.Resident) *errs.ApiErr {
+func (v residentValidator) Run(resident models.Resident) *errs.APIErr {
 	var errors []string
 
 	if err := models.IsResidentID(resident.ID); err != nil {

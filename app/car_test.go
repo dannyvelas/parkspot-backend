@@ -63,7 +63,7 @@ func (suite *carTestSuite) TestEdit_CarDNE_Negative() {
 	_, err := suite.carService.Update(carWithIDThatDNE)
 	require.Error(suite.T(), err, "No error encountered when editing a non-existing car")
 
-	var apiErr *errs.ApiErr
+	var apiErr *errs.APIErr
 	require.ErrorAsf(suite.T(), err, &apiErr, "Couldn't cast error to apiErr. Error is: %v", err)
 
 	require.Equal(suite.T(), http.StatusNotFound, apiErr.StatusCode, "response was: %v", apiErr.Error())
