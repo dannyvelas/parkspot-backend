@@ -3,6 +3,8 @@ package app
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
@@ -10,7 +12,6 @@ import (
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 	"github.com/dannyvelas/parkspot-backend/util"
-	"strings"
 )
 
 type PermitService struct {
@@ -103,33 +104,13 @@ func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error
 		return models.Permit{}, err
 	}
 
-	// if carID != "", this permit will be created for a pre-existing car
-	if desiredPermit.CarID != "" {
-		// find and validate that this car follows policy for creating a permit
-		car, err := s.getAndValidateCar(desiredPermit, *resident.UnlimDays, permitLength)
-		if err != nil {
-			return models.Permit{}, err
-		}
-
-		// get a snapshot of car and save it into the permit
-		desiredPermit.LicensePlate = car.LicensePlate
-		desiredPermit.Color = car.Color
-		desiredPermit.Make = car.Make
-		desiredPermit.Model = car.Model
-	} else {
-		// otherwise, we will create a new car for this permit
-		desiredCar := models.Car{ResidentID: desiredPermit.ResidentID, LicensePlate: desiredPermit.LicensePlate, Color: desiredPermit.Color, Make: desiredPermit.Make, Model: desiredPermit.Model}
-		createdCar, err := s.carService.Create(desiredCar)
-		if err != nil {
-			return models.Permit{}, fmt.Errorf("error creating car: %w", err)
-		}
-
-		// record the carID that was used to create this car
-		desiredPermit.CarID = createdCar.ID
+	populatedPermit, err := s.populatePermitCarFields(desiredPermit, *resident.UnlimDays, permitLength)
+	if err != nil {
+		return models.Permit{}, err
 	}
 
-	desiredPermit.AffectsDays = desiredPermit.ExceptionReason == "" && !*resident.UnlimDays
-	createdPermit, err := s.create(desiredPermit)
+	populatedPermit.AffectsDays = populatedPermit.ExceptionReason == "" && !*resident.UnlimDays
+	createdPermit, err := s.create(populatedPermit)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %v", err)
 	}
@@ -164,6 +145,43 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 }
 
 // helpers
+func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
+	// if carID != "", this permit will be created for a pre-existing car
+	if p.CarID != "" {
+		return s.populateFromPreExistingCar(p, residentUnlimDays, permitLength)
+	}
+
+	// otherwise, we will create a new car for this permit
+	desiredCar := models.Car{ResidentID: p.ResidentID, LicensePlate: p.LicensePlate, Color: p.Color, Make: p.Make, Model: p.Model}
+	createdCar, err := s.carService.Create(desiredCar)
+	if errors.Is(err, errs.ErrCarWithLPAlreadyExists) {
+		// actually if this car already exists, we will create this permit for a pre-existing car
+		return s.populateFromPreExistingCar(p, residentUnlimDays, permitLength)
+	} else if err != nil {
+		return models.Permit{}, fmt.Errorf("error creating car: %w", err)
+	}
+
+	// record the carID that was used to create this car
+	retPermit := p
+	retPermit.CarID = createdCar.ID
+	return retPermit, nil
+}
+
+func (s PermitService) populateFromPreExistingCar(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
+	// find and validate that this car follows policy for creating a permit
+	car, err := s.getAndValidateCar(p, residentUnlimDays, permitLength)
+	if err != nil {
+		return models.Permit{}, err
+	}
+
+	// get a snapshot of car and save it into the permit
+	p.LicensePlate = car.LicensePlate
+	p.Color = car.Color
+	p.Make = car.Make
+	p.Model = car.Model
+	return p, nil
+}
+
 func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permitLength int) (models.Resident, error) {
 	if err := models.IsResidentID(desiredPermit.ResidentID); err != nil {
 		return models.Resident{}, errs.InvalidResID
@@ -223,7 +241,8 @@ func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays 
 	}
 
 	// we found the car: error out if it has active permits during dates requested
-	carActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{CarID: existingCar.ID},
+	carActivePermitsDuring, err := s.permitRepo.SelectWhere(
+		models.Permit{CarID: existingCar.ID},
 		selectopts.WithDateIntersect(desiredPermit.StartDate, desiredPermit.EndDate),
 	)
 	if err != nil {

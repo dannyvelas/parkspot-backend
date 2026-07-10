@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/models/validator"
@@ -77,7 +78,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 		} else if len(cars) != 0 && cars[0].ID != updatedFields.ID {
 			// it's possible that the car we found with the same licensePlate in the database is the car we're currently updating
 			// in this case, don't raise an error
-			return models.Car{}, errs.NewAlreadyExists("a car with this licensePlate: " + updatedFields.LicensePlate)
+			return models.Car{}, errs.NewErrCarWithLPAlreadyExists(updatedFields.LicensePlate)
 		}
 	}
 
@@ -109,7 +110,7 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: desiredCar.LicensePlate}); err != nil {
 		return models.Car{}, fmt.Errorf("carService.createCar error getting car by licensePlate: %v", err)
 	} else if len(cars) != 0 {
-		return models.Car{}, errs.NewAlreadyExists("a car with this licensePlate: " + desiredCar.LicensePlate)
+		return models.Car{}, errs.NewErrCarWithLPAlreadyExists(desiredCar.LicensePlate)
 	}
 
 	carID, err := s.carRepo.Create(desiredCar)
