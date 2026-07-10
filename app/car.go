@@ -50,6 +50,21 @@ func (s CarService) GetOne(id string) (models.Car, error) {
 	return s.carRepo.GetOne(id)
 }
 
+func (s CarService) GetOneByLicensePlate(licensePlate string) (models.Car, error) {
+	if licensePlate == "" {
+		return models.Car{}, errs.MissingIDField
+	}
+
+	cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: licensePlate})
+	if err != nil {
+		return models.Car{}, fmt.Errorf("error getting car by licensePlate: %v", err)
+	} else if len(cars) == 0 {
+		return models.Car{}, errs.NotFound
+	}
+
+	return cars[0], nil
+}
+
 func (s CarService) Delete(id string) error {
 	if id == "" {
 		return errs.MissingIDField

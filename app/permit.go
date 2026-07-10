@@ -146,18 +146,29 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 
 // helpers
 func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
-	// if carID != "", this permit will be created for a pre-existing car
-	if p.CarID != "" {
-		return s.populateFromPreExistingCar(p, residentUnlimDays, permitLength)
+	associatedCar, err := s.findCar(p)
+	if !errors.Is(err, errs.NotFound) && err != nil {
+		return models.Permit{}, err
+	}
+
+	// if we found a car that already exists like this in the database, lets use that one
+	if err == nil {
+		if err := s.validateCar(p, associatedCar, residentUnlimDays, permitLength); err != nil {
+			return models.Permit{}, err
+		}
+		// get a snapshot of car and save it into the permit
+		p.CarID = associatedCar.ID
+		p.LicensePlate = associatedCar.LicensePlate
+		p.Color = associatedCar.Color
+		p.Make = associatedCar.Make
+		p.Model = associatedCar.Model
+		return p, nil
 	}
 
 	// otherwise, we will create a new car for this permit
 	desiredCar := models.Car{ResidentID: p.ResidentID, LicensePlate: p.LicensePlate, Color: p.Color, Make: p.Make, Model: p.Model}
 	createdCar, err := s.carService.Create(desiredCar)
-	if errors.Is(err, errs.ErrCarWithLPAlreadyExists) {
-		// actually if this car already exists, we will create this permit for a pre-existing car
-		return s.populateFromPreExistingCar(p, residentUnlimDays, permitLength)
-	} else if err != nil {
+	if err != nil {
 		return models.Permit{}, fmt.Errorf("error creating car: %w", err)
 	}
 
@@ -167,19 +178,39 @@ func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDay
 	return retPermit, nil
 }
 
-func (s PermitService) populateFromPreExistingCar(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
-	// find and validate that this car follows policy for creating a permit
-	car, err := s.getAndValidateCar(p, residentUnlimDays, permitLength)
+func (s PermitService) findCar(p models.Permit) (models.Car, error) {
+	if p.CarID == "" {
+		return s.carService.GetOneByLicensePlate(p.LicensePlate)
+	} else {
+		return s.carService.GetOne(p.CarID)
+	}
+}
+
+func (s PermitService) validateCar(p models.Permit, c models.Car, residentUnlimDays bool, permitLength int) error {
+	// error out if it has active permits during dates requested
+	carActivePermitsDuring, err := s.permitRepo.SelectWhere(
+		models.Permit{CarID: c.ID},
+		selectopts.WithDateIntersect(p.StartDate, p.EndDate),
+	)
 	if err != nil {
-		return models.Permit{}, err
+		return fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
+	} else if len(carActivePermitsDuring) != 0 {
+		return errs.CarActivePermit
 	}
 
-	// get a snapshot of car and save it into the permit
-	p.LicensePlate = car.LicensePlate
-	p.Color = car.Color
-	p.Make = car.Make
-	p.Model = car.Model
-	return p, nil
+	// if this is an exception, or if this resident has unlimited days,
+	// there are no more car checks to be performed. so return no errors
+	if p.ExceptionReason != "" || residentUnlimDays {
+		return nil
+	}
+
+	if *c.AmtParkingDaysUsed >= config.MaxParkingDays {
+		return errs.EntityDaysTooLong("car", *c.AmtParkingDaysUsed)
+	} else if *c.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
+		return errs.PermitPlusEntityDaysTooLong("car", *c.AmtParkingDaysUsed)
+	}
+
+	return nil
 }
 
 func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permitLength int) (models.Resident, error) {
@@ -226,44 +257,6 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	}
 
 	return resident, nil
-}
-
-func (s PermitService) getAndValidateCar(desiredPermit models.Permit, unlimDays bool, permitLength int) (models.Car, error) {
-	if !util.IsUUIDV4(desiredPermit.CarID) {
-		return models.Car{}, errs.InvalidFields("CarID is not a UUID")
-	}
-
-	existingCar, err := s.carService.GetOne(desiredPermit.CarID)
-	if errors.Is(err, errs.NotFound) {
-		return models.Car{}, errs.CarForPermitDNE
-	} else if err != nil {
-		return models.Car{}, fmt.Errorf("error getting one from carRepo: %v", err)
-	}
-
-	// we found the car: error out if it has active permits during dates requested
-	carActivePermitsDuring, err := s.permitRepo.SelectWhere(
-		models.Permit{CarID: existingCar.ID},
-		selectopts.WithDateIntersect(desiredPermit.StartDate, desiredPermit.EndDate),
-	)
-	if err != nil {
-		return models.Car{}, fmt.Errorf("error getting active of car during dates in permitRepo: %v", err)
-	} else if len(carActivePermitsDuring) != 0 {
-		return models.Car{}, errs.CarActivePermit
-	}
-
-	// if this is an exception, or if this resident has unlimited days,
-	// there are no more car checks to be performed. so return no errors
-	if desiredPermit.ExceptionReason != "" || unlimDays {
-		return existingCar, nil
-	}
-
-	if *existingCar.AmtParkingDaysUsed >= config.MaxParkingDays {
-		return models.Car{}, errs.EntityDaysTooLong("car", *existingCar.AmtParkingDaysUsed)
-	} else if *existingCar.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-		return models.Car{}, errs.PermitPlusEntityDaysTooLong("car", *existingCar.AmtParkingDaysUsed)
-	}
-
-	return existingCar, nil
 }
 
 func (s PermitService) validateDates(desiredPermit models.Permit) error {
