@@ -210,12 +210,6 @@ func (s PermitService) validateCar(p models.Permit, c models.Car, residentUnlimD
 		return nil
 	}
 
-	if *c.AmtParkingDaysUsed >= config.MaxParkingDays {
-		return errs.EntityDaysTooLong("car", *c.AmtParkingDaysUsed)
-	} else if *c.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-		return errs.PermitPlusEntityDaysTooLong("car", *c.AmtParkingDaysUsed)
-	}
-
 	return nil
 }
 
