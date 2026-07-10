@@ -20,18 +20,18 @@ func NewUser(id string, firstName string, lastName string, email string, role Ro
 	}
 }
 
-func (self User) Equal(other User) bool {
-	if self.ID != other.ID {
+func (u User) Equal(other User) bool {
+	if u.ID != other.ID {
 		return false
-	} else if self.FirstName != other.FirstName {
+	} else if u.FirstName != other.FirstName {
 		return false
-	} else if self.LastName != other.LastName {
+	} else if u.LastName != other.LastName {
 		return false
-	} else if self.Email != other.Email {
+	} else if u.Email != other.Email {
 		return false
-	} else if self.Role != other.Role {
+	} else if u.Role != other.Role {
 		return false
-	} else if self.TokenVersion != other.TokenVersion {
+	} else if u.TokenVersion != other.TokenVersion {
 		return false
 	}
 	return true

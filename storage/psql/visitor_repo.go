@@ -152,7 +152,6 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	return visitor.toModels(), nil
 }
 
-// helpers
 func (visitorRepo VisitorRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	likeQuery := "%" + strings.ToLower(query) + "%"
 	return squirrel.Or{

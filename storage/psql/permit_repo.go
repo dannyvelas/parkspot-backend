@@ -203,7 +203,6 @@ func (permitRepo PermitRepo) Reset() error {
 	return nil
 }
 
-// helpers
 func (permitRepo PermitRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
