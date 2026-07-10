@@ -147,6 +147,10 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 // helpers
 func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
 	associatedCar, err := s.findCar(p)
+	if !errors.Is(err, errs.NotFound) && err != nil {
+		return models.Permit{}, err
+	}
+
 	if errors.Is(err, errs.NotFound) {
 		if p.CarID != "" {
 			// the caller asked for a specific, pre-existing car that doesn't exist:
@@ -165,8 +169,6 @@ func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDay
 		retPermit := p
 		retPermit.CarID = createdCar.ID
 		return retPermit, nil
-	} else if err != nil {
-		return models.Permit{}, err
 	}
 
 	// we found a car that already exists like this in the database, lets use that one
