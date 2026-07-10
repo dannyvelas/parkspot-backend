@@ -55,7 +55,7 @@ func (s CarService) GetOne(id string) (models.Car, error) {
 
 func (s CarService) GetOneByLicensePlate(licensePlate string) (models.Car, error) {
 	if licensePlate == "" {
-		return models.Car{}, errs.MissingIDField
+		return models.Car{}, errs.EmptyFields("licensePlate")
 	}
 
 	cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: licensePlate})
