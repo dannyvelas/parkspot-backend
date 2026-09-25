@@ -32,3 +32,4 @@
 ## Notes
 
 - FR-010's migration/reconciliation approach was clarified with the user: residents whose historical days-used value doesn't match their derived total receive an automatically generated migration-reconciliation adjustment that preserves their currently-effective limit. All checklist items pass.
+- 2026-09-24 /speckit-clarify session resolved 3 further ambiguities: days-used counts all non-deleted permits regardless of expiration (lifetime running total); the per-car day counter is explicitly out of scope; the allowance-adjustment ledger is append-only, with mistakes corrected via a new offsetting adjustment rather than edits/deletes. All checklist items remain passing (16/16).
