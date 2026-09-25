@@ -69,4 +69,4 @@ effective_allowance(resident)= 20 + adjustment_total(resident)
 2. **`000008_drop_amt_parking_days_used.up.sql`**: `ALTER TABLE resident DROP COLUMN amt_parking_days_used`.
    - `000008_drop_amt_parking_days_used.down.sql`: re-add the column (`ADD COLUMN amt_parking_days_used SMALLINT NOT NULL DEFAULT 0`); note a rollback after this point cannot recover the original per-resident values (they now live only in `quota_adjustment`), which is acceptable since this mirrors how any destructive-column-drop migration behaves in this repo already.
 
-3. `storage/psql/database.go`'s `CreateSchemas()` target version updates from `1` to `8` so integration tests pick up both new migrations (see research.md Decision 6).
+3. `storage/psql/database.go`'s `CreateSchemas()` is updated to additionally apply `000007_quota_adjustment.up.sql` (and later `000008_drop_amt_parking_days_used.up.sql`) directly, without changing its existing `migrator.Migrate(1)` call — see research.md Decision 6 for why a simple version bump would incorrectly pull in the seed-data migrations too.
