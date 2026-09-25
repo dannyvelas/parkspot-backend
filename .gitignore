@@ -9,3 +9,7 @@ bin/
 scripts/gen/prod_csv_in/
 notes.txt
 future-code/
+
+.claude
+.specify
+CLAUDE.md
