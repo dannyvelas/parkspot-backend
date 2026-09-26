@@ -1,0 +1,5 @@
+BEGIN;
+
+DROP TABLE IF EXISTS quota_adjustment CASCADE;
+
+COMMIT;
