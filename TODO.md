@@ -24,8 +24,7 @@
 - [x] (DEPLOY) change parking days yearly limit to 20
 - [x] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
 - [x] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
-- [ ] arreglar error de editar días de parqueo
-- [ ] give admins the power to be able to change car colors 
+- [x] give admins the power to be able to change car colors 
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -91,6 +90,13 @@
 - [ ] start using require in resident\_test
 - [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [ ] probably use docker-compose to initialize test container in app/test\_helpers.go
+- [ ] switch from BIGINT to TIMESTAMPTZ
+- [ ] remove prodmigration stuff from makefile and add a new entry entrypoint to this project that runs go-lang migrate internally. that way whatever server runs this doesn't need to have the golang-migrate binary
+- [ ] remove race conditions. e.g. make each request to create/delete/update a permit an atomic transaction
+  - [ ] same for cars
+  - [ ] same for residents
+  - [ ] same for visitors
+- [ ] split seed-data migrations (000002-000006) out of `migrations/` into a separate seed script/target, so `migrations/` is schema-only. this would let `storage/psql/database.go`'s `CreateSchemas` call the plain, un-special-cased migrate path instead of skipping specific files, and would let `.prodmigrations`/`migrate_prod_up_step` retire too, since prod could then just run every migration normally
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [✓] (fix) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
