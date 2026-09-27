@@ -19,7 +19,7 @@ import (
 // intermediate version sequentially, which would also apply the seed-data
 // migrations (000002-000006) that tests deliberately skip.
 var schemaOnlyMigrations = []string{
-	"000007_quota_adjustment.up.sql",
+	"000007_quota_ledger.up.sql",
 }
 
 func NewSandboxDatabase() (testcontainers.Container, Database, error) {
