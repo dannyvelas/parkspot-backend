@@ -31,7 +31,7 @@ Validation/lifecycle rules:
 
 ```sql
 CREATE TABLE quota_ledger (
-    id                  BIGSERIAL PRIMARY KEY,
+    id                  SERIAL PRIMARY KEY,
     resident_id         CHAR(8) NOT NULL REFERENCES resident(id) ON DELETE CASCADE,
     quota_year          INT NOT NULL,
     amount              SMALLINT NOT NULL,
