@@ -6,4 +6,5 @@ type Database interface {
 	CarRepo() CarRepo
 	PermitRepo() PermitRepo
 	VisitorRepo() VisitorRepo
+	QuotaLedgerRepo() QuotaLedgerRepo
 }
