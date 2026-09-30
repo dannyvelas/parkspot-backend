@@ -34,6 +34,7 @@ func NewPermitRepo(driver *sqlx.DB) storage.PermitRepo {
 		"permit.request_ts",
 		"permit.affects_days",
 		"permit.exception_reason",
+		"permit.cancelled_ts",
 	).From("permit")
 	countSelect := stmtBuilder.Select("count(*)").From("permit")
 
@@ -57,7 +58,7 @@ func (permitRepo PermitRepo) SelectWhere(permitFields models.Permit, selectOpts 
 		"color":         permitFields.Color,
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
-	}))
+	})).Where("permit.cancelled_ts IS NULL")
 
 	query, args, err := permitSelect.ToSql()
 	if err != nil {
@@ -86,7 +87,7 @@ func (permitRepo PermitRepo) SelectCountWhere(permitFields models.Permit, select
 		"color":         permitFields.Color,
 		"make":          permitFields.Make,
 		"model":         permitFields.Model,
-	}))
+	})).Where("permit.cancelled_ts IS NULL")
 
 	query, args, err := countSelect.ToSql()
 	if err != nil {
@@ -156,18 +157,18 @@ func (permitRepo PermitRepo) Create(desiredPermit models.Permit) (int, error) {
 	return permitID, nil
 }
 
-func (permitRepo PermitRepo) Delete(id int) error {
-	const query = `DELETE FROM permit WHERE id = $1`
+func (permitRepo PermitRepo) Cancel(id int) error {
+	const query = `UPDATE permit SET cancelled_ts = $1 WHERE id = $2`
 
-	res, err := permitRepo.driver.Exec(query, id)
+	res, err := permitRepo.driver.Exec(query, time.Now().Unix(), id)
 	if err != nil {
-		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("permit_repo.Cancel: %w: %v", errs.ErrDBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("permit_repo.Delete: %w: %v", errs.ErrDBGetRowsAffected, err)
+		return fmt.Errorf("permit_repo.Cancel: %w: %v", errs.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("permit_repo.Delete: %w", errs.NewNotFound("permit"))
+		return fmt.Errorf("permit_repo.Cancel: %w", errs.NewNotFound("permit"))
 	}
 
 	return nil
