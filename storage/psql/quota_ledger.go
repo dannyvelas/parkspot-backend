@@ -12,7 +12,7 @@ type quotaLedger struct {
 	ResidentID       string         `db:"resident_id"`
 	QuotaYearUTC     int            `db:"quota_year_utc"`
 	Amount           int            `db:"amount"`
-	EntryType        string         `db:"entry_type"`
+	EntryType        string         `db:"entry_type"` // scanned as plain text; converted to models.EntryType in toModels()
 	PermitID         sql.NullInt64  `db:"permit_id"`
 	CreatedByAdminID sql.NullString `db:"created_by_admin_id"`
 	Note             sql.NullString `db:"note"`
@@ -41,7 +41,7 @@ func (q quotaLedger) toModels() models.QuotaLedger {
 		ResidentID:       q.ResidentID,
 		QuotaYearUTC:     q.QuotaYearUTC,
 		Amount:           q.Amount,
-		EntryType:        q.EntryType,
+		EntryType:        models.EntryType(q.EntryType),
 		PermitID:         permitID,
 		CreatedByAdminID: createdByAdminID,
 		Note:             note,
