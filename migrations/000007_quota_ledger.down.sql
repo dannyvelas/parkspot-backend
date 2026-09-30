@@ -1,0 +1,7 @@
+BEGIN;
+
+ALTER TABLE permit DROP COLUMN IF EXISTS cancelled_ts;
+
+DROP TABLE IF EXISTS quota_ledger CASCADE;
+
+COMMIT;
