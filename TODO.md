@@ -97,6 +97,10 @@
   - [ ] same for residents
   - [ ] same for visitors
 - [ ] split seed-data migrations (000002-000006) out of `migrations/` into a separate seed script/target, so `migrations/` is schema-only. this would let `storage/psql/database.go`'s `CreateSchemas` call the plain, un-special-cased migrate path instead of skipping specific files, and would let `.prodmigrations`/`migrate_prod_up_step` retire too, since prod could then just run every migration normally
+- see if we should do what demi-backend does where we don't have duplicates of storage / models data types.
+- see if there are any other differences to demi-backend.
+- make front-end be SPA because it doesn't need the complexity of SSR
+- make the front-end use RPC and be in the same repo as backend
 ## Testing
 - [✓] add test that resident can have two active permits at one time, but no more
 - [✓] (fix) make sure that when a resident is creating a car via a new permit with a repeat license plate, that there is an adequate warning returned that's not 500 internal server error
