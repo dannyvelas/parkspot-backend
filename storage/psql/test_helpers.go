@@ -14,12 +14,13 @@ import (
 )
 
 // schemaOnlyMigrations lists migration files, beyond the base schema (version 1),
-// that contain schema changes rather than seed data. CreateSchemas applies these
-// directly (not via migrator.Migrate) because migrate.Migrate(N) walks every
-// intermediate version sequentially, which would also apply the seed-data
-// migrations (000002-000006) that tests deliberately skip.
+// applied directly (not via migrator.Migrate) rather than all at once via
+// migrator.Up(). This whitelist is a holdover from when seed-data migrations
+// lived alongside schema migrations in this directory; now that seed data has
+// moved to seeds/, migrations/ is schema-only and this could be simplified to
+// a plain migrator.Up() call — tracked as a followup, not done here.
 var schemaOnlyMigrations = []string{
-	"000007_quota_ledger.up.sql",
+	"000002_quota_ledger.up.sql",
 }
 
 func NewSandboxDatabase() (testcontainers.Container, Database, error) {
