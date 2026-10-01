@@ -12,12 +12,13 @@ import (
 )
 
 type Database struct {
-	driver       *sqlx.DB
-	adminRepo    storage.AdminRepo
-	residentRepo storage.ResidentRepo
-	carRepo      storage.CarRepo
-	permitRepo   storage.PermitRepo
-	visitorRepo  storage.VisitorRepo
+	driver          *sqlx.DB
+	adminRepo       storage.AdminRepo
+	residentRepo    storage.ResidentRepo
+	carRepo         storage.CarRepo
+	permitRepo      storage.PermitRepo
+	visitorRepo     storage.VisitorRepo
+	quotaLedgerRepo storage.QuotaLedgerRepo
 }
 
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
@@ -32,12 +33,13 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	}
 
 	return Database{
-		driver:       driver,
-		adminRepo:    NewAdminRepo(driver),
-		residentRepo: NewResidentRepo(driver),
-		carRepo:      NewCarRepo(driver),
-		permitRepo:   NewPermitRepo(driver),
-		visitorRepo:  NewVisitorRepo(driver),
+		driver:          driver,
+		adminRepo:       NewAdminRepo(driver),
+		residentRepo:    NewResidentRepo(driver),
+		carRepo:         NewCarRepo(driver),
+		permitRepo:      NewPermitRepo(driver),
+		visitorRepo:     NewVisitorRepo(driver),
+		quotaLedgerRepo: NewQuotaLedgerRepo(driver),
 	}, nil
 }
 
@@ -59,4 +61,8 @@ func (database Database) PermitRepo() storage.PermitRepo {
 
 func (database Database) VisitorRepo() storage.VisitorRepo {
 	return database.visitorRepo
+}
+
+func (database Database) QuotaLedgerRepo() storage.QuotaLedgerRepo {
+	return database.quotaLedgerRepo
 }
