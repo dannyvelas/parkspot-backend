@@ -43,9 +43,10 @@ All users can:
 1. Install docker
 2. Run docker
 3. Run PostgreSQL instance: `docker compose up -d`
-4. Create database models and seed them with sample data: `make migrate_up`
-5. Create an `.env` file: `cp .env.example .env`
-6. Run the service: `go run -v main.go`
+4. Create database models: `make migrate_up`
+5. Seed the database with sample data: `make seed_up`
+6. Create an `.env` file: `cp .env.example .env`
+7. Run the service: `go run -v main.go`
 
 
 ## Local development
