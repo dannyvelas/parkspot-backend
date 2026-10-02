@@ -5,7 +5,5 @@ target/
 .scraps/
 .DS_Store
 bin/
-.prodmigrations/
-scripts/gen/prod_csv_in/
 notes.txt
 future-code/

@@ -29,14 +29,6 @@ migrate_create:
 migrate_version:
 	migrate -path migrations -database $(DATABASE_URL) version
 
-.PHONY: migrate_prod_up_step
-migrate_prod_up_step:
-	migrate -path .prodmigrations -database $(DATABASE_URL) -verbose up 1
-
-.PHONY: migrate_prod_down_step
-migrate_prod_down_step:
-	migrate -path .prodmigrations -database $(DATABASE_URL) -verbose down 1
-
 # Seed data (local dev only — plain SQL files, not golang-migrate-tracked,
 # never run against prod)
 .PHONY: seed_up
