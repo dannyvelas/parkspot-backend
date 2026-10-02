@@ -44,6 +44,6 @@ seed_down:
 gen_test_csvs:
 	python3 scripts/db/gen/test_data.py csv
 
-.PHONY: gen_test_migrations
-gen_test_migrations:
-	python3 scripts/db/gen/test_data.py migration
+.PHONY: gen_test_seeds
+gen_test_seeds:
+	python3 scripts/db/gen/test_data.py seed

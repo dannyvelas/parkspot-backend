@@ -387,11 +387,11 @@ def row_to_visitor(row: List[str]) -> Visitor:
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('usage: python3 scripts/db/gen/test_data.py [ csv | migration ]')
+        print('usage: python3 scripts/db/gen/test_data.py [ csv | seed ]')
         exit(1)
     file_out = sys.argv[1]
-    if file_out not in ['csv', 'migration']:
-        print('usage: python3 scripts/db/gen/test_data.py [ csv | migration ]')
+    if file_out not in ['csv', 'seed']:
+        print('usage: python3 scripts/db/gen/test_data.py [ csv | seed ]')
         exit(1)
 
     if file_out == 'csv':
@@ -436,29 +436,29 @@ if __name__ == '__main__':
                                             f'{permit.as_csv()}\n')
                                         amt_permits += 1
 
-    elif file_out == 'migration':
-        def migration_in_file_name(
+    elif file_out == 'seed':
+        def seed_in_file_name(
             model: str) -> str: return f'./scripts/db/gen/csv_out/{model}.csv'
 
-        def migration_out_file_name(
-            version: int, model: str) -> str: return f'./migrations/00000{version}_seed_{model}.up.sql'
+        def seed_out_file_name(
+            version: int, model: str) -> str: return f'./seeds/00{version}_{model}.up.sql'
 
-        with open(migration_in_file_name('resident'), 'r') as file_in:
-            with open(migration_out_file_name(3, 'resident'), 'w') as file_out:
+        with open(seed_in_file_name('resident'), 'r') as file_in:
+            with open(seed_out_file_name(2, 'resident'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
                     resident = csv_out_row_to_resident(row)
                     file_out.write(f'{resident.as_sql()}\n')
 
-        with open(migration_in_file_name('car'), 'r') as file_in:
-            with open(migration_out_file_name(4, 'car'), 'w') as file_out:
+        with open(seed_in_file_name('car'), 'r') as file_in:
+            with open(seed_out_file_name(3, 'car'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
                     car = row_to_car(row)
                     file_out.write(f'{car.as_sql()}\n')
 
-        with open(migration_in_file_name('permit'), 'r') as file_in:
-            with open(migration_out_file_name(5, 'permit'), 'w') as file_out:
+        with open(seed_in_file_name('permit'), 'r') as file_in:
+            with open(seed_out_file_name(4, 'permit'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
 
                 amt_rows = 0
@@ -471,8 +471,8 @@ if __name__ == '__main__':
                 file_out.write(
                     f'\nALTER SEQUENCE permit_id_seq RESTART WITH {amt_rows+1};\n')
 
-        with open(migration_in_file_name('visitor'), 'r') as file_in:
-            with open(migration_out_file_name(6, 'visitor'), 'w') as file_out:
+        with open(seed_in_file_name('visitor'), 'r') as file_in:
+            with open(seed_out_file_name(5, 'visitor'), 'w') as file_out:
                 reader = csv.reader(file_in, delimiter='\t')
                 for _, row in enumerate(reader):
                     visitor = row_to_visitor(row)
