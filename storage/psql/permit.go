@@ -19,10 +19,11 @@ type permit struct {
 	RequestTS       sql.NullInt64  `db:"request_ts"`
 	AffectsDays     bool           `db:"affects_days"`
 	ExceptionReason sql.NullString `db:"exception_reason"`
+	CancelledTS     sql.NullInt64  `db:"cancelled_ts"`
 }
 
 func (permit permit) toModels() models.Permit {
-	return models.NewPermit(
+	p := models.NewPermit(
 		permit.PermitID,
 		permit.ResidentID,
 		permit.CarID,
@@ -36,6 +37,13 @@ func (permit permit) toModels() models.Permit {
 		permit.AffectsDays,
 		permit.ExceptionReason.String,
 	)
+
+	if permit.CancelledTS.Valid {
+		cancelledTS := permit.CancelledTS.Int64
+		p.CancelledTS = &cancelledTS
+	}
+
+	return p
 }
 
 type permitSlice []permit
