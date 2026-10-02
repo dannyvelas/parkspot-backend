@@ -3,25 +3,13 @@ package psql
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/rs/zerolog/log"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
-
-// schemaOnlyMigrations lists migration files, beyond the base schema (version 1),
-// applied directly (not via migrator.Migrate) rather than all at once via
-// migrator.Up(). This whitelist is a holdover from when seed-data migrations
-// lived alongside schema migrations in this directory; now that seed data has
-// moved to seeds/, migrations/ is schema-only and this could be simplified to
-// a plain migrator.Up() call — tracked as a followup, not done here.
-var schemaOnlyMigrations = []string{
-	"000002_quota_ledger.up.sql",
-}
 
 func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 	ctx := context.Background()
@@ -77,26 +65,8 @@ func CreateSchemasForTest(database Database) error {
 		return fmt.Errorf("failed to initialize migrate with migrate.Driver instance: %v", err)
 	}
 
-	if version, dirty, err := migrator.Version(); dirty {
-		return fmt.Errorf("error: database version is dirty. Please fix it")
-	} else if err != nil && err != migrate.ErrNilVersion {
-		return fmt.Errorf("error getting migrator version: %v", err)
-	} else if err != migrate.ErrNilVersion {
-		log.Info().Msgf("not applying any migrations because found a version of %d", version)
-	} else {
-		if err := migrator.Migrate(1); err != nil {
-			return fmt.Errorf("failed to migrate up to the first migration: %v", err)
-		}
-
-		for _, filename := range schemaOnlyMigrations {
-			sqlBytes, err := os.ReadFile("../migrations/" + filename)
-			if err != nil {
-				return fmt.Errorf("failed to read schema-only migration %s: %v", filename, err)
-			}
-			if _, err := database.driver.Exec(string(sqlBytes)); err != nil {
-				return fmt.Errorf("failed to apply schema-only migration %s: %v", filename, err)
-			}
-		}
+	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to apply migrations: %v", err)
 	}
 
 	return nil
