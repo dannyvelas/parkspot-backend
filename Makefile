@@ -37,6 +37,16 @@ migrate_prod_up_step:
 migrate_prod_down_step:
 	migrate -path .prodmigrations -database $(DATABASE_URL) -verbose down 1
 
+# Seed data (local dev only — plain SQL files, not golang-migrate-tracked,
+# never run against prod)
+.PHONY: seed_up
+seed_up:
+	for f in seeds/*.up.sql; do psql $(DATABASE_URL) -v ON_ERROR_STOP=1 -f $$f || exit 1; done
+
+.PHONY: seed_down
+seed_down:
+	for f in $$(ls -r seeds/*.down.sql); do psql $(DATABASE_URL) -v ON_ERROR_STOP=1 -f $$f || exit 1; done
+
 # test data
 .PHONY: gen_test_csvs
 gen_test_csvs:
