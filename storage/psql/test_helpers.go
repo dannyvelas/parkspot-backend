@@ -3,24 +3,13 @@ package psql
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/rs/zerolog/log"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
-
-// schemaOnlyMigrations lists migration files, beyond the base schema (version 1),
-// that contain schema changes rather than seed data. CreateSchemas applies these
-// directly (not via migrator.Migrate) because migrate.Migrate(N) walks every
-// intermediate version sequentially, which would also apply the seed-data
-// migrations (000002-000006) that tests deliberately skip.
-var schemaOnlyMigrations = []string{
-	"000007_quota_ledger.up.sql",
-}
 
 func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 	ctx := context.Background()
@@ -76,26 +65,8 @@ func CreateSchemasForTest(database Database) error {
 		return fmt.Errorf("failed to initialize migrate with migrate.Driver instance: %v", err)
 	}
 
-	if version, dirty, err := migrator.Version(); dirty {
-		return fmt.Errorf("error: database version is dirty. Please fix it")
-	} else if err != nil && err != migrate.ErrNilVersion {
-		return fmt.Errorf("error getting migrator version: %v", err)
-	} else if err != migrate.ErrNilVersion {
-		log.Info().Msgf("not applying any migrations because found a version of %d", version)
-	} else {
-		if err := migrator.Migrate(1); err != nil {
-			return fmt.Errorf("failed to migrate up to the first migration: %v", err)
-		}
-
-		for _, filename := range schemaOnlyMigrations {
-			sqlBytes, err := os.ReadFile("../migrations/" + filename)
-			if err != nil {
-				return fmt.Errorf("failed to read schema-only migration %s: %v", filename, err)
-			}
-			if _, err := database.driver.Exec(string(sqlBytes)); err != nil {
-				return fmt.Errorf("failed to apply schema-only migration %s: %v", filename, err)
-			}
-		}
+	if err := migrator.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to apply migrations: %v", err)
 	}
 
 	return nil
