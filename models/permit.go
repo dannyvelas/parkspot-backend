@@ -17,7 +17,6 @@ type Permit struct {
 	RequestTS       int64     `json:"requestTS"` // int64: type used by time package for unix time
 	AffectsDays     bool      `json:"affectsDays"`
 	ExceptionReason string    `json:"exceptionReason,omitempty"`
-	CancelledTS     *int64    `json:"cancelledTS,omitempty"`
 }
 
 func NewPermit(
@@ -74,10 +73,6 @@ func (p Permit) Equal(other Permit) bool {
 	} else if p.AffectsDays != other.AffectsDays {
 		return false
 	} else if p.ExceptionReason != other.ExceptionReason {
-		return false
-	} else if (p.CancelledTS == nil) != (other.CancelledTS == nil) {
-		return false
-	} else if p.CancelledTS != nil && *p.CancelledTS != *other.CancelledTS {
 		return false
 	}
 
