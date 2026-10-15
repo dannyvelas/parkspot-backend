@@ -16,7 +16,7 @@ func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres",
 		ExposedPorts: []string{"5432/tcp", "5432/tcp"},
-		WaitingFor:   wait.ForExposedPort(),
+		WaitingFor:   wait.ForLog("database system is ready to accept connections").WithOccurrence(2),
 		Env: map[string]string{
 			"POSTGRES_USER":     "postgres",
 			"POSTGRES_PASSWORD": "postgres",
