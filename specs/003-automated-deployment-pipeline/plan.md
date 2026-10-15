@@ -1,46 +1,40 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Automated CI/CD Deployment Pipeline
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Branch**: `003-automated-deployment-pipeline` | **Date**: 2026-10-15 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Input**: Feature specification from `/specs/003-automated-deployment-pipeline/spec.md`
 
 **Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Replace the current manual `scp`-based release process with a GitHub Actions workflow that triggers only on merged pull requests into `main`, builds and pushes a Docker image, and deploys it with **Kamal** (chosen over Dokku and hand-rolled scripting — see `research.md`) to the existing single production VPS that also hosts Postgres. Kamal's built-in `kamal-proxy` gives zero-downtime, health-check-gated traffic cutover (backed by a new `GET /up` endpoint) with automatic "stay on the last good version" behavior when a new release fails its health check; a Kamal pre-deploy hook runs the project's existing `golang-migrate` migrations against production before cutover; Postgres runs as a pinned-version Kamal accessory on a persistent Docker volume; a repo-tracked backup script + cron/timer unit (installed by the same bootstrap step that runs `kamal setup`) performs scheduled `pg_dump` uploads to object storage with a two-command `pg_restore` recovery path; secrets are resolved at deploy time from GitHub Actions encrypted secrets and the Bitwarden Secrets Manager CLI and injected purely as environment variables, never stored in the repo; and the workflow retries with backoff on server-unreachable failures and posts a Slack/Discord webhook notification when retries are exhausted or a deploy/migration fails.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**Language/Version**: Go 1.25 (existing app, unchanged); Bash (bootstrap/backup scripts); YAML (Kamal `config/deploy.yml`, GitHub Actions workflows); Ruby gem runtime for the `kamal` CLI itself (invoked from CI, not part of the app).
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: Kamal v2 (deploy orchestrator + bundled `kamal-proxy`), Docker Engine (build/runtime on both the CI image build step and the production host), `golang-migrate` CLI (already a project dependency/Makefile target — reused, not replaced), GitHub Actions (CI/CD platform, already hosts this repo), GitHub Container Registry (`ghcr.io`, image storage), Bitwarden Secrets Manager CLI (`bws`, app-secret resolution).
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: PostgreSQL, pinned minor version (e.g. `postgres:16.4`), run as a Kamal accessory container on the same host as the app, data on a named/persistent Docker volume. Backups: `pg_dump --format=custom` files uploaded on a schedule to S3-compatible object storage.
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: No change to the existing Go test suite (`go test`, `testcontainers-go`) — it continues to run as a required branch-protection check before merge. The deploy pipeline itself does not run tests; it is validated via the `GET /up` health check and the manual scenarios in `quickstart.md`.
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: Single Linux VPS reachable over SSH (current production host), with Docker installed by `kamal setup` as part of bootstrap. No Kubernetes/PaaS/multi-node orchestration.
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: Existing web service (Go/chi backend) + new operational/CI-CD surface (workflow YAML, Kamal config, bootstrap/backup scripts) committed to the same repo — not a new application component or additional deployable service.
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Performance Goals**: No new performance target for the application itself; the pipeline's own goal is 0 seconds of full-outage downtime per deploy/rollback (SC-003) and a health check that resolves within a few seconds of container start.
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: No secrets of any kind (plaintext or encrypted) committed to the repository; deploys and their migrations are serialized (never two in flight at once); the deploy pipeline must not re-run the test suite merged code already passed; a bounded retry/backoff budget before giving up and notifying the operator, rather than retrying forever.
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: Single production server, single Postgres instance, single application, solo operator — explicitly not designed for multi-region, multi-tenant, or multi-node scale.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+`.specify/memory/constitution.md` is still the unfilled placeholder template (no project-specific principles have been ratified yet), so there are no concrete gates to check this plan against. No violations to track; `Complexity Tracking` below is left empty accordingly. Re-checked after Phase 1 design: still no constitution in force, no new violations introduced.
 
 ## Project Structure
 
@@ -57,51 +51,37 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+api/                       # existing — adds one new unauthenticated handler
+└── health_handler.go      # GET /up (contracts/health-check-endpoint.md)
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+config/                    # existing — no changes; already env-var driven
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
+migrations/                # existing — unchanged format, now auto-applied by CI
 
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+.kamal/
+├── secrets                # resolves app secrets (GitHub secrets + bws) into env vars at deploy time
+└── hooks/
+    └── pre-deploy          # runs `migrate ... up` against production before cutover
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
+config/deploy.yml           # Kamal config: app image, servers, Postgres accessory (pinned
+                             # version + persistent volume), proxy/healthcheck settings
 
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+.github/
+└── workflows/
+    └── deploy.yml           # triggers on merged PR into main; build+push image, kamal deploy
+                              # with backoff retry, chat-webhook notification on failure
+
+ops/                         # new — reproducible host bootstrap & backup, checked into the repo
+├── bootstrap.sh             # idempotent: installs Docker (via `kamal setup`), installs backup
+│                             # cron/timer unit; the whole "new server" runbook
+└── backup/
+    ├── backup.sh            # pg_dump --format=custom | upload to object storage
+    └── parkspot-backup.timer / .cron    # schedule definition, installed by bootstrap.sh
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: This feature adds no new application module or service — it is almost entirely CI/CD and host-provisioning configuration layered onto the existing single Go backend. The only application code change is one new handler (`api/health_handler.go`) wired into the existing `chi` router in `api/server.go`. Everything else (`config/deploy.yml`, `.kamal/`, `.github/workflows/deploy.yml`, `ops/`) is new top-level pipeline/ops configuration, kept out of `config/`, `api/`, `app/`, and `storage/` (the existing application layering) so the deployment concern stays clearly separated from application code.
 
 ## Complexity Tracking
 
