@@ -24,7 +24,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit outstanding changes before clarification?
     description: Auto-commit before spec clarification
     condition: null
@@ -32,7 +32,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit outstanding changes before planning?
     description: Auto-commit before implementation planning
     condition: null
@@ -40,7 +40,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit outstanding changes before task generation?
     description: Auto-commit before task generation
     condition: null
@@ -48,7 +48,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit outstanding changes before implementation?
     description: Auto-commit before implementation
     condition: null
@@ -103,7 +103,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit clarification changes?
     description: Auto-commit after spec clarification
     condition: null
@@ -111,7 +111,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit plan changes?
     description: Auto-commit after implementation planning
     condition: null
@@ -126,7 +126,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit task changes?
     description: Auto-commit after task generation
     condition: null
@@ -134,7 +134,7 @@ hooks:
   - extension: git
     command: speckit.git.commit
     enabled: true
-    optional: true
+    optional: false
     prompt: Commit implementation changes?
     description: Auto-commit after implementation
     condition: null
