@@ -1,0 +1,52 @@
+service: parkspot-backend
+image: dannyvelas/parkspot-backend
+
+servers:
+  web:
+    hosts:
+      - park-spot.co
+
+proxy:
+  ssl: true
+  host: park-spot.co
+
+registry:
+  server: ghcr.io
+  username: dannyvelas
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+ssh:
+  user: deploy
+
+env:
+  clear:
+    PORT: 5000
+  secret:
+    - DATABASE_URL
+    - TOKEN_ACCESSSECRET
+    - TOKEN_REFRESHSECRET
+    - OAUTH_CLIENTID
+    - OAUTH_CLIENTSECRET
+    - OAUTH_REDIRECTURL
+    - OAUTH_SCOPE
+    - OAUTH_AUTHURL
+    - OAUTH_TOKENURL
+    - OAUTH_ACCESSTOKEN
+    - OAUTH_REFRESHTOKEN
+    - OAUTH_TOKENTYPE
+    - OAUTH_EXPIRY
+
+accessories:
+  postgres:
+    image: postgres:17.6
+    host: park-spot.co
+    port: "127.0.0.1:5432:5432"
+    env:
+      clear:
+        POSTGRES_USER: postgres
+        POSTGRES_DB: postgres
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
