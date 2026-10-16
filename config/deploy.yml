@@ -4,11 +4,15 @@ image: dannyvelas/parkspot-backend
 servers:
   web:
     hosts:
-      - park-spot.co
+      - 45.77.119.253
 
 proxy:
   ssl: true
-  host: park-spot.co
+  host: api.park-spot.co
+  app_port: 5000
+
+builder:
+  arch: amd64
 
 registry:
   server: ghcr.io
@@ -18,12 +22,19 @@ registry:
 
 ssh:
   user: deploy
+  port: 27983
+  keys:
+    - ~/.ssh/id_ed25519_parkspot_kamal
+  keys_only: true
 
 env:
   clear:
     PORT: 5000
   secret:
     - DATABASE_URL
+    - COOKIEDOMAIN
+    - CORSALLOWEDORIGINS
+    - FRONTENDURL
     - TOKEN_ACCESSSECRET
     - TOKEN_REFRESHSECRET
     - OAUTH_CLIENTID
@@ -40,7 +51,7 @@ env:
 accessories:
   postgres:
     image: postgres:17.6
-    host: park-spot.co
+    host: 45.77.119.253
     port: "127.0.0.1:5432:5432"
     env:
       clear:
