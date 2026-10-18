@@ -6,6 +6,7 @@ import (
 )
 
 type App struct {
+	Database        storage.Database
 	JWTService      JWTService
 	AuthService     AuthService
 	AdminService    AdminService
@@ -26,6 +27,7 @@ func NewApp(c config.Config, database storage.Database) App {
 	permitService := NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
 
 	return App{
+		Database:        database,
 		JWTService:      jwtService,
 		AuthService:     authService,
 		AdminService:    adminService,

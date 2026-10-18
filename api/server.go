@@ -51,11 +51,15 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	visitorHandler := newVisitorHandler(app.VisitorService)
 	carHandler := newCarHandler(app.CarService)
 	permitHandler := newPermitHandler(app.PermitService)
+	healthHandler := newHealthHandler(app.Database)
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, http.StatusOK, "hello world")
 	}))
+
+	// deployment health check (kamal-proxy polls this; see contracts/health-check-endpoint.md)
+	router.Get("/up", healthHandler.up())
 
 	// api
 	router.Route("/api", func(r chi.Router) {

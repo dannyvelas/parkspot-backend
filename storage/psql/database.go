@@ -43,6 +43,10 @@ func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	}, nil
 }
 
+func (database Database) Ping() error {
+	return database.driver.Ping()
+}
+
 func (database Database) AdminRepo() storage.AdminRepo {
 	return database.adminRepo
 }
