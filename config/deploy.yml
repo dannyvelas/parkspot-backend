@@ -4,7 +4,7 @@ image: dannyvelas/parkspot-backend
 servers:
   web:
     hosts:
-      - 45.77.119.253
+      - 45.77.73.20
 
 proxy:
   ssl: true
@@ -24,7 +24,7 @@ ssh:
   user: deploy
   port: 27983
   keys:
-    - ~/.ssh/id_ed25519_parkspot_kamal
+    - ~/.ssh/id_ed25519_parkspot-kamal
   keys_only: true
 
 env:
@@ -51,7 +51,7 @@ env:
 accessories:
   postgres:
     image: postgres:17.6
-    host: 45.77.119.253
+    host: 45.77.73.20
     port: "127.0.0.1:5432:5432"
     env:
       clear:
