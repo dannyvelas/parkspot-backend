@@ -15,20 +15,10 @@ This covers `kamal setup` + `kamal deploy` run from a laptop.
 | Deploy user | `ssh.user` |
 | Database | `postgres:17.6` accessory, container `parkspot-backend-postgres` |
 
-The commands below use these shell variables. Set them once per session, from `config/deploy.yml` and from `terraform output` in the [infra](https://github.com/dannyvelas/infra) repo:
-
-```fish
-set ip        (yq -r '.servers.web.hosts[0]' config/deploy.yml)
-set ssh_port  (yq -r '.ssh.port'             config/deploy.yml)
-set ssh_key   (yq -r '.ssh.keys[0]'          config/deploy.yml | string replace '~' $HOME)
-set admin_user (terraform output -raw admin_username)   # in the infra repo
-```
-
 ## What you need
 
 - `kamal` installed (`gem install kamal`; currently 2.10.1)
 - `bws` and `jq` on `PATH` — `.kamal/secrets` shells out to both
-- `yq` on `PATH`, for reading connection details out of `config/deploy.yml`
 - A `BWS_ACCESS_TOKEN` set in your env for the Bitwarden Secrets Manager project `c902bd7c-b27c-4791-bab1-b4e5003dac58`. Only having "read" permissions on this is fine.
 - A `KAMAL_REGISTRY_PASSWORD` set in your env for `kamal setup`. You can get this by generating a new personal access token on Github. The scope needed is `write:packages`. This allows Kamal to push and pull `ghcr.io/dannyvelas/parkspot-backend`.
 
