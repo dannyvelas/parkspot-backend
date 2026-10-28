@@ -18,5 +18,5 @@ set -euo pipefail
 CONTAINER=${POSTGRES_CONTAINER:-parkspot-backend-postgres}
 
 docker exec -i -e PGPASSWORD="$PGPASSWORD" "$CONTAINER" \
-  psql -U postgres -d postgres -v app_password="$APP_DB_PASSWORD" -f - \
+  psql -U postgres -d parkspot -v app_password="$APP_DB_PASSWORD" -f - \
   < "$(dirname "$0")/provision-app-role.sql"

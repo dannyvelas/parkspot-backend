@@ -56,7 +56,7 @@ accessories:
     env:
       clear:
         POSTGRES_USER: postgres
-        POSTGRES_DB: postgres
+        POSTGRES_DB: parkspot
       secret:
         - POSTGRES_PASSWORD
     directories:
