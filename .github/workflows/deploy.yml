@@ -12,6 +12,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # on.pull_request.branches already restricts this to PRs whose base is
+    # main; this guard is the piece that actually matters - excludes PRs
+    # that were closed WITHOUT merging (the trigger fires on both).
+    if: github.event.pull_request.merged == true
     steps:
       - uses: actions/checkout@v4
         with:
