@@ -22,11 +22,10 @@ func NewQuotaLedgerRepo(driver *sqlx.DB) storage.QuotaLedgerRepo {
 	return QuotaLedgerRepo{driver: driver}
 }
 
-// sqlGetter is satisfied by both *sqlx.DB and *sqlx.Tx, so insertPermit can
-// run outside a transaction (when a permit doesn't affect days) or inside
-// one (when it does and its ledger entry must be atomic with it).
+// sqlGetter is satisfied by both *sqlx.DB and *sqlx.Tx, so it can be a driver outside of a txn
+// or txn itself
 type sqlGetter interface {
-	Get(dest interface{}, query string, args ...interface{}) error
+	Get(dest any, query string, args ...any) error
 }
 
 func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLength int) (models.Permit, error) {
@@ -38,7 +37,7 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBExec, err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// FOR UPDATE tells Postgres to lock this resident row exclusively for the
 	// rest of this transaction, effectively using it as a mutex: if two
@@ -143,7 +142,7 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 	if err != nil {
 		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if _, err := tx.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2", now, permit.ID); err != nil {
 		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
@@ -173,7 +172,7 @@ func (r QuotaLedgerRepo) CreateAdjustment(entry models.QuotaLedger) (models.Quot
 	if err != nil {
 		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", errs.ErrDBExec, err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// locks the same resident row CreatePermitEntry locks, so an adjustment
 	// can't race a concurrent permit-creation check for the same resident.
