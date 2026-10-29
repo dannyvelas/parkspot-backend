@@ -8,6 +8,13 @@ on:
 permissions:
   contents: read
   packages: write
+  # Buildx's default provenance/SBOM attestations push an extra
+  # attestation manifest to ghcr.io, which needs these two in addition
+  # to packages: write - without them, the push fails with
+  # "denied: permission_denied: read_package" despite write access to
+  # the image itself.
+  attestations: write
+  id-token: write
 
 jobs:
   deploy:
