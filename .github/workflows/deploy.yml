@@ -1,0 +1,54 @@
+name: deploy
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - run: gem install kamal -v 2.10.1
+
+      - name: Set up SSH key for Kamal
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_parkspot-kamal
+          chmod 600 ~/.ssh/id_ed25519_parkspot-kamal
+          ssh-keyscan -p 27983 45.77.73.20 >> ~/.ssh/known_hosts
+
+      - name: kamal deploy
+        id: deploy
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+        run: kamal deploy
+
+      - name: Record deployment summary
+        # if always() makes it so that this also runs on failed deploys
+        if: always()
+        run: |
+          {
+            echo "## Deployment"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${{ github.event.pull_request.merge_commit_sha }}\` |"
+            echo "| PR | #${{ github.event.pull_request.number }} |"
+            echo "| Image tag | \`ghcr.io/dannyvelas/parkspot-backend:${{ github.event.pull_request.merge_commit_sha }}\` |"
+            echo "| Status | ${{ steps.deploy.outcome == 'success' && '✅ succeeded' || '❌ failed' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
