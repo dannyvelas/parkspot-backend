@@ -73,8 +73,6 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) CancelPermitEntry(permit models.
 		return nil
 	}
 
-	// same formula as creation (FR-011): the permit's own original
-	// request_ts, never the current time (FR-017).
 	quotaYearUTC := time.Unix(permit.RequestTS, 0).UTC().Year()
 	permitID := permit.ID
 	quotaLedgerRepoMock.nextEntryID++
