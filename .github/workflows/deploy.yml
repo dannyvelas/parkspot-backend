@@ -32,7 +32,27 @@ jobs:
           ssh-keyscan -p 27983 45.77.73.20 >> ~/.ssh/known_hosts
 
       - name: kamal deploy
+        id: deploy
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: kamal deploy
+
+      - name: Record deployment summary
+        if: always()
+        # github.sha reflects the pull_request event's own synthetic merge
+        # ref, not necessarily the real commit now on main (which is what
+        # we actually checked out via `ref: main` above, and what kamal
+        # deploy's git-SHA-based versioning uses) - merge_commit_sha is
+        # the one that matches.
+        run: |
+          {
+            echo "## Deployment"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${{ github.event.pull_request.merge_commit_sha }}\` |"
+            echo "| PR | #${{ github.event.pull_request.number }} |"
+            echo "| Image tag | \`ghcr.io/dannyvelas/parkspot-backend:${{ github.event.pull_request.merge_commit_sha }}\` |"
+            echo "| Status | ${{ steps.deploy.outcome == 'success' && '✅ succeeded' || '❌ failed' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
