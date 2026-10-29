@@ -24,6 +24,13 @@ jobs:
 
       - run: gem install kamal -v 2.10.1
 
+      - name: Install bws (Bitwarden Secrets Manager CLI)
+        run: |
+          curl -sL -o bws.zip https://github.com/bitwarden/sdk-sm/releases/download/bws-v2.1.0/bws-x86_64-unknown-linux-gnu-2.1.0.zip
+          sudo unzip -o bws.zip -d /usr/local/bin
+          sudo chmod +x /usr/local/bin/bws
+          rm bws.zip
+
       - name: Set up SSH key for Kamal
         run: |
           mkdir -p ~/.ssh
