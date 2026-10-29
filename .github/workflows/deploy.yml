@@ -39,12 +39,8 @@ jobs:
         run: kamal deploy
 
       - name: Record deployment summary
+        # if always() makes it so that this also runs on failed deploys
         if: always()
-        # github.sha reflects the pull_request event's own synthetic merge
-        # ref, not necessarily the real commit now on main (which is what
-        # we actually checked out via `ref: main` above, and what kamal
-        # deploy's git-SHA-based versioning uses) - merge_commit_sha is
-        # the one that matches.
         run: |
           {
             echo "## Deployment"
