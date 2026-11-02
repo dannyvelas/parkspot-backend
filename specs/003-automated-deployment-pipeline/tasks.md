@@ -80,8 +80,8 @@ Per `plan.md`'s Project Structure: application code changes live in `api/`; ever
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Implement `GET /up` in `api/health_handler.go` per `contracts/health-check-endpoint.md`: unauthenticated, returns `200 ok` only once the process confirms it can reach Postgres via the existing `storage/psql` connection; returns `503` otherwise. No version/internal info is exposed.
-- [ ] T016 [US2] Wire the `/up` route into the existing unauthenticated route group in `api/server.go` (alongside the current `/` "hello world" route), depends on T015.
+- [X] T015 [US2] Implement `GET /up` in `api/health_handler.go` per `contracts/health-check-endpoint.md`: unauthenticated, returns `200 ok` only once the process confirms it can reach Postgres via the existing `storage/psql` connection; returns `503` otherwise. No version/internal info is exposed. Already implemented (and T016's wiring already done alongside it) — verified against the contract and confirmed `go build ./...` passes.
+- [X] T016 [US2] Wire the `/up` route into the existing unauthenticated route group in `api/server.go` (alongside the current `/` "hello world" route), depends on T015. Already done: `router.Get("/up", healthHandler.up())` sits right next to the `/` route, outside any auth middleware/group.
 - [ ] T017 [US2] Add `api/health_handler_test.go` covering the healthy and DB-unreachable cases, matching the existing per-handler test convention (e.g. `car_handler_test.go`), depends on T015.
 - [ ] T018 [US2] Configure the `proxy.healthcheck` block in `config/deploy.yml` (from T006) to poll `GET /up` with a bounded number of attempts/interval before kamal-proxy cuts traffic over to a new container, depends on T006, T015.
 - [ ] T019 [US2] Verify the existing graceful-shutdown window in `main.go` (`server.ShutdownGracefully(30 * time.Second)`) is long enough to drain in-flight requests during a kamal-proxy cutover, and document the chosen Kamal `drain_timeout`/stop-grace setting in `config/deploy.yml` to match.
