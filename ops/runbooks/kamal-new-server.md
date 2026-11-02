@@ -55,7 +55,7 @@ kamal setup
 
 This installs Docker's buildx builder locally if needed, builds and pushes the image, boots `kamal-proxy`, boots the Postgres accessory, and starts the app container.
 
-## Step 5: Give the `deploy` workflow access to the image
+## Step 5: Hand the image over to the `deploy` workflow
 
 Confirm workflows are allowed to write packages:
 
@@ -69,11 +69,21 @@ If that prints `read`, set it to `write`:
 gh api -X PUT repos/dannyvelas/parkspot-backend/actions/permissions/workflow -f default_workflow_permissions=write
 ```
 
+Delete the package that `kamal setup` just created, at its [package settings](https://github.com/users/dannyvelas/packages/container/package/parkspot-backend) under **Danger Zone**. The app keeps running — the server already holds the image locally.
+
 Merge a no-op PR into `main`, then confirm the `deploy` workflow succeeded:
 
 ```sh
 gh run list --workflow=deploy.yml --limit 1
 ```
+
+Confirm the workflow recreated the package and linked it:
+
+```sh
+gh api user/packages/container/parkspot-backend --jq '{visibility, repository: .repository.full_name}'
+```
+
+`repository` must print `dannyvelas/parkspot-backend`. If `visibility` is not what you want, change it at the same package settings page, then re-run this step's no-op PR to confirm deploys still work.
 
 ## Step 6: Subsequent deploys
 
