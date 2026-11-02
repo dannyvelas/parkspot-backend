@@ -19,6 +19,7 @@ This covers `kamal setup` + `kamal deploy` run from a laptop.
 
 - `kamal` installed (`gem install kamal`; currently 2.10.1)
 - `bws` and `jq` on `PATH` — `.kamal/secrets` shells out to both
+- `gh` installed and authenticated (`gh auth status`)
 - A `BWS_ACCESS_TOKEN` set in your env for the Bitwarden Secrets Manager project `c902bd7c-b27c-4791-bab1-b4e5003dac58`. Only having "read" permissions on this is fine.
 - A `KAMAL_REGISTRY_PASSWORD` set in your env for `kamal setup`. You can get this by generating a new personal access token on Github. The scope needed is `write:packages`. This allows Kamal to push and pull `ghcr.io/dannyvelas/parkspot-backend`.
 
@@ -54,7 +55,27 @@ kamal setup
 
 This installs Docker's buildx builder locally if needed, builds and pushes the image, boots `kamal-proxy`, boots the Postgres accessory, and starts the app container.
 
-## Step 5: Subsequent deploys
+## Step 5: Give the `deploy` workflow access to the image
+
+Confirm workflows are allowed to write packages:
+
+```sh
+gh api repos/dannyvelas/parkspot-backend/actions/permissions/workflow --jq '.default_workflow_permissions'
+```
+
+If that prints `read`, set it to `write`:
+
+```sh
+gh api -X PUT repos/dannyvelas/parkspot-backend/actions/permissions/workflow -f default_workflow_permissions=write
+```
+
+Merge a no-op PR into `main`, then confirm the `deploy` workflow succeeded:
+
+```sh
+gh run list --workflow=deploy.yml --limit 1
+```
+
+## Step 6: Subsequent deploys
 
 ```sh
 kamal deploy
