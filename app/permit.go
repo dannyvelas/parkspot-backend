@@ -15,16 +15,18 @@ import (
 )
 
 type PermitService struct {
-	permitRepo   storage.PermitRepo
-	residentRepo storage.ResidentRepo
-	carService   CarService
+	permitRepo      storage.PermitRepo
+	residentRepo    storage.ResidentRepo
+	quotaLedgerRepo storage.QuotaLedgerRepo
+	carService      CarService
 }
 
-func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, carService CarService) PermitService {
+func NewPermitService(permitRepo storage.PermitRepo, residentRepo storage.ResidentRepo, quotaLedgerRepo storage.QuotaLedgerRepo, carService CarService) PermitService {
 	return PermitService{
-		permitRepo:   permitRepo,
-		residentRepo: residentRepo,
-		carService:   carService,
+		permitRepo:      permitRepo,
+		residentRepo:    residentRepo,
+		quotaLedgerRepo: quotaLedgerRepo,
+		carService:      carService,
 	}
 }
 
@@ -70,17 +72,12 @@ func (s PermitService) Delete(id int) error {
 		return err
 	}
 
-	if err = s.permitRepo.Delete(id); err != nil {
+	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
+	if err = s.quotaLedgerRepo.CancelPermitEntry(permit, permitLength); err != nil {
 		return err
 	}
 
-	permitLength := int(permit.EndDate.Sub(permit.StartDate).Hours() / 24)
 	if permit.AffectsDays {
-		err = s.residentRepo.AddToAmtParkingDaysUsed(permit.ResidentID, -permitLength)
-		if err != nil {
-			return fmt.Errorf("error subtracting amtParkingDaysUsed in residentRepo: %v", err)
-		}
-
 		err = s.carService.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
 		if err != nil && !errors.Is(err, errs.NotFound) {
 			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %v", err)
@@ -112,7 +109,7 @@ func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error
 	populatedPermit.AffectsDays = populatedPermit.ExceptionReason == "" && !*resident.UnlimDays
 	createdPermit, err := s.create(populatedPermit)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %v", err)
+		return models.Permit{}, fmt.Errorf("error creating permit in permitservice: %w", err)
 	}
 
 	return createdPermit, nil
@@ -244,17 +241,14 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 		return models.Resident{}, errs.ResidentTwoActivePermits
 	}
 
-	if resident.UnlimDays == nil || resident.AmtParkingDaysUsed == nil {
-		return models.Resident{}, fmt.Errorf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
+	if resident.UnlimDays == nil {
+		return models.Resident{}, fmt.Errorf("data type error in permit service validate create. unlimDays is nil")
 	}
 
-	if !*resident.UnlimDays {
-		if *resident.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return models.Resident{}, errs.EntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
-		} else if *resident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return models.Resident{}, errs.PermitPlusEntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
-		}
-	}
+	// the day-count check against the resident's effective allowance happens
+	// atomically inside quotaLedgerRepo.CreatePermitEntry, once AffectsDays is
+	// known (populatePermitCarFields runs after this function returns) — see
+	// s.create() and research.md §6.
 
 	return resident, nil
 }
@@ -284,27 +278,18 @@ func (s PermitService) validateDates(desiredPermit models.Permit) error {
 
 func (s PermitService) create(desiredPermit models.Permit) (models.Permit, error) {
 	permitLength := util.GetAmtDays(desiredPermit.StartDate, desiredPermit.EndDate)
-	if desiredPermit.AffectsDays {
-		err := s.residentRepo.AddToAmtParkingDaysUsed(desiredPermit.ResidentID, permitLength)
-		if err != nil {
-			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in residentRepo: %v", err)
-		}
 
-		err = s.carService.carRepo.AddToAmtParkingDaysUsed(desiredPermit.CarID, permitLength)
+	createdPermit, err := s.quotaLedgerRepo.CreatePermitEntry(desiredPermit, permitLength)
+	if err != nil {
+		return models.Permit{}, err
+	}
+
+	if desiredPermit.AffectsDays {
+		err = s.carService.carRepo.AddToAmtParkingDaysUsed(createdPermit.CarID, permitLength)
 		if err != nil {
 			return models.Permit{}, fmt.Errorf("error adding to amt parking days used in carRepo: %v", err)
 		}
 	}
 
-	permitID, err := s.permitRepo.Create(desiredPermit)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error create new permit in permitRepo: %v", err)
-	}
-
-	newPermit, err := s.permitRepo.GetOne(permitID)
-	if err != nil {
-		return models.Permit{}, fmt.Errorf("error getting permit after having created it in permitRepo: %v", err)
-	}
-
-	return newPermit, nil
+	return createdPermit, nil
 }
