@@ -10,7 +10,7 @@ type PermitRepo interface {
 	SelectCountWhere(permitFields models.Permit, selectOpts ...selectopts.SelectOpt) (int, error)
 	GetOne(id int) (models.Permit, error)
 	Create(desiredPermit models.Permit) (int, error)
-	Delete(id int) error
+	Cancel(id int) error
 	Update(permitFields models.Permit) error
 	Reset() error // for testing purposes
 }
