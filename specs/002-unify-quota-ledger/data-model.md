@@ -50,7 +50,7 @@ Field notes:
 |---|---|
 | `resident_id` | Whose usage this entry affects. |
 | `quota_year` | The allowance period this entry counts against — computed at write time (research.md §3), **never** recomputed from `created_at` later (FR-011). For a `PERMIT` entry, this is the period in effect when the permit was created. For its cancellation's offsetting entry, this is copied from the original entry's `quota_year`, not the period current at cancellation time (FR-017, clarification Q2). |
-| `amount` | Signed day count. Positive = adds to usage (a new permit, or a restrictive admin adjustment). Negative = removes from usage (a cancellation's offsetting entry, or a grant-style admin adjustment). |
+| `amount` | Signed day count. The sign is relative to the figure this entry feeds: a positive `PERMIT` entry adds to usage, and a positive `ADMIN_ADJUSTMENT` entry adds to the effective allowance. Negative values are reversals or reductions — a cancellation's offsetting `PERMIT` entry, or a restrictive admin adjustment. No entry ever feeds both figures (see the invariants below). |
 | `entry_type` | `'PERMIT'` (system-generated, alongside a permit create/cancel) or `'ADMIN_ADJUSTMENT'` (admin-recorded, requires `note` and `created_by_admin_id`). |
 | `permit_id` | Set only for `PERMIT` entries; `NULL` for `ADMIN_ADJUSTMENT`. References the permit whose creation or cancellation produced this row — always resolvable via `PermitRepo.GetOne`, even after the permit is cancelled. |
 | `created_by_admin_id` | Set only for `ADMIN_ADJUSTMENT` entries. |
@@ -59,8 +59,8 @@ Field notes:
 
 Invariants (enforced in `QuotaLedgerRepo`, not by any DB-role privilege change — research.md §2):
 - No `Update` or `Delete` method exists on `QuotaLedgerRepo`. Only `Create` (single entry, always inside the caller's transaction) and read methods.
-- A resident's derived usage for a period = `SUM(amount) WHERE resident_id = ? AND quota_year = ?` (`COALESCE(..., 0)` when no rows exist — this is what makes the annual reset automatic, FR-012).
-- A resident's effective allowance for a period = `20 + SUM(amount) WHERE resident_id = ? AND quota_year = ? AND entry_type = 'ADMIN_ADJUSTMENT'` (FR-006). Equivalently, "usage" already nets admin adjustments in; the two figures (FR-015) are reported separately to callers as described above.
+- A resident's derived usage for a period = `SUM(amount) WHERE resident_id = ? AND quota_year = ? AND entry_type = 'PERMIT'` (`COALESCE(..., 0)` when no rows exist — this is what makes the annual reset automatic, FR-012).
+- A resident's effective allowance for a period = `20 + SUM(amount) WHERE resident_id = ? AND quota_year = ? AND entry_type = 'ADMIN_ADJUSTMENT'` (FR-006). The two sums above partition the period's rows by `entry_type`, so no entry contributes to both figures; they are reported separately to callers (FR-015) as described above. Summing all rows together instead would count an admin adjustment twice — once in usage and once in the allowance — which cancels it out of the limit check entirely.
 
 ### `admin` (unchanged)
 

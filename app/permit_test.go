@@ -6,6 +6,7 @@ import (
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/psql"
 	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/google/go-cmp/cmp"
@@ -22,6 +23,7 @@ type permitTestSuite struct {
 	container       testcontainers.Container
 	permitService   PermitService
 	residentService ResidentService
+	quotaLedgerRepo storage.QuotaLedgerRepo
 
 	// this map is shared between multiple tests so it is kept here
 	desiredPermits map[string]models.Permit
@@ -44,6 +46,7 @@ func (suite *permitTestSuite) SetupSuite() {
 	carService := NewCarService(database.CarRepo())
 	suite.residentService = NewResidentService(database.ResidentRepo())
 	suite.permitService = NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
+	suite.quotaLedgerRepo = database.QuotaLedgerRepo()
 
 	{ // create residents
 		if _, err := suite.residentService.Create(models.TestResident); err != nil {
@@ -81,6 +84,10 @@ func (suite *permitTestSuite) TearDownSuite() {
 }
 
 func (suite *permitTestSuite) TearDownTest() {
+	if err := suite.quotaLedgerRepo.Reset(); err != nil {
+		suite.T().Fatalf("encountered error resetting quota ledger repo in-between tests")
+	}
+
 	err := suite.permitService.permitRepo.Reset()
 	if err != nil {
 		suite.T().Fatalf("encountered error resetting permit repo in-between tests")
@@ -367,6 +374,55 @@ func (suite *permitTestSuite) TestGetMaxExpired_Positive() {
 }
 
 // helpers
+func (suite *permitTestSuite) TestCreate_AdminAdjustmentRaisesEffectiveAllowance() {
+	residentID := models.TestResident.ID
+	quotaYearUTC := time.Now().UTC().Year()
+
+	eighteenDays := activeFor24Hrs(models.Permit{ResidentID: residentID, CarID: models.TestCar.ID}, 0)
+	eighteenDays.EndDate = eighteenDays.StartDate.Add(time.Hour * 24 * 18)
+	eighteenDays.AffectsDays = true
+	if _, err := suite.quotaLedgerRepo.CreatePermitEntry(eighteenDays, 18); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error creating the 18-day permit before test: %v", err))
+	}
+
+	balances, err := suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(),
+		models.QuotaBalance{DaysUsed: 18, EffectiveAllowance: config.MaxParkingDays},
+		balances[residentID])
+
+	threeDays := activeFor24Hrs(models.Permit{ResidentID: residentID, CarID: models.TestCar.ID}, 24)
+	threeDays.EndDate = threeDays.StartDate.Add(time.Hour * 24 * 3)
+	threeDays.AffectsDays = true
+	if _, err := suite.quotaLedgerRepo.CreatePermitEntry(threeDays, 3); err == nil {
+		require.Error(suite.T(), err, "the 3-day permit should be rejected at 18 of 20 days used")
+	}
+
+	adjustment := models.NewQuotaLedger(
+		residentID, quotaYearUTC, 5, models.EntryTypeAdminAdjustment,
+		nil, nil, util.ToPtr("board-approved extension"),
+	)
+	if _, err := suite.quotaLedgerRepo.CreateAdjustment(adjustment); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("error recording the admin adjustment: %v", err))
+	}
+
+	balances, err = suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(),
+		models.QuotaBalance{DaysUsed: 18, EffectiveAllowance: config.MaxParkingDays + 5},
+		balances[residentID])
+
+	if _, err := suite.quotaLedgerRepo.CreatePermitEntry(threeDays, 3); err != nil {
+		require.NoError(suite.T(), fmt.Errorf("the 3-day permit should be allowed after a +5 adjustment: %v", err))
+	}
+
+	balances, err = suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(),
+		models.QuotaBalance{DaysUsed: 21, EffectiveAllowance: config.MaxParkingDays + 5},
+		balances[residentID])
+}
+
 func activeFor24Hrs(permit models.Permit, offset time.Duration) models.Permit {
 	permit.StartDate = time.Now().Add(time.Hour * offset).Truncate(time.Second)
 	permit.EndDate = permit.StartDate.Add(time.Hour * 24)
