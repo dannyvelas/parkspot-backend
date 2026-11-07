@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# All Kamal hooks run locally, on whatever machine invokes `kamal deploy`
+# (confirmed from Kamal's own source: Kamal::Cli::Base#run_hook wraps the
+# hook in `run_locally`) - never via SSH on the target host. pre-deploy
+# and post-deploy are the only two hooks Kamal passes secrets to, so
+# DATABASE_URL is only available here (and in post-deploy), not in
+# pre-app-boot/post-app-boot despite those running closer to the actual
+# container boot.
+#
+# DATABASE_URL's host (parkspot-backend-postgres) only resolves inside
+# the production server's own Docker network, so it's unreachable
+# directly from here. Tunnel the accessory's host-loopback-bound port
+# (config/deploy.yml's "127.0.0.1:5432:5432") back to this machine via
+# SSH, then run the real migrate CLI through it.
+
+TUNNEL_PORT=15432
+
+ssh -f -N \
+  -p 27983 -i ~/.ssh/id_ed25519_parkspot-kamal \
+  -L "${TUNNEL_PORT}:127.0.0.1:5432" \
+  deploy@45.77.73.20
+
+TUNNELED_DATABASE_URL=$(echo "$DATABASE_URL" | sed -E 's#@[^/]+/#@127.0.0.1:'"$TUNNEL_PORT"'/#')
+
+migrate -path migrations -database "$TUNNELED_DATABASE_URL" up
