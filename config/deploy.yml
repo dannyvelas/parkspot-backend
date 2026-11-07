@@ -10,6 +10,10 @@ proxy:
   ssl: true
   host: api.park-spot.co
   app_port: 5000
+  healthcheck:
+    path: /up
+    interval: 1
+    timeout: 5
 
 builder:
   arch: amd64
