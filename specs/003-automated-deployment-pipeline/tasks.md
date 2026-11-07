@@ -99,7 +99,7 @@ Per `plan.md`'s Project Structure: application code changes live in `api/`; ever
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Wrap the `kamal deploy` step in `.github/workflows/deploy.yml` (from T010) with a bounded exponential-backoff retry for server-unreachable (SSH connection) failures.
+- [~] T021 [US3] Wrap the `kamal deploy` step in `.github/workflows/deploy.yml` (from T010) with a bounded exponential-backoff retry for server-unreachable (SSH connection) failures. Deliberately skipped — operator judgment call that this isn't needed.
 - [ ] T022 [US3] Add a final always-run step in `.github/workflows/deploy.yml` that posts a Slack/Discord incoming-webhook Notification (using the webhook URL secret from T005), firing when retries are exhausted or the deploy/health-check failed, per `data-model.md`'s Notification entity.
 - [ ] T023 [US3] Ensure the notification payload built in T022 includes `event_type` (`retries_exhausted` | `rollback_occurred`), PR number/commit SHA, and a short human-readable reason, per `contracts/ci-deploy-trigger.md`.
 - [ ] T024 [US3] Run `quickstart.md` Scenario 3 end-to-end: block SSH to the server, merge, confirm backoff attempts in the workflow log and a webhook notification once exhausted; then restore access and confirm a clean success with no stale alert.
