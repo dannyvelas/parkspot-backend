@@ -38,7 +38,7 @@ INSERT INTO quota_ledger (resident_id, quota_year_utc, amount, entry_type, note)
 SELECT
   r.id,
   EXTRACT(YEAR FROM (now() AT TIME ZONE 'UTC'))::int,
-  r.amt_parking_days_used - COALESCE(b.total, 0),
+  COALESCE(b.total, 0) - r.amt_parking_days_used,
   'ADMIN_ADJUSTMENT',
   'Migration reconciliation: preserves previously-recorded allowance from legacy amt_parking_days_used field'
 FROM resident r
@@ -46,6 +46,7 @@ LEFT JOIN (
   SELECT resident_id, SUM(amount) AS total
   FROM quota_ledger
   WHERE entry_type = 'PERMIT'
+    AND quota_year_utc = EXTRACT(YEAR FROM (now() AT TIME ZONE 'UTC'))::int
   GROUP BY resident_id
 ) b ON b.resident_id = r.id
 WHERE r.amt_parking_days_used <> COALESCE(b.total, 0);
