@@ -13,7 +13,15 @@ set -euo pipefail
 # the production server's own Docker network, so it's unreachable
 # directly from here. Tunnel the accessory's host-loopback-bound port
 # (config/deploy.yml's "127.0.0.1:5432:5432") back to this machine via
-# SSH, then run the real migrate CLI through it.
+# SSH, then run the already-built-and-pushed app image's own migrate
+# binary (cmd/migrate) through it, instead of a separately-installed
+# migrate CLI.
+#
+# config.NewConfig() hard-requires the OAUTH_* vars (everything else
+# has safe defaults) even though migrate itself never uses them -
+# Kamal::Secrets#to_h parses the whole .kamal/secrets file, so they're
+# already present in this hook's own environment and just need
+# forwarding into the container.
 
 TUNNEL_PORT=15432
 
@@ -24,4 +32,10 @@ ssh -f -N \
 
 TUNNELED_DATABASE_URL=$(echo "$DATABASE_URL" | sed -E 's#@[^/]+/#@127.0.0.1:'"$TUNNEL_PORT"'/#')
 
-migrate -path migrations -database "$TUNNELED_DATABASE_URL" up
+docker run --rm --network host \
+  --entrypoint /usr/local/bin/migrate \
+  -e DATABASE_URL="$TUNNELED_DATABASE_URL" \
+  -e OAUTH_CLIENTID -e OAUTH_CLIENTSECRET -e OAUTH_REDIRECTURL -e OAUTH_SCOPE \
+  -e OAUTH_AUTHURL -e OAUTH_TOKENURL -e OAUTH_ACCESSTOKEN -e OAUTH_REFRESHTOKEN \
+  -e OAUTH_TOKENTYPE -e OAUTH_EXPIRY \
+  "ghcr.io/dannyvelas/parkspot-backend:${KAMAL_VERSION}"
