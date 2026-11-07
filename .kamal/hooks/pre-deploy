@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TUNNEL_PORT=15432
+
+ssh -f -N \
+  -p 27983 -i ~/.ssh/id_ed25519_parkspot-kamal \
+  -L "${TUNNEL_PORT}:127.0.0.1:5432" \
+  deploy@45.77.73.20
+
+TUNNELED_DATABASE_URL=$(echo "$DATABASE_URL" | sed -E 's#@[^/]+/#@127.0.0.1:'"$TUNNEL_PORT"'/#')
+
+docker run --rm --network host \
+  --entrypoint /usr/local/bin/migrate \
+  -e DATABASE_URL="$TUNNELED_DATABASE_URL" \
+  -e OAUTH_CLIENTID -e OAUTH_CLIENTSECRET -e OAUTH_REDIRECTURL -e OAUTH_SCOPE \
+  -e OAUTH_AUTHURL -e OAUTH_TOKENURL -e OAUTH_ACCESSTOKEN -e OAUTH_REFRESHTOKEN \
+  -e OAUTH_TOKENTYPE -e OAUTH_EXPIRY \
+  "ghcr.io/dannyvelas/parkspot-backend:${KAMAL_VERSION}"
