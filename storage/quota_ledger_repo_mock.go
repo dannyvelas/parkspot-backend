@@ -26,8 +26,10 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) balance(residentID string, quota
 		if entry.ResidentID != residentID || entry.QuotaYearUTC != quotaYearUTC {
 			continue
 		}
-		daysUsed += entry.Amount
-		if entry.EntryType == models.EntryTypeAdminAdjustment {
+		switch entry.EntryType {
+		case models.EntryTypePermit:
+			daysUsed += entry.Amount
+		case models.EntryTypeAdminAdjustment:
 			adjustmentSum += entry.Amount
 		}
 	}
@@ -115,22 +117,26 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) SelectBalances(residentIDs []str
 		wanted[id] = true
 	}
 
+	seen := make(map[string]bool)
 	daysUsed := make(map[string]int)
 	adjustmentSum := make(map[string]int)
 	for _, entry := range quotaLedgerRepoMock.entries {
 		if entry.QuotaYearUTC != quotaYearUTC || !wanted[entry.ResidentID] {
 			continue
 		}
-		daysUsed[entry.ResidentID] += entry.Amount
-		if entry.EntryType == models.EntryTypeAdminAdjustment {
+		seen[entry.ResidentID] = true
+		switch entry.EntryType {
+		case models.EntryTypePermit:
+			daysUsed[entry.ResidentID] += entry.Amount
+		case models.EntryTypeAdminAdjustment:
 			adjustmentSum[entry.ResidentID] += entry.Amount
 		}
 	}
 
-	balances := make(map[string]models.QuotaBalance, len(daysUsed))
-	for residentID, used := range daysUsed {
+	balances := make(map[string]models.QuotaBalance, len(seen))
+	for residentID := range seen {
 		balances[residentID] = models.QuotaBalance{
-			DaysUsed:           used,
+			DaysUsed:           daysUsed[residentID],
 			EffectiveAllowance: config.MaxParkingDays + adjustmentSum[residentID],
 		}
 	}
