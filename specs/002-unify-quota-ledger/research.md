@@ -34,7 +34,7 @@
 
 ## 5. Backfill granularity at cutover
 
-**Decision**: The cutover migration inserts one `quota_ledger` row per existing qualifying permit (`entry_type='PERMIT'`, `permit_id` set, `quota_year` derived from that permit's own `request_ts`), then computes, per resident, the (small) residual difference between their old `resident.amt_parking_days_used` value and the sum just backfilled, and inserts at most one additional `entry_type='ADMIN_ADJUSTMENT'` row (`created_by_admin_id = NULL`, `note` explaining it's a migration reconciliation) to close that gap — mirroring the reconciliation SQL already present in `migrations/000007_quota_adjustment.up.sql`, adapted to per-permit backfill.
+**Decision**: The cutover migration inserts one `quota_ledger` row per existing qualifying permit (`entry_type='PERMIT'`, `permit_id` set, `quota_year` derived from that permit's own `request_ts`), then computes, per resident, the (small) residual between the *current period's* backfilled permit rows and their old `resident.amt_parking_days_used` value — `backfilled − legacy`, since the row lands in the effective allowance rather than in usage, and both sides must be scoped to the same period to be comparable — and inserts at most one additional `entry_type='ADMIN_ADJUSTMENT'` row (`created_by_admin_id = NULL`, `note` explaining it's a migration reconciliation) to close that gap — mirroring the reconciliation SQL already present in `migrations/000007_quota_adjustment.up.sql`, adapted to per-permit backfill.
 
 **Rationale**: Directly implements clarification Question 3/FR-013. Reuses the existing reconciliation-SQL shape from the (soon-removed) `000007` migration rather than inventing a new pattern.
 
@@ -45,8 +45,10 @@
 ```
 BEGIN;
 SELECT 1 FROM resident WHERE id = $1 FOR UPDATE;   -- lock this resident's row
-SELECT COALESCE(SUM(amount), 0) FROM quota_ledger WHERE resident_id = $1 AND quota_year = $2;
--- app code checks sum + permitLength <= 20 (or unlimited/exempt)
+SELECT COALESCE(SUM(amount) FILTER (WHERE entry_type = 'PERMIT'), 0),
+       COALESCE(SUM(amount) FILTER (WHERE entry_type = 'ADMIN_ADJUSTMENT'), 0)
+  FROM quota_ledger WHERE resident_id = $1 AND quota_year = $2;
+-- app code checks permitSum + permitLength <= 20 + adjustmentSum (or unlimited/exempt)
 INSERT INTO permit (...) VALUES (...) RETURNING id;
 INSERT INTO quota_ledger (resident_id, quota_year, amount, entry_type, permit_id) VALUES ($1, $2, $3, 'PERMIT', <new permit id>);
 COMMIT;
@@ -62,6 +64,6 @@ This lives on the new `QuotaLedgerRepo` (in `storage/psql`), which is handed the
 
 ## 7. Effective allowance computation stays a single grouped query
 
-**Decision**: `QuotaLedgerRepo` exposes `SelectBalances(residentIDs []string, quotaYear int) (map[string]int, error)` (or equivalent), built as one `SELECT resident_id, COALESCE(SUM(amount), 0) FROM quota_ledger WHERE quota_year = $1 GROUP BY resident_id` (optionally filtered to a set of IDs for a single page), used by `ResidentService.GetAll`/`GetOne` to attach each resident's derived usage — never a per-resident follow-up query. This directly satisfies FR-010/SC-003.
+**Decision**: `QuotaLedgerRepo` exposes `SelectBalances(residentIDs []string, quotaYear int) (map[string]models.QuotaBalance, error)` (or equivalent), built as one `SELECT resident_id, COALESCE(SUM(amount) FILTER (WHERE entry_type = 'PERMIT'), 0) AS days_used, COALESCE(SUM(amount) FILTER (WHERE entry_type = 'ADMIN_ADJUSTMENT'), 0) AS adjustment_sum FROM quota_ledger WHERE quota_year = $1 GROUP BY resident_id` (optionally filtered to a set of IDs for a single page), used by `ResidentService.GetAll`/`GetOne` to attach each resident's derived usage and effective allowance as two separate figures — never a per-resident follow-up query. This directly satisfies FR-010/SC-003/FR-015.
 
 **Rationale**: Matches the vault note's core fix for the N+1 problem and requires no caching layer, consistent with the note's own conclusion that a live aggregate is cheap at this data scale (tens to low hundreds of ledger rows per resident per year).
