@@ -59,3 +59,13 @@ jobs:
             echo "| Image tag | \`ghcr.io/dannyvelas/parkspot-backend:${{ github.event.pull_request.merge_commit_sha }}\` |"
             echo "| Status | ${{ steps.deploy.outcome == 'success' && '✅ succeeded' || '❌ failed' }} |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify Slack on deploy failure
+        if: failure()
+        run: |
+          payload=$(jq -n \
+            --arg pr "${{ github.event.pull_request.number }}" \
+            --arg sha "${{ github.event.pull_request.merge_commit_sha }}" \
+            --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{text: (":rotating_light: Deploy failed for PR #" + $pr + " (" + $sha + ")\n" + $url)}')
+          curl -sf -X POST -H "Content-Type: application/json" -d "$payload" "${{ secrets.DEPLOY_WEBHOOK_URL }}"
