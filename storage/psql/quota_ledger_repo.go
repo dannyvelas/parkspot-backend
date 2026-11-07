@@ -52,11 +52,11 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
 
 	var daysUsed, adjustmentSum int
 	err = tx.QueryRow(`
-    SELECT COALESCE(SUM(amount), 0),
-           COALESCE(SUM(amount) FILTER (WHERE entry_type = $1), 0)
+    SELECT COALESCE(SUM(amount) FILTER (WHERE entry_type = $1), 0),
+           COALESCE(SUM(amount) FILTER (WHERE entry_type = $2), 0)
     FROM quota_ledger
-    WHERE resident_id = $2 AND quota_year_utc = $3
-  `, string(models.EntryTypeAdminAdjustment), desiredPermit.ResidentID, quotaYearUTC).Scan(&daysUsed, &adjustmentSum)
+    WHERE resident_id = $3 AND quota_year_utc = $4
+  `, string(models.EntryTypePermit), string(models.EntryTypeAdminAdjustment), desiredPermit.ResidentID, quotaYearUTC).Scan(&daysUsed, &adjustmentSum)
 	if err != nil {
 		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBQuery, err)
 	}
@@ -226,12 +226,12 @@ func (r QuotaLedgerRepo) SelectBalances(residentIDs []string, quotaYearUTC int) 
 	rows := []balanceRow{}
 	err := r.driver.Select(&rows, `
     SELECT resident_id,
-           COALESCE(SUM(amount), 0) AS days_used,
-           COALESCE(SUM(amount) FILTER (WHERE entry_type = $1), 0) AS adjustment_sum
+           COALESCE(SUM(amount) FILTER (WHERE entry_type = $1), 0) AS days_used,
+           COALESCE(SUM(amount) FILTER (WHERE entry_type = $2), 0) AS adjustment_sum
     FROM quota_ledger
-    WHERE resident_id = ANY($2) AND quota_year_utc = $3
+    WHERE resident_id = ANY($3) AND quota_year_utc = $4
     GROUP BY resident_id
-  `, string(models.EntryTypeAdminAdjustment), pq.Array(residentIDs), quotaYearUTC)
+  `, string(models.EntryTypePermit), string(models.EntryTypeAdminAdjustment), pq.Array(residentIDs), quotaYearUTC)
 	if err != nil {
 		return nil, fmt.Errorf("quota_ledger_repo.SelectBalances: %w: %v", errs.ErrDBQuery, err)
 	}
