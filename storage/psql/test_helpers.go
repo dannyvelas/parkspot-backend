@@ -3,6 +3,8 @@ package psql
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"runtime"
 
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/golang-migrate/migrate/v4"
@@ -54,13 +56,27 @@ func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 	return postgresContainer, database, nil
 }
 
+func migrationsDirURL() (string, error) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("could not resolve the path of storage/psql/test_helpers.go")
+	}
+
+	return "file://" + filepath.Join(filepath.Dir(thisFile), "..", "..", "migrations"), nil
+}
+
 func CreateSchemasForTest(database Database) error {
 	driver, err := postgres.WithInstance(database.driver.DB, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("call to postgres.WithInstance failed to cast *sql.DB to migrate.Driver: %v", err)
 	}
 
-	migrator, err := migrate.NewWithDatabaseInstance("file://../migrations", "postgres", driver)
+	migrationsURL, err := migrationsDirURL()
+	if err != nil {
+		return err
+	}
+
+	migrator, err := migrate.NewWithDatabaseInstance(migrationsURL, "postgres", driver)
 	if err != nil {
 		return fmt.Errorf("failed to initialize migrate with migrate.Driver instance: %v", err)
 	}
