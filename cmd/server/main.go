@@ -5,7 +5,6 @@ import (
 	"github.com/dannyvelas/parkspot-backend/api"
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
-	"github.com/dannyvelas/parkspot-backend/migrations"
 	"github.com/dannyvelas/parkspot-backend/storage/psql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -18,12 +17,6 @@ import (
 func main() {
 	// logging setup
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
-	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		runMigrateCommand(os.Args[2:])
-		return
-	}
-
 	log.Info().Msg("Initializing app...")
 
 	// load config
@@ -58,23 +51,6 @@ func main() {
 	log.Info().Msgf("Closing server: %v", fatalErr)
 
 	server.ShutdownGracefully(30 * time.Second)
-}
-
-func runMigrateCommand(args []string) {
-	if len(args) != 1 || args[0] != "up" {
-		log.Fatal().Msg("usage: parkspot-backend migrate up")
-	}
-
-	c, err := config.NewConfig()
-	if err != nil {
-		log.Fatal().Msgf("Error loading config: %v", err)
-	}
-
-	if err := migrations.Up(c.Postgres.URL); err != nil {
-		log.Fatal().Msgf("Failed to apply migrations: %v", err)
-	}
-
-	log.Info().Msg("Migrations applied.")
 }
 
 func listenToInterrupt(errChannel chan<- error) {
