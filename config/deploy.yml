@@ -1,6 +1,14 @@
 service: parkspot-backend
 image: dannyvelas/parkspot-backend
 
+# when deploying, `drain_timeout` decides "once the new container is spun up,
+# and new requests are going to the new container, how many seconds should
+# kamal-proxy wait before killing requests that went to the old container
+# before the cutoff?" by hard-coding this to be the exact same value as what
+# we're sending to *http.Server.Shutdown (30 seconds), we make sure kamal doesn't
+# kill any connections that net/http wouldn't have killed anyway
+drain_timeout: 30
+
 servers:
   web:
     hosts:
@@ -10,6 +18,10 @@ proxy:
   ssl: true
   host: api.park-spot.co
   app_port: 5000
+  healthcheck:
+    path: /up
+    interval: 1
+    timeout: 5
 
 builder:
   arch: amd64
