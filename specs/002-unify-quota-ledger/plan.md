@@ -18,7 +18,7 @@ This plan replaces that in-progress design entirely with a single, unified, appe
 
 **Storage**: PostgreSQL (existing tables: `admin`, `resident`, `car`, `permit`, `visitor`; this feature adds `quota_ledger`, removes `quota_adjustment`)
 
-**Testing**: `stretchr/testify` (`suite` + `require`) with this repo's two established patterns: (a) real-Postgres integration tests via `testcontainers-go` + `storage/psql.NewSandboxDatabase()` (used by `app/permit_test.go`), and (b) mock-repo unit tests via hand-written `storage/*_repo_mock.go` implementations (used by `app/resident_test.go`). The new transactional lock-and-insert path (research.md §6) needs integration-test coverage (mocks can't meaningfully simulate row-level locking), so its concurrency test (Scenario 3.4 in `quickstart.md`) belongs in the `testcontainers-go` suite alongside `permit_test.go`.
+**Testing**: `stretchr/testify` (`suite` + `require`) with this repo's two established patterns: (a) real-Postgres integration tests via `testcontainers-go` + `storage/psql.NewSandboxDatabase()` (used by `app/permit_test.go` for service-level behaviour and by `storage/psql/quota_ledger_repo_test.go` for repo-level behaviour), and (b) mock-repo unit tests via hand-written `storage/*_repo_mock.go` implementations (used by `app/resident_test.go`). The new transactional lock-and-insert path (research.md §6) needs integration-test coverage (mocks can't meaningfully simulate row-level locking), so its concurrency test (Scenario 3.4 in `quickstart.md`) belongs in `storage/psql/quota_ledger_repo_test.go`, the `testcontainers-go` suite that sits alongside the repo it tests.
 
 **Target Platform**: Linux server (Heroku-deployed HTTP API)
 
