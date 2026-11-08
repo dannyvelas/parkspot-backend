@@ -20,14 +20,16 @@ ALTER TABLE permit ADD COLUMN IF NOT EXISTS cancelled_ts BIGINT;
 -- its original creation time and the allowance period (quota_year_utc) that was in
 -- effect then, so pre-cutover activity is exactly as individually auditable as
 -- anything created after this migration (see specs/002-unify-quota-ledger/spec.md FR-013)
+-- request_ts is null for permits created before that field was tracked (all of 2019,
+-- part of 2020), so those fall back to start_ts, which is never null
 INSERT INTO quota_ledger (resident_id, quota_year_utc, amount, entry_type, permit_id, created_at)
 SELECT
   p.resident_id,
-  EXTRACT(YEAR FROM (to_timestamp(p.request_ts) AT TIME ZONE 'UTC'))::int,
+  EXTRACT(YEAR FROM (to_timestamp(COALESCE(p.request_ts, p.start_ts)) AT TIME ZONE 'UTC'))::int,
   (p.end_ts - p.start_ts) / 86400,
   'PERMIT',
   p.id,
-  to_timestamp(p.request_ts)
+  to_timestamp(COALESCE(p.request_ts, p.start_ts))
 FROM permit p
 WHERE p.affects_days = true;
 
