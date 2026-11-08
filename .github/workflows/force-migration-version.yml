@@ -1,0 +1,51 @@
+name: force-migration-version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "schema_migrations version to force (no SQL is run, bookkeeping only)"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  force:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install bws (Bitwarden Secrets Manager CLI)
+        run: |
+          curl -sL -o bws.zip https://github.com/bitwarden/sdk-sm/releases/download/bws-v2.1.0/bws-x86_64-unknown-linux-gnu-2.1.0.zip
+          sudo unzip -o bws.zip -d /usr/local/bin
+          sudo chmod +x /usr/local/bin/bws
+          rm bws.zip
+
+      - name: Set up SSH key for Kamal
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_parkspot-kamal
+          chmod 600 ~/.ssh/id_ed25519_parkspot-kamal
+          ssh-keyscan -p 27983 45.77.73.20 >> ~/.ssh/known_hosts
+
+      - name: Open SSH tunnel to production Postgres
+        run: |
+          ssh -f -N -p 27983 -i ~/.ssh/id_ed25519_parkspot-kamal -L 15432:127.0.0.1:5432 deploy@45.77.73.20
+
+      - name: Resolve DATABASE_URL from Bitwarden
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+        run: |
+          bws secret list c902bd7c-b27c-4791-bab1-b4e5003dac58 --access-token "$BWS_ACCESS_TOKEN" --output json > /tmp/bws-secrets.json
+          PASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_APP_PASSWORD") | .value' /tmp/bws-secrets.json)
+          echo "DATABASE_URL=postgresql://parkspot_app:${PASSWORD}@127.0.0.1:15432/parkspot?sslmode=disable" >> "$GITHUB_ENV"
+          rm -f /tmp/bws-secrets.json
+
+      - name: Force schema_migrations version
+        run: go run .github/scripts/force-migration.go "${{ inputs.version }}"
