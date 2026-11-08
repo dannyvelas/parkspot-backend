@@ -97,6 +97,7 @@
   - [ ] same for residents
   - [ ] same for visitors
 - [ ] a permit being created in the middle of a container being evicted because of a new deployment, will follow-through being created
+- [ ] (DEPLOY) switch the Postgres accessory's storage in `ops/deploy.yml` from a bind-mounted directory to a named Docker volume -- not urgent, the bind mount already persists data correctly; this is a portability/permissions nicety, not a data-loss risk. Requires copying the real data into the new volume before any reboot that uses it, or the accessory would boot against an empty volume. See specs/003-automated-deployment-pipeline/tasks.md T030.
 - [x] split seed-data migrations (000002-000006) out of `migrations/` into a separate seed script/target, so `migrations/` is schema-only. this would let `storage/psql/database.go`'s `CreateSchemas` call the plain, un-special-cased migrate path instead of skipping specific files, and would let `.prodmigrations`/`migrate_prod_up_step` retire too, since prod could then just run every migration normally
 - see if we should do what demi-backend does where we don't have duplicates of storage / models data types.
 - see if there are any other differences to demi-backend.
