@@ -8,7 +8,7 @@ This is the one new interface the application exposes as part of this feature: t
 - **Success response**: `200 OK`, body `ok` (plain text; content is not machine-parsed by kamal-proxy, only the status code is).
   - Returned only once the process has verified it can serve requests — at minimum, that it can reach the configured Postgres database (reusing the existing `storage/psql` connection the app already opens at startup; this endpoint does not open a new connection per request).
 - **Failure response**: any non-`2xx` status (e.g., `503 Service Unavailable`) if the dependency check fails. kamal-proxy treats this as "not yet healthy" and keeps routing traffic to the previous version.
-- **Timeout/poll behavior**: kamal-proxy polls this endpoint on an interval with a bounded number of attempts (configured in `config/deploy.yml`'s `proxy.healthcheck` block) after the new container starts; exceeding that budget without a `200` is what produces the "deployment failed, traffic never switched" outcome described in User Story 2.
+- **Timeout/poll behavior**: kamal-proxy polls this endpoint on an interval with a bounded number of attempts (configured in `ops/deploy.yml`'s `proxy.healthcheck` block) after the new container starts; exceeding that budget without a `200` is what produces the "deployment failed, traffic never switched" outcome described in User Story 2.
 - **Idempotency**: safe to call any number of times; has no side effects.
 
 ## Out of scope for this endpoint

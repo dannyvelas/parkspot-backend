@@ -55,6 +55,6 @@ A message sent to the operator's chat app describing a pipeline event needing at
 
 The reproducible set of packages, pinned database version, persistent data volume, and scheduled jobs that constitute a production host.
 
-- **Identity**: the `config/deploy.yml` (Kamal config) + bootstrap/backup-cron files checked into the repo, as applied to a given host by `kamal setup`.
+- **Identity**: the `ops/deploy.yml` (Kamal config) + bootstrap/backup-cron files checked into the repo, as applied to a given host by `kamal setup`.
 - **Fields**: `postgres_image_tag` (pinned version), `volume_name` (persistent data volume), `backup_schedule` (cron/timer expression), `installed_packages` (Docker + whatever Kamal's setup installs).
 - **Relationships**: hosts zero or more Deployments over time; hosts exactly one Postgres accessory (with its Backups); hosts the backup cron job.
