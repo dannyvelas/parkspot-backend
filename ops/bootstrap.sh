@@ -26,18 +26,24 @@ kamal setup -c ops/deploy.yml
 
 echo "==> Provisioning the restricted parkspot_app Postgres role"
 BWS_SECRETS_FILE=$(mktemp)
+PROVISION_SECRETS_FILE=$(mktemp)
 
 # regardless of how this script ends, run rm -r "$BWS_SECRETS_FILE right before
-trap 'rm -f "$BWS_SECRETS_FILE"' EXIT
+trap 'rm -f "$BWS_SECRETS_FILE" "$PROVISION_SECRETS_FILE"' EXIT
 
 bws secret list "$BWS_PROJECT_ID" --access-token "$BWS_ACCESS_TOKEN" --output json > "$BWS_SECRETS_FILE"
 PGPASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_PASSWORD") | .value' "$BWS_SECRETS_FILE")
 APP_DB_PASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_APP_PASSWORD") | .value' "$BWS_SECRETS_FILE")
 
+chmod 600 "$PROVISION_SECRETS_FILE"
+printf 'PGPASSWORD=%s\nAPP_DB_PASSWORD=%s\n' "$PGPASSWORD" "$APP_DB_PASSWORD" > "$PROVISION_SECRETS_FILE"
+
 scp -P "$SSH_PORT" -i "$SSH_KEY" \
-  ops/postgres/provision-app-role.sh ops/postgres/provision-app-role.sql \
+  ops/postgres/provision-app-role.sh ops/postgres/provision-app-role.sql "$PROVISION_SECRETS_FILE" \
   "deploy@$SSH_HOST:/tmp/"
-$SSH "PGPASSWORD='$PGPASSWORD' APP_DB_PASSWORD='$APP_DB_PASSWORD' bash /tmp/provision-app-role.sh; rm -f /tmp/provision-app-role.sh /tmp/provision-app-role.sql"
+$SSH "mv /tmp/$(basename "$PROVISION_SECRETS_FILE") /tmp/provision-secrets.env && chmod 600 /tmp/provision-secrets.env && \
+      set -a && . /tmp/provision-secrets.env && set +a && bash /tmp/provision-app-role.sh; \
+      rm -f /tmp/provision-app-role.sh /tmp/provision-app-role.sql /tmp/provision-secrets.env"
 
 echo "==> Installing the backup cron/timer"
 if [ -f ops/backup/parkspot-backup.timer ] && [ -f ops/backup/parkspot-backup.service ]; then
