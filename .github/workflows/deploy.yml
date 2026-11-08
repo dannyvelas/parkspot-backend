@@ -43,7 +43,7 @@ jobs:
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-        run: kamal deploy
+        run: kamal deploy -c ops/deploy.yml
 
       - name: Record deployment summary
         # if always() makes it so that this also runs on failed deploys

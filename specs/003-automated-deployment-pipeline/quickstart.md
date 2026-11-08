@@ -1,6 +1,6 @@
 # Quickstart: Validating the Automated Deployment Pipeline
 
-This is a validation guide, not implementation code. It assumes the design in `plan.md`/`research.md`/`data-model.md` has been implemented: a `config/deploy.yml` (Kamal), a `GET /up` endpoint (`contracts/health-check-endpoint.md`), a GitHub Actions workflow (`contracts/ci-deploy-trigger.md`), a backup script + cron unit, and branch protection on `main`.
+This is a validation guide, not implementation code. It assumes the design in `plan.md`/`research.md`/`data-model.md` has been implemented: an `ops/deploy.yml` (Kamal), a `GET /up` endpoint (`contracts/health-check-endpoint.md`), a GitHub Actions workflow (`contracts/ci-deploy-trigger.md`), a backup script + cron unit, and branch protection on `main`.
 
 ## Prerequisites
 
@@ -42,9 +42,9 @@ This is a validation guide, not implementation code. It assumes the design in `p
 ## Scenario 5 — Fresh server bootstrap (User Story 5)
 
 1. Provision a brand-new, empty test server.
-2. Run only the documented bootstrap command(s) (`kamal setup` against this new host, pointed at the same `config/deploy.yml`) — no other manual configuration.
+2. Run only the documented bootstrap command(s) (`kamal setup` against this new host, pointed at the same `ops/deploy.yml`) — no other manual configuration.
 3. **Expect**: Docker is installed, the pinned Postgres accessory is running with its persistent volume, the backup cron/timer is present (`crontab -l` or `systemctl list-timers`), and the app container is running and passing `/up`.
-4. Change the pinned Postgres image tag in `config/deploy.yml` and re-run the accessory boot step.
+4. Change the pinned Postgres image tag in `ops/deploy.yml` and re-run the accessory boot step.
 5. **Expect**: the new server now runs the newly pinned version, confirmed via `docker exec <postgres accessory> postgres --version`.
 
 ## Scenario 6 — Backup and restore (User Story 6)

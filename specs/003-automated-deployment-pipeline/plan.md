@@ -12,7 +12,7 @@ Replace the current manual `scp`-based release process with a GitHub Actions wor
 
 ## Technical Context
 
-**Language/Version**: Go 1.25 (existing app, unchanged); Bash (bootstrap/backup scripts); YAML (Kamal `config/deploy.yml`, GitHub Actions workflows); Ruby gem runtime for the `kamal` CLI itself (invoked from CI, not part of the app).
+**Language/Version**: Go 1.25 (existing app, unchanged); Bash (bootstrap/backup scripts); YAML (Kamal `ops/deploy.yml`, GitHub Actions workflows); Ruby gem runtime for the `kamal` CLI itself (invoked from CI, not part of the app).
 
 **Primary Dependencies**: Kamal v2 (deploy orchestrator + bundled `kamal-proxy`), Docker Engine (build/runtime on both the CI image build step and the production host), `golang-migrate` CLI (already a project dependency/Makefile target — reused, not replaced), GitHub Actions (CI/CD platform, already hosts this repo), GitHub Container Registry (`ghcr.io`, image storage), Bitwarden Secrets Manager CLI (`bws`, app-secret resolution).
 
@@ -65,15 +65,14 @@ migrations/                # existing — unchanged format, now auto-applied by 
 └── hooks/
     └── pre-deploy          # runs `migrate ... up` against production before cutover
 
-config/deploy.yml           # Kamal config: app image, servers, Postgres accessory (pinned
-                             # version + persistent volume), proxy/healthcheck settings
-
 .github/
 └── workflows/
     └── deploy.yml           # triggers on merged PR into main; build+push image, kamal deploy
                               # with backoff retry, chat-webhook notification on failure
 
 ops/                         # new — reproducible host bootstrap & backup, checked into the repo
+├── deploy.yml               # Kamal config: app image, servers, Postgres accessory (pinned
+│                             # version + persistent volume), proxy/healthcheck settings
 ├── bootstrap.sh             # idempotent: installs Docker (via `kamal setup`), installs backup
 │                             # cron/timer unit; the whole "new server" runbook
 └── backup/
@@ -81,7 +80,7 @@ ops/                         # new — reproducible host bootstrap & backup, che
     └── parkspot-backup.timer / .cron    # schedule definition, installed by bootstrap.sh
 ```
 
-**Structure Decision**: This feature adds no new application module or service — it is almost entirely CI/CD and host-provisioning configuration layered onto the existing single Go backend. The only application code change is one new handler (`api/health_handler.go`) wired into the existing `chi` router in `api/server.go`. Everything else (`config/deploy.yml`, `.kamal/`, `.github/workflows/deploy.yml`, `ops/`) is new top-level pipeline/ops configuration, kept out of `config/`, `api/`, `app/`, and `storage/` (the existing application layering) so the deployment concern stays clearly separated from application code.
+**Structure Decision**: This feature adds no new application module or service — it is almost entirely CI/CD and host-provisioning configuration layered onto the existing single Go backend. The only application code change is one new handler (`api/health_handler.go`) wired into the existing `chi` router in `api/server.go`. Everything else (`ops/` — including `ops/deploy.yml` — `.kamal/`, and `.github/workflows/deploy.yml`) is new top-level pipeline/ops configuration, kept out of `config/`, `api/`, `app/`, and `storage/` (the existing application layering) so the deployment concern stays clearly separated from application code.
 
 ## Complexity Tracking
 
