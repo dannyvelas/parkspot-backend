@@ -100,6 +100,37 @@ func (suite *quotaLedgerRepoTestSuite) TestAdminAdjustmentRaisesEffectiveAllowan
 		balances[residentID])
 }
 
+func (suite *quotaLedgerRepoTestSuite) TestCancelPermitEntryTwiceCreditsTheDaysOnce() {
+	residentID := models.TestResident.ID
+	quotaYearUTC := time.Now().UTC().Year()
+
+	createdPermit, err := suite.quotaLedgerRepo.CreatePermitEntry(permitLasting(residentID, 10, 0), 10)
+	require.NoError(suite.T(), err)
+
+	balances, err := suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), 10, balances[residentID].DaysUsed)
+
+	require.NoError(suite.T(), suite.quotaLedgerRepo.CancelPermitEntry(createdPermit, 10))
+
+	balances, err = suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), 0, balances[residentID].DaysUsed)
+
+	require.NoError(suite.T(), suite.quotaLedgerRepo.CancelPermitEntry(createdPermit, 10),
+		"a repeated cancellation should succeed silently rather than error")
+
+	balances, err = suite.quotaLedgerRepo.SelectBalances([]string{residentID}, quotaYearUTC)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), 0, balances[residentID].DaysUsed,
+		"a second cancellation must not credit the days back again")
+
+	history, err := suite.quotaLedgerRepo.SelectHistory(residentID)
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), history, 2,
+		"expected exactly one creation entry and one cancellation entry")
+}
+
 func permitLasting(residentID string, days int, offset time.Duration) models.Permit {
 	startDate := time.Now().Add(offset).Truncate(time.Second)
 
