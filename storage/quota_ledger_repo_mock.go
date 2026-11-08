@@ -75,6 +75,13 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) CancelPermitEntry(permit models.
 		return nil
 	}
 
+	for _, entry := range quotaLedgerRepoMock.entries {
+		if entry.EntryType == models.EntryTypePermit && entry.PermitID != nil &&
+			*entry.PermitID == permit.ID && entry.Amount < 0 {
+			return nil
+		}
+	}
+
 	quotaYearUTC := time.Unix(permit.RequestTS, 0).UTC().Year()
 	permitID := permit.ID
 	quotaLedgerRepoMock.nextEntryID++

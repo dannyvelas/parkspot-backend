@@ -132,7 +132,7 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 	now := time.Now().Unix()
 
 	if !permit.AffectsDays {
-		if _, err := r.driver.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2", now, permit.ID); err != nil {
+		if _, err := r.driver.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2 AND cancelled_ts IS NULL", now, permit.ID); err != nil {
 			return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
 		}
 		return nil
@@ -144,8 +144,16 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if _, err := tx.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2", now, permit.ID); err != nil {
+	result, err := tx.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2 AND cancelled_ts IS NULL", now, permit.ID)
+	if err != nil {
 		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+	} else if rowsAffected == 0 {
+		return nil
 	}
 
 	// same quota_year_utc formula as creation (FR-011), computed from the
