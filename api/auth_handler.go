@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -118,21 +118,13 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 			return
 		}
 
-		authHeader := r.Header.Get("Authorization")
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			log.Debug().Msg("No 'Authorization' header was present with 'Bearer ' prefix.")
-			respondError(w, errs.Unauthorized)
-			return
-		}
-
-		accessToken := strings.TrimPrefix(authHeader, "Bearer ")
-		user, err := h.jwtService.ParseAccess(accessToken)
+		accessPayload, err := ctxGetAccessPayload(r.Context())
 		if err != nil {
-			respondError(w, errs.Unauthorized)
+			respondError(w, fmt.Errorf("auth_handler.resetPassword: error getting access payload: %v", err))
 			return
 		}
 
-		if err := h.authService.ResetPassword(user.ID, payload.Password); err != nil {
+		if err := h.authService.ResetPassword(accessPayload.ID, payload.Password); err != nil {
 			respondError(w, err)
 			return
 		}
