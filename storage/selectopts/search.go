@@ -16,5 +16,11 @@ func (search search) Dispatch(repo Repo, selector squirrel.SelectBuilder) squirr
 	if search.search == "" {
 		return selector
 	}
-	return selector.Where(repo.SearchAsSQL(search.search))
+
+	searchRepo, ok := repo.(SearchRepo)
+	if !ok {
+		return selector
+	}
+
+	return selector.Where(searchRepo.SearchAsSQL(search.search))
 }
