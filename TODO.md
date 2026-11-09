@@ -81,10 +81,10 @@
 - [x] make "Domain" property of httpCookie a config value instead of a hard-coded one
 - [x] use a shared testResident between app/car\_test.go and app/permit\_test.go
 - [x] move `app/test_helpers.go` to storage/
-- [ ] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
+- [x] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
 - [ ] add resident getone functions which just wraps over resident.selectwhere
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
-- [ ] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
+- [x] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
 - [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
 - [ ] start using require in resident\_test

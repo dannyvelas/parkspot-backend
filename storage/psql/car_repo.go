@@ -192,7 +192,7 @@ func (carRepo CarRepo) Reset() error {
 	return nil
 }
 
-// SearchAsSQL implements selectops.Repo
+// SearchAsSQL implements selectopts.SearchRepo
 func (carRepo CarRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
