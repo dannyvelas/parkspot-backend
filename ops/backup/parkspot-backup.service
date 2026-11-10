@@ -1,0 +1,7 @@
+[Unit]
+Description=parkspot database backup
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/parkspot-backup.env
+ExecStart=/usr/local/bin/parkspot-backup.sh
