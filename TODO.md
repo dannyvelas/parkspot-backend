@@ -100,6 +100,8 @@
 - [ ] (DEPLOY) switch the Postgres accessory's storage in `ops/deploy.yml` from a bind-mounted directory to a named Docker volume -- not urgent, the bind mount already persists data correctly; this is a portability/permissions nicety, not a data-loss risk. Requires copying the real data into the new volume before any reboot that uses it, or the accessory would boot against an empty volume. See specs/003-automated-deployment-pipeline/tasks.md T030.
 - [ ] (DEPLOY) before ever bumping the Postgres accessory's pinned image tag in `ops/deploy.yml`, verify the upgrade path first. A minor/patch bump (e.g. `17.6` -> `17.7`) is safe to just reboot. A major bump (e.g. `17.x` -> `18.x`) is not -- Postgres refuses to start a newer major version against an older major version's on-disk data, you'd need `pg_upgrade` or a dump/restore first. Never tested either path for real yet. See specs/003-automated-deployment-pipeline/tasks.md T031.
 - [ ] (DEPLOY) `ops/bootstrap.sh` has never actually been run start-to-finish against a real brand-new server -- only its individual pieces (`kamal setup`, `provision-app-role.sh`) have been verified separately, against the already-existing production server. Next time a genuinely new server needs provisioning, that's the real end-to-end test. See specs/003-automated-deployment-pipeline/tasks.md T032.
+- [ ] (DEPLOY) `ops/backup/backup.sh`'s systemd timer fails silently right now -- if the dump or upload breaks, nothing notifies anyone, you'd only find out by checking `systemctl status`/`journalctl` by hand. Add a failure notification reusing the Slack webhook already built for deploys (`DEPLOY_WEBHOOK_URL`, T022) via `OnFailure=` on the systemd service.
+- [ ] (DEPLOY) consider a dead-man's-switch ping (e.g. healthchecks.io, free tier) for the backup timer -- catches the timer not firing at all, not just a failed run, which a self-reported Slack alert from inside backup.sh can't catch.
 - [x] split seed-data migrations (000002-000006) out of `migrations/` into a separate seed script/target, so `migrations/` is schema-only. this would let `storage/psql/database.go`'s `CreateSchemas` call the plain, un-special-cased migrate path instead of skipping specific files, and would let `.prodmigrations`/`migrate_prod_up_step` retire too, since prod could then just run every migration normally
 - see if we should do what demi-backend does where we don't have duplicates of storage / models data types.
 - see if there are any other differences to demi-backend.
@@ -162,8 +164,8 @@
 - [x] probably remove getters from config files, too verbose, not much benefit (it makes sense in theory but not in practice. when are you really going to accidentally override a config value? the answer is probably never)
 - [ ] increment token version on password reset
 - [ ] add expiration JWT time to constants
-- [ ] make python script also generate down migration file 
-- [ ] make python script add line to `migrations/000001_schemas.down.sql` to drop table
+- [✗] make python script also generate down migration file 
+- [✗] make python script add line to `migrations/000001_schemas.down.sql` to drop table
 - [ ] add logging when a non-null empty string is read from db (aka when NullString.Valid is true but NullString.string == '')
 - [ ] explore using validator
 - [ ] fix respond.go. it doesn't actually set response at 500 when JSON encoding fails
