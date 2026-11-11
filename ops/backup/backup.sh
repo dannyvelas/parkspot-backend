@@ -21,6 +21,10 @@ fi
 DUMP_FILE=$(mktemp -t parkspot-backup-XXXXXX.dump)
 trap 'rm -f "$DUMP_FILE"' EXIT
 
+# kamal created a docker network via `docker network create`. in a docker network,
+# docker containers can resolve eachother by name. this is because docker runs a
+# DNS server. whenever a container looks up the name of another container, the
+# the DNS server will respond with an IP address
 pg_dump --format=custom -h "$POSTGRES_HOST" -U parkspot_app -d parkspot > "$DUMP_FILE"
 
 OBJECT_KEY="parkspot-$(date -u +%Y%m%dT%H%M%SZ).dump"
