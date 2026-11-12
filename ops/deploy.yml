@@ -73,3 +73,16 @@ accessories:
         - POSTGRES_PASSWORD
     directories:
       - data:/var/lib/postgresql/data
+  backup:
+    image: ghcr.io/dannyvelas/parkspot-backup:latest
+    host: 45.77.73.20
+    registry:
+      server: ghcr.io
+      username: dannyvelas
+      password:
+        - KAMAL_REGISTRY_PASSWORD
+    env:
+      secret:
+        - POSTGRES_APP_PASSWORD
+        - VULTR_OBJECT_STORAGE_ACCESS_KEY
+        - VULTR_OBJECT_STORAGE_SECRET_KEY
