@@ -6,8 +6,8 @@ trap 'stopping=1; [[ -n "$sleeper" ]] && kill "$sleeper" 2>/dev/null' TERM INT
 
 while (( ! stopping )); do
   now=$(date -u +%s)
-  next=$(date -u -d 'today 03:00' +%s)
-  (( next <= now )) && next=$(date -u -d 'tomorrow 03:00' +%s)
+  next=$(date -u -d 'today 10:30' +%s)
+  (( next <= now )) && next=$(date -u -d 'tomorrow 10:30' +%s)
 
   sleep $(( next - now )) & sleeper=$!
   (( stopping )) && kill "$sleeper" 2>/dev/null
