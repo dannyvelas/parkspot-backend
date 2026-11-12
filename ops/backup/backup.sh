@@ -14,6 +14,7 @@ export AWS_SECRET_ACCESS_KEY="$VULTR_OBJECT_STORAGE_SECRET_KEY"
 export AWS_DEFAULT_REGION=us-east-1
 export PGPASSWORD="$POSTGRES_APP_PASSWORD"
 
+# check if bucket already exists. if not, create it. this should only execute the first time this script is run
 if ! aws --endpoint-url "$S3_ENDPOINT" s3api head-bucket --bucket "$S3_BUCKET" 2>/dev/null; then
   aws --endpoint-url "$S3_ENDPOINT" s3 mb "s3://$S3_BUCKET"
 fi
