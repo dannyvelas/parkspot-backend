@@ -38,6 +38,13 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519_parkspot-kamal
           ssh-keyscan -p 27983 45.77.73.20 >> ~/.ssh/known_hosts
 
+      # the `kamal deploy` task pushes the parkspot-backend image to ghcr, but not our backup accessory image. so we're doing that here
+      - name: Build and push backup accessory image
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker build -t ghcr.io/dannyvelas/parkspot-backup:latest -f ops/backup/Dockerfile ops/backup
+          docker push ghcr.io/dannyvelas/parkspot-backup:latest
+
       - name: kamal deploy
         id: deploy
         env:
