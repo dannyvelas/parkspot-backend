@@ -2,14 +2,15 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"time"
 )
 
 type Server struct {
@@ -58,7 +59,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		respondJSON(w, http.StatusOK, "hello world")
 	}))
 
-	// deployment health check (kamal-proxy polls this; see contracts/health-check-endpoint.md)
+	// deployment health check
 	router.Get("/up", healthHandler.up())
 
 	// api
