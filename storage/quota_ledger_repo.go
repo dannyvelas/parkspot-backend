@@ -9,7 +9,7 @@ import (
 // permit's creation/cancellation or recorded manually by an admin. Entries
 // are permanent once created: this interface deliberately exposes no
 // Update/Delete method, so it is structurally impossible for a caller to
-// mutate or remove one (spec FR-002).
+// mutate or remove one
 type QuotaLedgerRepo interface {
 	// CreatePermitEntry inserts a permit and, if it affects days, a
 	// same-transaction PERMIT-type ledger entry for permitLength days,

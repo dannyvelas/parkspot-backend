@@ -29,8 +29,7 @@ migrate_create:
 migrate_version:
 	migrate -path migrations -database $(DATABASE_URL) version
 
-# Seed data (local dev only — plain SQL files, not golang-migrate-tracked,
-# never run against prod)
+# Seed data (local dev only — plain SQL files, not golang-migrate-tracked, never run against prod)
 .PHONY: seed_up
 seed_up:
 	for f in seeds/*.up.sql; do psql $(DATABASE_URL) -v ON_ERROR_STOP=1 -f $$f || exit 1; done

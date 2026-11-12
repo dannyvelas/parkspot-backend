@@ -156,10 +156,10 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 		return nil
 	}
 
-	// same quota_year_utc formula as creation (FR-011), computed from the
-	// permit's own original request_ts, never from the current time — a
+	// same quota_year_utc formula as creation, computed from the
+	// permit's own original request_ts, never from the current time. a
 	// cancellation must net against the period it was originally booked
-	// against, not whichever period happens to be current now (FR-017).
+	// against, not whichever period happens to be current now
 	quotaYearUTC := time.Unix(permit.RequestTS, 0).UTC().Year()
 	if _, err := tx.Exec(`
     INSERT INTO quota_ledger (resident_id, quota_year_utc, amount, entry_type, permit_id)
