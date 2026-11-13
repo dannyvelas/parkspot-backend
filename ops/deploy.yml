@@ -76,11 +76,6 @@ accessories:
   backup:
     image: ghcr.io/dannyvelas/parkspot-backup:latest
     host: 45.77.73.20
-    registry:
-      server: ghcr.io
-      username: dannyvelas
-      password:
-        - KAMAL_REGISTRY_PASSWORD
     env:
       secret:
         - POSTGRES_APP_PASSWORD
