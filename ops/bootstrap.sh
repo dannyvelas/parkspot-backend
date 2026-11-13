@@ -19,6 +19,7 @@ SSH="ssh -p $SSH_PORT -i $SSH_KEY deploy@$SSH_HOST"
 # expand that to a command, which it's not. so we use ":" to act as the command which
 # does nothing.
 : "${BWS_ACCESS_TOKEN:?BWS_ACCESS_TOKEN must be set}"
+: "${KAMAL_REGISTRY_PASSWORD:?KAMAL_REGISTRY_PASSWORD must be set}"
 BWS_PROJECT_ID=c902bd7c-b27c-4791-bab1-b4e5003dac58
 
 echo "==> kamal setup (Docker, app container, Postgres accessory, backup accessory)"
