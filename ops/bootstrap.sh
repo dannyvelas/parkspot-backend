@@ -33,11 +33,12 @@ PROVISION_SECRETS_FILE=$(mktemp)
 trap 'rm -f "$BWS_SECRETS_FILE" "$PROVISION_SECRETS_FILE"' EXIT
 
 bws secret list "$BWS_PROJECT_ID" --access-token "$BWS_ACCESS_TOKEN" --output json > "$BWS_SECRETS_FILE"
+# named PGPASSWORD, not POSTGRES_PASSWORD, because psql and pg_dump expect that exact env name
 PGPASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_PASSWORD") | .value' "$BWS_SECRETS_FILE")
-APP_DB_PASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_APP_PASSWORD") | .value' "$BWS_SECRETS_FILE")
+POSTGRES_APP_PASSWORD=$(jq -r '.[] | select(.key=="POSTGRES_APP_PASSWORD") | .value' "$BWS_SECRETS_FILE")
 
 chmod 600 "$PROVISION_SECRETS_FILE"
-printf 'PGPASSWORD=%s\nAPP_DB_PASSWORD=%s\n' "$PGPASSWORD" "$APP_DB_PASSWORD" > "$PROVISION_SECRETS_FILE"
+printf 'PGPASSWORD=%s\nPOSTGRES_APP_PASSWORD=%s\n' "$PGPASSWORD" "$POSTGRES_APP_PASSWORD" > "$PROVISION_SECRETS_FILE"
 
 scp -P "$SSH_PORT" -i "$SSH_KEY" \
   ops/postgres/provision-app-role.sh ops/postgres/provision-app-role.sql "$PROVISION_SECRETS_FILE" \

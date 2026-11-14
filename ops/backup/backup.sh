@@ -12,6 +12,7 @@ S3_BUCKET=parkspot-backups
 export AWS_ACCESS_KEY_ID="$VULTR_OBJECT_STORAGE_ACCESS_KEY"
 export AWS_SECRET_ACCESS_KEY="$VULTR_OBJECT_STORAGE_SECRET_KEY"
 export AWS_DEFAULT_REGION=us-east-1
+# named PGPASSWORD, not POSTGRES_APP_PASSWORD, because psql and pg_dump expect that exact env name
 export PGPASSWORD="$POSTGRES_APP_PASSWORD"
 
 # check if bucket already exists. if not, create it. this should only execute the first time this script is run

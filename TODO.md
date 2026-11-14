@@ -82,9 +82,9 @@
 - [x] use a shared testResident between app/car\_test.go and app/permit\_test.go
 - [x] move `app/test_helpers.go` to storage/
 - [x] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
-- [ ] maybe remove `*Repo.Reset()` functions? idk they seem dangerous. there's probably a better way to do the same thing
+- [x] maybe remove `*Repo.Reset()` functions? idk they seem dangerous. there's probably a better way to do the same thing
 - [ ] i think the quota_ledger design needs another look. admins should be able to set a given resident's days to an exact number, instead of saying +5 days, -4 days or whatever.
-- [ ] looks like some env keys are not named consistently. in some places i see PGPASSWORD and POSTGRES_PASSWORD refer to the same concept. i see APP_DB_PASSWORD and POSTGRES_APP_PASSWORD refer to the same concept. there may be more examples. make all consistent
+- [x] looks like some env keys are not named consistently. in some places i see PGPASSWORD and POSTGRES_PASSWORD refer to the same concept. i see APP_DB_PASSWORD and POSTGRES_APP_PASSWORD refer to the same concept. there may be more examples. make all consistent
 - [ ] add comments to ops/backup/scheduler.sh
 - [ ] add resident getone functions which just wraps over resident.selectwhere
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
