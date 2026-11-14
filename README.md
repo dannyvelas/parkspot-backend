@@ -51,3 +51,9 @@ All users can:
 
 ## Local development
 * All residents/admins in the sample data have the password: `notapassword`.
+
+## Deploying
+Production deploys to the single VPS are automated: a merged PR into `main` triggers `.github/workflows/deploy.yml`, which builds and pushes the Docker images (the app, and the `backup` accessory) and runs `kamal deploy` against `ops/deploy.yml`. These three files define the entire production setup:
+* `ops/deploy.yml` — the Kamal config: the app service, the Postgres accessory, and the backup accessory.
+* `.github/workflows/deploy.yml` — the CI workflow that builds, pushes, and deploys on every merge to `main`.
+* `ops/bootstrap.sh` — the idempotent script for bringing up a new server (or re-provisioning the current one) from scratch: `kamal setup`, Postgres role provisioning, and booting every accessory for the first time. Not run by CI; run by hand when standing up or fixing a server.
