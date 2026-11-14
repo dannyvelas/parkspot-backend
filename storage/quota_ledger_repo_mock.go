@@ -150,10 +150,3 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) SelectBalances(residentIDs []str
 
 	return balances, nil
 }
-
-func (quotaLedgerRepoMock *QuotaLedgerRepoMock) Reset() error {
-	quotaLedgerRepoMock.entries = quotaLedgerRepoMock.entries[:0]
-	quotaLedgerRepoMock.nextEntryID = 0
-	quotaLedgerRepoMock.nextPermitID = 0
-	return nil
-}

@@ -17,6 +17,7 @@ import (
 type carTestSuite struct {
 	suite.Suite
 	container  testcontainers.Container
+	database   psql.Database
 	carService CarService
 }
 
@@ -32,6 +33,7 @@ func (suite *carTestSuite) SetupSuite() {
 	}
 	// save container in suite struct so we can terminate it on suite teardown
 	suite.container = container
+	suite.database = database
 
 	residentService := NewResidentService(database.ResidentRepo())
 	// use default models.TestResident for duration of tests
@@ -51,9 +53,8 @@ func (suite *carTestSuite) TearDownSuite() {
 }
 
 func (suite *carTestSuite) TearDownTest() {
-	err := suite.carService.carRepo.Reset()
-	if err != nil {
-		suite.T().Fatalf("encountered error resetting car repo in-between tests")
+	if err := suite.database.ResetTables("car"); err != nil {
+		suite.T().Fatalf("encountered error resetting car repo in-between tests: %v", err)
 	}
 }
 

@@ -194,15 +194,6 @@ func (permitRepo PermitRepo) Update(permitFields models.Permit) error {
 	return nil
 }
 
-func (permitRepo PermitRepo) Reset() error {
-	_, err := permitRepo.driver.Exec("DELETE FROM permit")
-	if err != nil {
-		return fmt.Errorf("permit_repo.Reset: %w: %v", errs.ErrDBExec, err)
-	}
-
-	return nil
-}
-
 func (permitRepo PermitRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{

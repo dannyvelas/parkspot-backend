@@ -52,3 +52,16 @@ func NewSandboxDatabase() (testcontainers.Container, Database, error) {
 
 	return postgresContainer, database, nil
 }
+
+// ResetTables deletes every row from the given tables, in the order given,
+// so a test can start the next case from an empty table. Tables with
+// foreign keys into one another must be listed child-before-parent.
+func (database Database) ResetTables(tables ...string) error {
+	for _, table := range tables {
+		if _, err := database.driver.Exec("DELETE FROM " + table); err != nil {
+			return fmt.Errorf("resetting table %s: %w", table, err)
+		}
+	}
+
+	return nil
+}

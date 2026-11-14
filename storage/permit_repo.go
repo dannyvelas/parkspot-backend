@@ -12,5 +12,4 @@ type PermitRepo interface {
 	Create(desiredPermit models.Permit) (int, error)
 	Delete(id int) error
 	Update(permitFields models.Permit) error
-	Reset() error // for testing purposes
 }

@@ -22,13 +22,9 @@ func TestResidentService(t *testing.T) {
 	suite.Run(t, new(residentTestSuite))
 }
 
-func (suite *residentTestSuite) SetupSuite() {
+func (suite *residentTestSuite) SetupTest() {
 	residentRepo := storage.NewResidentRepoMock()
 	suite.residentService = NewResidentService(&residentRepo)
-}
-
-func (suite *residentTestSuite) TearDownTest() {
-	suite.residentService.residentRepo.Reset()
 }
 
 func (suite *residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {

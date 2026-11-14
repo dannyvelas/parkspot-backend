@@ -20,6 +20,7 @@ import (
 type permitTestSuite struct {
 	suite.Suite
 	container       testcontainers.Container
+	database        psql.Database
 	permitService   PermitService
 	residentService ResidentService
 
@@ -39,6 +40,7 @@ func (suite *permitTestSuite) SetupSuite() {
 	}
 	// save container in suite struct so we can terminate it on suite teardown
 	suite.container = container
+	suite.database = database
 
 	// service dependency
 	carService := NewCarService(database.CarRepo())
@@ -81,9 +83,8 @@ func (suite *permitTestSuite) TearDownSuite() {
 }
 
 func (suite *permitTestSuite) TearDownTest() {
-	err := suite.permitService.permitRepo.Reset()
-	if err != nil {
-		suite.T().Fatalf("encountered error resetting permit repo in-between tests")
+	if err := suite.database.ResetTables("permit"); err != nil {
+		suite.T().Fatalf("encountered error resetting permit repo in-between tests: %v", err)
 	}
 }
 

@@ -183,15 +183,6 @@ func (carRepo CarRepo) Delete(id string) error {
 	return nil
 }
 
-func (carRepo CarRepo) Reset() error {
-	_, err := carRepo.driver.Exec("DELETE FROM car")
-	if err != nil {
-		return fmt.Errorf("car_repo.Reset: %w: %v", errs.ErrDBExec, err)
-	}
-
-	return nil
-}
-
 // SearchAsSQL implements selectopts.SearchRepo
 func (carRepo CarRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)

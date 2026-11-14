@@ -101,8 +101,3 @@ func (carRepoMock *CarRepoMock) Delete(id string) error {
 
 	return nil
 }
-
-func (carRepoMock *CarRepoMock) Reset() error {
-	carRepoMock.cars = carRepoMock.cars[:0]
-	return nil
-}

@@ -16,6 +16,7 @@ import (
 type authTestSuite struct {
 	suite.Suite
 	container       testcontainers.Container
+	database        psql.Database
 	authService     AuthService
 	residentService ResidentService // kept here so we can tear down between tests
 }
@@ -32,6 +33,7 @@ func (suite *authTestSuite) SetupSuite() {
 	}
 	// save container in suite struct so we can terminate it on suite teardown
 	suite.container = container
+	suite.database = database
 
 	// create services that are needed to create services used in this suite
 	jwtService := NewJWTService(config.TokenConfig{AccessSecret: "accessSecret", RefreshSecret: "refreshSecret"})
@@ -56,8 +58,8 @@ func (suite *authTestSuite) TearDownSuite() {
 }
 
 func (suite *authTestSuite) TearDownTest() {
-	if err := suite.residentService.residentRepo.Reset(); err != nil {
-		suite.T().Fatalf("encountered error resetting auth repo in-between tests")
+	if err := suite.database.ResetTables("resident"); err != nil {
+		suite.T().Fatalf("encountered error resetting auth repo in-between tests: %v", err)
 	}
 }
 
