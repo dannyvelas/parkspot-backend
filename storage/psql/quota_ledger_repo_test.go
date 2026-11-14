@@ -18,6 +18,7 @@ import (
 type quotaLedgerRepoTestSuite struct {
 	suite.Suite
 	container       testcontainers.Container
+	database        Database
 	quotaLedgerRepo storage.QuotaLedgerRepo
 	permitRepo      storage.PermitRepo
 }
@@ -32,6 +33,7 @@ func (suite *quotaLedgerRepoTestSuite) SetupSuite() {
 		suite.T().Fatalf("error getting sandbox database: %v", err)
 	}
 	suite.container = container
+	suite.database = database
 	suite.quotaLedgerRepo = database.QuotaLedgerRepo()
 	suite.permitRepo = database.PermitRepo()
 
@@ -48,12 +50,9 @@ func (suite *quotaLedgerRepoTestSuite) TearDownSuite() {
 }
 
 func (suite *quotaLedgerRepoTestSuite) TearDownTest() {
-	if err := suite.quotaLedgerRepo.Reset(); err != nil {
-		suite.T().Fatalf("encountered error resetting quota ledger repo in-between tests: %v", err)
-	}
-
-	if err := suite.permitRepo.Reset(); err != nil {
-		suite.T().Fatalf("encountered error resetting permit repo in-between tests: %v", err)
+	// quota_ledger has a foreign key into permit, so it must be cleared first
+	if err := suite.database.ResetTables("quota_ledger", "permit"); err != nil {
+		suite.T().Fatalf("encountered error resetting tables in-between tests: %v", err)
 	}
 }
 

@@ -254,12 +254,3 @@ func (r QuotaLedgerRepo) SelectBalances(residentIDs []string, quotaYearUTC int) 
 
 	return balances, nil
 }
-
-func (r QuotaLedgerRepo) Reset() error {
-	_, err := r.driver.Exec("DELETE FROM quota_ledger")
-	if err != nil {
-		return fmt.Errorf("quota_ledger_repo.Reset: %w: %v", errs.ErrDBExec, err)
-	}
-
-	return nil
-}

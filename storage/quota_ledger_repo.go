@@ -31,5 +31,4 @@ type QuotaLedgerRepo interface {
 	// returned map; callers must default that case to
 	// models.QuotaBalance{DaysUsed: 0, EffectiveAllowance: config.MaxParkingDays}.
 	SelectBalances(residentIDs []string, quotaYearUTC int) (map[string]models.QuotaBalance, error)
-	Reset() error // for testing purposes
 }

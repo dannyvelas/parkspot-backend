@@ -13,5 +13,4 @@ type CarRepo interface {
 	AddToAmtParkingDaysUsed(id string, days int) error
 	Update(carFields models.Car) error
 	Delete(id string) error
-	Reset() error // for testing purposes
 }

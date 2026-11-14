@@ -188,15 +188,6 @@ func (residentRepo ResidentRepo) Update(residentFields models.Resident) error {
 	return nil
 }
 
-func (residentRepo ResidentRepo) Reset() error {
-	_, err := residentRepo.driver.Exec("DELETE FROM resident")
-	if err != nil {
-		return fmt.Errorf("resident_repo.Reset: %w: %v", errs.ErrDBExec, err)
-	}
-
-	return nil
-}
-
 func (residentRepo ResidentRepo) SearchAsSQL(query string) squirrel.Sqlizer {
 	lcQuery := strings.ToLower(query)
 	return squirrel.Or{
