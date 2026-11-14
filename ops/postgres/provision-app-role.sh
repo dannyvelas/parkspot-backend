@@ -5,10 +5,10 @@ set -euo pipefail
 # "parkspot-backend-postgres" container, not on the host itself.
 
 : "${PGPASSWORD:?PGPASSWORD (postgres superuser password) must be set}"
-: "${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}"
+: "${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD must be set}"
 
 CONTAINER=${POSTGRES_CONTAINER:-parkspot-backend-postgres}
 
 docker exec -i -e PGPASSWORD="$PGPASSWORD" "$CONTAINER" \
-  psql -U postgres -d parkspot -v app_password="$APP_DB_PASSWORD" -f - \
+  psql -U postgres -d parkspot -v app_password="$POSTGRES_APP_PASSWORD" -f - \
   < "$(dirname "$0")/provision-app-role.sql"
