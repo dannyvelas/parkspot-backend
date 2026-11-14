@@ -1,16 +1,17 @@
 package app
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/imdario/mergo"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"net/http"
-	"testing"
 )
 
 type residentTestSuite struct {
@@ -48,22 +49,13 @@ func (suite *residentTestSuite) TestCreate_ResidentDuplicateEmail_Negative() {
 	}
 
 	_, err := suite.residentService.Create(resident1)
-	if err != nil {
-		suite.NoError(fmt.Errorf("error creating resident when setting up test"))
-		return
-	}
+	require.NoError(suite.T(), err, "error creating resident when setting up test")
 
 	_, err = suite.residentService.Create(residentSameEmail)
-	if err == nil {
-		suite.NoError(fmt.Errorf("successfully created resident with duplicate email when it shouldn't have"))
-		return
-	}
+	require.NotNil(suite.T(), err, "successfully created resident with duplicate email when it shouldn't have")
 
 	var apiErr *errs.APIErr
-	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("unexpected error: %v", err))
-		return
-	}
+	require.ErrorAs(suite.T(), err, &apiErr, "unexpected error: %v", err)
 
 	suite.Equal(http.StatusBadRequest, apiErr.StatusCode, "Expected bad request got: %d", apiErr.StatusCode)
 	suite.Contains(apiErr.Error(), "email") // assert bad request happened bc of email
@@ -76,7 +68,8 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 		LastName:  "last",
 		Phone:     "1234567890",
 		Email:     "email@example.com",
-		Password:  "notapassword"}
+		Password:  "notapassword",
+	}
 
 	// set up a table of tests
 	type test struct {
@@ -93,8 +86,7 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 	for testName, test_ := range tests {
 		expected := test_.argument
 		if err := mergo.Merge(&expected, residentToEdit); err != nil {
-			suite.NoError(fmt.Errorf("error merging when preparing test: %v\n", err))
-			return
+			require.NoError(suite.T(), fmt.Errorf("error merging when preparing test: %v\n", err))
 		}
 		tests[testName] = test{argument: test_.argument, expected: expected}
 	}
@@ -117,19 +109,15 @@ func (suite *residentTestSuite) TestEdit_Resident_Positive() {
 	}
 
 	for testName, test := range tests {
-		if _, err := suite.residentService.Create(residentToEdit); err != nil {
-			suite.NoError(fmt.Errorf("error creating test resident before running test: %v", err))
-			break
-		}
+		_, err := suite.residentService.Create(residentToEdit)
+		require.NoError(suite.T(), err, "error creating test resident before running test")
 
 		if err := executeTest(test); err != nil {
-			suite.NoError(fmt.Errorf("%s failed: %v", testName, err))
+			require.NoError(suite.T(), fmt.Errorf("%s failed: %v", testName, err))
 		}
 
-		if err := suite.residentService.Delete(residentToEdit.ID); err != nil {
-			suite.NoError(fmt.Errorf("error deleting test resident after running test: %v", err))
-			break
-		}
+		err = suite.residentService.Delete(residentToEdit.ID)
+		require.NoError(suite.T(), err, "error deleting test resident after running test")
 	}
 }
 
@@ -137,16 +125,10 @@ func (suite *residentTestSuite) TestEdit_ResidentDNE_Negative() {
 	residentThatDNE := models.Resident{ID: "B0000000", FirstName: "NEWFIRST"}
 
 	_, err := suite.residentService.Update(residentThatDNE)
-	if err == nil {
-		suite.NoError(fmt.Errorf("no error encountered when editing a non-existing resident"))
-		return
-	}
+	require.NotNil(suite.T(), err, "no error encountered when editing a non-existing resident")
 
 	var apiErr *errs.APIErr
-	if !errors.As(err, &apiErr) {
-		suite.NoError(fmt.Errorf("couldn't cast error to apiErr. Error is: %v", err))
-		return
-	}
+	require.ErrorAs(suite.T(), err, &apiErr, "couldn't cast error to apiErr. Error is: %v", err)
 
 	suite.Equal(http.StatusNotFound, apiErr.StatusCode)
 }
