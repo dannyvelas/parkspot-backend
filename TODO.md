@@ -85,13 +85,13 @@
 - [x] maybe remove `*Repo.Reset()` functions? idk they seem dangerous. there's probably a better way to do the same thing
 - [ ] i think the quota_ledger design needs another look. admins should be able to set a given resident's days to an exact number, instead of saying +5 days, -4 days or whatever.
 - [x] looks like some env keys are not named consistently. in some places i see PGPASSWORD and POSTGRES_PASSWORD refer to the same concept. i see APP_DB_PASSWORD and POSTGRES_APP_PASSWORD refer to the same concept. there may be more examples. make all consistent
-- [ ] add comments to ops/backup/scheduler.sh
-- [ ] add resident getone functions which just wraps over resident.selectwhere
+- [x] add comments to ops/backup/scheduler.sh
+- [✗] add resident getone functions which just wraps over resident.selectwhere (wont do: unlike car/permit's GetOne, this would just be a thin wrapper over SelectWhere with no real query-shape benefit, and the one call site with different not-found semantics (permit.go's getAndValidateResident) wouldn't even cleanly reuse it)
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
 - [x] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
 - [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
 - [ ] probably add some logic so that car creation and day adding are rolledback if any of the repo functions to create a permit fail
-- [ ] start using require in resident\_test
+- [x] start using require in resident\_test
 - [ ] move visitor tests from `api/` to `app/`, if test does not focus on any HTTP-related logic:
 - [ ] probably use docker-compose to initialize test container in app/test\_helpers.go
 - [ ] switch from BIGINT to TIMESTAMPTZ
