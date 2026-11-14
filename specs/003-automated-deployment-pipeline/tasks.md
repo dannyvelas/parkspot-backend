@@ -179,9 +179,9 @@ Per `plan.md`'s Project Structure: application code changes live in `api/`; ever
 
 **Purpose**: Wrap-up work that spans multiple stories and closes out the original "it's a mess" complaint at the documentation level.
 
-- [ ] T037 [P] Add a "Deploying" section to `README.md` pointing at `ops/deploy.yml`, `.github/workflows/deploy.yml`, and `ops/bootstrap.sh` as the three files that define the entire production setup.
-- [ ] T038 Run the full `quickstart.md` validation (Scenarios 1–6, in order) end-to-end against the real production (or a production-like staging) server before considering this feature done.
-- [ ] T039 Identify and remove any now-superseded manual deploy notes/scripts (the old ad hoc `scp` process this feature replaces), if any exist in the repo or its docs.
+- [X] T037 [P] Add a "Deploying" section to `README.md` pointing at `ops/deploy.yml`, `.github/workflows/deploy.yml`, and `ops/bootstrap.sh` as the three files that define the entire production setup.
+- [ ] T038 Run the full `quickstart.md` validation (Scenarios 1–6, in order) end-to-end against the real production (or a production-like staging) server before considering this feature done. Scenarios 1-5 have real-production evidence already (T014, T020, T024, T026/T028, T029). Blocked on the same thing as T036 -- Scenario 6 can't close until a real *scheduled* backup fires, not just the manual tests under T033/T035.
+- [X] T039 Identify and remove any now-superseded manual deploy notes/scripts (the old ad hoc `scp` process this feature replaces), if any exist in the repo or its docs. Searched the whole repo (`scp`, Makefile deploy/prod targets, anything named `*deploy*`): nothing to remove. The only `scp` hits are this spec's own planning docs (historical context, not a leftover script) and `ops/bootstrap.sh`/`ops/backup` (the current automated system). The Makefile has zero deploy/prod targets -- the `.prodmigrations`/`migrate_prod_up_step` retirement was already done (see TODO.md).
 
 ---
 
