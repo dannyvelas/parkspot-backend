@@ -31,6 +31,7 @@ func respondJSON(w http.ResponseWriter, statusCode int, data any) {
 func respondError(w http.ResponseWriter, err error) {
 	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
+		unhandledErrorsTotal.Inc()
 		log.Error().Msg(err.Error())
 		respondJSON(w, http.StatusInternalServerError, "Internal Server Error")
 		return
