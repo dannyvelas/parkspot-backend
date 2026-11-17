@@ -30,7 +30,7 @@ func (h visitorHandler) get(status models.Status) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("visitor_router.getVisitorsOfResident: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_router.getVisitorsOfResident: %v", err))
 			return
 		}
 
@@ -41,7 +41,7 @@ func (h visitorHandler) get(status models.Status) http.HandlerFunc {
 
 		visitorsWithMetadata, err := h.visitorService.Get(status, limit, page, search, residentID)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -53,19 +53,19 @@ func (h visitorHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var desiredVisitor models.Visitor
 		if err := json.NewDecoder(r.Body).Decode(&desiredVisitor); err != nil {
-			respondError(w, errs.Malformed("New Visitor Request"))
+			respondError(w, r, errs.Malformed("New Visitor Request"))
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("visitor_handler.create(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_handler.create(): error getting access payload: %v", err))
 			return
 		}
 
 		if desiredVisitor.ResidentID != "" && desiredVisitor.ResidentID != accessPayload.ID {
-			respondError(w, errs.BadRequest("Residents cannot create a visitor for another resident"))
+			respondError(w, r, errs.BadRequest("Residents cannot create a visitor for another resident"))
 			return
 		}
 		if desiredVisitor.ResidentID == "" {
@@ -74,7 +74,7 @@ func (h visitorHandler) create() http.HandlerFunc {
 
 		visitor, err := h.visitorService.Create(desiredVisitor)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -86,30 +86,30 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, errs.IDNotUUID)
+			respondError(w, r, errs.IDNotUUID)
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("visitor_handler.deleteOne: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_handler.deleteOne: error getting access payload: %v", err))
 			return
 		}
 
 		visitorToDelete, err := h.visitorService.GetOne(id)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
 		if visitorToDelete.ResidentID != accessPayload.ID {
-			respondError(w, errs.Unauthorized)
+			respondError(w, r, errs.Unauthorized)
 			return
 		}
 
 		if err := h.visitorService.Delete(id); err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 

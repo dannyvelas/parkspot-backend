@@ -31,7 +31,7 @@ func (h carHandler) get() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("error getting access payload: %v", err))
 			return
 		}
 
@@ -42,7 +42,7 @@ func (h carHandler) get() http.HandlerFunc {
 
 		carsWithMetadata, err := h.carService.GetAll(limit, page, reversed, search, residentID)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -54,30 +54,30 @@ func (h carHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		if !util.IsUUIDV4(id) {
-			respondError(w, errs.IDNotUUID)
+			respondError(w, r, errs.IDNotUUID)
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("car_handler.deleteOne: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.deleteOne: error getting access payload: %v", err))
 			return
 		}
 
 		carToDelete, err := h.carService.GetOne(id)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole && carToDelete.ResidentID != accessPayload.ID {
-			respondError(w, errs.NewUnauthorized("resident cannot delete car of another resident"))
+			respondError(w, r, errs.NewUnauthorized("resident cannot delete car of another resident"))
 			return
 		}
 
 		if err := h.carService.Delete(id); err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -89,7 +89,7 @@ func (h carHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		car, err := h.carService.GetOne(chi.URLParam(r, "id"))
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -101,35 +101,35 @@ func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
-			respondError(w, errs.Malformed("EditCarReq"))
+			respondError(w, r, errs.Malformed("EditCarReq"))
 			return
 		}
 		if !util.IsUUIDV4(editCarReq.ID) {
-			respondError(w, errs.IDNotUUID)
+			respondError(w, r, errs.IDNotUUID)
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("car_handler.edit(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.edit(): error getting access payload: %v", err))
 			return
 		}
 
 		carToEdit, err := h.carService.GetOne(editCarReq.ID)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole && carToEdit.ResidentID != accessPayload.ID {
-			respondError(w, errs.NewUnauthorized("resident cannot edit car of another resident"))
+			respondError(w, r, errs.NewUnauthorized("resident cannot edit car of another resident"))
 			return
 		}
 
 		car, err := h.carService.Update(editCarReq)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -141,20 +141,20 @@ func (h carHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var desiredCar models.Car
 		if err := json.NewDecoder(r.Body).Decode(&desiredCar); err != nil {
-			respondError(w, errs.Malformed("New Car Request"))
+			respondError(w, r, errs.Malformed("New Car Request"))
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("car_handler.create(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.create(): error getting access payload: %v", err))
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole {
 			if desiredCar.ResidentID != "" && desiredCar.ResidentID != accessPayload.ID {
-				respondError(w, errs.NewUnauthorized("resident cannot create car for another resident"))
+				respondError(w, r, errs.NewUnauthorized("resident cannot create car for another resident"))
 				return
 			}
 			if desiredCar.ResidentID == "" {
@@ -164,7 +164,7 @@ func (h carHandler) create() http.HandlerFunc {
 
 		car, err := h.carService.Create(desiredCar)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 		respondJSON(w, http.StatusOK, car)
@@ -175,13 +175,13 @@ func (h carHandler) getOfResident() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		residentID := chi.URLParam(r, "id")
 		if residentID == "" {
-			respondError(w, errs.MissingIDField)
+			respondError(w, r, errs.MissingIDField)
 			return
 		}
 
 		cars, err := h.carService.GetAll(0, 0, false, "", residentID)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
