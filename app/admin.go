@@ -64,7 +64,7 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 
 	// make sure admin doesn't already exist
 	if _, err := s.adminRepo.GetOne(desiredAdmin.ID); err != nil && !errors.Is(err, errs.NotFound) {
-		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: error getting admin by id: %v", err)
+		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: error getting admin by id: %w", err)
 	} else if err == nil {
 		return models.Admin{}, errs.NewAlreadyExists("an admin with ID: " + desiredAdmin.ID)
 	}
@@ -80,7 +80,7 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 	desiredAdmin.Password = hashString
 	err = s.adminRepo.Create(desiredAdmin)
 	if err != nil {
-		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: Error querying adminRepo: %v", err)
+		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: Error querying adminRepo: %w", err)
 	}
 
 	createdAdmin, err := s.GetOne(desiredAdmin.ID)

@@ -27,7 +27,7 @@ func (s VisitorService) Get(status models.Status, limit, page int, search, resid
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
 	)
 	if err != nil {
-		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting all visitors from visitor repo: %v", err)
+		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting all visitors from visitor repo: %w", err)
 	}
 
 	totalAmount, err := s.visitorRepo.SelectCountWhere(models.Visitor{ResidentID: residentID},
@@ -35,7 +35,7 @@ func (s VisitorService) Get(status models.Status, limit, page int, search, resid
 		selectopts.WithSearch(search),
 	)
 	if err != nil {
-		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting count of all visitors from visitor repo: %v", err)
+		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting count of all visitors from visitor repo: %w", err)
 	}
 
 	return models.NewListWithMetadata(allVisitors, totalAmount), nil
@@ -55,12 +55,12 @@ func (s VisitorService) Create(desiredVisitor models.Visitor) (models.Visitor, e
 
 	visitorID, err := s.visitorRepo.Create(desiredVisitor)
 	if err != nil {
-		return models.Visitor{}, fmt.Errorf("error creating visitor in visitor repo: %v", err)
+		return models.Visitor{}, fmt.Errorf("error creating visitor in visitor repo: %w", err)
 	}
 
 	visitor, err := s.visitorRepo.GetOne(visitorID)
 	if err != nil {
-		return models.Visitor{}, fmt.Errorf("error getting visitor after creating in visitor repo: %v", err)
+		return models.Visitor{}, fmt.Errorf("error getting visitor after creating in visitor repo: %w", err)
 	}
 
 	return visitor, nil

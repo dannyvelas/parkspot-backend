@@ -30,14 +30,14 @@ func (s CarService) GetAll(limit, page int, reversed bool, search, residentID st
 		selectopts.WithSearch(search),
 	)
 	if err != nil {
-		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting cars from car repo: %v", err)
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting cars from car repo: %w", err)
 	}
 
 	totalAmount, err := s.carRepo.SelectCountWhere(models.Car{ResidentID: residentID},
 		selectopts.WithSearch(search),
 	)
 	if err != nil {
-		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting total amount from car repo: %v", err)
+		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting total amount from car repo: %w", err)
 	}
 
 	return models.NewListWithMetadata(allCars, totalAmount), nil
@@ -60,7 +60,7 @@ func (s CarService) GetOneByLicensePlate(licensePlate string) (models.Car, error
 
 	cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: licensePlate})
 	if err != nil {
-		return models.Car{}, fmt.Errorf("error getting car by licensePlate: %v", err)
+		return models.Car{}, fmt.Errorf("error getting car by licensePlate: %w", err)
 	} else if len(cars) == 0 {
 		return models.Car{}, errs.NotFound
 	}
@@ -92,7 +92,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 	// if license plate is being updated to a new one, make sure it's unique
 	if updatedFields.LicensePlate != "" {
 		if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: updatedFields.LicensePlate}); err != nil {
-			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %v", err)
+			return models.Car{}, fmt.Errorf("car_service.update error getting car by license plate: %w", err)
 		} else if len(cars) != 0 && cars[0].ID != updatedFields.ID {
 			// it's possible that the car we found with the same licensePlate in the database is the car we're currently updating
 			// in this case, don't raise an error
@@ -119,21 +119,21 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	}
 	if desiredCar.ID != "" {
 		if cars, err := s.carRepo.SelectWhere(models.Car{ID: desiredCar.ID}); err != nil {
-			return models.Car{}, fmt.Errorf("carService.Create: error getting car by id: %v", err)
+			return models.Car{}, fmt.Errorf("carService.Create: error getting car by id: %w", err)
 		} else if len(cars) != 0 {
 			return models.Car{}, errs.NewAlreadyExists("a car with this ID: " + desiredCar.ID)
 		}
 	}
 
 	if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: desiredCar.LicensePlate}); err != nil {
-		return models.Car{}, fmt.Errorf("carService.createCar error getting car by licensePlate: %v", err)
+		return models.Car{}, fmt.Errorf("carService.createCar error getting car by licensePlate: %w", err)
 	} else if len(cars) != 0 {
 		return models.Car{}, errs.NewErrCarWithLPAlreadyExists(desiredCar.LicensePlate)
 	}
 
 	carID, err := s.carRepo.Create(desiredCar)
 	if err != nil {
-		return models.Car{}, fmt.Errorf("error creating car with carRepo: %v", err)
+		return models.Car{}, fmt.Errorf("error creating car with carRepo: %w", err)
 	}
 
 	newCar := models.NewCar(carID, desiredCar.ResidentID, desiredCar.LicensePlate, desiredCar.Color, desiredCar.Make, desiredCar.Model, 0)
