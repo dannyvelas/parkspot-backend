@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/dannyvelas/parkspot-backend/api"
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/storage/psql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -43,6 +44,7 @@ func main() {
 	// initialize and start server
 	server := api.NewServer(c, app)
 	go server.Start(errChannel)
+	go server.StartMetrics(errChannel)
 
 	// listen to signal interrupt
 	go listenToInterrupt(errChannel)
