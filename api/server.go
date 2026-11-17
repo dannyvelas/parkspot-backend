@@ -10,11 +10,13 @@ import (
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
 type Server struct {
 	*http.Server
+	metricsServer *http.Server
 }
 
 func NewServer(c config.Config, app app.App) Server {
@@ -28,8 +30,16 @@ func NewServer(c config.Config, app app.App) Server {
 		IdleTimeout:  c.HTTP.IdleTimeout,
 	}
 
+	metricsRouter := http.NewServeMux()
+	metricsRouter.Handle("/metrics", promhttp.Handler())
+	metricsServer := &http.Server{
+		Addr:    ":" + c.HTTP.MetricsPort,
+		Handler: metricsRouter,
+	}
+
 	return Server{
-		server,
+		Server:        server,
+		metricsServer: metricsServer,
 	}
 }
 
@@ -124,6 +134,11 @@ func (s Server) Start(errChannel chan<- error) {
 	errChannel <- s.ListenAndServe()
 }
 
+func (s Server) StartMetrics(errChannel chan<- error) {
+	log.Info().Msgf("Metrics server started on: %s", s.metricsServer.Addr)
+	errChannel <- s.metricsServer.ListenAndServe()
+}
+
 func (s Server) ShutdownGracefully(timeout time.Duration) {
 	log.Info().Msg("Gracefully shutting down...")
 
@@ -134,5 +149,11 @@ func (s Server) ShutdownGracefully(timeout time.Duration) {
 		log.Error().Msgf("Error shutting down the server: %v", err)
 	} else {
 		log.Info().Msg("HttpServer gracefully shut down")
+	}
+
+	if err := s.metricsServer.Shutdown(gracefullCtx); err != nil {
+		log.Error().Msgf("Error shutting down the metrics server: %v", err)
+	} else {
+		log.Info().Msg("Metrics server gracefully shut down")
 	}
 }
