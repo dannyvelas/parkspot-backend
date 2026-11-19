@@ -66,7 +66,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 	// index
 	router.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		respondJSON(w, http.StatusOK, "hello world")
+		respondJSON(w, r, http.StatusOK, "hello world")
 	}))
 
 	// deployment health check

@@ -46,7 +46,7 @@ func (h carHandler) get() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, carsWithMetadata)
+		respondJSON(w, r, http.StatusOK, carsWithMetadata)
 	}
 }
 
@@ -81,7 +81,7 @@ func (h carHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Successfully deleted car"})
+		respondJSON(w, r, http.StatusOK, message{"Successfully deleted car"})
 	}
 }
 
@@ -93,7 +93,7 @@ func (h carHandler) getOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, car)
+		respondJSON(w, r, http.StatusOK, car)
 	}
 }
 
@@ -133,7 +133,7 @@ func (h carHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, car)
+		respondJSON(w, r, http.StatusOK, car)
 	}
 }
 
@@ -167,7 +167,7 @@ func (h carHandler) create() http.HandlerFunc {
 			respondError(w, r, err)
 			return
 		}
-		respondJSON(w, http.StatusOK, car)
+		respondJSON(w, r, http.StatusOK, car)
 	}
 }
 
@@ -185,6 +185,6 @@ func (h carHandler) getOfResident() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, cars)
+		respondJSON(w, r, http.StatusOK, cars)
 	}
 }

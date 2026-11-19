@@ -46,7 +46,7 @@ func (h permitHandler) get(status models.Status) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, permitsWithMetadata)
+		respondJSON(w, r, http.StatusOK, permitsWithMetadata)
 	}
 }
 
@@ -59,7 +59,7 @@ func (h permitHandler) getOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, permit)
+		respondJSON(w, r, http.StatusOK, permit)
 	}
 }
 
@@ -99,7 +99,7 @@ func (h permitHandler) create() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, createdPermit)
+		respondJSON(w, r, http.StatusOK, createdPermit)
 	}
 }
 
@@ -112,7 +112,7 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Successfully deleted permit"})
+		respondJSON(w, r, http.StatusOK, message{"Successfully deleted permit"})
 	}
 }
 
@@ -130,6 +130,6 @@ func (h permitHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, permit)
+		respondJSON(w, r, http.StatusOK, permit)
 	}
 }

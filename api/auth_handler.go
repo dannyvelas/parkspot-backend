@@ -45,7 +45,7 @@ func (h authHandler) login() http.HandlerFunc {
 
 		h.sendRefreshToken(w, refreshToken)
 
-		respondJSON(w, http.StatusOK, session)
+		respondJSON(w, r, http.StatusOK, session)
 	}
 }
 
@@ -54,7 +54,7 @@ func (h authHandler) logout() http.HandlerFunc {
 		cookie := http.Cookie{Name: config.RefreshCookieKey, Value: "deleted", HttpOnly: true, Path: "/", Expires: time.Unix(0, 0)}
 		http.SetCookie(w, &cookie)
 
-		respondJSON(w, http.StatusOK, message{"Successfully logged-out user"})
+		respondJSON(w, r, http.StatusOK, message{"Successfully logged-out user"})
 	}
 }
 
@@ -83,7 +83,7 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 
 		h.sendRefreshToken(w, refreshToken)
 
-		respondJSON(w, http.StatusOK, session)
+		respondJSON(w, r, http.StatusOK, session)
 	}
 }
 
@@ -106,7 +106,7 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, emailSentResponse)
+		respondJSON(w, r, http.StatusOK, emailSentResponse)
 	}
 }
 
@@ -129,7 +129,7 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Password has been successfully reset."})
+		respondJSON(w, r, http.StatusOK, message{"Password has been successfully reset."})
 	}
 }
 

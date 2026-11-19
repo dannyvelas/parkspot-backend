@@ -34,7 +34,7 @@ func (h residentHandler) getAll() http.HandlerFunc {
 		residents := util.MapSlice(residentsWithMetadata.Records, h.removeHash)
 		residentsWithMetadata.Records = residents
 
-		respondJSON(w, http.StatusOK, residentsWithMetadata)
+		respondJSON(w, r, http.StatusOK, residentsWithMetadata)
 	}
 }
 
@@ -46,7 +46,7 @@ func (h residentHandler) getOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, h.removeHash(resident))
+		respondJSON(w, r, http.StatusOK, h.removeHash(resident))
 	}
 }
 
@@ -69,7 +69,7 @@ func (h residentHandler) edit() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, h.removeHash(resident))
+		respondJSON(w, r, http.StatusOK, h.removeHash(resident))
 	}
 }
 
@@ -80,7 +80,7 @@ func (h residentHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Successfully deleted resident"})
+		respondJSON(w, r, http.StatusOK, message{"Successfully deleted resident"})
 	}
 }
 
@@ -98,7 +98,7 @@ func (h residentHandler) create() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, h.removeHash(createdRes))
+		respondJSON(w, r, http.StatusOK, h.removeHash(createdRes))
 	}
 }
 

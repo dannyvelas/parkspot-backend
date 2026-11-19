@@ -15,12 +15,13 @@ type message struct {
 	Message string `json:"message"`
 }
 
-func respondJSON(w http.ResponseWriter, statusCode int, data any) {
+func respondJSON(w http.ResponseWriter, r *http.Request, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
 
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
+		unhandledErrorsTotal.WithLabelValues(routePattern(r)).Inc()
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Error().Msgf("Error encoding response: %s", err)
 
@@ -35,11 +36,11 @@ func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	if !errors.As(err, &apiErr) {
 		unhandledErrorsTotal.WithLabelValues(routePattern(r)).Inc()
 		log.Error().Msg(err.Error())
-		respondJSON(w, http.StatusInternalServerError, "Internal Server Error")
+		respondJSON(w, r, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
-	respondJSON(w, apiErr.StatusCode, apiErr.Error())
+	respondJSON(w, r, apiErr.StatusCode, apiErr.Error())
 }
 
 // routePattern returns chi's route pattern (e.g. "/api/permit/{id}"),

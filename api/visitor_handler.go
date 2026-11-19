@@ -45,7 +45,7 @@ func (h visitorHandler) get(status models.Status) http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, visitorsWithMetadata)
+		respondJSON(w, r, http.StatusOK, visitorsWithMetadata)
 	}
 }
 
@@ -78,7 +78,7 @@ func (h visitorHandler) create() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, visitor)
+		respondJSON(w, r, http.StatusOK, visitor)
 	}
 }
 
@@ -113,6 +113,6 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 			return
 		}
 
-		respondJSON(w, http.StatusOK, message{"Successfully deleted visitor"})
+		respondJSON(w, r, http.StatusOK, message{"Successfully deleted visitor"})
 	}
 }
