@@ -31,7 +31,7 @@ func (h permitHandler) get(status models.Status) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("error getting access payload: %v", err))
 			return
 		}
 
@@ -42,7 +42,7 @@ func (h permitHandler) get(status models.Status) http.HandlerFunc {
 
 		permitsWithMetadata, err := h.permitService.GetAll(status, limit, page, reversed, search, residentID)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -55,7 +55,7 @@ func (h permitHandler) getOne() http.HandlerFunc {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		permit, err := h.permitService.GetOne(id)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -67,25 +67,25 @@ func (h permitHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
-			respondError(w, errs.Malformed("NewPermitReq"))
+			respondError(w, r, errs.Malformed("NewPermitReq"))
 			return
 		}
 
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, fmt.Errorf("permit_router.createPermit: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("permit_router.createPermit: error getting access payload: %v", err))
 			return
 		}
 
 		if accessPayload.Role == models.ResidentRole {
 			if newPermitReq.ExceptionReason != "" {
 				message := "Residents cannot request parking permits with exceptions"
-				respondError(w, errs.BadRequest(message))
+				respondError(w, r, errs.BadRequest(message))
 				return
 			}
 			if newPermitReq.ResidentID != "" && newPermitReq.ResidentID != accessPayload.ID {
-				respondError(w, errs.BadRequest("Residents cannot request a parking permit for another resident"))
+				respondError(w, r, errs.BadRequest("Residents cannot request a parking permit for another resident"))
 				return
 			}
 			if newPermitReq.ResidentID == "" {
@@ -95,7 +95,7 @@ func (h permitHandler) create() http.HandlerFunc {
 
 		createdPermit, err := h.permitService.Create(newPermitReq)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -108,7 +108,7 @@ func (h permitHandler) deleteOne() http.HandlerFunc {
 		id := util.ToPosInt(chi.URLParam(r, "id"))
 		err := h.permitService.Delete(id)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -120,13 +120,13 @@ func (h permitHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&editPermitReq); err != nil {
-			respondError(w, errs.Malformed("EditPermitReq"))
+			respondError(w, r, errs.Malformed("EditPermitReq"))
 			return
 		}
 
 		permit, err := h.permitService.Update(editPermitReq)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 

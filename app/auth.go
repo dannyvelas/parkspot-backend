@@ -51,7 +51,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 	if errors.Is(err, errs.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %v", err)
+		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %w", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
@@ -82,7 +82,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	if errors.Is(err, errs.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %v", err)
+		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %w", err)
 	}
 
 	userFromDB := loginable.AsUser()
@@ -113,7 +113,7 @@ func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) erro
 	if errors.Is(err, errs.NotFound) {
 		return errs.Unauthorized
 	} else if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %v", err)
+		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %w", err)
 	}
 
 	service, err := a.getGmailService(ctx)
@@ -149,7 +149,7 @@ func (a AuthService) ResetPassword(id, newPass string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("authService.resetPassword: error updating password: %v", err)
+		return fmt.Errorf("authService.resetPassword: error updating password: %w", err)
 	}
 
 	return nil

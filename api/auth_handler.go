@@ -33,13 +33,13 @@ func (h authHandler) login() http.HandlerFunc {
 		}
 		err := json.NewDecoder(r.Body).Decode(&credentials)
 		if err != nil {
-			respondError(w, errs.Malformed("Credentials"))
+			respondError(w, r, errs.Malformed("Credentials"))
 			return
 		}
 
 		session, refreshToken, err := h.authService.Login(credentials.ID, credentials.Password)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -63,21 +63,21 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 		cookie, err := r.Cookie(config.RefreshCookieKey)
 		if err != nil {
 			log.Debug().Msgf("could not find cookie")
-			respondError(w, errs.Unauthorized)
+			respondError(w, r, errs.Unauthorized)
 			return
 		}
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
 			log.Debug().Msgf("could not parse cookie: %v", err)
-			respondError(w, errs.Unauthorized)
+			respondError(w, r, errs.Unauthorized)
 			return
 		}
 
 		session, refreshToken, err := h.authService.RefreshTokens(refreshPayload)
 		if err != nil {
 			log.Debug().Msgf("could not have auth service refresh tokens: %v", err)
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -94,15 +94,15 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 
 		var payload struct{ ID string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, errs.Malformed("id object"))
+			respondError(w, r, errs.Malformed("id object"))
 			return
 		} else if payload.ID == "" {
-			respondError(w, errs.EmptyFields("id"))
+			respondError(w, r, errs.EmptyFields("id"))
 			return
 		}
 
 		if err := h.authService.SendResetPasswordEmail(r.Context(), payload.ID); err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -114,18 +114,18 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, errs.Malformed("password object"))
+			respondError(w, r, errs.Malformed("password object"))
 			return
 		}
 
 		accessPayload, err := ctxGetAccessPayload(r.Context())
 		if err != nil {
-			respondError(w, fmt.Errorf("auth_handler.resetPassword: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("auth_handler.resetPassword: error getting access payload: %v", err))
 			return
 		}
 
 		if err := h.authService.ResetPassword(accessPayload.ID, payload.Password); err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 

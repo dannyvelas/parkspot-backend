@@ -28,7 +28,7 @@ func (h residentHandler) getAll() http.HandlerFunc {
 
 		residentsWithMetadata, err := h.residentService.GetAll(limit, page, search)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 		residents := util.MapSlice(residentsWithMetadata.Records, h.removeHash)
@@ -42,7 +42,7 @@ func (h residentHandler) getOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		resident, err := h.residentService.GetOne(chi.URLParam(r, "id"))
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -54,18 +54,18 @@ func (h residentHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editResidentReq models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
-			respondError(w, errs.Malformed("EditResidentReq"))
+			respondError(w, r, errs.Malformed("EditResidentReq"))
 			return
 		}
 
 		if editResidentReq.Password != "" {
-			respondError(w, errs.BadRequest("Resident passwords cannot be edited. These can only be changed if a resident requests a password reset."))
+			respondError(w, r, errs.BadRequest("Resident passwords cannot be edited. These can only be changed if a resident requests a password reset."))
 			return
 		}
 
 		resident, err := h.residentService.Update(editResidentReq)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -76,7 +76,7 @@ func (h residentHandler) edit() http.HandlerFunc {
 func (h residentHandler) deleteOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h.residentService.Delete(chi.URLParam(r, "id")); err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 
@@ -88,13 +88,13 @@ func (h residentHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, errs.Malformed("NewResidentReq"))
+			respondError(w, r, errs.Malformed("NewResidentReq"))
 			return
 		}
 
 		createdRes, err := h.residentService.Create(payload)
 		if err != nil {
-			respondError(w, err)
+			respondError(w, r, err)
 			return
 		}
 

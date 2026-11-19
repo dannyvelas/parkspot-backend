@@ -3,10 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/dannyvelas/parkspot-backend/errs"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/go-chi/chi/v5"
+	"github.com/rs/zerolog/log"
 )
 
 type message struct {
@@ -28,13 +30,29 @@ func respondJSON(w http.ResponseWriter, statusCode int, data any) {
 	}
 }
 
-func respondError(w http.ResponseWriter, err error) {
+func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
+		unhandledErrorsTotal.WithLabelValues(routePattern(r)).Inc()
 		log.Error().Msg(err.Error())
 		respondJSON(w, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
 	respondJSON(w, apiErr.StatusCode, apiErr.Error())
+}
+
+// routePattern returns chi's route pattern (e.g. "/api/permit/{id}"),
+func routePattern(r *http.Request) string {
+	rctx := chi.RouteContext(r.Context())
+	if rctx == nil {
+		return r.URL.Path
+	}
+
+	pattern := rctx.RoutePattern()
+	if pattern == "" {
+		return r.URL.Path
+	}
+
+	return pattern
 }
