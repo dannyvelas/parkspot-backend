@@ -30,10 +30,6 @@ var (
 			config.MaxPermitLength,
 			config.MaxPermitLength),
 	)
-	ResidentTwoActivePermits = NewAPIErr(
-		http.StatusBadRequest,
-		"Cannot create a permit during these dates"+
-			" because this resident has at least two active permits during that time.")
 )
 
 func EntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {

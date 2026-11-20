@@ -241,7 +241,7 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting active of resident during dates in permitRepo: %w", err)
 	} else if len(residentActivePermitsDuring) >= 2 {
-		return models.Resident{}, errs.ResidentTwoActivePermits
+		return models.Resident{}, ResidentTwoActivePermits
 	}
 
 	if resident.UnlimDays == nil || resident.AmtParkingDaysUsed == nil {
