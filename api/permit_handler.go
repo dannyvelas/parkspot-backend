@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dannyvelas/parkspot-backend/app"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/go-chi/chi/v5"
@@ -67,7 +66,7 @@ func (h permitHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&newPermitReq); err != nil {
-			respondError(w, r, errs.Malformed("NewPermitReq"))
+			respondError(w, r, Malformed("NewPermitReq"))
 			return
 		}
 
@@ -81,11 +80,11 @@ func (h permitHandler) create() http.HandlerFunc {
 		if accessPayload.Role == models.ResidentRole {
 			if newPermitReq.ExceptionReason != "" {
 				message := "Residents cannot request parking permits with exceptions"
-				respondError(w, r, errs.BadRequest(message))
+				respondError(w, r, BadRequest(message))
 				return
 			}
 			if newPermitReq.ResidentID != "" && newPermitReq.ResidentID != accessPayload.ID {
-				respondError(w, r, errs.BadRequest("Residents cannot request a parking permit for another resident"))
+				respondError(w, r, BadRequest("Residents cannot request a parking permit for another resident"))
 				return
 			}
 			if newPermitReq.ResidentID == "" {
@@ -120,7 +119,7 @@ func (h permitHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editPermitReq models.Permit
 		if err := json.NewDecoder(r.Body).Decode(&editPermitReq); err != nil {
-			respondError(w, r, errs.Malformed("EditPermitReq"))
+			respondError(w, r, Malformed("EditPermitReq"))
 			return
 		}
 

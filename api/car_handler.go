@@ -101,7 +101,7 @@ func (h carHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editCarReq models.Car
 		if err := json.NewDecoder(r.Body).Decode(&editCarReq); err != nil {
-			respondError(w, r, errs.Malformed("EditCarReq"))
+			respondError(w, r, Malformed("EditCarReq"))
 			return
 		}
 		if !util.IsUUIDV4(editCarReq.ID) {
@@ -141,7 +141,7 @@ func (h carHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var desiredCar models.Car
 		if err := json.NewDecoder(r.Body).Decode(&desiredCar); err != nil {
-			respondError(w, r, errs.Malformed("New Car Request"))
+			respondError(w, r, Malformed("New Car Request"))
 			return
 		}
 

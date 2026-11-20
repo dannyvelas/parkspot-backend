@@ -33,7 +33,7 @@ func (h authHandler) login() http.HandlerFunc {
 		}
 		err := json.NewDecoder(r.Body).Decode(&credentials)
 		if err != nil {
-			respondError(w, r, errs.Malformed("Credentials"))
+			respondError(w, r, Malformed("Credentials"))
 			return
 		}
 
@@ -94,7 +94,7 @@ func (h authHandler) sendResetPasswordEmail() http.HandlerFunc {
 
 		var payload struct{ ID string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, r, errs.Malformed("id object"))
+			respondError(w, r, Malformed("id object"))
 			return
 		} else if payload.ID == "" {
 			respondError(w, r, errs.EmptyFields("id"))
@@ -114,7 +114,7 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload struct{ Password string }
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, r, errs.Malformed("password object"))
+			respondError(w, r, Malformed("password object"))
 			return
 		}
 
