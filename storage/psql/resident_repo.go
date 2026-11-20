@@ -1,6 +1,7 @@
 package psql
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -37,6 +38,23 @@ func NewResidentRepo(driver *sqlx.DB) storage.ResidentRepo {
 		residentSelect: residentSelect,
 		countSelect:    countSelect,
 	}
+}
+
+func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
+	query, args, err := residentRepo.residentSelect.Where("id = $1", id).ToSql()
+	if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", storage.ErrDBBuildingQuery, err)
+	}
+
+	resident := resident{}
+	err = residentRepo.driver.Get(&resident, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", errs.NewNotFound("resident"))
+	} else if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
+	}
+
+	return resident.toModels(), nil
 }
 
 func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) ([]models.Resident, error) {

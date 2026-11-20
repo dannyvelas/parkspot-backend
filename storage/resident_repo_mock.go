@@ -15,6 +15,14 @@ func NewResidentRepoMock() ResidentRepoMock {
 	return ResidentRepoMock{residents: make([]models.Resident, 0)}
 }
 
+func (residentRepoMock *ResidentRepoMock) GetOne(id string) (models.Resident, error) {
+	i := util.Find(residentRepoMock.residents, func(resident models.Resident) bool { return resident.ID == id })
+	if i < 0 {
+		return models.Resident{}, errs.NewNotFound("resident")
+	}
+	return residentRepoMock.residents[i], nil
+}
+
 func (residentRepoMock *ResidentRepoMock) SelectWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) ([]models.Resident, error) {
 	var residentsFound []models.Resident
 	for _, resident := range residentRepoMock.residents {

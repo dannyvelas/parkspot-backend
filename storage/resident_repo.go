@@ -6,6 +6,7 @@ import (
 )
 
 type ResidentRepo interface {
+	GetOne(id string) (models.Resident, error)
 	SelectWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) ([]models.Resident, error)
 	SelectCountWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) (int, error)
 	AddToAmtParkingDaysUsed(id string, days int) error
