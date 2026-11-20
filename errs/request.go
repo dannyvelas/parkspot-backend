@@ -11,7 +11,6 @@ var (
 	MissingIDField = NewAPIErr(http.StatusBadRequest, "ID field is required but missing")
 	IDNotUUID      = NewAPIErr(http.StatusBadRequest, "ID field is not a UUID")
 	InvalidResID   = NewAPIErr(http.StatusBadRequest, "ResidentID must start be a 'B' or a 'T', followed by 7 numbers")
-	AlreadyExists  = NewAPIErr(http.StatusBadRequest, "already exists")
 )
 
 func BadRequest(message string) *APIErr {
@@ -36,10 +35,6 @@ func InvalidFields(fields string) *APIErr {
 
 func Malformed(payload string) *APIErr {
 	return NewAPIErr(http.StatusBadRequest, payload+" malformed")
-}
-
-func NewAlreadyExists(resource string) *APIErr {
-	return &APIErr{http.StatusBadRequest, fmt.Errorf("%s %w", resource, AlreadyExists)}
 }
 
 func AllEditFieldsEmpty(fields string) *APIErr {

@@ -121,7 +121,7 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 		if cars, err := s.carRepo.SelectWhere(models.Car{ID: desiredCar.ID}); err != nil {
 			return models.Car{}, fmt.Errorf("carService.Create: error getting car by id: %w", err)
 		} else if len(cars) != 0 {
-			return models.Car{}, errs.NewAlreadyExists("a car with this ID: " + desiredCar.ID)
+			return models.Car{}, NewAlreadyExists("a car with this ID: " + desiredCar.ID)
 		}
 	}
 

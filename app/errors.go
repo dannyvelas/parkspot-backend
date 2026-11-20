@@ -39,13 +39,19 @@ var (
 	)
 
 	ErrResidentQuotaFieldsNil = errors.New("resident's UnlimDays or AmtParkingDaysUsed is nil")
+
+	AlreadyExists = errs.NewAPIErr(http.StatusBadRequest, "already exists")
 )
 
 func NewCarWithLPAlreadyExists(licensePlate string) *errs.APIErr {
 	return errs.NewAPIErrFromError(
 		http.StatusBadRequest,
-		fmt.Errorf("a car with this licensePlate %s %w", licensePlate, errs.AlreadyExists),
+		fmt.Errorf("a car with this licensePlate %s %w", licensePlate, AlreadyExists),
 	)
+}
+
+func NewAlreadyExists(resource string) *errs.APIErr {
+	return errs.NewAPIErrFromError(http.StatusBadRequest, fmt.Errorf("%s %w", resource, AlreadyExists))
 }
 
 func EntityDaysTooLong(entity string, amtDaysUsed int) *errs.APIErr {

@@ -108,13 +108,13 @@ func (s ResidentService) Create(desiredRes models.Resident) (models.Resident, er
 	if residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredRes.ID}); err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.createResident: error getting resident by id: %w", err)
 	} else if len(residents) != 0 {
-		return models.Resident{}, errs.NewAlreadyExists("a resident with ID: " + desiredRes.ID)
+		return models.Resident{}, NewAlreadyExists("a resident with ID: " + desiredRes.ID)
 	}
 
 	if residents, err := s.residentRepo.SelectWhere(models.Resident{Email: desiredRes.Email}); err != nil {
 		return models.Resident{}, fmt.Errorf("resident_service.createResident error getting resident by email: %w", err)
 	} else if len(residents) != 0 {
-		return models.Resident{}, errs.NewAlreadyExists("a resident with this email: " + desiredRes.Email)
+		return models.Resident{}, NewAlreadyExists("a resident with this email: " + desiredRes.Email)
 	}
 
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(desiredRes.Password), bcrypt.DefaultCost)

@@ -66,7 +66,7 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 	if _, err := s.adminRepo.GetOne(desiredAdmin.ID); err != nil && !errors.Is(err, errs.NotFound) {
 		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: error getting admin by id: %w", err)
 	} else if err == nil {
-		return models.Admin{}, errs.NewAlreadyExists("an admin with ID: " + desiredAdmin.ID)
+		return models.Admin{}, NewAlreadyExists("an admin with ID: " + desiredAdmin.ID)
 	}
 
 	// TODO: check for duplicate email here
