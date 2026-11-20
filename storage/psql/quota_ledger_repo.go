@@ -63,9 +63,9 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
 
 	effectiveAllowance := config.MaxParkingDays + adjustmentSum
 	if daysUsed >= effectiveAllowance {
-		return models.Permit{}, errs.EntityDaysTooLong("resident", daysUsed)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w", storage.ErrQuotaExceeded)
 	} else if daysUsed+permitLength > effectiveAllowance {
-		return models.Permit{}, errs.PermitPlusEntityDaysTooLong("resident", daysUsed)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w", storage.ErrQuotaWouldExceed)
 	}
 
 	createdPermit, err := r.insertPermit(tx, desiredPermit, now.Unix())
