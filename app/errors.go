@@ -39,6 +39,9 @@ var (
 	)
 
 	ErrResidentQuotaFieldsNil = errors.New("resident's UnlimDays or AmtParkingDaysUsed is nil")
+	ErrJWTGenerating          = errors.New("error generating JWT")
+	ErrGmailClient            = errors.New("error constructing Gmail client")
+	ErrSendingMail            = errors.New("error sending mail via Gmail API")
 
 	AlreadyExists = errs.NewAPIErr(http.StatusBadRequest, "already exists")
 )
