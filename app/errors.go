@@ -41,6 +41,13 @@ var (
 	ErrResidentQuotaFieldsNil = errors.New("resident's UnlimDays or AmtParkingDaysUsed is nil")
 )
 
+func NewCarWithLPAlreadyExists(licensePlate string) *errs.APIErr {
+	return errs.NewAPIErrFromError(
+		http.StatusBadRequest,
+		fmt.Errorf("a car with this licensePlate %s %w", licensePlate, errs.AlreadyExists),
+	)
+}
+
 func EntityDaysTooLong(entity string, amtDaysUsed int) *errs.APIErr {
 	entityLower := cases.Lower(language.English).String(entity)
 	entityTitle := cases.Title(language.English).String(entity)
