@@ -1,8 +1,6 @@
-package errs
+package storage
 
-import (
-	"errors"
-)
+import "errors"
 
 var (
 	ErrDBConnecting      = errors.New("error connecting to database")

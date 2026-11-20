@@ -21,7 +21,7 @@ func NewAdminRepo(driver *sqlx.DB) storage.AdminRepo {
 
 func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	if id == "" {
-		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: Empty ID", errs.ErrDBInvalidArg)
+		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: Empty ID", storage.ErrDBInvalidArg)
 	}
 
 	const query = `
@@ -36,7 +36,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	if err == sql.ErrNoRows {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NewNotFound("admin"))
 	} else if err != nil {
-		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: %v", errs.ErrDBQueryScanOneRow, err)
+		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: %v", storage.ErrDBQueryScanOneRow, err)
 	}
 
 	return admin.toModels(), nil
@@ -56,12 +56,12 @@ func (adminRepo AdminRepo) Update(adminFields models.Admin) error {
 
 	query, args, err := adminUpdate.Where("admin.id = ?", adminFields.ID).ToSql()
 	if err != nil {
-		return fmt.Errorf("admin_repo.Update: %w: %v", errs.ErrDBBuildingQuery, err)
+		return fmt.Errorf("admin_repo.Update: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	_, err = adminRepo.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("admin_repo.Update: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("admin_repo.Update: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return nil
@@ -80,12 +80,12 @@ func (adminRepo AdminRepo) Create(desiredAdmin models.Admin) error {
 			"is_privileged": desiredAdmin.IsPrivileged,
 		}).ToSql()
 	if err != nil {
-		return fmt.Errorf("admin_repo.Create: %w: %v", errs.ErrDBBuildingQuery, err)
+		return fmt.Errorf("admin_repo.Create: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	_, err = adminRepo.driver.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("admin_repo.Create: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("admin_repo.Create: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return nil
@@ -96,11 +96,11 @@ func (adminRepo AdminRepo) Delete(id string) error {
 
 	res, err := adminRepo.driver.Exec(query, id)
 	if err != nil {
-		return fmt.Errorf("admin_repo.Delete: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("admin_repo.Delete: %w: %v", storage.ErrDBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("admin_repo.Delete: %w: %v", errs.ErrDBGetRowsAffected, err)
+		return fmt.Errorf("admin_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
 		return fmt.Errorf("admin_repo.Delete: %w", errs.NewNotFound("admin"))
 	}
