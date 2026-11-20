@@ -245,7 +245,7 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	}
 
 	if resident.UnlimDays == nil || resident.AmtParkingDaysUsed == nil {
-		return models.Resident{}, fmt.Errorf("data type error in permit service validate create. unlimDays or amtParkingDaysUsed is nil")
+		return models.Resident{}, fmt.Errorf("getAndValidateResident: %w", errs.ErrResidentQuotaFieldsNil)
 	}
 
 	if !*resident.UnlimDays {
