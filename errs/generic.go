@@ -7,15 +7,10 @@ import (
 
 var (
 	Unauthorized   = NewAPIErr(http.StatusUnauthorized, "unauthorized")
-	NotFound       = NewAPIErr(http.StatusNotFound, "not found")
 	MissingIDField = NewAPIErr(http.StatusBadRequest, "ID field is required but missing")
 	IDNotUUID      = NewAPIErr(http.StatusBadRequest, "ID field is not a UUID")
 	InvalidResID   = NewAPIErr(http.StatusBadRequest, "ResidentID must start be a 'B' or a 'T', followed by 7 numbers")
 )
-
-func NewNotFound(resource string) *APIErr {
-	return &APIErr{http.StatusNotFound, fmt.Errorf("%s %w", resource, NotFound)}
-}
 
 func NewUnauthorized(message string) *APIErr {
 	return &APIErr{http.StatusUnauthorized, fmt.Errorf("%s %w", message, Unauthorized)}

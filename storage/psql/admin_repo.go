@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/jmoiron/sqlx"
@@ -34,7 +33,7 @@ func (adminRepo AdminRepo) GetOne(id string) (models.Admin, error) {
 	var admin admin
 	err := adminRepo.driver.Get(&admin, query, id)
 	if err == sql.ErrNoRows {
-		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", errs.NewNotFound("admin"))
+		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w", storage.NewNotFound("admin"))
 	} else if err != nil {
 		return models.Admin{}, fmt.Errorf("admin_repo.GetOne: %w: %v", storage.ErrDBQueryScanOneRow, err)
 	}
@@ -102,7 +101,7 @@ func (adminRepo AdminRepo) Delete(id string) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("admin_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("admin_repo.Delete: %w", errs.NewNotFound("admin"))
+		return fmt.Errorf("admin_repo.Delete: %w", storage.NewNotFound("admin"))
 	}
 
 	return nil

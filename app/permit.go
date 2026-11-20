@@ -82,10 +82,10 @@ func (s PermitService) Delete(id int) error {
 		}
 
 		err = s.carService.carRepo.AddToAmtParkingDaysUsed(permit.CarID, -permitLength)
-		if err != nil && !errors.Is(err, errs.NotFound) {
+		if err != nil && !errors.Is(err, storage.NotFound) {
 			return fmt.Errorf("error subtracting amtParkingDaysUsed in carRepo: %w", err)
 		}
-		// purposely not returning error if error.Is(err, errs.NotFound)
+		// purposely not returning error if error.Is(err, storage.NotFound)
 		// its possible that the car with id of permit.CarID was deleted and no longer exists.
 		// unlike a resident deletion, a car deletion does not cascade delete its permits
 	}
@@ -147,11 +147,11 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 // helpers
 func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
 	associatedCar, err := s.findCar(p)
-	if !errors.Is(err, errs.NotFound) && err != nil {
+	if !errors.Is(err, storage.NotFound) && err != nil {
 		return models.Permit{}, err
 	}
 
-	if errors.Is(err, errs.NotFound) {
+	if errors.Is(err, storage.NotFound) {
 		if p.CarID != "" {
 			// the caller asked for a specific, pre-existing car that doesn't exist:
 			// this is an error, not a signal to create a new car

@@ -10,6 +10,7 @@ import (
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
@@ -48,7 +49,7 @@ type Session struct {
 
 func (a AuthService) Login(id, password string) (Session, string, error) {
 	loginable, err := a.getUser(id)
-	if errors.Is(err, errs.NotFound) {
+	if errors.Is(err, storage.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.login: error querying repo: %w", err)
@@ -79,7 +80,7 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 
 func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	loginable, err := a.getUser(user.ID)
-	if errors.Is(err, errs.NotFound) {
+	if errors.Is(err, storage.NotFound) {
 		return Session{}, "", errs.Unauthorized
 	} else if err != nil {
 		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: error querying repo: %w", err)
@@ -110,7 +111,7 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 
 func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) error {
 	loginable, err := a.getUser(id)
-	if errors.Is(err, errs.NotFound) {
+	if errors.Is(err, storage.NotFound) {
 		return errs.Unauthorized
 	} else if err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %w", err)

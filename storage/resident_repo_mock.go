@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
 	"github.com/dannyvelas/parkspot-backend/util"
@@ -18,7 +17,7 @@ func NewResidentRepoMock() ResidentRepoMock {
 func (residentRepoMock *ResidentRepoMock) GetOne(id string) (models.Resident, error) {
 	i := util.Find(residentRepoMock.residents, func(resident models.Resident) bool { return resident.ID == id })
 	if i < 0 {
-		return models.Resident{}, errs.NewNotFound("resident")
+		return models.Resident{}, NewNotFound("resident")
 	}
 	return residentRepoMock.residents[i], nil
 }
@@ -46,7 +45,7 @@ func (residentRepoMock *ResidentRepoMock) AddToAmtParkingDaysUsed(id string, day
 		return resident.ID == id
 	})
 	if i == -1 {
-		return errs.NewNotFound("resident")
+		return NewNotFound("resident")
 	}
 	resident := &residentRepoMock.residents[i]
 
@@ -70,7 +69,7 @@ func (residentRepoMock *ResidentRepoMock) Delete(id string) error {
 		return resident.ID == id
 	})
 	if i == -1 {
-		return errs.NewNotFound("resident")
+		return NewNotFound("resident")
 	}
 	residents := residentRepoMock.residents
 
@@ -86,7 +85,7 @@ func (residentRepoMock *ResidentRepoMock) Delete(id string) error {
 func (residentRepoMock *ResidentRepoMock) Update(residentFields models.Resident) error {
 	i := util.Find(residentRepoMock.residents, func(resident models.Resident) bool { return resident.ID == residentFields.ID })
 	if i < 0 {
-		return errs.NewNotFound("resident")
+		return NewNotFound("resident")
 	}
 	resident := &residentRepoMock.residents[i]
 	if residentFields.FirstName != "" {

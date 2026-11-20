@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
@@ -47,7 +46,7 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	car := car{}
 	err = carRepo.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", errs.NewNotFound("car"))
+		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w", storage.NewNotFound("car"))
 	} else if err != nil {
 		return models.Car{}, fmt.Errorf("car_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
 	}
@@ -64,7 +63,7 @@ func (carRepo CarRepo) GetOneByLicensePlate(licensePlate string) (models.Car, er
 	car := car{}
 	err = carRepo.driver.Get(&car, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w", errs.NewNotFound("car"))
+		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w", storage.NewNotFound("car"))
 	} else if err != nil {
 		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w: %v", storage.ErrDBQuery, err)
 	}

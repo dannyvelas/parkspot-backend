@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
@@ -129,7 +128,7 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("visitor_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("visitor_repo.Delete: %w", errs.NewNotFound("visitor"))
+		return fmt.Errorf("visitor_repo.Delete: %w", storage.NewNotFound("visitor"))
 	}
 
 	return nil
@@ -144,7 +143,7 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	visitor := visitor{}
 	err = visitorRepo.driver.Get(&visitor, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NewNotFound("visitor"))
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", storage.NewNotFound("visitor"))
 	} else if err != nil {
 		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
 	}

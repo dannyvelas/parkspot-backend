@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/google/uuid"
@@ -18,7 +17,7 @@ func NewCarRepoMock() CarRepoMock {
 func (carRepoMock *CarRepoMock) GetOne(id string) (models.Car, error) {
 	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.ID == id })
 	if i < 0 {
-		return models.Car{}, errs.NewNotFound("car")
+		return models.Car{}, NewNotFound("car")
 	}
 	return carRepoMock.cars[i], nil
 }
@@ -26,7 +25,7 @@ func (carRepoMock *CarRepoMock) GetOne(id string) (models.Car, error) {
 func (carRepoMock *CarRepoMock) GetOneByLicensePlate(licensePlate string) (models.Car, error) {
 	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.LicensePlate == licensePlate })
 	if i < 0 {
-		return models.Car{}, errs.NewNotFound("car")
+		return models.Car{}, NewNotFound("car")
 	}
 	return carRepoMock.cars[i], nil
 }
@@ -62,7 +61,7 @@ func (carRepoMock *CarRepoMock) Create(car models.Car) (string, error) {
 func (carRepoMock *CarRepoMock) AddToAmtParkingDaysUsed(id string, days int) error {
 	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.ID == id })
 	if i == -1 {
-		return errs.NewNotFound("car")
+		return NewNotFound("car")
 	}
 	car := &carRepoMock.cars[i]
 
@@ -73,7 +72,7 @@ func (carRepoMock *CarRepoMock) AddToAmtParkingDaysUsed(id string, days int) err
 func (carRepoMock *CarRepoMock) Update(carFields models.Car) error {
 	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.ID == carFields.ID })
 	if i < 0 {
-		return errs.NewNotFound("car")
+		return NewNotFound("car")
 	}
 	car := &carRepoMock.cars[i]
 	if carFields.LicensePlate != "" {
@@ -97,7 +96,7 @@ func (carRepoMock *CarRepoMock) Update(carFields models.Car) error {
 func (carRepoMock *CarRepoMock) Delete(id string) error {
 	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.ID == id })
 	if i == -1 {
-		return errs.NewNotFound("car")
+		return NewNotFound("car")
 	}
 	cars := carRepoMock.cars
 
