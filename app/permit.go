@@ -106,7 +106,7 @@ func (s PermitService) Create(desiredPermit models.Permit) (models.Permit, error
 		return models.Permit{}, err
 	}
 
-	populatedPermit, err := s.populatePermitCarFields(desiredPermit, *resident.UnlimDays, permitLength)
+	populatedPermit, err := s.populatePermitCarFields(desiredPermit, *resident.UnlimDays)
 	if err != nil {
 		return models.Permit{}, err
 	}
@@ -147,7 +147,7 @@ func (s PermitService) Update(updatedFields models.Permit) (models.Permit, error
 }
 
 // helpers
-func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool, permitLength int) (models.Permit, error) {
+func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDays bool) (models.Permit, error) {
 	associatedCar, err := s.findCar(p)
 	if !errors.Is(err, storage.NotFound) && err != nil {
 		return models.Permit{}, err
@@ -174,7 +174,7 @@ func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDay
 	}
 
 	// we found a car that already exists like this in the database, lets use that one
-	if err := s.validateCar(p, associatedCar, residentUnlimDays, permitLength); err != nil {
+	if err := s.validateCar(p, associatedCar, residentUnlimDays); err != nil {
 		return models.Permit{}, err
 	}
 	// get a snapshot of car and save it into the permit
@@ -194,7 +194,7 @@ func (s PermitService) findCar(p models.Permit) (models.Car, error) {
 	}
 }
 
-func (s PermitService) validateCar(p models.Permit, c models.Car, residentUnlimDays bool, permitLength int) error {
+func (s PermitService) validateCar(p models.Permit, c models.Car, residentUnlimDays bool) error {
 	// error out if it has active permits during dates requested
 	carActivePermitsDuring, err := s.permitRepo.SelectWhere(
 		models.Permit{CarID: c.ID},
