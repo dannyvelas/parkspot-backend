@@ -135,5 +135,5 @@ func (suite *carTestSuite) TestCreate_CarRepeatLP_Negative() {
 	_, err := suite.carService.Create(carWithSameLP)
 	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
 
-	require.ErrorIs(suite.T(), err, errs.AlreadyExists, "error is expected to be one of already exists")
+	require.ErrorIs(suite.T(), err, AlreadyExists, "error is expected to be one of already exists")
 }

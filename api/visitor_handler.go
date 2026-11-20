@@ -53,7 +53,7 @@ func (h visitorHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var desiredVisitor models.Visitor
 		if err := json.NewDecoder(r.Body).Decode(&desiredVisitor); err != nil {
-			respondError(w, r, errs.Malformed("New Visitor Request"))
+			respondError(w, r, Malformed("New Visitor Request"))
 			return
 		}
 
@@ -65,7 +65,7 @@ func (h visitorHandler) create() http.HandlerFunc {
 		}
 
 		if desiredVisitor.ResidentID != "" && desiredVisitor.ResidentID != accessPayload.ID {
-			respondError(w, r, errs.BadRequest("Residents cannot create a visitor for another resident"))
+			respondError(w, r, BadRequest("Residents cannot create a visitor for another resident"))
 			return
 		}
 		if desiredVisitor.ResidentID == "" {

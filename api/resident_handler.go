@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"github.com/dannyvelas/parkspot-backend/app"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/util"
 	"github.com/go-chi/chi/v5"
@@ -54,12 +53,12 @@ func (h residentHandler) edit() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var editResidentReq models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&editResidentReq); err != nil {
-			respondError(w, r, errs.Malformed("EditResidentReq"))
+			respondError(w, r, Malformed("EditResidentReq"))
 			return
 		}
 
 		if editResidentReq.Password != "" {
-			respondError(w, r, errs.BadRequest("Resident passwords cannot be edited. These can only be changed if a resident requests a password reset."))
+			respondError(w, r, BadRequest("Resident passwords cannot be edited. These can only be changed if a resident requests a password reset."))
 			return
 		}
 
@@ -88,7 +87,7 @@ func (h residentHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload models.Resident
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			respondError(w, r, errs.Malformed("NewResidentReq"))
+			respondError(w, r, Malformed("NewResidentReq"))
 			return
 		}
 

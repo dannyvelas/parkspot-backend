@@ -139,7 +139,7 @@ func (suite *permitTestSuite) TestCreate_CarTwoActivePermits() {
 
 	_, err = suite.permitService.Create(permitSameCar)
 	require.NotNil(suite.T(), err)
-	require.ErrorIs(suite.T(), err, errs.CarActivePermit, "expected error to be car active permit")
+	require.ErrorIs(suite.T(), err, CarActivePermit, "expected error to be car active permit")
 }
 
 func (suite *permitTestSuite) TestCreate_SameLicensePlateDifferentResident_Positive() {
@@ -195,7 +195,7 @@ func (suite *permitTestSuite) TestCreate_NonexistentCarID_Negative() {
 
 	_, err := suite.permitService.Create(desiredPermit)
 	require.NotNil(suite.T(), err)
-	require.ErrorIs(suite.T(), err, errs.CarForPermitDNE, "expected a nonexistent CarID to error out instead of silently creating an unrelated car")
+	require.ErrorIs(suite.T(), err, CarForPermitDNE, "expected a nonexistent CarID to error out instead of silently creating an unrelated car")
 }
 
 func (suite *permitTestSuite) TestCreate_CarInvalidFields() {

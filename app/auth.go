@@ -66,12 +66,12 @@ func (a AuthService) Login(id, password string) (Session, string, error) {
 	// generate tokens
 	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: %w: %v", errs.ErrJWTGenerating, err)
+		return Session{}, "", fmt.Errorf("auth_service.login: %w: %v", ErrJWTGenerating, err)
 	}
 
 	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.login: %w: %v", errs.ErrJWTGenerating, err)
+		return Session{}, "", fmt.Errorf("auth_service.login: %w: %v", ErrJWTGenerating, err)
 	}
 
 	return Session{user, accessToken}, refreshToken, nil
@@ -97,12 +97,12 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 	// generate tokens
 	refreshToken, err := a.jwtService.NewRefresh(user)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: %w: %v", errs.ErrJWTGenerating, err)
+		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: %w: %v", ErrJWTGenerating, err)
 	}
 
 	accessToken, err := a.jwtService.NewAccess(user.ID, user.Role)
 	if err != nil {
-		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: %w: %v", errs.ErrJWTGenerating, err)
+		return Session{}, "", fmt.Errorf("auth_service.refreshTokens: %w: %v", ErrJWTGenerating, err)
 	}
 
 	return Session{user, accessToken}, refreshToken, nil
@@ -128,7 +128,7 @@ func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) erro
 
 	_, err = service.Users.Messages.Send("me", gmailMessage).Do()
 	if err != nil {
-		return fmt.Errorf("auth_service.sendResetPasswordEmail: %w: %v", errs.ErrSendingMail, err)
+		return fmt.Errorf("auth_service.sendResetPasswordEmail: %w: %v", ErrSendingMail, err)
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func (a AuthService) getGmailService(ctx context.Context) (*gmail.Service, error
 
 	service, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve Gmail client: %w: %v", errs.ErrGmailClient, err)
+		return nil, fmt.Errorf("unable to retrieve Gmail client: %w: %v", ErrGmailClient, err)
 	}
 
 	return service, nil
@@ -189,7 +189,7 @@ func (a AuthService) createGmailMessage(toUser models.User) (*gmail.Message, err
 
 	token, err := a.jwtService.NewAccess(toUser.ID, toUser.Role)
 	if err != nil {
-		return nil, fmt.Errorf("error generating JWT: %w: %v", errs.ErrJWTGenerating, err)
+		return nil, fmt.Errorf("error generating JWT: %w: %v", ErrJWTGenerating, err)
 	}
 
 	fmt.Fprintf(body, "From: Park Spot <parkspotapplication@gmail.com>\r\n")

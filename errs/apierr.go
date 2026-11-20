@@ -16,6 +16,13 @@ func NewAPIErr(statusCode int, message string) *APIErr {
 	}
 }
 
+func NewAPIErrFromError(statusCode int, err error) *APIErr {
+	return &APIErr{
+		StatusCode: statusCode,
+		err:        err,
+	}
+}
+
 // Error implements error interface
 func (e *APIErr) Error() string {
 	return e.err.Error()

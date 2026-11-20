@@ -1,27 +1,34 @@
-package errs
+package app
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"net/http"
 )
 
 var (
-	ResidentForPermitDNE = NewAPIErr(
+	ResidentTwoActivePermits = errs.NewAPIErr(
+		http.StatusBadRequest,
+		"Cannot create a permit during these dates"+
+			" because this resident has at least two active permits during that time.")
+	ResidentForPermitDNE = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Users must have a registered account to request a guest parking"+
 			" permit. Please create their account before requesting their permit.")
-	CarForPermitDNE = NewAPIErr(
+	CarForPermitDNE = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"The car that you chose for this permit does not"+
 			" exist. Please create or choose another car.")
-	CarActivePermit = NewAPIErr(
+	CarActivePermit = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+
 			" because this car has at least one active permit during that time.")
-	PermitTooLong = NewAPIErr(
+	PermitTooLong = errs.NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: Requests cannot be longer than %d days,"+
 			" unless there is an exception."+
@@ -30,17 +37,31 @@ var (
 			config.MaxPermitLength,
 			config.MaxPermitLength),
 	)
-	ResidentTwoActivePermits = NewAPIErr(
-		http.StatusBadRequest,
-		"Cannot create a permit during these dates"+
-			" because this resident has at least two active permits during that time.")
+
+	ErrResidentQuotaFieldsNil = errors.New("resident's UnlimDays or AmtParkingDaysUsed is nil")
+	ErrJWTGenerating          = errors.New("error generating JWT")
+	ErrGmailClient            = errors.New("error constructing Gmail client")
+	ErrSendingMail            = errors.New("error sending mail via Gmail API")
+
+	AlreadyExists = errs.NewAPIErr(http.StatusBadRequest, "already exists")
 )
 
-func EntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {
+func NewCarWithLPAlreadyExists(licensePlate string) *errs.APIErr {
+	return errs.NewAPIErrFromError(
+		http.StatusBadRequest,
+		fmt.Errorf("a car with this licensePlate %s %w", licensePlate, AlreadyExists),
+	)
+}
+
+func NewAlreadyExists(resource string) *errs.APIErr {
+	return errs.NewAPIErrFromError(http.StatusBadRequest, fmt.Errorf("%s %w", resource, AlreadyExists))
+}
+
+func EntityDaysTooLong(entity string, amtDaysUsed int) *errs.APIErr {
 	entityLower := cases.Lower(language.English).String(entity)
 	entityTitle := cases.Title(language.English).String(entity)
 
-	return NewAPIErr(
+	return errs.NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: This %s has used parking permits that have lasted"+
 			" a combined total of %d days."+
@@ -52,10 +73,10 @@ func EntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {
 	)
 }
 
-func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *APIErr {
+func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *errs.APIErr {
 	entityLower := cases.Lower(language.English).String(entity)
 
-	return NewAPIErr(
+	return errs.NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: This request would exceed the %s's"+
 			" yearly guest parking pass limit of %d days."+

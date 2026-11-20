@@ -96,7 +96,7 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 		} else if len(cars) != 0 && cars[0].ID != updatedFields.ID {
 			// it's possible that the car we found with the same licensePlate in the database is the car we're currently updating
 			// in this case, don't raise an error
-			return models.Car{}, errs.NewErrCarWithLPAlreadyExists(updatedFields.LicensePlate)
+			return models.Car{}, NewCarWithLPAlreadyExists(updatedFields.LicensePlate)
 		}
 	}
 
@@ -121,14 +121,14 @@ func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 		if cars, err := s.carRepo.SelectWhere(models.Car{ID: desiredCar.ID}); err != nil {
 			return models.Car{}, fmt.Errorf("carService.Create: error getting car by id: %w", err)
 		} else if len(cars) != 0 {
-			return models.Car{}, errs.NewAlreadyExists("a car with this ID: " + desiredCar.ID)
+			return models.Car{}, NewAlreadyExists("a car with this ID: " + desiredCar.ID)
 		}
 	}
 
 	if cars, err := s.carRepo.SelectWhere(models.Car{LicensePlate: desiredCar.LicensePlate}); err != nil {
 		return models.Car{}, fmt.Errorf("carService.createCar error getting car by licensePlate: %w", err)
 	} else if len(cars) != 0 {
-		return models.Car{}, errs.NewErrCarWithLPAlreadyExists(desiredCar.LicensePlate)
+		return models.Car{}, NewCarWithLPAlreadyExists(desiredCar.LicensePlate)
 	}
 
 	carID, err := s.carRepo.Create(desiredCar)

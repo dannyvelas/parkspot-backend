@@ -155,7 +155,7 @@ func (s PermitService) populatePermitCarFields(p models.Permit, residentUnlimDay
 		if p.CarID != "" {
 			// the caller asked for a specific, pre-existing car that doesn't exist:
 			// this is an error, not a signal to create a new car
-			return models.Permit{}, errs.CarForPermitDNE
+			return models.Permit{}, CarForPermitDNE
 		}
 
 		// otherwise, we will create a new car for this permit
@@ -201,7 +201,7 @@ func (s PermitService) validateCar(p models.Permit, c models.Car, residentUnlimD
 	if err != nil {
 		return fmt.Errorf("error getting active of car during dates in permitRepo: %w", err)
 	} else if len(carActivePermitsDuring) != 0 {
-		return errs.CarActivePermit
+		return CarActivePermit
 	}
 
 	// if this is an exception, or if this resident has unlimited days,
@@ -222,7 +222,7 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting one from resident repo: %w", err)
 	} else if len(residents) == 0 {
-		return models.Resident{}, errs.ResidentForPermitDNE
+		return models.Resident{}, ResidentForPermitDNE
 	}
 	resident := residents[0]
 
@@ -232,7 +232,7 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	}
 
 	if permitLength > config.MaxPermitLength {
-		return models.Resident{}, errs.PermitTooLong
+		return models.Resident{}, PermitTooLong
 	}
 
 	residentActivePermitsDuring, err := s.permitRepo.SelectWhere(models.Permit{ResidentID: resident.ID},
@@ -241,18 +241,18 @@ func (s PermitService) getAndValidateResident(desiredPermit models.Permit, permi
 	if err != nil {
 		return models.Resident{}, fmt.Errorf("error getting active of resident during dates in permitRepo: %w", err)
 	} else if len(residentActivePermitsDuring) >= 2 {
-		return models.Resident{}, errs.ResidentTwoActivePermits
+		return models.Resident{}, ResidentTwoActivePermits
 	}
 
 	if resident.UnlimDays == nil || resident.AmtParkingDaysUsed == nil {
-		return models.Resident{}, fmt.Errorf("getAndValidateResident: %w", errs.ErrResidentQuotaFieldsNil)
+		return models.Resident{}, fmt.Errorf("getAndValidateResident: %w", ErrResidentQuotaFieldsNil)
 	}
 
 	if !*resident.UnlimDays {
 		if *resident.AmtParkingDaysUsed >= config.MaxParkingDays {
-			return models.Resident{}, errs.EntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
+			return models.Resident{}, EntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
 		} else if *resident.AmtParkingDaysUsed+permitLength > config.MaxParkingDays {
-			return models.Resident{}, errs.PermitPlusEntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
+			return models.Resident{}, PermitPlusEntityDaysTooLong("resident", *resident.AmtParkingDaysUsed)
 		}
 	}
 
