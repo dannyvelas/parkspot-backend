@@ -1,11 +1,12 @@
 package validator
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/util"
-	"regexp"
-	"strings"
 )
 
 type carValidator struct {

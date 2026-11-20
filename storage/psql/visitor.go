@@ -1,8 +1,9 @@
 package psql
 
 import (
-	"github.com/dannyvelas/parkspot-backend/models"
 	"time"
+
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type visitor struct {

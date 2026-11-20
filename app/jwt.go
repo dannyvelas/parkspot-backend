@@ -2,10 +2,11 @@ package app
 
 import (
 	"errors"
+	"time"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/golang-jwt/jwt/v4"
-	"time"
 )
 
 var (

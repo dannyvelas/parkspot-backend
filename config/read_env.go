@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func readEnvString(envKey string, defaultValue string) string {

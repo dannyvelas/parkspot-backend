@@ -24,7 +24,8 @@ func NewResidentService(residentRepo storage.ResidentRepo) ResidentService {
 func (s ResidentService) GetAll(limit, page int, search string) (models.ListWithMetadata[models.Resident], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-	allResidents, err := s.residentRepo.SelectWhere(models.Resident{},
+	allResidents, err := s.residentRepo.SelectWhere(
+		models.Resident{},
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
 		selectopts.WithSearch(search),
 	)

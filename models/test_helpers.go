@@ -18,7 +18,8 @@ var (
 		Password:           "notapassword",
 		UnlimDays:          util.ToPtr(false),
 		AmtParkingDaysUsed: util.ToPtr(0),
-		TokenVersion:       util.ToPtr(0)}
+		TokenVersion:       util.ToPtr(0),
+	}
 	// this is a test resident with unlimited parking days
 	TestResidentUnlimDays = Resident{
 		ID:                 "B7654321",
@@ -29,7 +30,8 @@ var (
 		Password:           "notapassword",
 		UnlimDays:          util.ToPtr(true),
 		AmtParkingDaysUsed: util.ToPtr(0),
-		TokenVersion:       util.ToPtr(0)}
+		TokenVersion:       util.ToPtr(0),
+	}
 	// this is the default test car. the associated resident is test_resident
 	TestCar = NewCar(
 		"d1e0affb-14e7-4e9f-b8a3-70be7d49d063",
@@ -38,7 +40,8 @@ var (
 		"color",
 		"make",
 		"model",
-		0)
+		0,
+	)
 	// this is the default test admin.
 	TestAdmin = NewAdmin(
 		"admin",

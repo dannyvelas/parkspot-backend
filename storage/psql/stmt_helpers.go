@@ -1,13 +1,12 @@
 package psql
 
 import (
-	"github.com/Masterminds/squirrel"
 	"reflect"
+
+	"github.com/Masterminds/squirrel"
 )
 
-var (
-	stmtBuilder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-)
+var stmtBuilder = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 func rmEmptyVals(whereClause squirrel.Eq) squirrel.Eq {
 	newClause := make(squirrel.Eq)

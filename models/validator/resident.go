@@ -1,10 +1,11 @@
 package validator
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
-	"github.com/dannyvelas/parkspot-backend/models"
 	"regexp"
 	"strings"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type residentValidator struct {

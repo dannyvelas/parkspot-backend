@@ -24,7 +24,8 @@ func NewCarService(carRepo storage.CarRepo) CarService {
 func (s CarService) GetAll(limit, page int, reversed bool, search, residentID string) (models.ListWithMetadata[models.Car], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-	allCars, err := s.carRepo.SelectWhere(models.Car{ResidentID: residentID},
+	allCars, err := s.carRepo.SelectWhere(
+		models.Car{ResidentID: residentID},
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
 		selectopts.WithReversed(reversed),
 		selectopts.WithSearch(search),
@@ -33,7 +34,8 @@ func (s CarService) GetAll(limit, page int, reversed bool, search, residentID st
 		return models.ListWithMetadata[models.Car]{}, fmt.Errorf("error getting cars from car repo: %w", err)
 	}
 
-	totalAmount, err := s.carRepo.SelectCountWhere(models.Car{ResidentID: residentID},
+	totalAmount, err := s.carRepo.SelectCountWhere(
+		models.Car{ResidentID: residentID},
 		selectopts.WithSearch(search),
 	)
 	if err != nil {

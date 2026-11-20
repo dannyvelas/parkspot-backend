@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage/psql"
@@ -10,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"net/http"
-	"testing"
 )
 
 type carTestSuite struct {

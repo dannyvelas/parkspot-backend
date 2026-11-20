@@ -1,8 +1,9 @@
 package selectopts
 
 import (
-	"github.com/Masterminds/squirrel"
 	"time"
+
+	"github.com/Masterminds/squirrel"
 )
 
 type dateIntersect struct {
