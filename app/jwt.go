@@ -29,7 +29,7 @@ func NewJWTService(tokenConfig config.TokenConfig) JWTService {
 
 type accessClaims struct {
 	Payload AccessPayload `json:"payload"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 type AccessPayload struct {
@@ -39,13 +39,13 @@ type AccessPayload struct {
 
 type refreshClaims struct {
 	User models.User `json:"user"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 func (jwtService JWTService) NewAccess(id string, role models.Role) (string, error) {
 	claims := accessClaims{
 		AccessPayload{id, role},
-		jwt.StandardClaims{ExpiresAt: time.Now().Add(time.Minute * 15).Unix()},
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 15))},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -56,7 +56,7 @@ func (jwtService JWTService) NewAccess(id string, role models.Role) (string, err
 func (jwtService JWTService) NewRefresh(user models.User) (string, error) {
 	claims := refreshClaims{
 		user,
-		jwt.StandardClaims{ExpiresAt: time.Now().AddDate(0, 0, 7).Unix()}, // 7 days
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(0, 0, 7))}, // 7 days
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
