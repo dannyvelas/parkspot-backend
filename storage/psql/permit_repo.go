@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
@@ -111,7 +110,7 @@ func (permitRepo PermitRepo) GetOne(id int) (models.Permit, error) {
 	permit := permit{}
 	err = permitRepo.driver.Get(&permit, query, args...)
 	if err == sql.ErrNoRows {
-		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", errs.NewNotFound("permit"))
+		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w", storage.NewNotFound("permit"))
 	} else if err != nil {
 		return models.Permit{}, fmt.Errorf("permit_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
 	}
@@ -167,7 +166,7 @@ func (permitRepo PermitRepo) Delete(id int) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("permit_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("permit_repo.Delete: %w", errs.NewNotFound("permit"))
+		return fmt.Errorf("permit_repo.Delete: %w", storage.NewNotFound("permit"))
 	}
 
 	return nil

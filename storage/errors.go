@@ -1,8 +1,16 @@
 package storage
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
+)
 
 var (
+	NotFound = errs.NewAPIErr(http.StatusNotFound, "not found")
+
 	ErrDBConnecting      = errors.New("error connecting to database")
 	ErrDBQuery           = errors.New("error querying database")
 	ErrDBQueryScanOneRow = errors.New("error when querying and scanning one row in database")
@@ -12,3 +20,7 @@ var (
 	ErrDBGetRowsAffected = errors.New("error getting rows affected by database query")
 	ErrDBPinging         = errors.New("error pinging database")
 )
+
+func NewNotFound(resource string) *errs.APIErr {
+	return errs.NewAPIErrFromError(http.StatusNotFound, fmt.Errorf("%s %w", resource, NotFound))
+}

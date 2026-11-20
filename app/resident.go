@@ -44,15 +44,8 @@ func (s ResidentService) GetOne(id string) (models.Resident, error) {
 	if id == "" {
 		return models.Resident{}, errs.MissingIDField
 	}
-	residents, err := s.residentRepo.SelectWhere(models.Resident{ID: id})
-	if err != nil {
-		return models.Resident{}, err
-	} else if len(residents) == 0 {
-		return models.Resident{}, errs.NewNotFound("resident")
-	}
-	resident := residents[0]
 
-	return resident, nil
+	return s.residentRepo.GetOne(id)
 }
 
 func (s ResidentService) Update(desiredResident models.Resident) (models.Resident, error) {

@@ -63,7 +63,7 @@ func (s AdminService) Create(desiredAdmin models.Admin) (models.Admin, error) {
 	}
 
 	// make sure admin doesn't already exist
-	if _, err := s.adminRepo.GetOne(desiredAdmin.ID); err != nil && !errors.Is(err, errs.NotFound) {
+	if _, err := s.adminRepo.GetOne(desiredAdmin.ID); err != nil && !errors.Is(err, storage.NotFound) {
 		return models.Admin{}, fmt.Errorf("admin_service.createAdmin: error getting admin by id: %w", err)
 	} else if err == nil {
 		return models.Admin{}, NewAlreadyExists("an admin with ID: " + desiredAdmin.ID)

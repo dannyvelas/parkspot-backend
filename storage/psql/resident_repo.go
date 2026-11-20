@@ -1,11 +1,11 @@
 package psql
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/dannyvelas/parkspot-backend/storage/selectopts"
@@ -37,6 +37,23 @@ func NewResidentRepo(driver *sqlx.DB) storage.ResidentRepo {
 		residentSelect: residentSelect,
 		countSelect:    countSelect,
 	}
+}
+
+func (residentRepo ResidentRepo) GetOne(id string) (models.Resident, error) {
+	query, args, err := residentRepo.residentSelect.Where("id = $1", id).ToSql()
+	if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", storage.ErrDBBuildingQuery, err)
+	}
+
+	resident := resident{}
+	err = residentRepo.driver.Get(&resident, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w", storage.NewNotFound("resident"))
+	} else if err != nil {
+		return models.Resident{}, fmt.Errorf("resident_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
+	}
+
+	return resident.toModels(), nil
 }
 
 func (residentRepo ResidentRepo) SelectWhere(residentFields models.Resident, selectOpts ...selectopts.SelectOpt) ([]models.Resident, error) {
@@ -151,7 +168,7 @@ func (residentRepo ResidentRepo) Delete(residentID string) error {
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("resident_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
-		return fmt.Errorf("resident_repo.Delete: %w", errs.NewNotFound("resident"))
+		return fmt.Errorf("resident_repo.Delete: %w", storage.NewNotFound("resident"))
 	}
 
 	return nil
