@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"time"
 
 	"github.com/dannyvelas/parkspot-backend/config"
@@ -49,9 +50,9 @@ func (quotaLedgerRepoMock *QuotaLedgerRepoMock) CreatePermitEntry(desiredPermit 
 	effectiveAllowance := config.MaxParkingDays + adjustmentSum
 
 	if daysUsed >= effectiveAllowance {
-		return models.Permit{}, ErrQuotaExceeded
+		return models.Permit{}, errors.New("quota_ledger_repo_mock.CreatePermitEntry: resident has already met or exceeded their effective allowance")
 	} else if daysUsed+permitLength > effectiveAllowance {
-		return models.Permit{}, ErrQuotaWouldExceed
+		return models.Permit{}, errors.New("quota_ledger_repo_mock.CreatePermitEntry: this permit would exceed resident's effective allowance")
 	}
 
 	permitID := createdPermit.ID

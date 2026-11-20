@@ -7,7 +7,6 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/dannyvelas/parkspot-backend/config"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/jmoiron/sqlx"
@@ -35,7 +34,7 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
 
 	tx, err := r.driver.Beginx()
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBExec, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
@@ -44,7 +43,7 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
 	// CreatePermitEntry calls for the same resident run concurrently, the
 	// second one blocks here until the first commits or rolls back.
 	if _, err := tx.Exec("SELECT 1 FROM resident WHERE id = $1 FOR UPDATE", desiredPermit.ResidentID); err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBQuery, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	now := time.Now()
@@ -58,14 +57,14 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
     WHERE resident_id = $3 AND quota_year_utc = $4
   `, string(models.EntryTypePermit), string(models.EntryTypeAdminAdjustment), desiredPermit.ResidentID, quotaYearUTC).Scan(&daysUsed, &adjustmentSum)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBQuery, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	effectiveAllowance := config.MaxParkingDays + adjustmentSum
 	if daysUsed >= effectiveAllowance {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w", storage.ErrQuotaExceeded)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: resident has already met or exceeded their effective allowance")
 	} else if daysUsed+permitLength > effectiveAllowance {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w", storage.ErrQuotaWouldExceed)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: this permit would exceed resident's effective allowance")
 	}
 
 	createdPermit, err := r.insertPermit(tx, desiredPermit, now.Unix())
@@ -78,11 +77,11 @@ func (r QuotaLedgerRepo) CreatePermitEntry(desiredPermit models.Permit, permitLe
     VALUES ($1, $2, $3, $4, $5)
   `, desiredPermit.ResidentID, quotaYearUTC, permitLength, string(models.EntryTypePermit), createdPermit.ID)
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBExec, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", errs.ErrDBExec, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.CreatePermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return createdPermit, nil
@@ -117,12 +116,12 @@ func (r QuotaLedgerRepo) insertPermit(g sqlGetter, desiredPermit models.Permit, 
 		Suffix("RETURNING id AS permit_id, resident_id, car_id, license_plate, color, make, model, start_ts, end_ts, request_ts, affects_days, exception_reason").
 		ToSql()
 	if err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.insertPermit: %w: %v", errs.ErrDBBuildingQuery, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.insertPermit: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	row := permit{}
 	if err := g.Get(&row, query, args...); err != nil {
-		return models.Permit{}, fmt.Errorf("quota_ledger_repo.insertPermit: %w: %v", errs.ErrDBExec, err)
+		return models.Permit{}, fmt.Errorf("quota_ledger_repo.insertPermit: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return row.toModels(), nil
@@ -133,25 +132,25 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 
 	if !permit.AffectsDays {
 		if _, err := r.driver.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2 AND cancelled_ts IS NULL", now, permit.ID); err != nil {
-			return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+			return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 		}
 		return nil
 	}
 
 	tx, err := r.driver.Beginx()
 	if err != nil {
-		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
 	result, err := tx.Exec("UPDATE permit SET cancelled_ts = $1 WHERE id = $2 AND cancelled_ts IS NULL", now, permit.ID)
 	if err != nil {
-		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 	} else if rowsAffected == 0 {
 		return nil
 	}
@@ -165,11 +164,11 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
     INSERT INTO quota_ledger (resident_id, quota_year_utc, amount, entry_type, permit_id)
     VALUES ($1, $2, $3, $4, $5)
   `, permit.ResidentID, quotaYearUTC, -permitLength, string(models.EntryTypePermit), permit.ID); err != nil {
-		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("quota_ledger_repo.CancelPermitEntry: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return nil
@@ -178,14 +177,14 @@ func (r QuotaLedgerRepo) CancelPermitEntry(permit models.Permit, permitLength in
 func (r QuotaLedgerRepo) CreateAdjustment(entry models.QuotaLedger) (models.QuotaLedger, error) {
 	tx, err := r.driver.Beginx()
 	if err != nil {
-		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", errs.ErrDBExec, err)
+		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", storage.ErrDBExec, err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
 	// locks the same resident row CreatePermitEntry locks, so an adjustment
 	// can't race a concurrent permit-creation check for the same resident.
 	if _, err := tx.Exec("SELECT 1 FROM resident WHERE id = $1 FOR UPDATE", entry.ResidentID); err != nil {
-		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", errs.ErrDBQuery, err)
+		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	nullableAdmin := sql.NullString{}
@@ -204,11 +203,11 @@ func (r QuotaLedgerRepo) CreateAdjustment(entry models.QuotaLedger) (models.Quot
     RETURNING *
   `, entry.ResidentID, entry.QuotaYearUTC, entry.Amount, string(entry.EntryType), nullableAdmin, nullableNote)
 	if err != nil {
-		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", errs.ErrDBExec, err)
+		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", storage.ErrDBExec, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", errs.ErrDBExec, err)
+		return models.QuotaLedger{}, fmt.Errorf("quota_ledger_repo.CreateAdjustment: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return row.toModels(), nil
@@ -218,7 +217,7 @@ func (r QuotaLedgerRepo) SelectHistory(residentID string) ([]models.QuotaLedger,
 	rows := quotaLedgerSlice{}
 	err := r.driver.Select(&rows, "SELECT * FROM quota_ledger WHERE resident_id = $1 ORDER BY created_at ASC", residentID)
 	if err != nil {
-		return nil, fmt.Errorf("quota_ledger_repo.SelectHistory: %w: %v", errs.ErrDBQuery, err)
+		return nil, fmt.Errorf("quota_ledger_repo.SelectHistory: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	return rows.toModels(), nil
@@ -241,7 +240,7 @@ func (r QuotaLedgerRepo) SelectBalances(residentIDs []string, quotaYearUTC int) 
     GROUP BY resident_id
   `, string(models.EntryTypePermit), string(models.EntryTypeAdminAdjustment), pq.Array(residentIDs), quotaYearUTC)
 	if err != nil {
-		return nil, fmt.Errorf("quota_ledger_repo.SelectBalances: %w: %v", errs.ErrDBQuery, err)
+		return nil, fmt.Errorf("quota_ledger_repo.SelectBalances: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	balances := make(map[string]models.QuotaBalance, len(rows))

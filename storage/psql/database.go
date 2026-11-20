@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/dannyvelas/parkspot-backend/config"
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/storage"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
@@ -24,12 +23,12 @@ type Database struct {
 func NewDatabase(postgresConfig config.PostgresConfig) (Database, error) {
 	driver, err := sqlx.Open("postgres", postgresConfig.URL)
 	if err != nil {
-		return Database{}, fmt.Errorf("database: %w: %v", errs.ErrDBConnecting, err)
+		return Database{}, fmt.Errorf("database: %w: %v", storage.ErrDBConnecting, err)
 	}
 
 	err = driver.Ping()
 	if err != nil {
-		return Database{}, fmt.Errorf("database: %w: %v", errs.ErrDBPinging, err)
+		return Database{}, fmt.Errorf("database: %w: %v", storage.ErrDBPinging, err)
 	}
 
 	return Database{

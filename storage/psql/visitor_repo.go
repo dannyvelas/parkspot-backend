@@ -53,13 +53,13 @@ func (visitorRepo VisitorRepo) SelectWhere(visitorFields models.Visitor, selectO
 
 	query, args, err := visitorSelect.ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", errs.ErrDBBuildingQuery, err)
+		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	visitors := visitorSlice{}
 	err = visitorRepo.driver.Select(&visitors, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", errs.ErrDBQuery, err)
+		return nil, fmt.Errorf("visitor_repo.SelectWhere: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	return visitors.toModels(), nil
@@ -79,13 +79,13 @@ func (visitorRepo VisitorRepo) SelectCountWhere(visitorFields models.Visitor, se
 	}))
 	query, args, err := countSelect.ToSql()
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", errs.ErrDBBuildingQuery, err)
+		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	var totalAmount int
 	err = visitorRepo.driver.Get(&totalAmount, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", errs.ErrDBQuery, err)
+		return 0, fmt.Errorf("visitor_repo.SelectCountWhere: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	return totalAmount, nil
@@ -106,13 +106,13 @@ func (visitorRepo VisitorRepo) Create(desiredVisitor models.Visitor) (string, er
 		Suffix("RETURNING visitor.id").
 		ToSql()
 	if err != nil {
-		return "", fmt.Errorf("visitor_repo.Create: %w: %v", errs.ErrDBBuildingQuery, err)
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	var visitorID string
 	err = visitorRepo.driver.Get(&visitorID, query, args...)
 	if err != nil {
-		return "", fmt.Errorf("visitor_repo.Create: %w: %v", errs.ErrDBExec, err)
+		return "", fmt.Errorf("visitor_repo.Create: %w: %v", storage.ErrDBExec, err)
 	}
 
 	return visitorID, nil
@@ -123,11 +123,11 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 
 	res, err := visitorRepo.driver.Exec(query, visitorID)
 	if err != nil {
-		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.ErrDBExec, err)
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", storage.ErrDBExec, err)
 	}
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
-		return fmt.Errorf("visitor_repo.Delete: %w: %v", errs.ErrDBGetRowsAffected, err)
+		return fmt.Errorf("visitor_repo.Delete: %w: %v", storage.ErrDBGetRowsAffected, err)
 	} else if rowsAffected == 0 {
 		return fmt.Errorf("visitor_repo.Delete: %w", errs.NewNotFound("visitor"))
 	}
@@ -138,7 +138,7 @@ func (visitorRepo VisitorRepo) Delete(visitorID string) error {
 func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) {
 	query, args, err := visitorRepo.visitorSelect.Where("visitor.id = $1", visitorID).ToSql()
 	if err != nil {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.ErrDBBuildingQuery, err)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", storage.ErrDBBuildingQuery, err)
 	}
 
 	visitor := visitor{}
@@ -146,7 +146,7 @@ func (visitorRepo VisitorRepo) GetOne(visitorID string) (models.Visitor, error) 
 	if err == sql.ErrNoRows {
 		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w", errs.NewNotFound("visitor"))
 	} else if err != nil {
-		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", errs.ErrDBQuery, err)
+		return models.Visitor{}, fmt.Errorf("visitor_repo.GetOne: %w: %v", storage.ErrDBQuery, err)
 	}
 
 	return visitor.toModels(), nil
