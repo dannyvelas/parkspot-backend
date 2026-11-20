@@ -55,6 +55,23 @@ func (carRepo CarRepo) GetOne(id string) (models.Car, error) {
 	return car.toModels(), nil
 }
 
+func (carRepo CarRepo) GetOneByLicensePlate(licensePlate string) (models.Car, error) {
+	query, args, err := carRepo.carSelect.Where("car.license_plate = $1", licensePlate).ToSql()
+	if err != nil {
+		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w: %v", storage.ErrDBBuildingQuery, err)
+	}
+
+	car := car{}
+	err = carRepo.driver.Get(&car, query, args...)
+	if err == sql.ErrNoRows {
+		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w", errs.NewNotFound("car"))
+	} else if err != nil {
+		return models.Car{}, fmt.Errorf("car_repo.GetOneByLicensePlate: %w: %v", storage.ErrDBQuery, err)
+	}
+
+	return car.toModels(), nil
+}
+
 func (carRepo CarRepo) SelectWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) ([]models.Car, error) {
 	selector := carRepo.carSelect
 	for _, opt := range selectOpts {

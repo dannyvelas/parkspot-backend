@@ -23,6 +23,14 @@ func (carRepoMock *CarRepoMock) GetOne(id string) (models.Car, error) {
 	return carRepoMock.cars[i], nil
 }
 
+func (carRepoMock *CarRepoMock) GetOneByLicensePlate(licensePlate string) (models.Car, error) {
+	i := util.Find(carRepoMock.cars, func(car models.Car) bool { return car.LicensePlate == licensePlate })
+	if i < 0 {
+		return models.Car{}, errs.NewNotFound("car")
+	}
+	return carRepoMock.cars[i], nil
+}
+
 func (carRepoMock *CarRepoMock) SelectWhere(carFields models.Car) ([]models.Car, error) {
 	var carsFound []models.Car
 	for _, car := range carRepoMock.cars {

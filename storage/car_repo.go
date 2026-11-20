@@ -7,6 +7,7 @@ import (
 
 type CarRepo interface {
 	GetOne(id string) (models.Car, error)
+	GetOneByLicensePlate(licensePlate string) (models.Car, error)
 	SelectWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) ([]models.Car, error)
 	SelectCountWhere(carFields models.Car, selectOpts ...selectopts.SelectOpt) (int, error)
 	Create(desiredCar models.Car) (string, error)
