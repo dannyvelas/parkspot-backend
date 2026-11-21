@@ -8,4 +8,4 @@ import (
 var unhandledErrorsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "parkspot_unhandled_errors_total",
 	Help: "Count of errors that reached respondError's unhandled branch and were returned to the client as a 500.",
-}, []string{"route"})
+}, []string{"route", "error"})
