@@ -25,6 +25,10 @@
 - [x] (DEPLOY) change backend api url from api.lasvistas.parkspotapp.com to api.parkspotapp.com
 - [x] (DEPLOY) add dev deploys to dev.api.parkspotapp.com and dev.parkspotapp.com
 - [x] give admins the power to be able to change car colors 
+- [ ] auth hole: `GET /api/permit/{id}` has no ownership check, so any resident can read any permit by id
+- [ ] auth hole: `GET /api/resident/{id}/cars` passes the url id straight through, so any resident can list another resident's cars
+- [ ] auth hole: residents can `PUT /api/car` with `amtParkingDaysUsed` and reset their own car's day counter. only admins should be able to set it
+- [ ] auth hole: the password reset email link is just a normal access token (`createGmailMessage` calls `jwtService.NewAccess`), and `PUT /api/user/password` accepts any access token without the old password. its complecting "logged in" with "proved they own this email": a reset link is a 15 min full api session, and any stolen/borrowed session can change the password. give resets their own short-lived token type (own secret or `purpose` claim) only the reset endpoint accepts, and require the current password for logged-in password changes
 ## Mid priority
 - [x] check if it makes sense to use `%w` for errors in `storage/*_repo` files
 - [x] probably fix the way that car and permit repo are tied together.
@@ -87,6 +91,15 @@
 - [x] looks like some env keys are not named consistently. in some places i see PGPASSWORD and POSTGRES_PASSWORD refer to the same concept. i see APP_DB_PASSWORD and POSTGRES_APP_PASSWORD refer to the same concept. there may be more examples. make all consistent
 - [x] add comments to ops/backup/scheduler.sh
 - [✗] add resident getone functions which just wraps over resident.selectwhere (wont do: unlike car/permit's GetOne, this would just be a thin wrapper over SelectWhere with no real query-shape benefit, and the one call site with different not-found semantics (permit.go's getAndValidateResident) wouldn't even cleanly reuse it)
+- [ ] probably get rid of endoftime. this seems hacky
+- [ ] make all expected errors a variant type. e.g. make them be defined without a message or http status. the respondError function can unpack them and decide what http status code to use and how to present it. its complecting to make all packages in the codebase think about HTTP
+- [ ] put authorization rules (who can do what to which resource) in one place, e.g. a table of role -> allowed actions plus one shared "does this actor own this resource" func that services call. right now they're scattered across router groups, the `authenticate` middleware (which also does role checks despite its name), and hand-written `if`s in handlers that also fill in a default `ResidentID`. its complecting the rules with control flow: "what can a resident do?" has no single answer, the same rule returns `Unauthorized` in car_handler but `BadRequest` in visitor/permit handlers, and missing checks are invisible (see the auth holes in high priority). keep authentication (bcrypt, jwt verification) in `app/` where it is
+- [ ] refresh tokens embed a whole snapshot of `models.User`, and `AuthService.RefreshTokens` re-issues from the token's copy instead of `userFromDB`, so name/email changes never reach the token until the user logs in again. its complecting the user's identity with their data as of login time
+- [ ] move gmail client setup and the reset email's headers/html out of `AuthService` into a small mailer dependency it calls (like it does with `jwtService`). its complecting "who may reset a password" with "how email is delivered and what it looks like": changing the template or leaving gmail means editing the auth service
+- [ ] make `AuthService.RefreshTokens` take the raw refresh token string and verify it itself, instead of taking an already-parsed `models.User`
+    * background: refreshing a session takes two checks. (1) verify the refresh token's signature, which proves *we* issued it and nobody edited the user inside it. (2) compare its `token_version` to the db, which proves it hasn't been revoked. only after both is it safe to hand out new tokens
+    * today, check (1) happens in `api/auth_handler.go`'s `refreshTokens` (`jwtService.ParseRefresh`) and check (2) happens in `AuthService.RefreshTokens`. so `RefreshTokens(user)` is only safe if whoever calls it already did check (1). nothing in its signature says so; read by itself it looks like it'll issue tokens for any `User` you give it. any new caller that skips the parse step (a test, a second endpoint) would hand out sessions for a forged/unverified user
+    * its complecting the function's correctness with the order of steps its caller performs. `Login` doesn't have this problem because it does all of its checks inside `AuthService`
 - [ ] read in configs using marshalling instead of using if/elseif/else logic
 - [x] don't force every repo struct to implement all the funcs in selectops.Repo. instead repo structs should only implement the funcs that are relevant to them
 - [ ] maybe use like a "get" args struct or something so that app/car.go or app/permit.go "get" functions don't have like 6 arguments (page, limit, reversed, search, residentID)
