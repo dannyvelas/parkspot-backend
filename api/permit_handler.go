@@ -31,7 +31,7 @@ func (h permitHandler) get(status models.Status) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("error getting access payload: %w", err))
 			return
 		}
 
@@ -74,7 +74,7 @@ func (h permitHandler) create() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("permit_router.createPermit: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("permit_router.createPermit: error getting access payload: %w", err))
 			return
 		}
 
