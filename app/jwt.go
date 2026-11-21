@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	ErrNotSigningMethodHMAC = errors.New("jwt: Not using SigningMethodHMAC")
-	ErrCastingJWTClaims     = errs.NewSentinel("ErrCastingJWTClaims", "jwt: Failed to cast JWT to JWTClaims struct")
-	ErrInvalidToken         = errs.NewSentinel("ErrInvalidToken", "jwt: Invalid Token")
+	ErrCastingJWTClaims = errs.NewSentinel("ErrCastingJWTClaims", "jwt: Failed to cast JWT to JWTClaims struct")
+	ErrInvalidToken     = errs.NewSentinel("ErrInvalidToken", "jwt: Invalid Token")
 )
 
 type JWTService struct {
@@ -68,7 +67,7 @@ func (jwtService JWTService) NewRefresh(user models.User) (string, error) {
 func (jwtService JWTService) ParseAccess(tokenString string) (AccessPayload, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &accessClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, ErrNotSigningMethodHMAC
+			return nil, errors.New("jwt: Not using SigningMethodHMAC")
 		}
 
 		return jwtService.accessSecret, nil
@@ -89,7 +88,7 @@ func (jwtService JWTService) ParseAccess(tokenString string) (AccessPayload, err
 func (jwtService JWTService) ParseRefresh(tokenString string) (models.User, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &refreshClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, ErrNotSigningMethodHMAC
+			return nil, errors.New("jwt: Not using SigningMethodHMAC")
 		}
 
 		return jwtService.refreshSecret, nil
