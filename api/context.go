@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+
 	"github.com/dannyvelas/parkspot-backend/app"
 )
 

@@ -2,6 +2,7 @@ package psql
 
 import (
 	"database/sql"
+
 	"github.com/dannyvelas/parkspot-backend/models"
 )
 
@@ -23,7 +24,8 @@ func (car car) toModels() models.Car {
 		car.Color,
 		car.Make.String,
 		car.Model.String,
-		car.AmtParkingDaysUsed)
+		car.AmtParkingDaysUsed,
+	)
 }
 
 type carSlice []car

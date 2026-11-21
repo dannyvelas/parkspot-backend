@@ -1,9 +1,10 @@
 package models
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
 	"strings"
 	"time"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
 )
 
 type Visitor struct {

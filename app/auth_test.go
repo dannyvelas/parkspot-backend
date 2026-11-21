@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage/psql"
@@ -10,7 +12,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"golang.org/x/crypto/bcrypt"
-	"testing"
 )
 
 type authTestSuite struct {

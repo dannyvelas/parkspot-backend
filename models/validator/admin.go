@@ -1,10 +1,11 @@
 package validator
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
-	"github.com/dannyvelas/parkspot-backend/models"
 	"regexp"
 	"strings"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type adminValidator struct {
@@ -12,12 +13,10 @@ type adminValidator struct {
 	emailRe     *regexp.Regexp
 }
 
-var (
-	CreateAdmin = adminValidator{
-		regexp.MustCompile("^[A-Za-z ]+$"),
-		regexp.MustCompile("^.+@.+$"),
-	}
-)
+var CreateAdmin = adminValidator{
+	regexp.MustCompile("^[A-Za-z ]+$"),
+	regexp.MustCompile("^.+@.+$"),
+}
 
 func (v adminValidator) Run(admin models.Admin) *errs.APIErr {
 	var errors []string

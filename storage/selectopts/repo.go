@@ -5,7 +5,7 @@ import (
 	"github.com/dannyvelas/parkspot-backend/models"
 )
 
-type Repo interface{}
+type Repo any
 
 type SearchRepo interface {
 	SearchAsSQL(string) squirrel.Sqlizer

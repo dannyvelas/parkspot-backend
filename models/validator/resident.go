@@ -1,10 +1,11 @@
 package validator
 
 import (
-	"github.com/dannyvelas/parkspot-backend/errs"
-	"github.com/dannyvelas/parkspot-backend/models"
 	"regexp"
 	"strings"
+
+	"github.com/dannyvelas/parkspot-backend/errs"
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type residentValidator struct {
@@ -18,14 +19,14 @@ type residentValidator struct {
 var (
 	CreateResident = residentValidator{
 		regexp.MustCompile("^[A-Za-z ]+$"),
-		regexp.MustCompile("^\\d{1,20}$"),
+		regexp.MustCompile(`^\d{1,20}$`),
 		regexp.MustCompile("^.+@.+$"),
 		false,
 		nil,
 	}
 	EditResident = residentValidator{
 		regexp.MustCompile("^[A-Za-z ]*$"),
-		regexp.MustCompile("^\\d{0,20}$"),
+		regexp.MustCompile(`^\d{0,20}$`),
 		regexp.MustCompile("^(.+@.+$|)$"),
 		true,
 		validateEditAmtDays,

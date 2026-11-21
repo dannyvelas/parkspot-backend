@@ -2,8 +2,9 @@ package psql
 
 import (
 	"database/sql"
-	"github.com/dannyvelas/parkspot-backend/models"
 	"time"
+
+	"github.com/dannyvelas/parkspot-backend/models"
 )
 
 type permit struct {

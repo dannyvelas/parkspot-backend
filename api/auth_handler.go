@@ -3,12 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"time"
 )
 
 type authHandler struct {

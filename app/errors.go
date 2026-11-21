@@ -15,19 +15,23 @@ var (
 	ResidentTwoActivePermits = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+
-			" because this resident has at least two active permits during that time.")
+			" because this resident has at least two active permits during that time.",
+	)
 	ResidentForPermitDNE = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Users must have a registered account to request a guest parking"+
-			" permit. Please create their account before requesting their permit.")
+			" permit. Please create their account before requesting their permit.",
+	)
 	CarForPermitDNE = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"The car that you chose for this permit does not"+
-			" exist. Please create or choose another car.")
+			" exist. Please create or choose another car.",
+	)
 	CarActivePermit = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+
-			" because this car has at least one active permit during that time.")
+			" because this car has at least one active permit during that time.",
+	)
 	PermitTooLong = errs.NewAPIErr(
 		http.StatusBadRequest,
 		fmt.Sprintf("Error: Requests cannot be longer than %d days,"+
@@ -87,5 +91,6 @@ func PermitPlusEntityDaysTooLong(entity string, amtDaysUsed int) *errs.APIErr {
 			entityLower, config.MaxParkingDays,
 			entityLower, amtDaysUsed,
 			entityLower, config.MaxParkingDays-amtDaysUsed,
-			entityLower))
+			entityLower),
+	)
 }

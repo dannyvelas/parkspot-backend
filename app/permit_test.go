@@ -3,6 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
@@ -12,9 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
-	"net/http"
-	"testing"
-	"time"
 )
 
 type permitTestSuite struct {

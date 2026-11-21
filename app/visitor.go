@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/dannyvelas/parkspot-backend/storage"
@@ -21,7 +22,8 @@ func NewVisitorService(visitorRepo storage.VisitorRepo) VisitorService {
 func (s VisitorService) Get(status models.Status, limit, page int, search, residentID string) (models.ListWithMetadata[models.Visitor], error) {
 	boundedLimit, offset := getBoundedLimitAndOffset(limit, page)
 
-	allVisitors, err := s.visitorRepo.SelectWhere(models.Visitor{ResidentID: residentID},
+	allVisitors, err := s.visitorRepo.SelectWhere(
+		models.Visitor{ResidentID: residentID},
 		selectopts.WithStatus(status),
 		selectopts.WithSearch(search),
 		selectopts.WithLimitAndOffset(boundedLimit, offset),
@@ -30,7 +32,8 @@ func (s VisitorService) Get(status models.Status, limit, page int, search, resid
 		return models.ListWithMetadata[models.Visitor]{}, fmt.Errorf("error getting all visitors from visitor repo: %w", err)
 	}
 
-	totalAmount, err := s.visitorRepo.SelectCountWhere(models.Visitor{ResidentID: residentID},
+	totalAmount, err := s.visitorRepo.SelectCountWhere(
+		models.Visitor{ResidentID: residentID},
 		selectopts.WithStatus(status),
 		selectopts.WithSearch(search),
 	)
