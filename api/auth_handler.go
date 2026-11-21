@@ -70,8 +70,7 @@ func (h authHandler) refreshTokens() http.HandlerFunc {
 
 		refreshPayload, err := h.jwtService.ParseRefresh(cookie.Value)
 		if err != nil {
-			log.Debug().Msgf("could not parse cookie: %v", err)
-			respondError(w, r, errs.Unauthorized)
+			respondError(w, r, err)
 			return
 		}
 

@@ -33,7 +33,7 @@ func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) fu
 			accessToken := strings.TrimPrefix(authHeader, "Bearer ")
 			accessPayload, err := m.jwtService.ParseAccess(accessToken)
 			if err != nil {
-				respondError(w, r, errs.Unauthorized)
+				respondError(w, r, err)
 				return
 			}
 
