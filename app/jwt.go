@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dannyvelas/parkspot-backend/config"
+	"github.com/dannyvelas/parkspot-backend/errs"
 	"github.com/dannyvelas/parkspot-backend/models"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -73,7 +74,7 @@ func (jwtService JWTService) ParseAccess(tokenString string) (AccessPayload, err
 		return jwtService.accessSecret, nil
 	})
 	if err != nil {
-		return AccessPayload{}, err
+		return AccessPayload{}, errs.Unauthorized
 	}
 
 	if claims, ok := token.Claims.(*accessClaims); !ok {
@@ -94,7 +95,7 @@ func (jwtService JWTService) ParseRefresh(tokenString string) (models.User, erro
 		return jwtService.refreshSecret, nil
 	})
 	if err != nil {
-		return models.User{}, err
+		return models.User{}, errs.Unauthorized
 	}
 
 	if claims, ok := token.Claims.(*refreshClaims); !ok {
