@@ -43,7 +43,7 @@ func (suite *carTestSuite) SetupSuite() {
 		suite.T().Fatalf("tearing down because failed to create resident: %v", err)
 	}
 
-	suite.carService = NewCarService(database.CarRepo())
+	suite.carService = NewCarService(database.CarRepo(), database.ResidentRepo())
 }
 
 func (suite *carTestSuite) TearDownSuite() {
@@ -137,4 +137,10 @@ func (suite *carTestSuite) TestCreate_CarRepeatLP_Negative() {
 	require.NotNil(suite.T(), err, "error when creating car with duplicate LP was not nil but it should have been")
 
 	require.ErrorIs(suite.T(), err, AlreadyExists, "error is expected to be one of already exists")
+}
+
+func (suite *carTestSuite) TestCreate_ResidentDNE_Negative() {
+	carOfNonexistentResident := models.NewCar("", "B9999999", "lp1", "color", "make", "model", 0)
+	_, err := suite.carService.Create(carOfNonexistentResident)
+	require.ErrorIs(suite.T(), err, ResidentForCarDNE, "expected a nonexistent residentID to error out instead of failing in the database")
 }

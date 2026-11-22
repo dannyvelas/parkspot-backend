@@ -26,6 +26,11 @@ var (
 		"The car that you chose for this permit does not"+
 			" exist. Please create or choose another car.",
 	)
+	ResidentForCarDNE = errs.NewAPIErr(
+		http.StatusBadRequest,
+		"The resident that you chose for this car does not"+
+			" exist. Please create their account before adding their car.",
+	)
 	CarActivePermit = errs.NewAPIErr(
 		http.StatusBadRequest,
 		"Cannot create a permit during these dates"+

@@ -44,7 +44,7 @@ func (suite *permitTestSuite) SetupSuite() {
 	suite.database = database
 
 	// service dependency
-	carService := NewCarService(database.CarRepo())
+	carService := NewCarService(database.CarRepo(), database.ResidentRepo())
 	suite.residentService = NewResidentService(database.ResidentRepo())
 	suite.permitService = NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
 
