@@ -85,3 +85,12 @@ accessories:
         - POSTGRES_APP_PASSWORD
         - VULTR_OBJECT_STORAGE_ACCESS_KEY
         - VULTR_OBJECT_STORAGE_SECRET_KEY
+  prometheus:
+    image: prom/prometheus
+    host: 45.77.73.20
+    # no `port:` - never published, reachable only by other containers on
+    # the kamal network (i.e. the grafana accessory)
+    files:
+      - ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    directories:
+      - data:/prometheus
