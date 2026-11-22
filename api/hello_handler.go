@@ -11,7 +11,7 @@ func sayHello() http.HandlerFunc {
 
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("hello_router.sayHello: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("hello_router.sayHello: error getting access payload: %w", err))
 			return
 		}
 

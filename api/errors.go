@@ -13,3 +13,12 @@ func BadRequest(message string) *errs.APIErr {
 func Malformed(payload string) *errs.APIErr {
 	return errs.NewAPIErr(http.StatusBadRequest, payload+" malformed")
 }
+
+var (
+	ErrAccessPayloadNotInContext = errs.NewSentinel(
+		"ErrAccessPayloadNotInContext", "access payload: key not found in context",
+	)
+	ErrAccessPayloadWrongType = errs.NewSentinel(
+		"ErrAccessPayloadWrongType", "access payload: value in context is not of type app.AccessPayload",
+	)
+)

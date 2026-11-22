@@ -32,7 +32,7 @@ func (h carHandler) get() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("error getting access payload: %w", err))
 			return
 		}
 
@@ -62,7 +62,7 @@ func (h carHandler) deleteOne() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("car_handler.deleteOne: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.deleteOne: error getting access payload: %w", err))
 			return
 		}
 
@@ -113,7 +113,7 @@ func (h carHandler) edit() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("car_handler.edit(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.edit(): error getting access payload: %w", err))
 			return
 		}
 
@@ -149,7 +149,7 @@ func (h carHandler) create() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("car_handler.create(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("car_handler.create(): error getting access payload: %w", err))
 			return
 		}
 

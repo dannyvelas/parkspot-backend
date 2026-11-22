@@ -31,7 +31,7 @@ func (h visitorHandler) get(status models.Status) http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("visitor_router.getVisitorsOfResident: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_router.getVisitorsOfResident: %w", err))
 			return
 		}
 
@@ -61,7 +61,7 @@ func (h visitorHandler) create() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("visitor_handler.create(): error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_handler.create(): error getting access payload: %w", err))
 			return
 		}
 
@@ -94,7 +94,7 @@ func (h visitorHandler) deleteOne() http.HandlerFunc {
 		ctx := r.Context()
 		accessPayload, err := ctxGetAccessPayload(ctx)
 		if err != nil {
-			respondError(w, r, fmt.Errorf("visitor_handler.deleteOne: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("visitor_handler.deleteOne: error getting access payload: %w", err))
 			return
 		}
 

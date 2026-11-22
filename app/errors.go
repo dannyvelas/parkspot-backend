@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -42,10 +41,10 @@ var (
 			config.MaxPermitLength),
 	)
 
-	ErrResidentQuotaFieldsNil = errors.New("resident's UnlimDays or AmtParkingDaysUsed is nil")
-	ErrJWTGenerating          = errors.New("error generating JWT")
-	ErrGmailClient            = errors.New("error constructing Gmail client")
-	ErrSendingMail            = errors.New("error sending mail via Gmail API")
+	ErrResidentQuotaFieldsNil = errs.NewSentinel("ErrResidentQuotaFieldsNil", "resident's UnlimDays or AmtParkingDaysUsed is nil")
+	ErrJWTGenerating          = errs.NewSentinel("ErrJWTGenerating", "error generating JWT")
+	ErrGmailClient            = errs.NewSentinel("ErrGmailClient", "error constructing Gmail client")
+	ErrSendingMail            = errs.NewSentinel("ErrSendingMail", "error sending mail via Gmail API")
 
 	AlreadyExists = errs.NewAPIErr(http.StatusBadRequest, "already exists")
 )

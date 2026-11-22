@@ -21,7 +21,7 @@ func respondJSON(w http.ResponseWriter, r *http.Request, statusCode int, data an
 
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		unhandledErrorsTotal.WithLabelValues(routePattern(r)).Inc()
+		unhandledErrorsTotal.WithLabelValues(routePattern(r), errorLabel(err)).Inc()
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Error().Msgf("Error encoding response: %s", err)
 
@@ -34,7 +34,7 @@ func respondJSON(w http.ResponseWriter, r *http.Request, statusCode int, data an
 func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	var apiErr *errs.APIErr
 	if !errors.As(err, &apiErr) {
-		unhandledErrorsTotal.WithLabelValues(routePattern(r)).Inc()
+		unhandledErrorsTotal.WithLabelValues(routePattern(r), errorLabel(err)).Inc()
 		log.Error().Msg(err.Error())
 		respondJSON(w, r, http.StatusInternalServerError, "Internal Server Error")
 		return

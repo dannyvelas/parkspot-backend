@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 
 	"github.com/dannyvelas/parkspot-backend/app"
 )
@@ -17,9 +16,9 @@ func ctxWithAccessPayload(ctx context.Context, payload app.AccessPayload) contex
 
 func ctxGetAccessPayload(ctx context.Context) (app.AccessPayload, error) {
 	if ctxUser := ctx.Value(accessKey); ctxUser == nil {
-		return app.AccessPayload{}, errors.New("user.ctxGetUser: key not found in context")
+		return app.AccessPayload{}, ErrAccessPayloadNotInContext
 	} else if payload, ok := ctxUser.(app.AccessPayload); !ok {
-		return app.AccessPayload{}, errors.New("user.ctxGetUser: value for user is not of type `user`")
+		return app.AccessPayload{}, ErrAccessPayloadWrongType
 	} else {
 		return payload, nil
 	}

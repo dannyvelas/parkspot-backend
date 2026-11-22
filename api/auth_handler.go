@@ -120,7 +120,7 @@ func (h authHandler) resetPassword() http.HandlerFunc {
 
 		accessPayload, err := ctxGetAccessPayload(r.Context())
 		if err != nil {
-			respondError(w, r, fmt.Errorf("auth_handler.resetPassword: error getting access payload: %v", err))
+			respondError(w, r, fmt.Errorf("auth_handler.resetPassword: error getting access payload: %w", err))
 			return
 		}
 
