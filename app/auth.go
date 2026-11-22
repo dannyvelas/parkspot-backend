@@ -112,7 +112,8 @@ func (a AuthService) RefreshTokens(user models.User) (Session, string, error) {
 func (a AuthService) SendResetPasswordEmail(ctx context.Context, id string) error {
 	loginable, err := a.getUser(id)
 	if errors.Is(err, storage.NotFound) {
-		return errs.Unauthorized
+		// purposely not returning an error so that this endpoint can't be used to check whether an account exists
+		return nil
 	} else if err != nil {
 		return fmt.Errorf("auth_service.sendResetPasswordEmail: error querying repo: %w", err)
 	}
