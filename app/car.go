@@ -12,12 +12,14 @@ import (
 )
 
 type CarService struct {
-	carRepo storage.CarRepo
+	carRepo      storage.CarRepo
+	residentRepo storage.ResidentRepo
 }
 
-func NewCarService(carRepo storage.CarRepo) CarService {
+func NewCarService(carRepo storage.CarRepo, residentRepo storage.ResidentRepo) CarService {
 	return CarService{
-		carRepo: carRepo,
+		carRepo:      carRepo,
+		residentRepo: residentRepo,
 	}
 }
 
@@ -111,6 +113,11 @@ func (s CarService) Update(updatedFields models.Car) (models.Car, error) {
 func (s CarService) Create(desiredCar models.Car) (models.Car, error) {
 	if err := validator.CreateCar.Run(desiredCar); err != nil {
 		return models.Car{}, err
+	}
+	if residents, err := s.residentRepo.SelectWhere(models.Resident{ID: desiredCar.ResidentID}); err != nil {
+		return models.Car{}, fmt.Errorf("carService.Create: error getting resident by id: %w", err)
+	} else if len(residents) == 0 {
+		return models.Car{}, ResidentForCarDNE
 	}
 	if desiredCar.ID != "" {
 		if cars, err := s.carRepo.SelectWhere(models.Car{ID: desiredCar.ID}); err != nil {

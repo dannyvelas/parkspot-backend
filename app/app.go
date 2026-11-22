@@ -23,7 +23,7 @@ func NewApp(c config.Config, database storage.Database) App {
 	residentService := NewResidentService(database.ResidentRepo())
 	authService := NewAuthService(jwtService, adminService, residentService, c.HTTP, c.OAuth)
 	visitorService := NewVisitorService(database.VisitorRepo())
-	carService := NewCarService(database.CarRepo())
+	carService := NewCarService(database.CarRepo(), database.ResidentRepo())
 	permitService := NewPermitService(database.PermitRepo(), database.ResidentRepo(), carService)
 
 	return App{
