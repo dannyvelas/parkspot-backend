@@ -94,3 +94,13 @@ accessories:
       - ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     directories:
       - data:/prometheus
+  grafana:
+    image: grafana/grafana
+    host: 45.77.73.20
+    # loopback-only, per infra/README.md's access model - reached via an
+    # SSH tunnel, never world-reachable
+    port: "127.0.0.1:3000:3000"
+    files:
+      - ops/grafana/provisioning:/etc/grafana/provisioning
+    directories:
+      - data:/var/lib/grafana
