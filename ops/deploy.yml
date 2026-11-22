@@ -13,6 +13,10 @@ servers:
   web:
     hosts:
       - 45.77.73.20
+    options:
+      # by default, the app container's name includes the deploy version. so by default, it changes every deploy.
+      # here we set a fixed container network name so that prometheus can use it as a hostname when scraping
+      network-alias: parkspot-backend-web
 
 proxy:
   ssl: true

@@ -1,0 +1,5 @@
+scrape_configs:
+  - job_name: parkspot-backend
+    static_configs:
+      # uses the parkspot-backend-web network-alias set in ../deploy.yml
+      - targets: ["parkspot-backend-web:9090"]
