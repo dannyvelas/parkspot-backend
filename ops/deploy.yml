@@ -97,9 +97,11 @@ accessories:
   grafana:
     image: grafana/grafana
     host: 45.77.73.20
-    # loopback-only, per infra/README.md's access model - reached via an
-    # SSH tunnel, never world-reachable
+    # loopback-only. to reach this you need to port-forward via SSH
     port: "127.0.0.1:3000:3000"
+    env:
+      secret:
+        - GF_SECURITY_ADMIN_PASSWORD
     files:
       - ops/grafana/provisioning:/etc/grafana/provisioning
     directories:
