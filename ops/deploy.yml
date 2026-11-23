@@ -13,6 +13,10 @@ servers:
   web:
     hosts:
       - 45.77.73.20
+    options:
+      # by default, the app container's name includes the deploy version. so by default, it changes every deploy.
+      # here we set a fixed container network name so that prometheus can use it as a hostname when scraping
+      network-alias: parkspot-backend-web
 
 proxy:
   ssl: true
@@ -81,3 +85,24 @@ accessories:
         - POSTGRES_APP_PASSWORD
         - VULTR_OBJECT_STORAGE_ACCESS_KEY
         - VULTR_OBJECT_STORAGE_SECRET_KEY
+  prometheus:
+    image: prom/prometheus
+    host: 45.77.73.20
+    # no `port:` - never published, reachable only by other containers on
+    # the kamal network (i.e. the grafana accessory)
+    files:
+      - ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    directories:
+      - data:/prometheus
+  grafana:
+    image: grafana/grafana
+    host: 45.77.73.20
+    # loopback-only. to reach this you need to port-forward via SSH
+    port: "127.0.0.1:3000:3000"
+    env:
+      secret:
+        - GF_SECURITY_ADMIN_PASSWORD
+    files:
+      - ops/grafana/provisioning:/etc/grafana/provisioning
+    directories:
+      - data:/var/lib/grafana
