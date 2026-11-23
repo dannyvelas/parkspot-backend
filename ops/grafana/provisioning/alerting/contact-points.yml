@@ -1,0 +1,15 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack
+    receivers:
+      - uid: slack-kind1-alerts
+        type: slack
+        settings:
+          # Grafana substitutes $SLACK_WEBHOOK_URL from the container's own
+          # environment at startup - the real value is a secret, set via
+          # deploy.yml's env.secret for the grafana accessory, never
+          # committed here
+          url: $SLACK_WEBHOOK_URL
+        disableResolveMessage: false
