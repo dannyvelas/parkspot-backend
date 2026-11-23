@@ -112,6 +112,7 @@ accessories:
     # file explicitly, matching its path under /etc/grafana/provisioning
     files:
       - ops/grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ops/grafana/provisioning/alerting/rules.yml:/etc/grafana/provisioning/alerting/rules.yml
     # a named volume, not `directories:` (a host bind-mount) - grafana runs
     # as a non-root user (uid 472) and the image pre-chowns /var/lib/grafana,
     # so a fresh named volume inherits the right ownership automatically. a
