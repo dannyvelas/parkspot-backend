@@ -92,8 +92,13 @@ accessories:
     # the kamal network (i.e. the grafana accessory)
     files:
       - ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    directories:
-      - data:/prometheus
+    # a named volume, not `directories:` (a host bind-mount) - prom/prometheus
+    # runs as a non-root user (uid 65534) and the image pre-chowns /prometheus,
+    # so a fresh named volume inherits the right ownership automatically. a
+    # bind-mounted host folder would just be owned by whoever created it and
+    # the container couldn't write to it
+    volumes:
+      - parkspot-backend-prometheus-data:/prometheus
   grafana:
     image: grafana/grafana
     host: 45.77.73.20
@@ -107,5 +112,10 @@ accessories:
     # file explicitly, matching its path under /etc/grafana/provisioning
     files:
       - ops/grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
-    directories:
-      - data:/var/lib/grafana
+    # a named volume, not `directories:` (a host bind-mount) - grafana runs
+    # as a non-root user (uid 472) and the image pre-chowns /var/lib/grafana,
+    # so a fresh named volume inherits the right ownership automatically. a
+    # bind-mounted host folder would just be owned by whoever created it and
+    # the container couldn't write to it
+    volumes:
+      - parkspot-backend-grafana-data:/var/lib/grafana
