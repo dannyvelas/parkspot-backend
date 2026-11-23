@@ -102,7 +102,10 @@ accessories:
     env:
       secret:
         - GF_SECURITY_ADMIN_PASSWORD
+    # `files:` uploads via SCP without :recursive, so it can only take
+    # individual files, not whole directories - list each provisioning
+    # file explicitly, matching its path under /etc/grafana/provisioning
     files:
-      - ops/grafana/provisioning:/etc/grafana/provisioning
+      - ops/grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
     directories:
       - data:/var/lib/grafana
