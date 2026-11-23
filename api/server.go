@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dannyvelas/parkspot-backend/app"
 	"github.com/dannyvelas/parkspot-backend/config"
 	"github.com/dannyvelas/parkspot-backend/models"
+	"github.com/dannyvelas/parkspot-backend/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -71,6 +73,14 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 
 	// deployment health check
 	router.Get("/up", healthHandler.up())
+
+	// TEMPORARY, for T016 (infra/specs/002-kind1-error-alerting): manually
+	// trigger a real unhandled error so we can confirm the whole chain -
+	// metric, alert, Slack notification - actually works end to end. Remove
+	// this route once that's confirmed.
+	router.Get("/internal/t016-test-trigger", func(w http.ResponseWriter, r *http.Request) {
+		respondError(w, r, fmt.Errorf("t016 manual trigger: %w", storage.ErrDBQuery))
+	})
 
 	// api
 	router.Route("/api", func(r chi.Router) {
