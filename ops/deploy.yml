@@ -107,11 +107,15 @@ accessories:
     env:
       secret:
         - GF_SECURITY_ADMIN_PASSWORD
+        - SLACK_WEBHOOK_URL
     # `files:` uploads via SCP without :recursive, so it can only take
     # individual files, not whole directories - list each provisioning
     # file explicitly, matching its path under /etc/grafana/provisioning
     files:
       - ops/grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ops/grafana/provisioning/alerting/rules.yml:/etc/grafana/provisioning/alerting/rules.yml
+      - ops/grafana/provisioning/alerting/contact-points.yml:/etc/grafana/provisioning/alerting/contact-points.yml
+      - ops/grafana/provisioning/alerting/policies.yml:/etc/grafana/provisioning/alerting/policies.yml
     # a named volume, not `directories:` (a host bind-mount) - grafana runs
     # as a non-root user (uid 472) and the image pre-chowns /var/lib/grafana,
     # so a fresh named volume inherits the right ownership automatically. a

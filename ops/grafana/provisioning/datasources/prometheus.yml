@@ -3,6 +3,10 @@ apiVersion: 1
 datasources:
   - name: Prometheus
     type: prometheus
+    # explicit, so the alert rule in ../alerting/rules.yml can reference it
+    # by a stable value instead of relying on whatever uid Grafana would
+    # auto-generate if this were left unset
+    uid: prometheus
     access: proxy
     # parkspot-backend-prometheus is the stable hostname Kamal gives the
     # prometheus accessory (../../deploy.yml), following its
