@@ -23,6 +23,19 @@ groups:
           # error's notification if it fired within 4h of the first one -
           # discovered by two different test triggers producing a Slack
           # message for the first but not the second
+          #
+          # The `or (... unless (... offset 5m))` half exists because a
+          # counter's very first-ever sample for a given label combination
+          # is invisible to increase(): there's no earlier sample to diff
+          # against, so a brand-new (route, error) pair whose first
+          # observed value is already nonzero (e.g. right after every
+          # fresh deploy resets the counter) would otherwise never fire.
+          # `metric unless (metric offset 5m)` returns the current value of
+          # any series that didn't exist 5 minutes ago - i.e. exactly the
+          # series increase() misses - so this catches that case too, with
+          # no application code involved. Verified empirically: a counter
+          # whose first-ever sample was already 1 showed increase() == 0
+          # but this combined expression == 1.
           - refId: B
             relativeTimeRange:
               from: 600
@@ -30,7 +43,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: B
-              expr: increase(parkspot_unhandled_errors_total[5m])
+              expr: (increase(parkspot_unhandled_errors_total[5m]) > 0) or (parkspot_unhandled_errors_total unless (parkspot_unhandled_errors_total offset 5m))
               instant: true
           # C: threshold check against B's per-label series, not a collapsed
           # scalar - this is what makes each label combination its own alert
