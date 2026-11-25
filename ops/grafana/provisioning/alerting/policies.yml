@@ -7,4 +7,11 @@ policies:
     # this is the only alert in the system. a future alert that needs
     # different handling can get its own `routes:` entry above this
     receiver: slack
-    group_by: ["alertname"]
+    # "..." is Alertmanager's literal syntax for "disable aggregation -
+    # treat every unique label set as its own group." Grouping by just
+    # alertname (the original setting) put every (route, error) combination
+    # in the same notification group, so once that group had been notified
+    # once, a second, different error joining it wouldn't notify
+    # immediately - Alertmanager would wait group_interval (5m default) to
+    # send a batched update instead of a prompt new notification
+    group_by: ["..."]
