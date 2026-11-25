@@ -10,21 +10,19 @@ groups:
         title: "parkspot-backend: unhandled errors"
         condition: C
         data:
-          # A: the actual firing condition - collapses across the error and
-          # route labels so this fires for ANY unexpected error, not just a
-          # specific sentinel/route combination
-          - refId: A
-            relativeTimeRange:
-              from: 600
-              to: 0
-            datasourceUid: prometheus
-            model:
-              refId: A
-              expr: sum(increase(parkspot_unhandled_errors_total[5m]))
-              instant: true
-          # B: the same window WITHOUT the sum, kept per-label, purely so its
-          # result can be put in the notification body - this is what lets a
-          # notification say which sentinel and which route actually broke
+          # B: per-label increase (error, route - no sum()). Evaluating the
+          # condition on this directly, instead of a collapsed sum(), means
+          # each distinct (route, error) combination becomes its own
+          # independently-tracked alert instance in Alertmanager - so a
+          # brand-new kind of error still notifies promptly no matter what
+          # else recently fired. Collapsing with sum() (the original design)
+          # made every firing carry the exact same alert identity
+          # ({alertname, grafana_folder, severity} only), so Alertmanager's
+          # own notification dedup (repeat_interval, 4h by default, never
+          # overridden here) would silently swallow a second, unrelated
+          # error's notification if it fired within 4h of the first one -
+          # discovered by two different test triggers producing a Slack
+          # message for the first but not the second
           - refId: B
             relativeTimeRange:
               from: 600
@@ -34,13 +32,14 @@ groups:
               refId: B
               expr: increase(parkspot_unhandled_errors_total[5m])
               instant: true
-          # C: threshold check against A's single collapsed number
+          # C: threshold check against B's per-label series, not a collapsed
+          # scalar - this is what makes each label combination its own alert
           - refId: C
             datasourceUid: "-100"
             model:
               refId: C
               type: threshold
-              expression: A
+              expression: B
               conditions:
                 - evaluator:
                     type: gt
@@ -52,6 +51,5 @@ groups:
         execErrState: Alerting
         annotations:
           summary: "parkspot-backend has at least one unhandled error in the last 5 minutes"
-          breakdown: "{{ index .Values \"B\" }}"
         labels:
           severity: critical
