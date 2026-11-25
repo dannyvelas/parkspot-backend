@@ -54,6 +54,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		MaxAge:           300,
 	}))
+	router.Use(metricsMiddleware)
 
 	// handlers
 	authMiddleware := newAuthMiddleware(app.JWTService)
