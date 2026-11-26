@@ -11,17 +11,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type middleware struct {
+type authMiddleware struct {
 	jwtService app.JWTService
 }
 
-func newMiddleware(jwtService app.JWTService) middleware {
-	return middleware{
+func newAuthMiddleware(jwtService app.JWTService) authMiddleware {
+	return authMiddleware{
 		jwtService: jwtService,
 	}
 }
 
-func (m middleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
+func (m authMiddleware) authenticate(firstRole models.Role, roles ...models.Role) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
