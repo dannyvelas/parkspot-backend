@@ -89,10 +89,24 @@
 - [x] move `app/test_helpers.go` to storage/
 - [x] remove logic inside of resetPassword auth handler that extracts a user from auth token. this logic is already done inside of api/middleware.go. to get a user in auth handler, just extract from context
 - [x] maybe remove `*Repo.Reset()` functions? idk they seem dangerous. there's probably a better way to do the same thing
-- [ ] i think the quota_ledger design needs another look. admins should be able to set a given resident's days to an exact number, instead of saying +5 days, -4 days or whatever.
 - [x] looks like some env keys are not named consistently. in some places i see PGPASSWORD and POSTGRES_PASSWORD refer to the same concept. i see APP_DB_PASSWORD and POSTGRES_APP_PASSWORD refer to the same concept. there may be more examples. make all consistent
 - [x] add comments to ops/backup/scheduler.sh
 - [✗] add resident getone functions which just wraps over resident.selectwhere (wont do: unlike car/permit's GetOne, this would just be a thin wrapper over SelectWhere with no real query-shape benefit, and the one call site with different not-found semantics (permit.go's getAndValidateResident) wouldn't even cleanly reuse it)
+- [ ] make CI run "kamal reboot grafana -c ops/deploy.yml" whenever something in ops/grafana changes
+- [ ] make CI run "kamal reboot prometheus -c ops/deploy.yml" whenever something in ops/prometheus changes
+- [ ] add alerts for errors from the outside. not just errors that we detect in code (e.g. alerts like api.park-spot.co is down, or file wasn't created etc)
+- [ ] add metrics for things like
+  - How long does my service take to respond to HTTP requests?
+    - what's the latency of permit creation requests? what about permit edit requests? what about permit deletion requests?
+    - what's the latency of car creation requests? what about car edit requests? what about car deletion requests?
+    - what's the latency of resident creation requests? what about resident edit requests? what about resident deletion requests?
+  - How many requests my service is receiving?
+  - What does the CPU/Memory utilization looks like?
+  - How many permits are being created?
+  - When do permits tend to be created more on a weekly basis?
+  - What requests are the most popular? is it editing permits? creating permits? adding visitors? creating cars? resetting passwords?
+- [ ] create grafana dashboard with metrics above
+- [ ] i think the quota_ledger design needs another look. admins should be able to set a given resident's days to an exact number, instead of saying +5 days, -4 days or whatever.
 - [ ] probably get rid of endoftime. this seems hacky
 - [ ] make all expected errors a variant type. e.g. make them be defined without a message or http status. the respondError function can unpack them and decide what http status code to use and how to present it. its complecting to make all packages in the codebase think about HTTP.
 - [ ] let db constraints answer "does this exist / is this unique" instead of check-then-insert. e.g. `CarService.Create` selects the resident, then inserts the car in a separate call; if the resident is deleted in between, the insert hits the `car.resident_id` foreign key and returns a 500. its complecting correctness with timing: the check's answer is only true at the moment it's asked. have `storage/psql` recognize postgres error codes (`23503` foreign key violation, `23505` unique violation) and return storage-level expected errors (e.g. `storage.ErrReferenceNotFound`, `storage.ErrAlreadyExists`) that `app` translates (e.g. into `ResidentForCarDNE`). that also makes the extra select unnecessary. same applies to the license plate uniqueness check in `CarService.Create`. pairs with the variant-type error item above
@@ -117,7 +131,6 @@
   - [ ] same for cars
   - [ ] same for residents
   - [ ] same for visitors
-- [ ] add metrics
 - [ ] a permit being created in the middle of a container being evicted because of a new deployment, will follow-through being created
 - [ ] (DEPLOY) switch the Postgres accessory's storage in `ops/deploy.yml` from a bind-mounted directory to a named Docker volume -- not urgent, the bind mount already persists data correctly; this is a portability/permissions nicety, not a data-loss risk. Requires copying the real data into the new volume before any reboot that uses it, or the accessory would boot against an empty volume. See specs/003-automated-deployment-pipeline/tasks.md T030.
 - [ ] (DEPLOY) before ever bumping the Postgres accessory's pinned image tag in `ops/deploy.yml`, verify the upgrade path first. A minor/patch bump (e.g. `17.6` -> `17.7`) is safe to just reboot. A major bump (e.g. `17.x` -> `18.x`) is not -- Postgres refuses to start a newer major version against an older major version's on-disk data, you'd need `pg_upgrade` or a dump/restore first. Never tested either path for real yet. See specs/003-automated-deployment-pipeline/tasks.md T031.
