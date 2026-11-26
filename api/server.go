@@ -56,7 +56,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 	}))
 
 	// handlers
-	middleware := newMiddleware(app.JWTService)
+	authMiddleware := newAuthMiddleware(app.JWTService)
 	authHandler := newAuthHandler(c.HTTP, app.JWTService, app.AuthService)
 	residentHandler := newResidentHandler(app.ResidentService)
 	visitorHandler := newVisitorHandler(app.VisitorService)
@@ -82,7 +82,7 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		})
 
 		r.Group(func(adminRouter chi.Router) {
-			adminRouter.Use(middleware.authenticate(models.AdminRole))
+			adminRouter.Use(authMiddleware.authenticate(models.AdminRole))
 			adminRouter.Delete("/permit/{id:[0-9]+}", permitHandler.deleteOne())
 			adminRouter.Delete("/resident/{id}", residentHandler.deleteOne())
 			adminRouter.Post("/resident", residentHandler.create())
@@ -91,14 +91,14 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		})
 
 		r.Group(func(officeRouter chi.Router) {
-			officeRouter.Use(middleware.authenticate(models.AdminRole, models.SecurityRole))
+			officeRouter.Use(authMiddleware.authenticate(models.AdminRole, models.SecurityRole))
 			officeRouter.Get("/residents", residentHandler.getAll())
 			officeRouter.Get("/resident/{id}", residentHandler.getOne())
 			officeRouter.Get("/car/{id}", carHandler.getOne())
 		})
 
 		r.Group(func(adminAndResidentRouter chi.Router) {
-			adminAndResidentRouter.Use(middleware.authenticate(models.AdminRole, models.ResidentRole))
+			adminAndResidentRouter.Use(authMiddleware.authenticate(models.AdminRole, models.ResidentRole))
 			adminAndResidentRouter.Post("/permit", permitHandler.create())
 			adminAndResidentRouter.Post("/car", carHandler.create())
 			adminAndResidentRouter.Put("/car", carHandler.edit())
@@ -106,13 +106,13 @@ func newRouter(c config.Config, app app.App) (router *chi.Mux) {
 		})
 
 		r.Group(func(residentRouter chi.Router) {
-			residentRouter.Use(middleware.authenticate(models.ResidentRole))
+			residentRouter.Use(authMiddleware.authenticate(models.ResidentRole))
 			residentRouter.Post("/visitor", visitorHandler.create())
 			residentRouter.Delete("/visitor/{id}", visitorHandler.deleteOne())
 		})
 
 		r.Group(func(userRouter chi.Router) {
-			userRouter.Use(middleware.authenticate(models.AdminRole, models.SecurityRole, models.ResidentRole))
+			userRouter.Use(authMiddleware.authenticate(models.AdminRole, models.SecurityRole, models.ResidentRole))
 			userRouter.Put("/user/password", authHandler.resetPassword())
 			userRouter.Get("/hello", sayHello())
 			userRouter.Get("/permits/all", permitHandler.get(models.AnyStatus))
