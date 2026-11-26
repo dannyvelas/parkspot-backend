@@ -94,8 +94,8 @@
 - [✗] add resident getone functions which just wraps over resident.selectwhere (wont do: unlike car/permit's GetOne, this would just be a thin wrapper over SelectWhere with no real query-shape benefit, and the one call site with different not-found semantics (permit.go's getAndValidateResident) wouldn't even cleanly reuse it)
 - [x] make CI run "kamal reboot grafana -c ops/deploy.yml" whenever something in ops/grafana changes
 - [x] make CI run "kamal reboot backups -c ops/deploy.yml" whenever something in ops/backups changes
-- [ ] make CI run "kamal reboot prometheus -c ops/deploy.yml" whenever something in ops/prometheus changes
-- [ ] make CI skip pushing the backup image if nothing in ops/backups changed
+- [x] make CI run "kamal reboot prometheus -c ops/deploy.yml" whenever something in ops/prometheus changes
+- [x] make CI skip pushing the backup image if nothing in ops/backups changed
 - [ ] add alerts for errors from the outside. not just errors that we detect in code (e.g. alerts like api.park-spot.co is down, or file wasn't created etc)
 - [ ] add metrics for things like
   - How long does my service take to respond to HTTP requests?
