@@ -116,6 +116,8 @@ accessories:
       - ops/grafana/provisioning/alerting/rules.yml:/etc/grafana/provisioning/alerting/rules.yml
       - ops/grafana/provisioning/alerting/contact-points.yml:/etc/grafana/provisioning/alerting/contact-points.yml
       - ops/grafana/provisioning/alerting/policies.yml:/etc/grafana/provisioning/alerting/policies.yml
+      - ops/grafana/provisioning/dashboards/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ops/grafana/provisioning/dashboards/api-health.json:/etc/grafana/provisioning/dashboards/api-health.json
     # a named volume, not `directories:` (a host bind-mount) - grafana runs
     # as a non-root user (uid 472) and the image pre-chowns /var/lib/grafana,
     # so a fresh named volume inherits the right ownership automatically. a

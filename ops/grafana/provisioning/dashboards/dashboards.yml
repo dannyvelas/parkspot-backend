@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: ParkSpot
+    orgId: 1
+    folder: ParkSpot
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    options:
+      # not recursive, but we only ever place dashboard JSON directly here,
+      # matching how datasources/ and alerting/ are laid out
+      path: /etc/grafana/provisioning/dashboards
