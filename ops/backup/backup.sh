@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# dummy change: testing that CI reboots the backup accessory on ops/backup changes
 set -euo pipefail
 
 : "${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD must be set}"
