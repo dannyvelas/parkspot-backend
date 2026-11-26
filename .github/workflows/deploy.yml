@@ -61,6 +61,7 @@ jobs:
 
       # the `kamal deploy` task pushes the parkspot-backend image to ghcr, but not our backup accessory image. so we're doing that here
       - name: Build and push backup accessory image
+        if: steps.changed.outputs.backup == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker build -t ghcr.io/dannyvelas/parkspot-backup:latest -f ops/backup/Dockerfile ops/backup
