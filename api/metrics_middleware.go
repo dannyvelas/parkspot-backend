@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -18,8 +17,6 @@ var httpRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 }, []string{"route", "method", "status"})
 
 // metricsMiddleware records httpRequestDuration for every request except
-// /up: kamal-proxy hits it every second (proxy.healthcheck.interval: 1 in
-// deploy.yml), which would swamp every real route's numbers.
 func metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/up" {
@@ -31,29 +28,21 @@ func metricsMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(ww, r)
 
-		httpRequestDuration.WithLabelValues(metricsRoutePattern(r), r.Method, statusClass(ww.Status())).
+		// default to unmatched bc every request, including junk, goes through here. otherwise, we explode cardinality
+		route := routePatternOr(r, "unmatched")
+		httpRequestDuration.WithLabelValues(route, metricsMethod(r.Method), statusClass(ww.Status())).
 			Observe(time.Since(start).Seconds())
 	})
 }
 
-// metricsRoutePattern returns chi's matched route pattern, or "unmatched"
-// for a 404 - never the raw request path. Falling back to the raw path
-// (like respond.go's routePattern does, safely, since it only ever runs
-// for errors on routes that already matched) would give an unbounded
-// label here, since every request, including junk paths bots probe, goes
-// through this middleware.
-func metricsRoutePattern(r *http.Request) string {
-	rctx := chi.RouteContext(r.Context())
-	if rctx == nil {
-		return "unmatched"
+// metricsMethod just makes sure method is one of the methods this backend uses. protects cardinality
+func metricsMethod(method string) string {
+	switch method {
+	case http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions:
+		return method
+	default:
+		return "other"
 	}
-
-	pattern := rctx.RoutePattern()
-	if pattern == "" {
-		return "unmatched"
-	}
-
-	return pattern
 }
 
 func statusClass(status int) string {

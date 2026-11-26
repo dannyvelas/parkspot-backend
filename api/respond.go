@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/dannyvelas/parkspot-backend/errs"
-	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 )
 
@@ -43,17 +42,7 @@ func respondError(w http.ResponseWriter, r *http.Request, err error) {
 	respondJSON(w, r, apiErr.StatusCode, apiErr.Error())
 }
 
-// routePattern returns chi's route pattern (e.g. "/api/permit/{id}"),
+// routePattern returns chi's route pattern (e.g. "/api/permit/{id}"). Safe to fall back to the raw path here since this only ever runs for errors on routes that already matched.
 func routePattern(r *http.Request) string {
-	rctx := chi.RouteContext(r.Context())
-	if rctx == nil {
-		return r.URL.Path
-	}
-
-	pattern := rctx.RoutePattern()
-	if pattern == "" {
-		return r.URL.Path
-	}
-
-	return pattern
+	return routePatternOr(r, r.URL.Path)
 }
