@@ -28,6 +28,11 @@ jobs:
           else
             echo "backup=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -q '^ops/grafana/' <<< "$files"; then
+            echo "grafana=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "grafana=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -69,6 +74,13 @@ jobs:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
         run: kamal accessory reboot backup -c ops/deploy.yml
+
+      - name: kamal accessory reboot grafana
+        if: steps.changed.outputs.grafana == 'true'
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+        run: kamal accessory reboot grafana -c ops/deploy.yml
 
       - name: Record deployment summary
         # if always() makes it so that this also runs on failed deploys
