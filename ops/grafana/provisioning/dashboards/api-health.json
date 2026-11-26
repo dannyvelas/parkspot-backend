@@ -101,6 +101,99 @@
           "legendFormat": "p99"
         }
       ]
+    },
+    {
+      "id": 200,
+      "type": "row",
+      "title": "By Route",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "panels": [
+        {
+          "id": 4,
+          "type": "table",
+          "title": "Busiest routes",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+          "fieldConfig": {
+            "defaults": { "unit": "reqps" },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Value" },
+                "properties": [{ "id": "displayName", "value": "Requests/sec" }]
+              }
+            ]
+          },
+          "options": {
+            "sortBy": [{ "displayName": "Requests/sec", "desc": true }]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "format": "table",
+              "instant": true,
+              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count[5m])))"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "table",
+          "title": "Slowest routes (p95)",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+          "fieldConfig": {
+            "defaults": { "unit": "s" },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Value" },
+                "properties": [{ "id": "displayName", "value": "p95 latency" }]
+              }
+            ]
+          },
+          "options": {
+            "sortBy": [{ "displayName": "p95 latency", "desc": true }]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "format": "table",
+              "instant": true,
+              "expr": "topk(10, histogram_quantile(0.95, sum by (route, le) (rate(parkspot_http_request_duration_seconds_bucket[5m]))))"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "table",
+          "title": "Routes with most 5xx",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+          "fieldConfig": {
+            "defaults": { "unit": "reqps" },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Value" },
+                "properties": [{ "id": "displayName", "value": "5xx/sec" }]
+              }
+            ]
+          },
+          "options": {
+            "sortBy": [{ "displayName": "5xx/sec", "desc": true }]
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "prometheus", "uid": "prometheus" },
+              "format": "table",
+              "instant": true,
+              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count{status=\"5xx\"}[5m])))"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
