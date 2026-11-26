@@ -46,3 +46,11 @@ func respondError(w http.ResponseWriter, r *http.Request, err error) {
 func routePattern(r *http.Request) string {
 	return routePatternOr(r, r.URL.Path)
 }
+
+func errorLabel(err error) string {
+	var sentinel *errs.Sentinel
+	if errors.As(err, &sentinel) {
+		return sentinel.Label()
+	}
+	return "unknown"
+}

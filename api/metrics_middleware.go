@@ -5,18 +5,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// httpRequestDuration computes latency and request volume
-var httpRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-	Name:    "parkspot_http_request_duration_seconds",
-	Help:    "Latency of HTTP requests, by route, method, and status class.",
-	Buckets: prometheus.DefBuckets,
-}, []string{"route", "method", "status"})
-
-// metricsMiddleware records httpRequestDuration for every request except
+// metricsMiddleware records httpRequestDuration
 func metricsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/up" {
