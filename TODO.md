@@ -96,8 +96,7 @@
 - [x] make CI run "kamal reboot backups -c ops/deploy.yml" whenever something in ops/backups changes
 - [x] make CI run "kamal reboot prometheus -c ops/deploy.yml" whenever something in ops/prometheus changes
 - [x] make CI skip pushing the backup image if nothing in ops/backups changed
-- [ ] add alerts for errors from the outside. not just errors that we detect in code (e.g. alerts like api.park-spot.co is down, or file wasn't created etc)
-- [ ] add metrics for things like
+- [x] add metrics for things like
   - How long does my service take to respond to HTTP requests?
     - what's the latency of permit creation requests? what about permit edit requests? what about permit deletion requests?
     - what's the latency of car creation requests? what about car edit requests? what about car deletion requests?
@@ -107,7 +106,8 @@
   - How many permits are being created?
   - When do permits tend to be created more on a weekly basis?
   - What requests are the most popular? is it editing permits? creating permits? adding visitors? creating cars? resetting passwords?
-- [ ] create grafana dashboard with metrics above
+- [x] create grafana dashboard with metrics above
+- [ ] add alerts for errors from the outside. not just errors that we detect in code (e.g. alerts like api.park-spot.co is down, or file wasn't created etc)
 - [ ] i think the quota_ledger design needs another look. admins should be able to set a given resident's days to an exact number, instead of saying +5 days, -4 days or whatever.
 - [ ] probably get rid of endoftime. this seems hacky
 - [ ] make all expected errors a variant type. e.g. make them be defined without a message or http status. the respondError function can unpack them and decide what http status code to use and how to present it. its complecting to make all packages in the codebase think about HTTP.

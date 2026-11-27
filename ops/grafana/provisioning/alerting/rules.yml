@@ -66,3 +66,52 @@ groups:
           summary: "parkspot-backend has at least one unhandled error in the last 5 minutes"
         labels:
           severity: critical
+
+  - orgId: 1
+    name: availability-alerts
+    folder: Availability Alerts
+    interval: 1m
+    rules:
+      - uid: parkspot-backend-up
+        title: "parkspot-backend: scrape target down"
+        condition: C
+        data:
+          # B: Prometheus writes an `up` sample for this target on every scrape
+          # - 1 if the scrape succeeded, 0 if it didn't (connection refused,
+          # timeout, DNS failure, etc). Unlike kind-1's counter, this doesn't
+          # depend on the app emitting anything, so it still fires when the
+          # app can't run any of its own code at all: an unrecovered panic,
+          # an OOM kill, or a container that never came back up after deploy
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: B
+              expr: up{job="parkspot-backend"}
+              instant: true
+          - refId: C
+            datasourceUid: "-100"
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params:
+                      - 1
+        # fire on the first missed scrape - don't wait for a sustained breach
+        for: 0s
+        # unlike kind-1's counter, `up` always has a sample once Prometheus is
+        # scraping this target at all, whether the scrape succeeds or not - so
+        # "no data" here means something broke in Grafana's query path to
+        # Prometheus itself, not "nothing to report." Treat that as a problem
+        # too rather than going quiet
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "Prometheus has not successfully scraped parkspot-backend - the process may be down, crashed, or unreachable"
+        labels:
+          severity: critical

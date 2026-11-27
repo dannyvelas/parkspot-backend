@@ -2,10 +2,10 @@ apiVersion: 1
 
 policies:
   - orgId: 1
-    # this is the root/default policy. T013's alert has no more specific
-    # route of its own, so it routes here by default - fine for now since
-    # this is the only alert in the system. a future alert that needs
-    # different handling can get its own `routes:` entry above this
+    # this is the root/default policy. neither the kind-1 nor the
+    # availability alert has a more specific route of its own, so both route
+    # here by default. a future alert that needs different handling can get
+    # its own `routes:` entry above this
     receiver: slack
     # "..." is Alertmanager's literal syntax for "disable aggregation -
     # treat every unique label set as its own group." Grouping by just
