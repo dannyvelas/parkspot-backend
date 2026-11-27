@@ -8,6 +8,23 @@
   "version": 1,
   "refresh": "30s",
   "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "route",
+        "label": "Route",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(parkspot_http_request_duration_seconds_count, route)",
+        "refresh": 1,
+        "sort": 1,
+        "multi": false,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" }
+      }
+    ]
+  },
   "panels": [
     {
       "id": 100,
@@ -31,7 +48,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(parkspot_http_request_duration_seconds_count[5m]))",
+          "expr": "sum(rate(parkspot_http_request_duration_seconds_count{route=~\"$route\"}[5m]))",
           "legendFormat": "requests/sec"
         }
       ]
@@ -66,7 +83,7 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "(sum(rate(parkspot_http_request_duration_seconds_count{status=\"5xx\"}[5m])) or vector(0)) / sum(rate(parkspot_http_request_duration_seconds_count[5m])) * 100",
+          "expr": "(sum(rate(parkspot_http_request_duration_seconds_count{route=~\"$route\", status=\"5xx\"}[5m])) or vector(0)) / sum(rate(parkspot_http_request_duration_seconds_count{route=~\"$route\"}[5m])) * 100",
           "legendFormat": "5xx rate"
         }
       ]
@@ -85,19 +102,19 @@
         {
           "refId": "A",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.5, sum(rate(parkspot_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.5, sum(rate(parkspot_http_request_duration_seconds_bucket{route=~\"$route\"}[5m])) by (le))",
           "legendFormat": "p50"
         },
         {
           "refId": "B",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum(rate(parkspot_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(parkspot_http_request_duration_seconds_bucket{route=~\"$route\"}[5m])) by (le))",
           "legendFormat": "p95"
         },
         {
           "refId": "C",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.99, sum(rate(parkspot_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(parkspot_http_request_duration_seconds_bucket{route=~\"$route\"}[5m])) by (le))",
           "legendFormat": "p99"
         }
       ]
