@@ -128,84 +128,87 @@
       "panels": [
         {
           "id": 4,
-          "type": "table",
-          "title": "Busiest routes",
+          "type": "bargauge",
+          "title": "Busiest routes (req/min)",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
           "fieldConfig": {
-            "defaults": { "unit": "short" },
-            "overrides": [
-              {
-                "matcher": { "id": "byName", "options": "Value" },
-                "properties": [{ "id": "displayName", "value": "Requests/min" }]
-              }
-            ]
+            "defaults": {
+              "unit": "short",
+              "color": { "mode": "fixed", "fixedColor": "blue" }
+            },
+            "overrides": []
           },
           "options": {
-            "sortBy": [{ "displayName": "Requests/min", "desc": true }]
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": { "calcs": ["lastNotNull"] }
           },
           "targets": [
             {
               "refId": "A",
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "format": "table",
               "instant": true,
+              "legendFormat": "{{route}}",
               "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count[15m])) * 60)"
             }
           ]
         },
         {
           "id": 5,
-          "type": "table",
+          "type": "bargauge",
           "title": "Slowest routes (p95)",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
           "fieldConfig": {
-            "defaults": { "unit": "s" },
-            "overrides": [
-              {
-                "matcher": { "id": "byName", "options": "Value" },
-                "properties": [{ "id": "displayName", "value": "p95 latency" }]
-              }
-            ]
+            "defaults": {
+              "unit": "s",
+              "color": { "mode": "fixed", "fixedColor": "blue" }
+            },
+            "overrides": []
           },
           "options": {
-            "sortBy": [{ "displayName": "p95 latency", "desc": true }]
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": { "calcs": ["lastNotNull"] }
           },
           "targets": [
             {
               "refId": "A",
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "format": "table",
               "instant": true,
+              "legendFormat": "{{route}}",
               "expr": "topk(10, histogram_quantile(0.95, sum by (route, le) (rate(parkspot_http_request_duration_seconds_bucket[15m]))))"
             }
           ]
         },
         {
           "id": 6,
-          "type": "table",
-          "title": "Routes with most 5xx",
+          "type": "bargauge",
+          "title": "Routes with most 5xx (per min)",
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
           "fieldConfig": {
-            "defaults": { "unit": "short" },
-            "overrides": [
-              {
-                "matcher": { "id": "byName", "options": "Value" },
-                "properties": [{ "id": "displayName", "value": "5xx/min" }]
-              }
-            ]
+            "defaults": {
+              "unit": "short",
+              "color": { "mode": "fixed", "fixedColor": "red" }
+            },
+            "overrides": []
           },
           "options": {
-            "sortBy": [{ "displayName": "5xx/min", "desc": true }]
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true,
+            "reduceOptions": { "calcs": ["lastNotNull"] }
           },
           "targets": [
             {
               "refId": "A",
               "datasource": { "type": "prometheus", "uid": "prometheus" },
-              "format": "table",
               "instant": true,
+              "legendFormat": "{{route}}",
               "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count{status=\"5xx\"}[15m])) * 60)"
             }
           ]
