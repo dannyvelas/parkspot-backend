@@ -151,7 +151,7 @@
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "instant": true,
               "legendFormat": "{{route}}",
-              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count[15m])) * 60)"
+              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count[$__range])) * 60)"
             }
           ]
         },
@@ -180,7 +180,7 @@
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "instant": true,
               "legendFormat": "{{route}}",
-              "expr": "topk(10, histogram_quantile(0.95, sum by (route, le) (rate(parkspot_http_request_duration_seconds_bucket[15m]))))"
+              "expr": "topk(10, histogram_quantile(0.95, sum by (route, le) (rate(parkspot_http_request_duration_seconds_bucket[$__range]))))"
             }
           ]
         },
@@ -209,7 +209,7 @@
               "datasource": { "type": "prometheus", "uid": "prometheus" },
               "instant": true,
               "legendFormat": "{{route}}",
-              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count{status=\"5xx\"}[15m])) * 60)"
+              "expr": "topk(10, sum by (route) (rate(parkspot_http_request_duration_seconds_count{status=\"5xx\"}[$__range])) * 60)"
             }
           ]
         }
